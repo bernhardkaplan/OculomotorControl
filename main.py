@@ -2,6 +2,7 @@ import simulation_parameters
 import VisualInput
 import MotionPrediction
 import BasalGanglia
+import VisualInputParameters
 
 
 class WorldTimer(object):
@@ -23,6 +24,7 @@ class WorldTimer(object):
 
 if __name__ == '__main__':
 
+
     GP = simulation_parameters.global_parameters()
     params = GP.params
     try:
@@ -38,9 +40,14 @@ if __name__ == '__main__':
 
     GP.write_parameters_to_file()
 
-    VI = VisualInput.VisualInput(params)
-    MT = MotionPrediction(params)
-    BG = BasalGanglia(params)
+    # decide whether to load the default parameters or to take parameters from a file
+    VIP = VisualInputParameters.VisualInputParameters()
+    vi_params = VIP.params
+    # pass parameters to the VisualInput module
+    VI = VisualInput.VisualInput(vi_params)
+
+    MT = MotionPrediction.MotionPrediction(params)
+    BG = BasalGanglia.BasalGanglia(params)
 
     for iteration in xrange(params['n_iterations']):
         stim = VI.compute_input(params['t_integrate'])

@@ -6,9 +6,22 @@ class ParameterContainer(object):
     This class contains the simulation parameters in a dictionary called params.
     """
 
-    def __init__(self, output_dir=None):
-        self.params = {}
-        self.set_filenames(folder_name=output_dir)
+    def __init__(self, params_fn=None):
+        if params_fn == None:
+            self.params = {}
+            self.set_filenames()
+        else:
+            self.load_params_from_file(params_fn)
+
+
+    def set_param_dict(self, name, params):
+        """A sub-dictionary params is set to the given name
+        Keyword arguments:
+        name -- (str) name of the sub-dictionary
+        params -- (dict) the parameter dictionary
+        """
+        self.params[name] = params
+
 
     def set_folder_name(self, folder_name=None):
         """
@@ -19,11 +32,12 @@ class ParameterContainer(object):
         """
 
         if folder_name == None:
-            folder_name = 'DummyTest/'
+            folder_name = 'DefaultFolder/'
             self.params['folder_name'] = folder_name
         else:
             self.params['folder_name'] = folder_name
         print 'Folder name:', self.params['folder_name']
+
 
     def set_filenames(self, folder_name=None):
         """
@@ -58,6 +72,7 @@ class ParameterContainer(object):
                 print 'Creating folder:\t%s' % f
                 os.system("mkdir %s" % (f))
 
+
     def load_params_from_file(self, fn):
         """
         Loads the file via json from a filename
@@ -66,8 +81,10 @@ class ParameterContainer(object):
         fn -- file name
         """
         f = file(fn, 'r')
-        params = json.load(f)
-        return params
+        print 'Loading parameters from', fn
+        self.params = json.load(f)
+        return self.params
+
 
 
     def update_values(self, to_update):
@@ -82,14 +99,24 @@ class ParameterContainer(object):
         self.set_filenames()
 
 
-    def write_parameters_to_file(self, fn=None):
-        if not (os.path.isdir(self.params['folder_name'])):
-            print 'Creating folder:\n\t%s' % self.params['folder_name']
-            self.create_folders()
+
+    def write_parameters_to_file(self, fn=None, params=None):
+        """
+        Keyword arguments:
+        fn -- (optional) target output filename for json dictionary
+        params -- (optional) the modified parameter dictionary that is to write
+        """
+
         if fn == None:
             fn = self.params['params_fn_json']
+        if params == None:
+            params_to_write = self.params
+        if not (os.path.isdir(params_to_write['folder_name'])):
+            print 'Creating folder:\n\t%s' % params_to_write['folder_name']
+            self.create_folders(params_to_write)
         print 'Writing parameters to: %s' % (fn)
         output_file = file(fn, 'w')
-        d = json.dump(self.params, output_file)
+        d = json.dump(params_to_write, output_file)
+
 
 
