@@ -12,19 +12,18 @@ class VisualInputParameters(ParameterContainer.ParameterContainer):
 
     def set_default_params(self):
 
-        # ######################
-        # SIMULATION PARAMETERS
-        # ######################
-        self.params['t_sim'] = 3000.                 # [ms] total simulation time
-        self.params['t_integrate'] = 50.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['dt'] = 0.1                      # [ms]
-        self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_integrate']))
-
         self.set_visual_input_params()
 
 
     def set_visual_input_params(self):
+        """
+        Here only those parameters should be set, which have nothing to do
+        with other modules or objects
+        TODO: move the cell numbers etc to simulation parameters, 
+        as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
+        """
 
+        self.params['visual_stim_seed'] = 123
         self.params['tuning_prop_seed'] = 0
         self.params['x_offset'] = 0.
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed

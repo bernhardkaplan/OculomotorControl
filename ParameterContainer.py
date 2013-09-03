@@ -64,7 +64,7 @@ class ParameterContainer(object):
 
     def create_folders(self):
         """
-        Must be called from 'outside' this class before the simulation
+        Is called when write_parameters_to_file is called.
         """
 
         for f in self.params['folder_names']:
@@ -93,7 +93,7 @@ class ParameterContainer(object):
         Keyword arguments:
         to_update -- dictionary storing the parameters to be updated
         """
-        for key, value in kwargs.iteritems():
+        for key, value in to_update.iteritems():
             self.params[key] = value
         # update the possibly dependent parameters
         self.set_filenames()
@@ -102,6 +102,7 @@ class ParameterContainer(object):
 
     def write_parameters_to_file(self, fn=None, params=None):
         """
+        This function must be called from 'outside' the class.
         Keyword arguments:
         fn -- (optional) target output filename for json dictionary
         params -- (optional) the modified parameter dictionary that is to write
@@ -113,7 +114,7 @@ class ParameterContainer(object):
             params_to_write = self.params
         if not (os.path.isdir(params_to_write['folder_name'])):
             print 'Creating folder:\n\t%s' % params_to_write['folder_name']
-            self.create_folders(params_to_write)
+            self.create_folders()
         print 'Writing parameters to: %s' % (fn)
         output_file = file(fn, 'w')
         d = json.dump(params_to_write, output_file)

@@ -1,6 +1,5 @@
 import numpy as np
 import json
-import numpy.random as rnd
 
 class VisualInput(object):
 
@@ -11,18 +10,40 @@ class VisualInput(object):
         """
         self.params = params
         self.trajectories = []
-        self.t_axis = np.arange(0, self.params['t_integrate'], self.params['dt'])
+        self.t_axis = np.arange(0, self.params['t_iteration'], self.params['dt'])
+        self.t_current = 0 # stores the 'current' time
+        np.random.seed(self.params['visual_stim_seed'])
 
-    def compute_input(self, t_integrate):
 
-        self.tuning_prop_exc = self.set_tuning_prop('exc')
-        self.tuning_prop_inh = self.set_tuning_prop('inh')
-        trajectory = self.compute_stimulus_trajectory(t_integrate)
-        self.compute_detector_response(trajectory)
+    def compute_input(self, t_integrate, eye_movement):
+        """
+        Integrate the real world trajectory and the eye direction and compute spike trains from that.
+
+        Keyword arguments:
+        t_integrate -- time for which the input is computed
+        eye_movement -- the direction of the eye
+        """
+        return self.dummy_stim(t_integrate)
+#        self.tuning_prop_exc = self.set_tuning_prop('exc')
+#        self.tuning_prop_inh = self.set_tuning_prop('inh')
+#        trajectory = self.compute_stimulus_trajectory(t_integrate)
+#        self.compute_detector_response(trajectory)
+
+
+
+
+    def dummy_stim(self, t_integrate):
+        print 'Creating dummy spike trains', self.t_current
+        stim = [ [] for unit in xrange(self.params['n_exc'])]
+        for unit in xrange(self.params['n_exc']): # create a spike train for the respective unit
+            n_spikes = np.random.randint(0, 10)
+            stim[unit] = np.random.rand(n_spikes) * t_integrate + self.t_current
+        self.t_current += t_integrate
+        return stim
+
 
 
     def compute_stimulus_trajectory(self, t_integrate):
-        time_axis = np.arange(0, t_integrate, self.params['dt_stim'])
         v_stim = self.params['motion_params'][2]
         trajectory = self.params['motion_params'][2] * time_axis + np.ones(t_integrate) * self.params['x_offset']
         self.trajectories.append(trajectory) # store for later save 
@@ -32,11 +53,12 @@ class VisualInput(object):
 
     def compute_detector_response(self, trajectory):
 
-        network_response = np.zeros((self.params['n_exc'], self.t_axis.size))
+        detector_response = np.zeros((self.params['n_exc'], self.t_axis.size))
         v_stim = self.params['motion_params'][2]
 
         for unit in xrange(self.params['n_exc']):
-            network_response[unit, :] = np.exp(-.5 * ((trajectory - self.tuning_prop_exc[unit, 0]) / self.params['blur_X'])**2 \
+            print 'debug', trajectory.shape, detector_response[unit, :].shape
+            detector_response[unit, :] = np.exp(-.5 * ((trajectory - self.tuning_prop_exc[unit, 0]) / self.params['blur_X'])**2 \
                     - .5 * ((v_stim - self.tuning_prop_exc[unit, 1]) / self.params['blur_V'])**2)
 
 
@@ -50,7 +72,7 @@ class VisualInput(object):
 
     def set_tuning_prop_1D(self, cell_type='exc'):
 
-        rnd.seed(self.params['tuning_prop_seed'])
+        np.random.seed(self.params['tuning_prop_seed'])
         if cell_type == 'exc':
             n_cells = self.params['n_exc']
             n_v = self.params['n_v']
@@ -76,7 +98,7 @@ class VisualInput(object):
 
         RF = np.linspace(0, self.params['torus_width'], n_rf_x, endpoint=False)
         index = 0
-        random_rotation_for_orientation = np.pi*rnd.rand(n_rf_x * n_v * n_orientation) * self.params['sigma_rf_orientation']
+        random_rotation_for_orientation = np.pi*np.random.rand(n_rf_x * n_v * n_orientation) * self.params['sigma_rf_orientation']
 
             # todo do the same for v_rho?
         for i_RF in xrange(n_rf_x):

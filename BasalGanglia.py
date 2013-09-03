@@ -5,3 +5,10 @@ class BasalGanglia(object):
         
         self.params = params
 
+
+    def get_eye_direction(self):
+        pass
+
+
+    def move_eye(self):
+        pass
