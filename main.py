@@ -39,7 +39,6 @@ if __name__ == '__main__':
 
 
     for iteration in xrange(params['n_iterations']):
-        # integrate the real world trajectory and the eye direction and compute spike trains from that
         stim = VI.compute_input(params['t_iteration'], BG.get_eye_direction())
         MT.compute_state(stim) # run the network for some time 
         BG.move_eye(MT.current_state)
