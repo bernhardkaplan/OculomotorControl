@@ -41,10 +41,11 @@ if __name__ == '__main__':
 
     for iteration in xrange(params['n_iterations']):
         # integrate the real world trajectory and the eye direction and compute spike trains from that
-        stim = VI.compute_input(params['t_iteration'], BG.get_eye_direction())
+        stim = VI.compute_input(params['t_iteration'])
         MT.update_input(stim) # run the network for some time 
         nest.Simulate(params['t_iteration'])
-        BG.move_eye(MT.current_state)
+        BG.move_eye()#MT.current_state)
+        VI.update_retina_image(BG.get_eye_direction())
 
 
 #    """

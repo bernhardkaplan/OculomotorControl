@@ -15,6 +15,8 @@ class VisualInput(object):
         np.random.seed(self.params['visual_stim_seed'])
 
 
+    def update_retina_image(self, BG.get_eye_direction())
+
     def compute_input(self, t_integrate, eye_movement):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.

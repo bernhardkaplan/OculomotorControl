@@ -34,7 +34,7 @@ class MotionPrediction(object):
 
         """
 
-        self.spike_times_container = 
+        self.spike_times_container = stim
         for i_, gid in enumerate(self.local_idx_exc):
             spike_times = self.spike_times_container[i_]
             nest.SetStatus([self.stimulus[i_]], {'spike_times' : spike_times})

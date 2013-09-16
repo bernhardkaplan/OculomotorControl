@@ -29,9 +29,20 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['t_sim'] = 3000.                 # [ms] total simulation time
-        self.params['t_iteration'] = 50.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 100.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
+
+        # #####################################
+        # CONNECTING MPN --> BG
+        # #####################################
+        self.params['w_exc_mpn_bg'] = 10.
+
+        # #####################################
+        # BASAL GANGLIA PARAMETERS
+        # #####################################
+        self.params['n_exc_bg'] = 100
+        self.params['n_actions'] = 3
 
 
         # #####################################
