@@ -34,7 +34,8 @@ class VisualInput(object):
 
     def dummy_stim(self, t_integrate):
         print 'Creating dummy spike trains', self.t_current
-        stim = [ [] for unit in xrange(self.params['n_exc'])]
+        stim = [ [] for unit in xrange(self.params['n_exc_mpn'])]
+        print 'DEBUG', self.params['n_exc']
         for unit in xrange(self.params['n_exc']): # create a spike train for the respective unit
             n_spikes = np.random.randint(0, 10)
             stim[unit] = np.random.rand(n_spikes) * t_integrate + self.t_current

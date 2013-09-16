@@ -10,5 +10,5 @@ class BasalGanglia(object):
         pass
 
 
-    def move_eye(self):
+    def move_eye(self, current_state):
         pass
