@@ -22,6 +22,7 @@ class MotionPrediction(object):
         nest.SetKernelStatus({'data_path':self.params['spiketimes_folder_mpn'], 'overwrite_files': True})
         print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
 
+        self.t_current = 0
 
     def setup_synapse_types(self):
 
@@ -53,9 +54,9 @@ class MotionPrediction(object):
             exit(1)
 
         # record spikes
-        exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':'exc_spikes'})
+        self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':'exc_spikes'})
         for state in xrange(self.params['n_states']):
-            nest.ConvergentConnect(self.list_of_populations[state], exc_spike_recorder)
+            nest.ConvergentConnect(self.list_of_populations[state], self.exc_spike_recorder)
 
 
     def create_dummy_network(self):
@@ -79,6 +80,26 @@ class MotionPrediction(object):
         self.spike_times_container = [ [] for i in xrange(len(self.local_idx_exc))]
 
 
+    def get_current_state(self):
+        """
+        This function should return an integer between 0 and params['n_states']
+        based on the spiking activity of the network during the last iteration (t_iteration [ms]).
+        """
+        all_events = nest.GetStatus(self.exc_spike_recorder)[0]['events']
+        recent_event_idx = all_events['times'] > self.t_current
+        new_event_times = all_events['times'][recent_event_idx]
+        new_event_gids = all_events['senders'][recent_event_idx]
+        state_activity = np.array(new_event_gids) / self.params['n_exc_per_mc']
+#        print 'new_event_times between %d - %d' % (self.t_current, self.t_current + self.params['t_iteration']),  new_event_times
+#        print 'new_event_gids', new_event_gids
+#        print 'State activity:', state_activity
+        cnt, bins = np.histogram(state_activity, bins=range(self.params['n_states']))
+        wta_state = np.argmax(cnt)
+        self.t_current += self.params['t_iteration']
+        return wta_state
+
+
+
 
     def get_local_indices(self, pop):
         """
@@ -97,7 +118,6 @@ class MotionPrediction(object):
 
         if gids_to_record == None:
             gids_to_record = np.random.randint(1, self.params['n_cells_mpn'], self.params['n_cells_to_record_mpn'])
-
         voltmeter = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.5})
         nest.SetStatus(voltmeter,[{"to_file": True, "withtime": True, 'label' : 'volt'}])
             

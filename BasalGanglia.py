@@ -11,4 +11,4 @@ class BasalGanglia(object):
 
 
     def move_eye(self, current_state):
-        pass
+        return current_state
