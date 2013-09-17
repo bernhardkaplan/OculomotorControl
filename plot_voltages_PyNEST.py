@@ -35,4 +35,5 @@ if __name__ == '__main__':
         time_axis, volt = extract_trace(d, gid)
         pylab.plot(time_axis, volt, label='%d' % gid, lw=2)
 
+    pylab.legend()
     pylab.show()

@@ -7,14 +7,17 @@ if (len(sys.argv) < 2):
 else:
     fn = sys.argv[1]
 
-data = np.load(fn)
-#data = np.loadtxt(fn)
+try:
+    data = np.load(fn)
+except:
+    data = np.loadtxt(fn)
+
 if (data.ndim == 1):
     x_axis = np.arange(data.size)
     pylab.plot(x_axis, data)
 else:
     for i in xrange(data[:, 0].size):
-        pylab.plot(data[i, 0], data[i, 1], 'o')
+        pylab.plot(data[i, 1], data[i, 0], '.', c='k')
 #    pylab.plot(data[:,0], data[:, 1], '-')
 #    pylab.plot(data[:,0], data[:, 1] / data[:, 0], '-')
 #    pylab.plot(data[:,0], data[:, 2], '-')

@@ -15,17 +15,18 @@ class VisualInput(object):
         np.random.seed(self.params['visual_stim_seed'])
 
 
-    def update_retina_image(self, BG.get_eye_direction())
+    def update_retina_image(self, eye_direction):
+        pass
 
-    def compute_input(self, t_integrate, eye_movement):
+    def compute_input(self, t_integrate, local_gids, stim_state):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
         Keyword arguments:
         t_integrate -- time for which the input is computed
-        eye_movement -- the direction of the eye
+        stim_state -- the index of the population which will be stimulated
         """
-        return self.dummy_stim(t_integrate)
+        return self.create_dummy_stim(t_integrate, local_gids, stim_state)
 #        self.tuning_prop_exc = self.set_tuning_prop('exc')
 #        self.tuning_prop_inh = self.set_tuning_prop('inh')
 #        trajectory = self.compute_stimulus_trajectory(t_integrate)
@@ -34,13 +35,25 @@ class VisualInput(object):
 
 
 
-    def dummy_stim(self, t_integrate):
+
+    def create_dummy_stim(self, t_integrate, local_gids, stim_state=0):
+        """
+        Keyword arguments:
+        t_integrate -- (float) length of the stimulus to be created
+        local_gids -- list of gids for which a stimulus shall be created
+        """
         print 'Creating dummy spike trains', self.t_current
-        stim = [ [] for unit in xrange(self.params['n_exc_mpn'])]
-        print 'DEBUG', self.params['n_exc']
-        for unit in xrange(self.params['n_exc']): # create a spike train for the respective unit
-            n_spikes = np.random.randint(0, 10)
-            stim[unit] = np.random.rand(n_spikes) * t_integrate + self.t_current
+#        stim = [ [] for unit in xrange(self.params['n_exc_per_mc'])]
+        stim = [ [] for gid in xrange(len(local_gids))]
+
+        for i_, gid in enumerate(local_gids):
+            # get the cell from the list of populations
+            mc_idx = (gid - 1) / self.params['n_exc_per_mc']
+            idx_in_pop = (gid - 1) - mc_idx * self.params['n_exc_per_mc']
+            if mc_idx == stim_state:
+                n_spikes = np.random.randint(20, 50)
+                stim[i_] = np.around(np.random.rand(n_spikes) * t_integrate + self.t_current, decimals=1)
+                stim[i_] = np.sort(stim[i_])
         self.t_current += t_integrate
         return stim
 
