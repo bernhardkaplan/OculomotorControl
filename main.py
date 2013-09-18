@@ -37,18 +37,18 @@ if __name__ == '__main__':
     MT = MotionPrediction.MotionPrediction(params)
     BG = BasalGanglia.BasalGanglia(params)
     CC = CreateConnections.CreateConnections(params)
-    CC.connect_mt_to_bg(MT, BG)
+#    CC.connect_mt_to_bg(MT, BG)
 
+    next_state = params['initial_state']
     for iteration in xrange(params['n_iterations']):
         # integrate the real world trajectory and the eye direction and compute spike trains from that
-        state_old = iteration % params['n_states'] 
-        stim = VI.compute_input(params['t_iteration'], MT.local_idx_exc, stim_state=state_old)
+        stim = VI.compute_input(MT.local_idx_exc, action_code=next_state)
         if params['debug_mpn']:
             save_spike_trains(params, iteration, stim)
         MT.update_input(stim) # run the network for some time 
         nest.Simulate(params['t_iteration'])
-        state_new = MT.get_current_state()
-        print 'Iteration: %d\tState before action: %d' % (iteration, state_new)
-        state_old = BG.select_action(state_new) # BG returns vx_eye
+        state_ = MT.get_current_state()
+        print 'Iteration: %d\tState before action: %d' % (iteration, state_)
+        next_state = BG.select_action(state_) # BG returns vx_eye
         VI.update_retina_image(BG.get_eye_direction())
 

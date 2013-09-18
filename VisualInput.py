@@ -14,34 +14,43 @@ class VisualInput(object):
         self.t_current = 0 # stores the 'current' time
         np.random.seed(self.params['visual_stim_seed'])
 
+        self.tuning_prop_exc = self.set_tuning_prop('exc')
+        self.tuning_prop_inh = self.set_tuning_prop('inh')
+
 
     def update_retina_image(self, eye_direction):
         pass
 
-    def compute_input(self, t_integrate, local_gids, stim_state):
+
+    def compute_input(self, local_gids, action_code, dummy=False):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
         Keyword arguments:
-        t_integrate -- time for which the input is computed
-        stim_state -- the index of the population which will be stimulated
+        local_gids -- the GIDS for which the stimulus needs to be computed
+        action_code -- a tuple representing the action (direction of eye movement)
         """
-        return self.create_dummy_stim(t_integrate, local_gids, stim_state)
-#        self.tuning_prop_exc = self.set_tuning_prop('exc')
-#        self.tuning_prop_inh = self.set_tuning_prop('inh')
-#        trajectory = self.compute_stimulus_trajectory(t_integrate)
+
+        if dummy:
+            return self.create_dummy_stim(local_gids, action_code)
+
+        else: 
+            trajectory = self.update_stimulus_trajectory(action_code)
+            stim = self.create_spike_trains_for_trajectory(local_gids, trajectory)
+            return stim
 #        self.compute_detector_response(trajectory)
 
 
 
 
 
-    def create_dummy_stim(self, t_integrate, local_gids, stim_state=0):
+    def create_dummy_stim(self, local_gids, action_code=0):
         """
         Keyword arguments:
-        t_integrate -- (float) length of the stimulus to be created
         local_gids -- list of gids for which a stimulus shall be created
+        action_code -- a tuple representing the action (direction of eye movement)
         """
+        t_integrate = self.params['t_iteration']
         print 'Creating dummy spike trains', self.t_current
 #        stim = [ [] for unit in xrange(self.params['n_exc_per_mc'])]
         stim = [ [] for gid in xrange(len(local_gids))]
@@ -50,7 +59,7 @@ class VisualInput(object):
             # get the cell from the list of populations
             mc_idx = (gid - 1) / self.params['n_exc_per_mc']
             idx_in_pop = (gid - 1) - mc_idx * self.params['n_exc_per_mc']
-            if mc_idx == stim_state:
+            if mc_idx == action_code:
                 n_spikes = np.random.randint(20, 50)
                 stim[i_] = np.around(np.random.rand(n_spikes) * t_integrate + self.t_current, decimals=1)
                 stim[i_] = np.sort(stim[i_])
@@ -58,11 +67,30 @@ class VisualInput(object):
         return stim
 
 
+    def create_spike_trains_for_trajectory(self, local_gids, trajectory):
+        """
+        Keyword arguments:
+        local_gids -- list of gids for which a stimulus shall be created
+        """
+        stim = [ [] for gid in xrange(len(local_gids))]
+        return stim
 
-    def compute_stimulus_trajectory(self, t_integrate):
-        v_stim = self.params['motion_params'][2]
-        trajectory = self.params['motion_params'][2] * time_axis + np.ones(t_integrate) * self.params['x_offset']
+
+    def update_stimulus_trajectory(self, action_code):
+        """
+        Keyword arguments:
+        action_code -- a tuple representing the action (direction of eye movement)
+        """
+        t_integrate = self.params['t_iteration']
+        time_axis = np.arange(0, t_integrate)
+        if self.params['n_grid_dimensions'] == 2:
+            idx = 2
+        else:
+            idx = 1
+        v_stim = self.params['motion_params'][idx]
+        trajectory = self.params['motion_params'][idx] * time_axis + np.ones(t_integrate) * self.params['x_offset']
         self.trajectories.append(trajectory) # store for later save 
+
         return trajectory
 
     
@@ -78,7 +106,7 @@ class VisualInput(object):
                     - .5 * ((v_stim - self.tuning_prop_exc[unit, 1]) / self.params['blur_V'])**2)
 
 
-    def set_tuning_prop(self, cell_type, mode='hexgrid'):
+    def set_tuning_prop(self, cell_type):
 
         if self.params['n_grid_dimensions'] == 2:
             return self.set_tuning_prop_2D(mode, cell_type)
@@ -90,13 +118,13 @@ class VisualInput(object):
 
         np.random.seed(self.params['tuning_prop_seed'])
         if cell_type == 'exc':
-            n_cells = self.params['n_exc']
+            n_cells = self.params['n_exc_mpn']
             n_v = self.params['n_v']
             n_rf_x = self.params['n_rf_x']
             v_max = self.params['v_max_tp']
             v_min = self.params['v_min_tp']
         else:
-            n_cells = self.params['n_inh']
+            n_cells = self.params['n_inh_mpn']
             n_v = self.params['n_v_inh']
             n_rf_x = self.params['n_rf_x_inh']
             v_max = self.params['v_max_tp']
@@ -121,10 +149,10 @@ class VisualInput(object):
             for i_v_rho, rho in enumerate(v_rho):
                 for orientation in orientations:
                 # for plotting this looks nicer, and due to the torus property it doesn't make a difference
-                    tuning_prop[index, 0] = (RF[i_RF] + self.params['sigma_rf_pos'] * rnd.randn()) % self.params['torus_width']
+                    tuning_prop[index, 0] = (RF[i_RF] + self.params['sigma_rf_pos'] * np.random.randn()) % self.params['torus_width']
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
-                    tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * rnd.randn())
-                    tuning_prop[index, 3] = 0. # np.sin(theta + random_rotation[index]) * rho * (1. + self.params['sigma_rf_speed'] * rnd.randn())
+                    tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
+                    tuning_prop[index, 3] = 0. # np.sin(theta + random_rotation[index]) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 4] = (orientation + random_rotation_for_orientation[index]) % np.pi
 
                     index += 1

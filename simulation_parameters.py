@@ -49,8 +49,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_bg'] = 100
         self.params['n_actions'] = 3
         self.params['n_states'] = 10
-        self.params['initial_state'] = 0 
-        assert (self.params['initial_state'] < self.params['n_states']), 'ERROR: initial_state out of bounds: %d (should be smaller than %d' % (self.params['initial_state'], self.params['n_states'])
+        self.params['initial_state'] = (.5, .5)
 
 
     def set_visual_input_params(self):

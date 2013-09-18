@@ -5,7 +5,7 @@ class BasalGanglia(object):
         
         self.params = params
 
-        self.create_networ()
+#        self.create_network()
 
     def get_eye_direction(self):
         pass
@@ -13,3 +13,6 @@ class BasalGanglia(object):
 
     def select_action(self, current_state):
         return current_state
+
+    def create_network(self):
+        pass

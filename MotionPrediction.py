@@ -16,7 +16,7 @@ class MotionPrediction(object):
         self.spike_times_container = []
 
         self.setup_synapse_types()
-        self.create_network(dummy=True)
+        self.create_network()
         self.record_voltages(self.params['gids_to_record_mpn'])
 
         nest.SetKernelStatus({'data_path':self.params['spiketimes_folder_mpn'], 'overwrite_files': True})
@@ -45,18 +45,34 @@ class MotionPrediction(object):
                 nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
 
 
-    def create_network(self, dummy=True):
+    def create_network(self, dummy=False):
 
         if dummy:
             self.create_dummy_network()
-        else:
-            print 'MotionPrediction.create_network: \tNot yet implemented ... :( \n will now quit'
-            exit(1)
+            # record spikes
+            self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':'exc_spikes'})
+            for state in xrange(self.params['n_states']):
+                nest.ConvergentConnect(self.list_of_populations[state], self.exc_spike_recorder)
 
-        # record spikes
-        self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':'exc_spikes'})
-        for state in xrange(self.params['n_states']):
-            nest.ConvergentConnect(self.list_of_populations[state], self.exc_spike_recorder)
+        else:
+            self.create_exc_pop()
+            self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':'exc_spikes'})
+            nest.ConvergentConnect(self.exc_pop, self.exc_spike_recorder)
+
+
+    def create_exc_pop(self):
+        cell_params = self.params['cell_params_mpn'].copy()
+
+        self.exc_pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_exc_mpn'], params=cell_params)
+        self.list_of_populations.append(self.exc_pop)
+        self.local_idx_exc += self.get_local_indices(self.exc_pop) # get the GIDS of the neurons that are local to the process
+
+        self.stimulus = nest.Create('spike_generator', self.n_local_exc)
+        # connect stimuli containers to the local cells
+        for i_, gid in enumerate(self.local_idx_exc):
+            print 'debug', i_, gid, len(self.exc_pop), self.pc_id
+            nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
+
 
 
     def create_dummy_network(self):
@@ -114,7 +130,7 @@ class MotionPrediction(object):
         return local_nodes
         
 
-    def record_voltages(self, gids_to_record=None):
+    def record_voltages(self, gids_to_record=None, dummy=False):
 
         if gids_to_record == None:
             gids_to_record = np.random.randint(1, self.params['n_cells_mpn'], self.params['n_cells_to_record_mpn'])
@@ -123,8 +139,12 @@ class MotionPrediction(object):
             
         for gid in gids_to_record:
             if gid in self.local_idx_exc:
-                mc_idx, idx_in_mc = self.get_indices_for_gid(gid)
-                nest.ConvergentConnect(voltmeter, [self.list_of_populations[mc_idx][idx_in_mc]])
+
+                if dummy:
+                    mc_idx, idx_in_mc = self.get_indices_for_gid(gid)
+                    nest.ConvergentConnect(voltmeter, [self.list_of_populations[mc_idx][idx_in_mc]])
+                else:
+                    nest.ConvergentConnect(voltmeter, [self.exc_pop[gid - 1]])
 
 
     def get_indices_for_gid(self, gid):
