@@ -69,8 +69,8 @@ class MotionPrediction(object):
 
         self.stimulus = nest.Create('spike_generator', self.n_local_exc)
         # connect stimuli containers to the local cells
+        print 'DEBUG', len(self.local_idx_exc)
         for i_, gid in enumerate(self.local_idx_exc):
-            print 'debug', i_, gid, len(self.exc_pop), self.pc_id
             nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
 
 
@@ -96,7 +96,7 @@ class MotionPrediction(object):
         self.spike_times_container = [ [] for i in xrange(len(self.local_idx_exc))]
 
 
-    def get_current_state(self):
+    def get_current_state(self, tuning_prop_exc):
         """
         This function should return an integer between 0 and params['n_states']
         based on the spiking activity of the network during the last iteration (t_iteration [ms]).
@@ -105,9 +105,13 @@ class MotionPrediction(object):
         recent_event_idx = all_events['times'] > self.t_current
         new_event_times = all_events['times'][recent_event_idx]
         new_event_gids = all_events['senders'][recent_event_idx]
+
+        print 'new_event_times between %d - %d' % (self.t_current, self.t_current + self.params['t_iteration']),  new_event_times
+        print 'new_event_gids', new_event_gids
+        stim_params_readout = self.readout_spiking_activity(tuning_prop_exc[new_event_gids, :], new_event_gids)
+
+
         state_activity = np.array(new_event_gids) / self.params['n_exc_per_mc']
-#        print 'new_event_times between %d - %d' % (self.t_current, self.t_current + self.params['t_iteration']),  new_event_times
-#        print 'new_event_gids', new_event_gids
 #        print 'State activity:', state_activity
         cnt, bins = np.histogram(state_activity, bins=range(self.params['n_states']))
         wta_state = np.argmax(cnt)
@@ -115,6 +119,24 @@ class MotionPrediction(object):
         return wta_state
 
 
+    def readout_spiking_activity(self, tuning_prop, gids):
+
+        if len(gids) == 0:
+            print '\nWARNING:\n\tNo spikes emitted!!!\n\tMotion Prediction Network was silent!\nReturning nonevalid stimulus prediction\n'
+            return (None, None, None, None)
+        print 'DEBUG tuning_prop', tuning_prop
+        print 'DEBUG gids', gids
+
+        nspikes = np.zeros(len(gids))
+        for i_, gid in enumerate(gids):
+            nspikes[i_] = (gids == gid).nonzero()[0].size
+
+        print 'debug nspikes', nspikes
+        confidence = nspikes / float(nspikes.sum())
+        prediction = tuning_prop * confidence
+        return prediction
+
+        
 
 
     def get_local_indices(self, pop):

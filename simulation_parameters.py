@@ -37,6 +37,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['t_iteration'] = 100.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
+        self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
 
         # #####################################
         # CONNECTING MPN --> BG
@@ -49,7 +50,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_bg'] = 100
         self.params['n_actions'] = 3
         self.params['n_states'] = 10
-        self.params['initial_state'] = (.5, .5)
+        self.params['initial_state'] = (.3, .5, .5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
     def set_visual_input_params(self):
@@ -62,10 +63,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['visual_stim_seed'] = 123
         self.params['tuning_prop_seed'] = 0
-        self.params['x_offset'] = 0.
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
         self.params['motion_params'] = [.0, .5 , .5, 0, np.pi/6.0] # (x, y, v_x, v_y, orientation of bar)
         self.params['debug_mpn'] = True
+        self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 
         # ###################
@@ -80,7 +81,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             # np.sqrt(np.sqrt(3)) comes from resolving the problem "how to quantize the square with a hex grid of a total of n_rfdots?"
             self.params['n_theta'] = 3# resolution in velocity norm and direction
         else:
-            self.params['n_rf_x'] = 10
+            self.params['n_rf_x'] = 20
             self.params['n_rf_y'] = 1
             self.params['n_theta'] = 1
 
@@ -92,6 +93,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -60.0, 'V_th': -55.0, \
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 0.2, 'tau_syn_in': 2.0}
         self.params['w_input_exc_mpn'] = 50. # [nS]
+        self.params['f_max_stim'] = 5000.       # [Hz] Max rate of the inhomogenous Poisson process
 
         self.params['n_v'] = 5
         self.params['n_hc'] = self.params['n_rf_x'] * self.params['n_rf_y']
@@ -131,7 +133,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['v_max_tp'] = 3.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.10  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['blur_X'], self.params['blur_V'] = .15, .45
+        self.params['blur_X'], self.params['blur_V'] = .10, .10
         self.params['blur_theta'] = 1.0
         self.params['torus_width'] = 1.
         self.params['torus_height'] = 1.
@@ -147,7 +149,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         super(global_parameters, self).set_filenames(folder_name)
         self.set_folder_names()
 
-        self.params['input_st_fn_mpn'] = self.params['input_folder_mpn'] + 'input_'
+        self.params['input_st_fn_mpn'] = self.params['input_folder_mpn'] + 'input_spikes_'
+        self.params['input_rate_fn_mpn'] = self.params['input_folder_mpn'] + 'input_rate_'
+        self.params['tuning_prop_exc_fn'] = self.params['parameters_folder'] + 'tuning_prop_exc.txt'
+        self.params['tuning_prop_inh_fn'] = self.params['parameters_folder'] + 'tuning_prop_inh.txt'
 
     def set_folder_names(self):
         self.params['input_folder_mpn'] = '%sInputSpikes_MPN/' % (self.params['folder_name'])

@@ -47,8 +47,8 @@ if __name__ == '__main__':
             save_spike_trains(params, iteration, stim)
         MT.update_input(stim) # run the network for some time 
         nest.Simulate(params['t_iteration'])
-        state_ = MT.get_current_state()
+        state_ = MT.get_current_state(VI.tuning_prop_exc)
         print 'Iteration: %d\tState before action: %d' % (iteration, state_)
         next_state = BG.select_action(state_) # BG returns vx_eye
-        VI.update_retina_image(BG.get_eye_direction())
+#        VI.update_retina_image(BG.get_eye_direction())
 
