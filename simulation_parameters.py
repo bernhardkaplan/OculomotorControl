@@ -34,7 +34,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 1500.                 # [ms] total simulation time
+        self.params['t_sim'] = 2000.                 # [ms] total simulation time
         self.params['t_iteration'] = 100.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
@@ -51,7 +51,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_bg'] = 100
         self.params['n_actions'] = 3
         self.params['n_states'] = 10
-        self.params['initial_state'] = (.3, .5, .5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.3, .5, -.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
     def set_visual_input_params(self):

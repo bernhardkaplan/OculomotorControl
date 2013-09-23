@@ -8,6 +8,7 @@ import simulation_parameters
 import CreateConnections
 import nest
 import numpy as np
+import time
 
 def save_spike_trains(params, iteration, stim_list):
     n_units = len(stim_list)
@@ -32,6 +33,7 @@ if __name__ == '__main__':
         GP = simulation_parameters.global_parameters()
         GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
         params = GP.params
+    t0 = time.time()
 
     VI = VisualInput.VisualInput(params)
     MT = MotionPrediction.MotionPrediction(params, VI)
@@ -60,5 +62,9 @@ if __name__ == '__main__':
         print 'Iteration: %d\tState after action: ' % (iteration), next_state
 #        VI.update_retina_image(BG.get_eye_direction())
 
-    np.savetxt(params['actions_taken_fn'], actions)
-    np.savetxt(params['network_states_fn'], network_states_net_net)
+    if pc_id == 0:
+        np.savetxt(params['actions_taken_fn'], actions)
+        np.savetxt(params['network_states_fn'], network_states_net_net)
+    t1 = time.time() - t0
+    print 'Time: %d [sec]' % t1
+

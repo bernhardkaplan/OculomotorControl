@@ -172,12 +172,12 @@ class VisualInput(object):
         time_axis = np.arange(0, t_integrate, self.params['dt_input_mpn'])
         # update the motion parameters based on the action
         if action_code[0] != None:
-            self.current_motion_params[0] += action_code[0] # shift x-position
+            self.current_motion_params[0] -= action_code[0] # shift x-position
             self.current_motion_params[2] = action_code[0]  # update v_stim_x
         else:
             self.current_motion_params = list(self.params['initial_state'])
         if (self.params['n_grid_dimensions'] == 2) and (action_code[1] != None):
-            self.current_motion_params[1] += action_code[1] # shift y-position
+            self.current_motion_params[1] -= action_code[1] # shift y-position
             self.current_motion_params[2] = action_code[1]  # update v_stim_y
 
         x_stim = self.current_motion_params[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]

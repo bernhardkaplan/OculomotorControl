@@ -37,11 +37,12 @@ class ActivityPlotter(object):
         d = np.zeros((self.it_max, self.x_grid.size)) #self.x_grid.size, self.it_max))
 
         for iteration in xrange(self.it_max):
+            print 'Plot input iteration', iteration
             fn_to_match = (self.params['input_nspikes_fn_mpn'] + 'it%d' % iteration).rsplit('/')[-1]
             list_of_files = utils.find_files(self.params['input_folder_mpn'], fn_to_match)
             for fn_ in list_of_files:
                 fn = self.params['input_folder_mpn'] + fn_
-                print 'Loading:', fn
+#                print 'Loading:', fn
                 d_it = np.loadtxt(fn, dtype=np.int)
                 nspikes = d_it[:, 1]
 
@@ -70,7 +71,13 @@ class ActivityPlotter(object):
         xlabels = ['%.1f' % (float(xtick) / self.n_bins_x) for xtick in self.x_ticks]
         ax.set_xticks(self.x_ticks)
         ax.set_xticklabels(xlabels)
+        output_fn = self.params['data_folder'] + 'mpn_input_activity.dat'
+        print 'Saving data to:', output_fn
+        np.savetxt(output_fn, d)
 
+        output_fig = self.params['figures_folder'] + 'mpn_input_activity.png'
+        print 'Saving figure to:', output_fn
+        pylab.savefig(output_fig)
 
     
 #    def get_nspikes(self, merged_spike_fn):
@@ -103,6 +110,7 @@ class ActivityPlotter(object):
         d = np.zeros((self.it_max, self.x_grid.size)) #self.x_grid.size, self.it_max))
         nspikes_thresh = 1
         for iteration in xrange(self.it_max):
+            print 'Plot output iteration', iteration
             cells_per_grid_cell = np.zeros(self.x_grid.size) # how many cells have been above a threshold activity during this iteration
             t0, t1 = iteration * self.params['t_iteration'], (iteration + 1) * self.params['t_iteration']
             nspikes = self.get_nspikes_interval(spike_data, t0, t1) 
@@ -131,6 +139,13 @@ class ActivityPlotter(object):
         xlabels = ['%.1f' % (float(xtick) / self.n_bins_x) for xtick in self.x_ticks]
         ax.set_xticks(self.x_ticks)
         ax.set_xticklabels(xlabels)
+        output_fn = self.params['data_folder'] + 'mpn_output_activity.dat'
+        print 'Saving data to:', output_fn
+        np.savetxt(output_fn, d)
+
+        output_fig = self.params['figures_folder'] + 'mpn_output_activity.png'
+        print 'Saving figure to:', output_fn
+        pylab.savefig(output_fig)
 
 
 
