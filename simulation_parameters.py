@@ -23,6 +23,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if params_fn == None:
             self.set_default_params()
             self.set_visual_input_params()
+            self.set_mpn_params()
 
 
     def set_default_params(self):
@@ -85,6 +86,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_rf_y'] = 1
             self.params['n_theta'] = 1
 
+
+
+    def set_mpn_params(self):
+
         # #####################################
         # MOTION PREDICTION NETWORK PARAMETERS 
         # #####################################
@@ -104,7 +109,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
 
-        self.params['gids_to_record_mpn'] = [ 1 + i * self.params['n_exc_per_mc'] for i in xrange(self.params['n_states'])]
+        self.params['gids_to_record_mpn'] = None
 
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .01 # some variability in the position of RFs
@@ -112,7 +117,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_orientation'] = 1 # number of preferred orientations
-        self.params['n_cells_to_record_mpn'] = 40
+        self.params['n_exc_to_record_mpn'] = 10
 
         # ###################
         # NETWORK PARAMETERS
@@ -133,7 +138,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['v_max_tp'] = 3.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.10  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['blur_X'], self.params['blur_V'] = .10, .10
+        self.params['blur_X'], self.params['blur_V'] = .20, .20
         self.params['blur_theta'] = 1.0
         self.params['torus_width'] = 1.
         self.params['torus_height'] = 1.
@@ -144,15 +149,21 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
         This funcion is called if no params_fn is passed 
         """
-        folder_name = 'AwesomeResults3/' # this is the main folder containing all information related to one simulation
+        folder_name = 'Results_dev/' # this is the main folder containing all information related to one simulation
 
         super(global_parameters, self).set_filenames(folder_name)
         self.set_folder_names()
-
+        self.params['exc_volt_fn_mpn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['exc_spikes_fn_mpn'] = 'mpn_exc_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['merged_exc_spikes_fn_mpn'] = 'mpn_merged_exc_spikes.dat' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
         self.params['input_st_fn_mpn'] = self.params['input_folder_mpn'] + 'input_spikes_'
         self.params['input_rate_fn_mpn'] = self.params['input_folder_mpn'] + 'input_rate_'
+        self.params['input_nspikes_fn_mpn'] = self.params['input_folder_mpn'] + 'input_nspikes_'
         self.params['tuning_prop_exc_fn'] = self.params['parameters_folder'] + 'tuning_prop_exc.txt'
         self.params['tuning_prop_inh_fn'] = self.params['parameters_folder'] + 'tuning_prop_inh.txt'
+
+        self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt'
+        self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
 
     def set_folder_names(self):
         self.params['input_folder_mpn'] = '%sInputSpikes_MPN/' % (self.params['folder_name'])

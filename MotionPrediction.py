@@ -4,8 +4,9 @@ import numpy as np
 
 class MotionPrediction(object):
 
-    def __init__(self, params):
+    def __init__(self, params, VI):
         
+        self.VI = VI
 
         self.pc_id, self.n_proc = nest.Rank(), nest.NumProcesses()
         self.params = params
@@ -24,6 +25,8 @@ class MotionPrediction(object):
 
         self.t_current = 0
 
+
+
     def setup_synapse_types(self):
 
         nest.CopyModel('static_synapse', 'input_exc_0', \
@@ -41,8 +44,8 @@ class MotionPrediction(object):
 
         """
         for i_, gid in enumerate(self.local_idx_exc):
-            if len(stim[i_]) > 0:
-                nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
+            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
+#            print 't_current: %d udpating input stimulus spiketrains:' % self.t_current, i_, stim[i_]
 
 
     def create_network(self, dummy=False):
@@ -50,13 +53,13 @@ class MotionPrediction(object):
         if dummy:
             self.create_dummy_network()
             # record spikes
-            self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':'exc_spikes'})
+            self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':self.params['exc_spikes_fn_mpn']})
             for state in xrange(self.params['n_states']):
                 nest.ConvergentConnect(self.list_of_populations[state], self.exc_spike_recorder)
 
         else:
             self.create_exc_pop()
-            self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':'exc_spikes'})
+            self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':self.params['exc_spikes_fn_mpn']})
             nest.ConvergentConnect(self.exc_pop, self.exc_spike_recorder)
 
 
@@ -69,7 +72,6 @@ class MotionPrediction(object):
 
         self.stimulus = nest.Create('spike_generator', self.n_local_exc)
         # connect stimuli containers to the local cells
-        print 'DEBUG', len(self.local_idx_exc)
         for i_, gid in enumerate(self.local_idx_exc):
             nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
 
@@ -106,34 +108,36 @@ class MotionPrediction(object):
         new_event_times = all_events['times'][recent_event_idx]
         new_event_gids = all_events['senders'][recent_event_idx]
 
-        print 'new_event_times between %d - %d' % (self.t_current, self.t_current + self.params['t_iteration']),  new_event_times
-        print 'new_event_gids', new_event_gids
+#        print 'new_event_times between %d - %d' % (self.t_current, self.t_current + self.params['t_iteration']),  new_event_times
+#        print 'new_event_gids', new_event_gids
         stim_params_readout = self.readout_spiking_activity(tuning_prop_exc[new_event_gids, :], new_event_gids)
-
-
-        state_activity = np.array(new_event_gids) / self.params['n_exc_per_mc']
-#        print 'State activity:', state_activity
-        cnt, bins = np.histogram(state_activity, bins=range(self.params['n_states']))
-        wta_state = np.argmax(cnt)
         self.t_current += self.params['t_iteration']
-        return wta_state
+        return stim_params_readout
+
+
+#        state_activity = np.array(new_event_gids) / self.params['n_exc_per_mc']
+#        print 'State activity:', state_activity
+#        cnt, bins = np.histogram(state_activity, bins=range(self.params['n_states']))
+#        wta_state = np.argmax(cnt)
+#        self.t_current += self.params['t_iteration']
+#        return wta_state
 
 
     def readout_spiking_activity(self, tuning_prop, gids):
 
         if len(gids) == 0:
             print '\nWARNING:\n\tNo spikes emitted!!!\n\tMotion Prediction Network was silent!\nReturning nonevalid stimulus prediction\n'
-            return (None, None, None, None)
-        print 'DEBUG tuning_prop', tuning_prop
-        print 'DEBUG gids', gids
+            return [0, 0, 0, 0, 0]
 
         nspikes = np.zeros(len(gids))
         for i_, gid in enumerate(gids):
             nspikes[i_] = (gids == gid).nonzero()[0].size
 
-        print 'debug nspikes', nspikes
         confidence = nspikes / float(nspikes.sum())
-        prediction = tuning_prop * confidence
+        n_dim = tuning_prop[0, :].size
+        prediction = np.zeros(n_dim)
+        for i_, gid in enumerate(gids):
+            prediction += tuning_prop[i_, :] * confidence[i_]
         return prediction
 
         
@@ -154,19 +158,24 @@ class MotionPrediction(object):
 
     def record_voltages(self, gids_to_record=None, dummy=False):
 
-        if gids_to_record == None:
-            gids_to_record = np.random.randint(1, self.params['n_cells_mpn'], self.params['n_cells_to_record_mpn'])
-        voltmeter = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.5})
-        nest.SetStatus(voltmeter,[{"to_file": True, "withtime": True, 'label' : 'volt'}])
-            
-        for gid in gids_to_record:
-            if gid in self.local_idx_exc:
+        if gids_to_record == 'random':
+            gids_to_record = np.random.randint(1, self.params['n_exc_mpn'], self.params['n_exc_to_record_mpn'])
+        elif gids_to_record == None:
+            gids_to_record = self.VI.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])[:self.params['n_exc_to_record_mpn']]
 
-                if dummy:
-                    mc_idx, idx_in_mc = self.get_indices_for_gid(gid)
-                    nest.ConvergentConnect(voltmeter, [self.list_of_populations[mc_idx][idx_in_mc]])
-                else:
-                    nest.ConvergentConnect(voltmeter, [self.exc_pop[gid - 1]])
+        self.voltmeter = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.2})
+        nest.SetStatus(self.voltmeter,[{"to_file": True, "withtime": True, 'label' : self.params['exc_volt_fn_mpn']}])
+            
+        nest.ConvergentConnect(self.voltmeter, gids_to_record)
+#        nest.DivergentConnect(self.voltmeter, gids_to_record)
+#        for gid in gids_to_record:
+#            if gid in self.local_idx_exc:
+
+#                if dummy:
+#                    mc_idx, idx_in_mc = self.get_indices_for_gid(gid)
+#                    nest.ConvergentConnect(self.voltmeter, [self.list_of_populations[mc_idx][idx_in_mc]])
+#                else:
+#                    nest.ConvergentConnect(self.voltmeter, [self.exc_pop[gid - 1]])
 
 
     def get_indices_for_gid(self, gid):

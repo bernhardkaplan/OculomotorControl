@@ -1,16 +1,19 @@
 import numpy as np
 import json
+import utils
 
 class VisualInput(object):
 
-    def __init__(self, params):
+    def __init__(self, params, pc_id=0):
         """
         Keyword arguments
         params -- dictionary that contains 
         """
         self.params = params
+        self.pc_id = pc_id
         self.trajectories = []
         self.t_axis = np.arange(0, self.params['t_iteration'], self.params['dt'])
+        self.iteration = 0
         self.t_current = 0 # stores the 'current' time
         np.random.seed(self.params['visual_stim_seed'])
 
@@ -20,7 +23,29 @@ class VisualInput(object):
         print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
         np.savetxt(self.params['tuning_prop_exc_fn'], self.tuning_prop_exc)
         np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
+
         self.current_motion_params = list(self.params['initial_state'])
+#        self.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])
+
+
+    def set_pc_id(self, pc_id):
+        self.pc_id = pc_id
+
+
+    def get_gids_near_stim_trajectory(self, verbose=False):
+
+        self.gids_to_record_exc, distances = utils.sort_gids_by_distance_to_stimulus(self.tuning_prop_exc, self.current_motion_params, \
+                self.t_current, self.t_current + self.params['t_iteration'], self.params['t_cross_visual_field'])
+        if verbose:
+            print 'Motion parameters', self.current_motion_params
+            print 'GID\tdist_to_stim\tx\ty\tu\tv\t\t'
+            for i in xrange(self.params['n_exc_mpn']):
+                gid = self.gids_to_record_exc[i]
+                print gid, '\t', distances[i], self.tuning_prop_exc[gid, :]
+
+        return self.gids_to_record_exc
+
+
 
 
 
@@ -35,14 +60,15 @@ class VisualInput(object):
 
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
         if dummy:
-            return self.create_dummy_stim(local_gids, action_code)
+            self.stim = self.create_dummy_stim(local_gids, action_code)
+            self.iteration += 1
+            return self.stim
 
         else: 
             trajectory = self.update_stimulus_trajectory(action_code)
-            stim = self.create_spike_trains_for_trajectory(local_gids, trajectory)
-            return stim
-#        self.compute_detector_response(trajectory)
-
+            self.create_spike_trains_for_trajectory(local_gids, trajectory)
+            self.iteration += 1
+            return self.stim
 
 
 
@@ -67,6 +93,7 @@ class VisualInput(object):
                 stim[i_] = np.around(np.random.rand(n_spikes) * t_integrate + self.t_current, decimals=1)
                 stim[i_] = np.sort(stim[i_])
         self.t_current += t_integrate
+        self.iteration += 1
         return stim
 
 
@@ -75,7 +102,7 @@ class VisualInput(object):
         Keyword arguments:
         local_gids -- list of gids for which a stimulus shall be created
         """
-        stim = [ [] for gid in xrange(len(local_gids))]
+        self.stim = [ [] for gid in xrange(len(local_gids))]
 
         dt = self.params['dt_input_mpn'] # [ms] time step for the non-homogenous Poisson process 
 
@@ -83,7 +110,7 @@ class VisualInput(object):
         n_cells = len(local_gids)
         L_input = np.zeros((n_cells, time.shape[0]))
         for i_time, time_ in enumerate(time):
-            if (i_time % 100 == 0):
+            if (i_time % 100 == 0) and (self.pc_id == 0):
                 print "t:", time_
             x_stim = trajectory[0][i_time]
             y_stim = trajectory[1][i_time]
@@ -92,6 +119,7 @@ class VisualInput(object):
             L_input[:, i_time] = self.get_input(self.tuning_prop_exc[local_gids, :], motion_params) 
             L_input[:, i_time] *= self.params['f_max_stim']
 
+        input_nspikes = np.zeros((len(local_gids), 2))
         # depending on trajectory and the tp create a spike train
         for i_, gid in enumerate(local_gids):
             rate_of_t = np.array(L_input[i_, :]) 
@@ -103,12 +131,15 @@ class VisualInput(object):
             for i in xrange(n_steps):
                 r = np.random.rand()
                 if (r <= ((rate_of_t[i]/1000.) * dt)): # rate is given in Hz -> 1/1000.
-                    st.append(i * dt) 
-            output_fn = self.params['input_st_fn_mpn'] + str(gid) + '.dat'
-            np.savetxt(output_fn, np.array(st))
-            stim.append(st)
+                    st.append(i * dt + self.t_current) 
+            input_nspikes[i_, :] = (gid, len(st))
+#            output_fn = self.params['input_st_fn_mpn'] + str(gid) + '.dat'
+#            np.savetxt(output_fn, np.array(st))
+            self.stim[i_] = st
 
-        return stim
+        self.t_current += self.params['t_iteration']
+        np.savetxt(self.params['input_nspikes_fn_mpn'] + 'it%d_%d.dat' % (self.iteration, self.pc_id), input_nspikes, fmt='%d\t%d')
+        return self.stim
 
 
     def get_input(self, tuning_prop, motion_params):
@@ -130,8 +161,6 @@ class VisualInput(object):
             d_ij = np.sqrt((tuning_prop[:, 0] - x_stim * np.ones(n_cells))**2)
             L = np.exp(-.5 * (d_ij)**2 / blur_X**2 \
                        -.5 * (tuning_prop[:, 2] - u_stim)**2 / blur_V**2)
-#            print 'Debug', tuning_prop[:, 0].shape, x_stim, x_stim.shape, n_cells
-#            d_ij = torus_distance_array(tuning_prop[:, 0], x_stim * np.ones(n_cells))
         return L
 
     def update_stimulus_trajectory(self, action_code):
@@ -142,15 +171,17 @@ class VisualInput(object):
         t_integrate = self.params['t_iteration']
         time_axis = np.arange(0, t_integrate, self.params['dt_input_mpn'])
         # update the motion parameters based on the action
-        print 'DEBUG action_code', action_code
-        self.current_motion_params[0] += action_code[0] # shift x-position
-        self.current_motion_params[2] = action_code[0]  # update v_stim_x
-        if self.params['n_grid_dimensions'] == 2:
+        if action_code[0] != None:
+            self.current_motion_params[0] += action_code[0] # shift x-position
+            self.current_motion_params[2] = action_code[0]  # update v_stim_x
+        else:
+            self.current_motion_params = list(self.params['initial_state'])
+        if (self.params['n_grid_dimensions'] == 2) and (action_code[1] != None):
             self.current_motion_params[1] += action_code[1] # shift y-position
             self.current_motion_params[2] = action_code[1]  # update v_stim_y
 
-        x_stim = self.current_motion_params[2] * time_axis + np.ones(time_axis.size) * self.current_motion_params[0]
-        y_stim = self.current_motion_params[3] * time_axis + np.ones(time_axis.size) * self.current_motion_params[1]
+        x_stim = self.current_motion_params[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
+        y_stim = self.current_motion_params[3] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
         
         # update the retinal position to the position of the stimulus at the end of the iteration
         self.current_motion_params[0] = x_stim[-1]
@@ -161,16 +192,6 @@ class VisualInput(object):
         return trajectory
 
     
-
-    def compute_detector_response(self, trajectory):
-
-        detector_response = np.zeros((self.params['n_exc'], self.t_axis.size))
-        v_stim = self.params['motion_params'][2]
-
-        for unit in xrange(self.params['n_exc']):
-            print 'debug', trajectory.shape, detector_response[unit, :].shape
-            detector_response[unit, :] = np.exp(-.5 * ((trajectory - self.tuning_prop_exc[unit, 0]) / self.params['blur_X'])**2 \
-                    - .5 * ((v_stim - self.tuning_prop_exc[unit, 1]) / self.params['blur_V'])**2)
 
 
     def set_tuning_prop(self, cell_type):
@@ -210,7 +231,6 @@ class VisualInput(object):
         index = 0
         random_rotation_for_orientation = np.pi*np.random.rand(self.params['n_exc_per_mc'] * n_rf_x * n_v * n_orientation) * self.params['sigma_rf_orientation']
 
-        print 'DEBUG n_cells', n_cells
         tuning_prop = np.zeros((n_cells, 5))
 
 
@@ -224,7 +244,6 @@ class VisualInput(object):
                         tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                         tuning_prop[index, 3] = 0. # np.sin(theta + random_rotation[index]) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                         tuning_prop[index, 4] = (orientation + random_rotation_for_orientation[index]) % np.pi
-                        print 'tuning_prop[%d, :]' % index, tuning_prop[index, :]
                         index += 1
 
         return tuning_prop

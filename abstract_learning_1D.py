@@ -1,6 +1,5 @@
 import simulation_parameters
 import numpy as np
-import utils
 import os
 import sys
 import time

@@ -33,22 +33,32 @@ if __name__ == '__main__':
         GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
         params = GP.params
 
-    VI = VisualInput.VisualInput(params) # pass parameters to the VisualInput module
-    MT = MotionPrediction.MotionPrediction(params)
+    VI = VisualInput.VisualInput(params)
+    MT = MotionPrediction.MotionPrediction(params, VI)
+    pc_id, n_proc = MT.pc_id, MT.n_proc
+    VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params)
     CC = CreateConnections.CreateConnections(params)
 #    CC.connect_mt_to_bg(MT, BG)
 
-    next_state = params['initial_state']
+    next_state = [None, None, None, None] 
+    actions = np.zeros((params['n_iterations'], 2))
+    network_states_net_net = np.zeros((params['n_iterations'], 5))
     for iteration in xrange(params['n_iterations']):
         # integrate the real world trajectory and the eye direction and compute spike trains from that
         stim = VI.compute_input(MT.local_idx_exc, action_code=next_state)
         if params['debug_mpn']:
             save_spike_trains(params, iteration, stim)
+
         MT.update_input(stim) # run the network for some time 
         nest.Simulate(params['t_iteration'])
-        state_ = MT.get_current_state(VI.tuning_prop_exc)
-        print 'Iteration: %d\tState before action: %d' % (iteration, state_)
-        next_state = BG.select_action(state_) # BG returns vx_eye
+        state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+        network_states_net_net[iteration, :] = state_
+        print 'Iteration: %d\tState before action: ' % (iteration), state_
+        next_state = BG.select_action(state_) # BG returns the network_states_net of the next stimulus
+        actions[iteration, :] = next_state
+        print 'Iteration: %d\tState after action: ' % (iteration), next_state
 #        VI.update_retina_image(BG.get_eye_direction())
 
+    np.savetxt(params['actions_taken_fn'], actions)
+    np.savetxt(params['network_states_fn'], network_states_net_net)
