@@ -34,7 +34,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 2000.                 # [ms] total simulation time
+        self.params['t_sim'] = 1000.                 # [ms] total simulation time
         self.params['t_iteration'] = 100.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
@@ -75,14 +75,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ###################
         self.params['n_grid_dimensions'] = 1     # decide on the spatial layout of the network
 
-        self.params['n_rf'] = 30
+        self.params['n_rf'] = 50
         if self.params['n_grid_dimensions'] == 2:
             self.params['n_rf_x'] = np.int(np.sqrt(self.params['n_rf'] * np.sqrt(3)))
             self.params['n_rf_y'] = np.int(np.sqrt(self.params['n_rf'])) 
             # np.sqrt(np.sqrt(3)) comes from resolving the problem "how to quantize the square with a hex grid of a total of n_rfdots?"
             self.params['n_theta'] = 3# resolution in velocity norm and direction
         else:
-            self.params['n_rf_x'] = 20
+            self.params['n_rf_x'] = self.params['n_rf']
             self.params['n_rf_y'] = 1
             self.params['n_theta'] = 1
 
@@ -94,13 +94,22 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # MOTION PREDICTION NETWORK PARAMETERS 
         # #####################################
         self.params['neuron_model_mpn'] = 'iaf_cond_exp'
-        self.params['cell_params_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
+        self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -60.0, 'V_th': -55.0, \
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 0.2, 'tau_syn_in': 2.0}
-        self.params['w_input_exc_mpn'] = 50. # [nS]
+        self.params['cell_params_inh_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
+                'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -60.0, 'V_th': -55.0, \
+                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 0.2, 'tau_syn_in': 2.0}
+        # input parameters
+        self.params['w_input_exc_mpn'] = 20. # [nS]
         self.params['f_max_stim'] = 5000.       # [Hz] Max rate of the inhomogenous Poisson process
 
-        self.params['n_v'] = 5
+
+        # ##############################
+        # EXCITATORY NETWORK PARAMETERS
+        # ##############################
+        # network properties, size, number of preferred directions
+        self.params['n_v'] = 6
         self.params['n_hc'] = self.params['n_rf_x'] * self.params['n_rf_y']
         self.params['n_mc_per_hc'] = self.params['n_v'] * self.params['n_theta']
         self.params['n_mc'] = self.params['n_hc'] * self.params['n_mc_per_hc']
@@ -108,9 +117,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_per_mc'] = self.params['n_exc_per_state']
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
-
         self.params['gids_to_record_mpn'] = None
-
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .01 # some variability in the position of RFs
         self.params['sigma_rf_speed'] = .30 # some variability in the speed of RFs
@@ -118,14 +125,20 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_orientation'] = 1 # number of preferred orientations
         self.params['n_exc_to_record_mpn'] = 10
+        self.params['v_max_tp'] = 3.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
+        self.params['v_min_tp'] = 0.10  # [a.u.] minimal velocity in visual space for tuning property distribution
+        self.params['blur_X'], self.params['blur_V'] = .20, .20
+        self.params['blur_theta'] = 1.0
+        self.params['torus_width'] = 1.
+        self.params['torus_height'] = 1.
 
-        # ###################
-        # NETWORK PARAMETERS
-        # ###################
-        self.params['fraction_inh_cells'] = 0.20 # fraction of inhibitory cells in the network, only approximately!
+        # ##############################
+        # INHIBITOTY NETWORK PARAMETERS
+        # ##############################
+        self.params['fraction_inh_cells_mpn'] = 0.20 # fraction of inhibitory cells in the network, only approximately!
         self.params['n_theta_inh'] = self.params['n_theta']
         self.params['n_v_inh'] = self.params['n_v']
-        self.params['n_rf_inh'] = int(round(self.params['fraction_inh_cells'] * self.params['n_rf']))
+        self.params['n_rf_inh'] = int(round(self.params['fraction_inh_cells_mpn'] * self.params['n_rf']))
         self.params['n_rf_x_inh'] = np.int(np.sqrt(self.params['n_rf_inh'] * np.sqrt(3)))
         # np.sqrt(np.sqrt(3)) comes from resolving the problem "how to quantize the square with a hex grid of a total of n_rf dots?"
         self.params['n_rf_y_inh'] = np.int(np.sqrt(self.params['n_rf_inh'])) 
@@ -135,13 +148,34 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 % (self.params['n_cells_mpn'], self.params['n_exc_mpn'], self.params['n_inh_mpn'], \
                 self.params['n_inh_mpn'] / float(self.params['n_exc_mpn']), self.params['n_inh_mpn'] / float(self.params['n_cells_mpn']))
 
+                    
+        # ############################################################
+        # M P N    EXC - INH    C O N N E C T I V I T Y    PARAMETERS
+        # ############################################################
+        self.params['p_ee_mpn'] = .0 # so far
+        self.params['p_ei_mpn'] = .05 # each inh neuron will receive input from p_ei_mpn * n_exc_mpn neurons
+        self.params['p_ie_mpn'] = .15 # each exc neuron will receive input from p_ie_mpn * n_inh_mpn neurons
+        self.params['p_ii_mpn'] = .0 # ...
 
-        self.params['v_max_tp'] = 3.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
-        self.params['v_min_tp'] = 0.10  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['blur_X'], self.params['blur_V'] = .20, .20
-        self.params['blur_theta'] = 1.0
-        self.params['torus_width'] = 1.
-        self.params['torus_height'] = 1.
+        self.params['w_ee_mpn'] = None # so far ...
+#        self.params['w_ei_mpn'] = 10.  # [nS]
+#        self.params['w_ie_mpn'] = 40. # [nS]
+#        self.params['w_ii_mpn'] = 1.  # [nS]
+        self.params['w_ei_mpn'] = 0.  # [nS]
+        self.params['w_ie_mpn'] = 0. # [nS]
+        self.params['w_ii_mpn'] = 0.  # [nS]
+
+        # number of connections to be received by one cell, to get the total number of connections in the network--> multiply by n_tgt_celltype
+        self.params['n_ee_mpn'] = int(round(self.params['p_ee_mpn'] * self.params['n_exc_mpn'])) 
+        self.params['n_ei_mpn'] = int(round(self.params['p_ei_mpn'] * self.params['n_exc_mpn'])) 
+        self.params['n_ie_mpn'] = int(round(self.params['p_ie_mpn'] * self.params['n_inh_mpn'])) 
+        self.params['n_ii_mpn'] = int(round(self.params['p_ii_mpn'] * self.params['n_inh_mpn'])) 
+
+        self.params['delay_ee_mpn'] = 1. # [ms]
+        self.params['delay_ei_mpn'] = 1. # [ms]
+        self.params['delay_ie_mpn'] = 1. # [ms]
+        self.params['delay_ii_mpn'] = 1. # [ms]
+
 
 
 
@@ -156,9 +190,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['exc_volt_fn_mpn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
         self.params['exc_spikes_fn_mpn'] = 'mpn_exc_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
         self.params['merged_exc_spikes_fn_mpn'] = 'mpn_merged_exc_spikes.dat' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['inh_volt_fn_mpn'] = 'mpn_inh_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['inh_spikes_fn_mpn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['merged_inh_spikes_fn_mpn'] = 'mpn_merged_inh_spikes.dat' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+
+        # input spike files
         self.params['input_st_fn_mpn'] = self.params['input_folder_mpn'] + 'input_spikes_'
         self.params['input_rate_fn_mpn'] = self.params['input_folder_mpn'] + 'input_rate_'
         self.params['input_nspikes_fn_mpn'] = self.params['input_folder_mpn'] + 'input_nspikes_'
+        # tuning properties
         self.params['tuning_prop_exc_fn'] = self.params['parameters_folder'] + 'tuning_prop_exc.txt'
         self.params['tuning_prop_inh_fn'] = self.params['parameters_folder'] + 'tuning_prop_inh.txt'
 

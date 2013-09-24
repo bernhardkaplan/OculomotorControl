@@ -45,17 +45,25 @@ if __name__ == '__main__':
 
     next_state = [None, None, None, None] 
     actions = np.zeros((params['n_iterations'], 2))
-    network_states_net_net = np.zeros((params['n_iterations'], 5))
+    network_states_net= np.zeros((params['n_iterations'], 5))
     for iteration in xrange(params['n_iterations']):
         # integrate the real world trajectory and the eye direction and compute spike trains from that
         stim = VI.compute_input(MT.local_idx_exc, action_code=next_state)
         if params['debug_mpn']:
             save_spike_trains(params, iteration, stim)
 
+        # compute BG input (for supervised learning)
+#        target_action = VI.transform_trajectory_to_action()
+
+        # BG.update_input(stim) #--> updates the Poisson-populations coding for the state
+        # BG.train_action_output(target_action)
+        # remove MT.update_input etc
         MT.update_input(stim) # run the network for some time 
         nest.Simulate(params['t_iteration'])
         state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-        network_states_net_net[iteration, :] = state_
+
+#        BG.update_poisson_layer(state_)
+        network_states_net[iteration, :] = state_
         print 'Iteration: %d\tState before action: ' % (iteration), state_
         next_state = BG.select_action(state_) # BG returns the network_states_net of the next stimulus
         actions[iteration, :] = next_state
@@ -64,7 +72,7 @@ if __name__ == '__main__':
 
     if pc_id == 0:
         np.savetxt(params['actions_taken_fn'], actions)
-        np.savetxt(params['network_states_fn'], network_states_net_net)
+        np.savetxt(params['network_states_fn'], network_states_net)
     t1 = time.time() - t0
     print 'Time: %d [sec]' % t1
 

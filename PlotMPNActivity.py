@@ -76,7 +76,7 @@ class ActivityPlotter(object):
         np.savetxt(output_fn, d)
 
         output_fig = self.params['figures_folder'] + 'mpn_input_activity.png'
-        print 'Saving figure to:', output_fn
+        print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
     
@@ -144,7 +144,7 @@ class ActivityPlotter(object):
         np.savetxt(output_fn, d)
 
         output_fig = self.params['figures_folder'] + 'mpn_output_activity.png'
-        print 'Saving figure to:', output_fn
+        print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
 

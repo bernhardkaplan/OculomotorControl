@@ -14,14 +14,18 @@ class MotionPrediction(object):
 
         self.list_of_populations = []
         self.local_idx_exc = []
+        self.local_idx_inh = []
         self.spike_times_container = []
 
         self.setup_synapse_types()
-        self.create_network()
+        self.create_exc_network()
+        self.create_inh_network()
+#        self.connect_exc_inh()
         self.record_voltages(self.params['gids_to_record_mpn'])
 
         nest.SetKernelStatus({'data_path':self.params['spiketimes_folder_mpn'], 'overwrite_files': True})
         print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
+        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
 
         self.t_current = 0
 
@@ -48,7 +52,7 @@ class MotionPrediction(object):
 #            print 't_current: %d udpating input stimulus spiketrains:' % self.t_current, i_, stim[i_]
 
 
-    def create_network(self, dummy=False):
+    def create_exc_network(self, dummy=False):
 
         if dummy:
             self.create_dummy_network()
@@ -58,28 +62,52 @@ class MotionPrediction(object):
                 nest.ConvergentConnect(self.list_of_populations[state], self.exc_spike_recorder)
 
         else:
-            self.create_exc_pop()
+
+            cell_params = self.params['cell_params_exc_mpn'].copy()
+
+            self.exc_pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_exc_mpn'], params=cell_params)
+            self.list_of_populations.append(self.exc_pop)
+            self.local_idx_exc += self.get_local_indices(self.exc_pop) # get the GIDS of the neurons that are local to the process
+
+            self.stimulus = nest.Create('spike_generator', self.n_local_exc)
+            # connect stimuli containers to the local cells
+            for i_, gid in enumerate(self.local_idx_exc):
+                nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
+
+
+
+
             self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':self.params['exc_spikes_fn_mpn']})
             nest.ConvergentConnect(self.exc_pop, self.exc_spike_recorder)
 
 
-    def create_exc_pop(self):
-        cell_params = self.params['cell_params_mpn'].copy()
 
-        self.exc_pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_exc_mpn'], params=cell_params)
-        self.list_of_populations.append(self.exc_pop)
-        self.local_idx_exc += self.get_local_indices(self.exc_pop) # get the GIDS of the neurons that are local to the process
+    def create_inh_network(self):
 
-        self.stimulus = nest.Create('spike_generator', self.n_local_exc)
-        # connect stimuli containers to the local cells
-        for i_, gid in enumerate(self.local_idx_exc):
-            nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
+        cell_params = self.params['cell_params_inh_mpn'].copy()
+
+        self.inh_pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_inh_mpn'], params=cell_params)
+        self.list_of_populations.append(self.inh_pop)
+        self.local_idx_inh += self.get_local_indices(self.inh_pop) # get the GIDS of the neurons that are local to the process
+
+        self.inh_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':self.params['inh_spikes_fn_mpn']})
+        nest.ConvergentConnect(self.inh_pop, self.inh_spike_recorder)
+
+
+
+    def connect_exc_inh(self):
+
+#        nest.RandomConvergentConnect(self.exc_pop, self.inh_pop, self.params['n_ee_mpn'], weeght=self.params['w_ee_mpn'], delay=self.params['delay_ee_mpn'], model='static_synapse')
+        nest.RandomConvergentConnect(self.exc_pop, self.inh_pop, self.params['n_ei_mpn'], weight=self.params['w_ei_mpn'], delay=self.params['delay_ei_mpn'], model='static_synapse')
+        nest.RandomConvergentConnect(self.exc_pop, self.inh_pop, self.params['n_ie_mpn'], weight=self.params['w_ie_mpn'], delay=self.params['delay_ie_mpn'], model='static_synapse')
+        nest.RandomConvergentConnect(self.exc_pop, self.inh_pop, self.params['n_ii_mpn'], weight=self.params['w_ii_mpn'], delay=self.params['delay_ii_mpn'], model='static_synapse')
+
 
 
 
     def create_dummy_network(self):
 
-        cell_params = self.params['cell_params_mpn'].copy()
+        cell_params = self.params['cell_params_exc_mpn'].copy()
 
         for state in xrange(self.params['n_states']):
             pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_exc_per_mc'], params=cell_params)
