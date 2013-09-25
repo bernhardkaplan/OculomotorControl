@@ -25,11 +25,11 @@ class VisualInput(object):
         np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
 
         self.current_motion_params = list(self.params['initial_state'])
+        # store the motion parameters seen on the retina
+        self.n_stim_dim = len(self.params['initial_state'])
+        self.motion_params = np.zeros((self.params['n_iterations'], self.n_stim_dim + 1))  # + 1 dimension for the time axis
+
 #        self.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])
-
-
-    def set_pc_id(self, pc_id):
-        self.pc_id = pc_id
 
 
     def get_gids_near_stim_trajectory(self, verbose=False):
@@ -46,9 +46,6 @@ class VisualInput(object):
         return self.gids_to_record_exc
 
 
-
-
-
     def compute_input(self, local_gids, action_code, dummy=False):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
@@ -59,43 +56,16 @@ class VisualInput(object):
         """
 
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
-        if dummy:
-            self.stim = self.create_dummy_stim(local_gids, action_code)
-            self.iteration += 1
-            return self.stim
-
-        else: 
+        if not dummy: 
+            self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
+            self.motion_params[self.iteration, -1] = self.t_current
             trajectory = self.update_stimulus_trajectory(action_code)
             self.create_spike_trains_for_trajectory(local_gids, trajectory)
-            self.iteration += 1
-            return self.stim
+        else:
+            self.stim = self.create_dummy_stim(local_gids, action_code)
 
-
-
-
-    def create_dummy_stim(self, local_gids, action_code=0):
-        """
-        Keyword arguments:
-        local_gids -- list of gids for which a stimulus shall be created
-        action_code -- a tuple representing the action (direction of eye movement)
-        """
-        t_integrate = self.params['t_iteration']
-        print 'Creating dummy spike trains', self.t_current
-#        stim = [ [] for unit in xrange(self.params['n_exc_per_mc'])]
-        stim = [ [] for gid in xrange(len(local_gids))]
-
-        for i_, gid in enumerate(local_gids):
-            # get the cell from the list of populations
-            mc_idx = (gid - 1) / self.params['n_exc_per_mc']
-            idx_in_pop = (gid - 1) - mc_idx * self.params['n_exc_per_mc']
-            if mc_idx == action_code:
-                n_spikes = np.random.randint(20, 50)
-                stim[i_] = np.around(np.random.rand(n_spikes) * t_integrate + self.t_current, decimals=1)
-                stim[i_] = np.sort(stim[i_])
-        self.t_current += t_integrate
         self.iteration += 1
-        return stim
-
+        return self.stim
 
     def create_spike_trains_for_trajectory(self, local_gids, trajectory):
         """
@@ -163,6 +133,7 @@ class VisualInput(object):
                        -.5 * (tuning_prop[:, 2] - u_stim)**2 / blur_V**2)
         return L
 
+
     def update_stimulus_trajectory(self, action_code):
         """
         Keyword arguments:
@@ -171,14 +142,18 @@ class VisualInput(object):
         t_integrate = self.params['t_iteration']
         time_axis = np.arange(0, t_integrate, self.params['dt_input_mpn'])
         # update the motion parameters based on the action
-        if action_code[0] != None:
-            self.current_motion_params[0] -= action_code[0] # shift x-position
-            self.current_motion_params[2] = action_code[0]  # update v_stim_x
+
+        if self.params['n_grid_dimensions'] == 1:
+            if np.any(action_code): # i.e. some action value has been taken
+                self.current_motion_params[0] -= action_code[0] # shift x-position
+                self.current_motion_params[2] = action_code[0]  # update v_stim_x
+            else: # it's the first iteration
+                print 'First iteration'
+                self.current_motion_params = list(self.params['initial_state'])
         else:
-            self.current_motion_params = list(self.params['initial_state'])
-        if (self.params['n_grid_dimensions'] == 2) and (action_code[1] != None):
-            self.current_motion_params[1] -= action_code[1] # shift y-position
-            self.current_motion_params[2] = action_code[1]  # update v_stim_y
+            if (action_code[1] != None):
+                self.current_motion_params[1] -= action_code[1] # shift y-position
+                self.current_motion_params[2] = action_code[1]  # update v_stim_y
 
         x_stim = self.current_motion_params[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
         y_stim = self.current_motion_params[3] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
@@ -187,6 +162,7 @@ class VisualInput(object):
         self.current_motion_params[0] = x_stim[-1]
         self.current_motion_params[1] = y_stim[-1]
         trajectory = (x_stim, y_stim)
+#        print 'DEBUG trajectory', trajectory
         self.trajectories.append(trajectory) # store for later save 
 
         return trajectory
@@ -342,3 +318,32 @@ class VisualInput(object):
                         index += 1
 
         return tuning_prop
+
+
+    def set_pc_id(self, pc_id):
+        self.pc_id = pc_id
+
+
+    def create_dummy_stim(self, local_gids, action_code=0):
+        """
+        Keyword arguments:
+        local_gids -- list of gids for which a stimulus shall be created
+        action_code -- a tuple representing the action (direction of eye movement)
+        """
+        t_integrate = self.params['t_iteration']
+        print 'Creating dummy spike trains', self.t_current
+#        stim = [ [] for unit in xrange(self.params['n_exc_per_mc'])]
+        stim = [ [] for gid in xrange(len(local_gids))]
+
+        for i_, gid in enumerate(local_gids):
+            # get the cell from the list of populations
+            mc_idx = (gid - 1) / self.params['n_exc_per_mc']
+            idx_in_pop = (gid - 1) - mc_idx * self.params['n_exc_per_mc']
+            if mc_idx == action_code:
+                n_spikes = np.random.randint(20, 50)
+                stim[i_] = np.around(np.random.rand(n_spikes) * t_integrate + self.t_current, decimals=1)
+                stim[i_] = np.sort(stim[i_])
+        self.t_current += t_integrate
+        self.iteration += 1
+        return stim
+

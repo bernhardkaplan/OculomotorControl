@@ -75,7 +75,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ###################
         self.params['n_grid_dimensions'] = 1     # decide on the spatial layout of the network
 
-        self.params['n_rf'] = 50
+        self.params['n_rf'] = 20
         if self.params['n_grid_dimensions'] == 2:
             self.params['n_rf_x'] = np.int(np.sqrt(self.params['n_rf'] * np.sqrt(3)))
             self.params['n_rf_y'] = np.int(np.sqrt(self.params['n_rf'])) 
@@ -96,20 +96,23 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['neuron_model_mpn'] = 'iaf_cond_exp'
         self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -60.0, 'V_th': -55.0, \
-                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 0.2, 'tau_syn_in': 2.0}
+                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 1.0, 'tau_syn_in': 5.0}
         self.params['cell_params_inh_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -60.0, 'V_th': -55.0, \
-                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 0.2, 'tau_syn_in': 2.0}
+                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 1.0, 'tau_syn_in': 5.0}
         # input parameters
-        self.params['w_input_exc_mpn'] = 20. # [nS]
+        self.params['w_input_exc_mpn'] = 2200. # [nS]
         self.params['f_max_stim'] = 5000.       # [Hz] Max rate of the inhomogenous Poisson process
+        # rough values to be chosed for f_max   w_input_exc_mpn
+        # for blur_x, v = 0.1, 0.1      4000    50
+        #                  .05  .05     5000    100
 
 
         # ##############################
         # EXCITATORY NETWORK PARAMETERS
         # ##############################
         # network properties, size, number of preferred directions
-        self.params['n_v'] = 6
+        self.params['n_v'] = 8
         self.params['n_hc'] = self.params['n_rf_x'] * self.params['n_rf_y']
         self.params['n_mc_per_hc'] = self.params['n_v'] * self.params['n_theta']
         self.params['n_mc'] = self.params['n_hc'] * self.params['n_mc_per_hc']
@@ -124,10 +127,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_orientation'] = 1 # number of preferred orientations
-        self.params['n_exc_to_record_mpn'] = 10
+        self.params['n_exc_to_record_mpn'] = 20
         self.params['v_max_tp'] = 3.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.10  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['blur_X'], self.params['blur_V'] = .20, .20
+        self.params['blur_X'], self.params['blur_V'] = .05, .05
         self.params['blur_theta'] = 1.0
         self.params['torus_width'] = 1.
         self.params['torus_height'] = 1.
@@ -201,9 +204,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # tuning properties
         self.params['tuning_prop_exc_fn'] = self.params['parameters_folder'] + 'tuning_prop_exc.txt'
         self.params['tuning_prop_inh_fn'] = self.params['parameters_folder'] + 'tuning_prop_inh.txt'
-
+        self.params['gids_to_record_fn_mp'] = self.params['parameters_folder'] + 'gids_to_record_mpn.txt'
+        # storage for actions (BG), network states (MPN) and motion parameters (on Retina)
         self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt'
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
+        self.params['motion_params_fn'] = self.params['data_folder'] + 'motion_params.txt'
+
 
     def set_folder_names(self):
         self.params['input_folder_mpn'] = '%sInputSpikes_MPN/' % (self.params['folder_name'])

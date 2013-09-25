@@ -132,7 +132,10 @@ class MotionPrediction(object):
         based on the spiking activity of the network during the last iteration (t_iteration [ms]).
         """
         all_events = nest.GetStatus(self.exc_spike_recorder)[0]['events']
+        print 'DEBUG all_events', self.pc_id, all_events
+        print 't_current', self.t_current
         recent_event_idx = all_events['times'] > self.t_current
+        print 'recent_event_idx', recent_event_idx
         new_event_times = all_events['times'][recent_event_idx]
         new_event_gids = all_events['senders'][recent_event_idx]
 
@@ -154,7 +157,7 @@ class MotionPrediction(object):
     def readout_spiking_activity(self, tuning_prop, gids):
 
         if len(gids) == 0:
-            print '\nWARNING:\n\tNo spikes emitted!!!\n\tMotion Prediction Network was silent!\nReturning nonevalid stimulus prediction\n'
+            print '\nWARNING:\n\tNo spikes on core %d emitted!!!\n\tMotion Prediction Network was silent!\nReturning nonevalid stimulus prediction\n' % (self.pc_id)
             return [0, 0, 0, 0, 0]
 
         nspikes = np.zeros(len(gids))
@@ -189,8 +192,11 @@ class MotionPrediction(object):
         if gids_to_record == 'random':
             gids_to_record = np.random.randint(1, self.params['n_exc_mpn'], self.params['n_exc_to_record_mpn'])
         elif gids_to_record == None:
-            gids_to_record = self.VI.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])[:self.params['n_exc_to_record_mpn']]
+            gids_to_record = self.VI.get_gids_near_stim_trajectory()[:self.params['n_exc_to_record_mpn']]
+#            gids_to_record = self.VI.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])[:self.params['n_exc_to_record_mpn']]
 
+        if self.pc_id == 0:
+            np.savetxt(self.params['gids_to_record_fn_mp'], gids_to_record)
         self.voltmeter = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.2})
         nest.SetStatus(self.voltmeter,[{"to_file": True, "withtime": True, 'label' : self.params['exc_volt_fn_mpn']}])
             

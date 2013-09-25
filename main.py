@@ -9,6 +9,7 @@ import CreateConnections
 import nest
 import numpy as np
 import time
+import os
 
 def save_spike_trains(params, iteration, stim_list):
     n_units = len(stim_list)
@@ -17,6 +18,14 @@ def save_spike_trains(params, iteration, stim_list):
         if len(stim_list[i_]) > 0:
             fn = fn_base + '%d_%d.dat' % (iteration, i_)
             np.savetxt(fn, stim_list[i_])
+
+
+def remove_files_from_folder(folder):
+    print 'Removing all files from folder:', folder
+    path =  os.path.abspath(folder)
+    cmd = 'rm  %s/*' % path
+    print cmd
+    os.system(cmd)
 
 
 if __name__ == '__main__':
@@ -35,9 +44,13 @@ if __name__ == '__main__':
         params = GP.params
     t0 = time.time()
 
+    remove_files_from_folder(params['spiketimes_folder_mpn'])
     VI = VisualInput.VisualInput(params)
     MT = MotionPrediction.MotionPrediction(params, VI)
     pc_id, n_proc = MT.pc_id, MT.n_proc
+    if pc_id == 0:
+        remove_files_from_folder(params['spiketimes_folder_mpn'])
+    
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params)
     CC = CreateConnections.CreateConnections(params)
@@ -73,6 +86,9 @@ if __name__ == '__main__':
     if pc_id == 0:
         np.savetxt(params['actions_taken_fn'], actions)
         np.savetxt(params['network_states_fn'], network_states_net)
+        np.savetxt(params['motion_params_fn'], VI.motion_params)
+
+
     t1 = time.time() - t0
     print 'Time: %d [sec]' % t1
 

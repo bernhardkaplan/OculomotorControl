@@ -18,7 +18,7 @@ class ActivityPlotter(object):
         else:
             self.it_max = it_max
 
-        self.n_bins_x = 20
+        self.n_bins_x = 30
         self.n_x_ticks = 10
         self.x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
         self.load_tuning_prop()
@@ -38,11 +38,11 @@ class ActivityPlotter(object):
 
         for iteration in xrange(self.it_max):
             print 'Plot input iteration', iteration
-            fn_to_match = (self.params['input_nspikes_fn_mpn'] + 'it%d' % iteration).rsplit('/')[-1]
+            fn_to_match = (self.params['input_nspikes_fn_mpn'] + 'it%d_' % iteration).rsplit('/')[-1]
             list_of_files = utils.find_files(self.params['input_folder_mpn'], fn_to_match)
             for fn_ in list_of_files:
                 fn = self.params['input_folder_mpn'] + fn_
-#                print 'Loading:', fn
+                print 'Loading:', fn
                 d_it = np.loadtxt(fn, dtype=np.int)
                 nspikes = d_it[:, 1]
 
@@ -148,6 +148,16 @@ class ActivityPlotter(object):
         pylab.savefig(output_fig)
 
 
+    def plot_retinal_slip(self):
+        d = np.loadtxt(self.params['motion_params_fn'])
+        t = d[:, 4]
+        x_slip = np.abs(d[:, 0] - .5)
+
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(t, x_slip)
+        ax.set_xlabel('Time [ms]')
+        ax.set_ylabel('Retinal slip (x-dim)')
 
 
 if __name__ == '__main__':
@@ -170,4 +180,5 @@ if __name__ == '__main__':
     Plotter = ActivityPlotter(params)#, it_max=1)
     Plotter.plot_input()
     Plotter.plot_output()
+    Plotter.plot_retinal_slip()
     pylab.show()
