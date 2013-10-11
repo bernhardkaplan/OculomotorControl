@@ -11,6 +11,21 @@ import numpy as np
 import time
 import os
 
+
+try:
+#     I_fail_because_I_do_not_want_to_use_MPI
+    from mpi4py import MPI
+    USE_MPI = True
+    comm = MPI.COMM_WORLD
+    pc_id, n_proc = comm.rank, comm.size
+    print "USE_MPI:", USE_MPI, 'pc_id, n_proc:', pc_id, n_proc
+except:
+    USE_MPI = False
+    pc_id, n_proc, comm = 0, 1, None
+    print "MPI not used"
+
+
+
 def save_spike_trains(params, iteration, stim_list):
     n_units = len(stim_list)
     fn_base = params['input_st_fn_mpn']
@@ -46,8 +61,8 @@ if __name__ == '__main__':
 
     remove_files_from_folder(params['spiketimes_folder_mpn'])
     VI = VisualInput.VisualInput(params)
-    MT = MotionPrediction.MotionPrediction(params, VI)
-    pc_id, n_proc = MT.pc_id, MT.n_proc
+    MT = MotionPrediction.MotionPrediction(params, VI, comm)
+
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder_mpn'])
     
@@ -56,7 +71,7 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params)
 #    CC.connect_mt_to_bg(MT, BG)
 
-    next_state = [None, None, None, None] 
+    next_state = list(params['initial_state'])
     actions = np.zeros((params['n_iterations'], 2))
     network_states_net= np.zeros((params['n_iterations'], 5))
     for iteration in xrange(params['n_iterations']):
@@ -77,10 +92,10 @@ if __name__ == '__main__':
 
 #        BG.update_poisson_layer(state_)
         network_states_net[iteration, :] = state_
-        print 'Iteration: %d\tState before action: ' % (iteration), state_
+        print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
         next_state = BG.select_action(state_) # BG returns the network_states_net of the next stimulus
         actions[iteration, :] = next_state
-        print 'Iteration: %d\tState after action: ' % (iteration), next_state
+        print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
 #        VI.update_retina_image(BG.get_eye_direction())
 
     if pc_id == 0:
@@ -90,5 +105,5 @@ if __name__ == '__main__':
 
 
     t1 = time.time() - t0
-    print 'Time: %d [sec]' % t1
+    print 'Time: %.2f [sec]' % t1
 

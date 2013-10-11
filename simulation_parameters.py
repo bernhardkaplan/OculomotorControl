@@ -4,6 +4,7 @@ import json
 import ParameterContainer
 
 class global_parameters(ParameterContainer.ParameterContainer):
+#class global_parameters(object):
     """
     The parameter class storing the simulation parameters 
     is derived from the ParameterContainer class.
@@ -18,13 +19,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Keyword arguments:
         params_fn -- string, if None: set_filenames and set_default_params will be called
         """
-        super(global_parameters, self).__init__() # call the constructor of the super/mother class
         
+
         if params_fn == None:
+            self.params = {}
             self.set_default_params()
             self.set_visual_input_params()
             self.set_mpn_params()
+        else:
+            self.load_params_from_file(params_fn)
 
+        print 'DEBUG', self.params['dummy_action_amplifier']
+        super(global_parameters, self).__init__() # call the constructor of the super/mother class
 
     def set_default_params(self):
         """
@@ -34,7 +40,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 1000.                 # [ms] total simulation time
+        self.params['t_sim'] = 200.                 # [ms] total simulation time
         self.params['t_iteration'] = 100.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
@@ -52,6 +58,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_actions'] = 3
         self.params['n_states'] = 10
         self.params['initial_state'] = (.3, .5, -.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['dummy_action_amplifier'] = 1.0 # when chosing actions if > 1.0: overcompensation
 
 
     def set_visual_input_params(self):
@@ -186,9 +193,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
         This funcion is called if no params_fn is passed 
         """
-        folder_name = 'Results_dev/' # this is the main folder containing all information related to one simulation
 
-        super(global_parameters, self).set_filenames(folder_name)
         self.set_folder_names()
         self.params['exc_volt_fn_mpn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
         self.params['exc_spikes_fn_mpn'] = 'mpn_exc_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
@@ -212,6 +217,23 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
 
     def set_folder_names(self):
+#        super(global_parameters, self).set_default_foldernames(folder_name)
+        folder_name = 'Results_dev_%.2f/' % (self.params['dummy_action_amplifier']) # this is the main folder containing all information related to one simulation
+        self.set_folder_name(folder_name)
+
+        self.params['parameters_folder'] = "%sParameters/" % self.params['folder_name']
+        self.params['figures_folder'] = "%sFigures/" % self.params['folder_name']
+        self.params['tmp_folder'] = "%stmp/" % self.params['folder_name']
+        self.params['data_folder'] = '%sData/' % (self.params['folder_name']) # for storage of analysis results etc
+        self.params['folder_names'] = [self.params['folder_name'], \
+                            self.params['parameters_folder'], \
+                            self.params['figures_folder'], \
+                            self.params['tmp_folder'], \
+                            self.params['data_folder']]
+
+        self.params['params_fn_json'] = '%ssimulation_parameters.json' % (self.params['parameters_folder'])
+
+
         self.params['input_folder_mpn'] = '%sInputSpikes_MPN/' % (self.params['folder_name'])
         self.params['spiketimes_folder_mpn'] = '%sSpikes/' % self.params['folder_name']
         self.params['folder_names'].append(self.params['spiketimes_folder_mpn'])

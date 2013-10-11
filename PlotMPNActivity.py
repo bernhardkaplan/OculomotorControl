@@ -75,7 +75,7 @@ class ActivityPlotter(object):
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
-        output_fig = self.params['figures_folder'] + 'mpn_input_activity.png'
+        output_fig = self.params['figures_folder'] + 'mpn_input_activity_%.2f.png' % (self.params['dummy_action_amplifier'])
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
@@ -143,21 +143,38 @@ class ActivityPlotter(object):
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
-        output_fig = self.params['figures_folder'] + 'mpn_output_activity.png'
+        output_fig = self.params['figures_folder'] + 'mpn_output_activity_%.2f.png' % (self.params['dummy_action_amplifier'])
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
 
     def plot_retinal_slip(self):
+        print 'plot_retinal_slip loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         t = d[:, 4]
         x_slip = np.abs(d[:, 0] - .5)
+        print 'debug x_slip:', x_slip
+        print 'debug d_x:', d[:, 0]
+        print 'debug d_x -.5 ', d[:, 0] - .5
+        output_fn = self.params['data_folder'] + 'mpn_xslip_%.2f.dat' % (self.params['dummy_action_amplifier'])
+        print 'Saving data to:', output_fn
+        np.savetxt(output_fn, d)
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
         ax.plot(t, x_slip)
+
+        ymin, ymax = x_slip.min(), x_slip.max()
+        for it_ in xrange(self.params['n_iterations']):
+            t0 = it_ * self.params['t_iteration']
+#            t1 = (it_ + 1) * self.params['t_iteration']
+            ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
+
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal slip (x-dim)')
+        output_fig = self.params['figures_folder'] + 'mpn_slip_%.2f.png' % self.params['dummy_action_amplifier']
+        print 'Saving figure to:', output_fig
+        pylab.savefig(output_fig)
 
 
 if __name__ == '__main__':
