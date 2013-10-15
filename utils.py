@@ -99,3 +99,13 @@ def get_min_distance_to_stim(mp, tp_cell, t_start, t_stop, t_cross_visual_field)
     return dist, min_spatial_dist
     
 
+def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
+    """
+    Returns the spikes fired by the cell with gid
+    all_spikes: 2-dim array containing all spiketimes
+    gid_idx: is the column index in the all_spikes array containing GID information
+    time_idx: is the column index in the all_spikes array containing time information
+    """
+    idx_ = (all_spikes[:, gid_idx] == gid).nonzero()[0]
+    spiketimes = all_spikes[idx_, time_idx]
+    return spiketimes

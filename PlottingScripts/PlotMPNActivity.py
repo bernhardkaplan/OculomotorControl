@@ -1,12 +1,19 @@
+import os, sys, inspect
+# use this if you want to include modules from a subforder
+cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../")))
+print 'cmd_subfolder', cmd_subfolder
+if cmd_subfolder not in sys.path:
+    sys.path.insert(0, cmd_subfolder)
+
+import numpy as np
+import pylab
 import matplotlib
-#matplotlib.use('Agg')
 import pylab
 import numpy as np
 import sys
-#import rcParams
-#rcP= rcParams.rcParams
 import os
 import utils
+import re
 
 
 class ActivityPlotter(object):
@@ -104,8 +111,8 @@ class ActivityPlotter(object):
 
 
     def plot_output(self):
-        merged_spike_fn = self.params['spiketimes_folder_mpn'] + self.params['merged_exc_spikes_fn_mpn']
-        utils.merge_and_sort_files(self.params['spiketimes_folder_mpn'] + self.params['exc_spikes_fn_mpn'], merged_spike_fn)
+        merged_spike_fn = self.params['spiketimes_folder_mpn'] + self.params['mpn_exc_spikes_fn_merged']
+        utils.merge_and_sort_files(self.params['spiketimes_folder_mpn'] + self.params['mpn_exc_spikes_fn'], merged_spike_fn)
         spike_data = np.loadtxt(merged_spike_fn)
         d = np.zeros((self.it_max, self.x_grid.size)) #self.x_grid.size, self.it_max))
         nspikes_thresh = 1
@@ -153,9 +160,6 @@ class ActivityPlotter(object):
         d = np.loadtxt(self.params['motion_params_fn'])
         t = d[:, 4]
         x_slip = np.abs(d[:, 0] - .5)
-        print 'debug x_slip:', x_slip
-        print 'debug d_x:', d[:, 0]
-        print 'debug d_x -.5 ', d[:, 0] - .5
         output_fn = self.params['data_folder'] + 'mpn_xslip_%.2f.dat' % (self.params['dummy_action_amplifier'])
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
@@ -177,6 +181,58 @@ class ActivityPlotter(object):
         pylab.savefig(output_fig)
 
 
+    def plot_raster_sorted(self, title='', cell_type='exc', sort_idx=0):
+        """
+        sort_idx : the index in tuning properties after which the cell gids are to be sorted for  the rasterplot
+        """
+        if cell_type == 'exc':
+            tp = self.tuning_prop_exc
+        else:
+            tp = self.tuning_prop_ing
+
+        tp_idx_sorted = tp[:, sort_idx].argsort() # + 1 because nest indexing
+
+        merged_spike_fn = self.params['spiketimes_folder_mpn'] + self.params['mpn_exc_spikes_fn_merged']
+        spikes_unsrtd = np.loadtxt(merged_spike_fn)
+
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title(title)
+        for i_, gid in enumerate(tp_idx_sorted):
+            spikes = utils.get_spiketimes(spikes_unsrtd, gid + 1)
+            nspikes = spikes.size
+            y_ = np.ones(spikes.size) * tp[gid, sort_idx]
+            ax.plot(spikes, y_, 'o', markersize=3, color='k')
+
+        return fig, ax
+
+
+    def plot_input_spikes_sorted(self, ax=None, title='', sort_idx=0):
+        """
+        Input spikes are stored in seperate files for each cell and for each iteration.
+        --> filenames are Folder/InputSpikes_MPN/input_spikes_X_GID.dat X = iteration, GID = cell gid
+        """
+        print 'plotting input spikes ...'
+
+        if ax == None:
+            fig = pylab.figure()
+            ax = fig.add_subplot(111)
+            ax.set_title(title)
+
+        tp = self.tuning_prop_exc
+        tp_idx_sorted = tp[:, sort_idx].argsort() # + 1 because nest indexing
+
+        for fn in os.listdir(self.params['input_folder_mpn']):
+            m = re.match('input_spikes_(\d+)_(\d+).dat', fn)
+            if m:
+                iteration = int(m.groups()[0])
+                gid = int(m.groups()[1])
+                y_pos_of_cell = tp[gid, sort_idx]
+                fn_ = self.params['input_folder_mpn'] + fn
+                d = np.loadtxt(fn_)
+                ax.plot(d, y_pos_of_cell * np.ones(d.size), 'o', markersize=3, alpha=.1, color='b')
+
+
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
@@ -193,9 +249,15 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-
+    
+    utils.merge_and_sort_files(params['spiketimes_folder_mpn'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder_mpn'] + params['mpn_exc_spikes_fn_merged'])
     Plotter = ActivityPlotter(params)#, it_max=1)
     Plotter.plot_input()
     Plotter.plot_output()
     Plotter.plot_retinal_slip()
+    fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
+    Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
+    fig.savefig(params['figures_folder'] + 'rasterplot_mpn_in_and_out.png')
+
+#    Plotter.plot_raster_sorted(title='Exc cells sorted by $v_x$', sort_idx=2)
     pylab.show()

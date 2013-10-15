@@ -10,10 +10,7 @@ import nest
 import numpy as np
 import time
 import os
-
-
-try:
-#     I_fail_because_I_do_not_want_to_use_MPI
+try: 
     from mpi4py import MPI
     USE_MPI = True
     comm = MPI.COMM_WORLD
@@ -26,12 +23,12 @@ except:
 
 
 
-def save_spike_trains(params, iteration, stim_list):
+def save_spike_trains(params, iteration, stim_list, gid_list):
     n_units = len(stim_list)
     fn_base = params['input_st_fn_mpn']
     for i_ in xrange(n_units):
         if len(stim_list[i_]) > 0:
-            fn = fn_base + '%d_%d.dat' % (iteration, i_)
+            fn = fn_base + '%d_%d.dat' % (iteration, gid_list[i_] - 1)
             np.savetxt(fn, stim_list[i_])
 
 
@@ -59,42 +56,48 @@ if __name__ == '__main__':
         params = GP.params
     t0 = time.time()
 
-    remove_files_from_folder(params['spiketimes_folder_mpn'])
     VI = VisualInput.VisualInput(params)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder_mpn'])
+        remove_files_from_folder(params['input_folder_mpn'])
     
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params)
     CC = CreateConnections.CreateConnections(params)
 #    CC.connect_mt_to_bg(MT, BG)
 
-    next_state = list(params['initial_state'])
-    actions = np.zeros((params['n_iterations'], 2))
-    network_states_net= np.zeros((params['n_iterations'], 5))
+    actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
+    network_states_net= np.zeros((params['n_iterations'], 4))
     for iteration in xrange(params['n_iterations']):
+
         # integrate the real world trajectory and the eye direction and compute spike trains from that
-        stim = VI.compute_input(MT.local_idx_exc, action_code=next_state)
+        stim = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
+        print 'DEBUG next stim pos: (x,y) (u, v)', VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+
         if params['debug_mpn']:
-            save_spike_trains(params, iteration, stim)
+            print 'debug stim', pc_id, len(stim), MT.local_idx_exc
+            save_spike_trains(params, iteration, stim, MT.local_idx_exc)
 
         # compute BG input (for supervised learning)
 #        target_action = VI.transform_trajectory_to_action()
-
         # BG.update_input(stim) #--> updates the Poisson-populations coding for the state
         # BG.train_action_output(target_action)
+
         # remove MT.update_input etc
         MT.update_input(stim) # run the network for some time 
         nest.Simulate(params['t_iteration'])
+        if comm != None:
+            comm.barrier()
+
         state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
 #        BG.update_poisson_layer(state_)
         network_states_net[iteration, :] = state_
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
         next_state = BG.select_action(state_) # BG returns the network_states_net of the next stimulus
-        actions[iteration, :] = next_state
+        actions[iteration + 1, :] = next_state
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
 #        VI.update_retina_image(BG.get_eye_direction())
 
