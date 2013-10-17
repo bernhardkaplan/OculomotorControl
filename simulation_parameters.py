@@ -29,7 +29,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.load_params_from_file(params_fn)
 
-        print 'DEBUG', self.params['dummy_action_amplifier']
         super(global_parameters, self).__init__() # call the constructor of the super/mother class
 
     def set_default_params(self):
@@ -40,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 2000.                 # [ms] total simulation time
-        self.params['t_iteration'] = 100.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_sim'] = 1000.                 # [ms] total simulation time
+        self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
         self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
@@ -58,7 +57,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_actions'] = 3
         self.params['n_states'] = 10
         self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['dummy_action_amplifier'] = 1.0 # when chosing actions if > 1.0: overcompensation
 
 
     def set_visual_input_params(self):
@@ -216,8 +214,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
     def set_folder_names(self):
 #        super(global_parameters, self).set_default_foldernames(folder_name)
-#        folder_name = 'Results_dev_%.2f/' % (self.params['dummy_action_amplifier']) # this is the main folder containing all information related to one simulation
-        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
+#        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
+        folder_name = 'Test/'
         self.set_folder_name(folder_name)
 
         self.params['parameters_folder'] = "%sParameters/" % self.params['folder_name']

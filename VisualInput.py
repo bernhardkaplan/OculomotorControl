@@ -53,10 +53,11 @@ class VisualInput(object):
         return self.stim
 
 
-    def create_spike_trains_for_trajectory(self, local_gids, trajectory):
+    def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False):
         """
-        Keyword arguments:
+        Arguments:
         local_gids -- list of gids for which a stimulus shall be created
+        trajectory -- two - dimensional (x, y) array of where the stimulus is positioned over time
         """
         self.stim = [ [] for gid in xrange(len(local_gids))]
 
@@ -80,8 +81,6 @@ class VisualInput(object):
         for i_, gid in enumerate(local_gids):
             rate_of_t = np.array(L_input[i_, :]) 
             output_fn = self.params['input_rate_fn_mpn'] + str(gid) + '.dat'
-            np.savetxt(output_fn, rate_of_t)
-            # each cell will get its own spike train stored in the following file + cell gid
             n_steps = rate_of_t.size
             st = []
             for i in xrange(n_steps):
@@ -89,8 +88,6 @@ class VisualInput(object):
                 if (r <= ((rate_of_t[i]/1000.) * dt)): # rate is given in Hz -> 1/1000.
                     st.append(i * dt + self.t_current) 
             input_nspikes[i_, :] = (gid, len(st))
-#            output_fn = self.params['input_st_fn_mpn'] + str(gid) + '.dat'
-#            np.savetxt(output_fn, np.array(st))
             self.stim[i_] = st
 
         self.t_current += self.params['t_iteration']
@@ -100,7 +97,7 @@ class VisualInput(object):
 
     def get_input(self, tuning_prop, motion_params):
         """
-        Keyword arguments:
+        Arguments:
         tuning_prop: the 4-dim tuning properties of local cells
         motion_params: 4-element tuple with the current stimulus position and direction
         """

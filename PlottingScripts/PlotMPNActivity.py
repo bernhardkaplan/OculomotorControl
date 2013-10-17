@@ -82,7 +82,7 @@ class ActivityPlotter(object):
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
-        output_fig = self.params['figures_folder'] + 'mpn_input_activity_%.2f.png' % (self.params['dummy_action_amplifier'])
+        output_fig = self.params['figures_folder'] + 'mpn_input_activity.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
@@ -150,7 +150,7 @@ class ActivityPlotter(object):
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
-        output_fig = self.params['figures_folder'] + 'mpn_output_activity_%.2f.png' % (self.params['dummy_action_amplifier'])
+        output_fig = self.params['figures_folder'] + 'mpn_output_activity.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
@@ -160,7 +160,7 @@ class ActivityPlotter(object):
         d = np.loadtxt(self.params['motion_params_fn'])
         t = d[:, 4]
         x_slip = np.abs(d[:, 0] - .5)
-        output_fn = self.params['data_folder'] + 'mpn_xslip_%.2f.dat' % (self.params['dummy_action_amplifier'])
+        output_fn = self.params['data_folder'] + 'mpn_xslip.dat'
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
@@ -176,7 +176,7 @@ class ActivityPlotter(object):
 
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal slip (x-dim)')
-        output_fig = self.params['figures_folder'] + 'mpn_slip_%.2f.png' % self.params['dummy_action_amplifier']
+        output_fig = self.params['figures_folder'] + 'mpn_slip.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
