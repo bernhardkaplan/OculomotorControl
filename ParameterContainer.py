@@ -58,7 +58,6 @@ class ParameterContainer(object):
                             self.params['figures_folder'], \
                             self.params['tmp_folder'], \
                             self.params['data_folder']]
-
         self.params['params_fn_json'] = '%ssimulation_parameters.json' % (self.params['parameters_folder'])
 
 
