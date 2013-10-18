@@ -17,11 +17,12 @@ class CreateConnections(object):
         The NEST simulation should run for some pre-fixed time
         Keyword arguments:
         src_net, tgt_net -- the source and the target network
+
         """
 
         for nactions in range(self.params['n_actions']):
             nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d1_MT_BG'])
-            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
+            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'], weight=self.params['w_ei_mpn'])
 
             nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
             nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])

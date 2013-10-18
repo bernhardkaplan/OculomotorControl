@@ -136,15 +136,9 @@ class MotionPrediction(object):
         based on the spiking activity of the network during the last iteration (t_iteration [ms]).
         """
         all_events = nest.GetStatus(self.exc_spike_recorder)[0]['events']
-#        print 'DEBUG all_events', self.pc_id, all_events
-#        print 't_current', self.t_current
         recent_event_idx = all_events['times'] > self.t_current
-#        print 'recent_event_idx', recent_event_idx
         new_event_times = all_events['times'][recent_event_idx]
         new_event_gids = all_events['senders'][recent_event_idx]
-
-#        print 'new_event_times between %d - %d' % (self.t_current, self.t_current + self.params['t_iteration']),  new_event_times
-#        print 'new_event_gids', new_event_gids
 
         if self.comm != None:
             gids_spiked, nspikes = self.communicate_local_spikes(new_event_gids)
@@ -154,21 +148,10 @@ class MotionPrediction(object):
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
         
-#        print 'DEBUG gids_spiked', gids_spiked
-#        print 'DEBUG nspikes', nspikes.size, nspikes
-
         # for all local gids: count occurence in new_event_gids
         stim_params_readout = self.readout_spiking_activity(tuning_prop_exc, gids_spiked, nspikes)
         self.t_current += self.params['t_iteration']
         return stim_params_readout
-
-#        state_activity = np.array(new_event_gids) / self.params['n_exc_per_mc']
-#        print 'State activity:', state_activity
-#        cnt, bins = np.histogram(state_activity, bins=range(self.params['n_states']))
-#        wta_state = np.argmax(cnt)
-#        self.t_current += self.params['t_iteration']
-#        return wta_state
-
 
     def communicate_local_spikes(self, gids):
 

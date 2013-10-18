@@ -56,7 +56,6 @@ if __name__ == '__main__':
         params = GP.params
     t0 = time.time()
 
-    print 'debug', params
     VI = VisualInput.VisualInput(params)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
@@ -69,13 +68,16 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params)
     CC.connect_mt_to_bg(MT, BG)
 
-    exit(1)
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
     network_states_net= np.zeros((params['n_iterations'], 4))
     for iteration in xrange(params['n_iterations']):
 
         # integrate the real world trajectory and the eye direction and compute spike trains from that
         stim = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
+
+        # get the state information BEFORE MPN perceives anything
+        # in order to set a supervisor signal
+        supervisor_state =  (VI.trajectories[-1][0], VI.trajectories[-1][1], VI.current_motion_params[2], VI.current_motion_params[3])
         print 'DEBUG next stim pos: (x,y) (u, v)', VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
 
         if params['debug_mpn']:
@@ -98,7 +100,7 @@ if __name__ == '__main__':
 #        BG.update_poisson_layer(state_)
         network_states_net[iteration, :] = state_
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
-        next_state = BG.select_action(state_) # BG returns the network_states_net of the next stimulus
+        next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
         actions[iteration + 1, :] = next_state
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
 #        VI.update_retina_image(BG.get_eye_direction())
