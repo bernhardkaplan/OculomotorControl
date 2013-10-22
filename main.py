@@ -64,7 +64,7 @@ if __name__ == '__main__':
         remove_files_from_folder(params['input_folder_mpn'])
     
     VI.set_pc_id(pc_id)
-    BG = BasalGanglia.BasalGanglia(params)
+    BG = BasalGanglia.BasalGanglia(params, comm)
     CC = CreateConnections.CreateConnections(params)
     CC.connect_mt_to_bg(MT, BG)
 
@@ -77,8 +77,10 @@ if __name__ == '__main__':
 
         # get the state information BEFORE MPN perceives anything
         # in order to set a supervisor signal
-        supervisor_state =  (VI.trajectories[-1][0], VI.trajectories[-1][1], VI.current_motion_params[2], VI.current_motion_params[3])
+        supervisor_state =  (VI.trajectories[-1][0][-1], VI.trajectories[-1][1][-1], VI.current_motion_params[2], VI.current_motion_params[3])
+
         print 'DEBUG next stim pos: (x,y) (u, v)', VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+        BG.supervised_training(supervisor_state)
 
         if params['debug_mpn']:
             print 'debug stim', pc_id, len(stim), MT.local_idx_exc
@@ -103,6 +105,7 @@ if __name__ == '__main__':
         next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
         actions[iteration + 1, :] = next_state
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
+#        exit(1)
 #        VI.update_retina_image(BG.get_eye_direction())
 
     if pc_id == 0:

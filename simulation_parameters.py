@@ -51,12 +51,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         self.params['w_exc_mpn_bg'] = 10.
 
-        # #####################################
-        # BASAL GANGLIA PARAMETERS
-        # #####################################
-        self.params['n_exc_bg'] = 100
-        self.params['n_actions'] = 3
-        self.params['n_states'] = 10
+        # initial motion parameters
         self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
@@ -190,7 +185,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
-        self.params['n_actions'] = 11
+        self.params['n_actions'] = 21
         self.params['n_states'] = 100
 
 
@@ -206,7 +201,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## Output GPi/SNr
         self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
         self.params['num_actions_output'] = 1
-        self.params['param_bg_output'] = {} # to adapt parms to aif_cond_alpha neuron model
+        self.params['param_bg_output'] = {'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
         
         self.params['str_to_output_exc_w'] = 10.
         self.params['str_to_output_inh_w'] = -10.
@@ -250,9 +245,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         #Connections States Actions
         self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_MT_BG'] = {'gain': 0.0, 'K':1.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['params_synapse_d1_MT_BG'] = {'gain': 0.0, 'K':0.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d2_MT_BG'] = {'gain': 0.0, 'K':1.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['params_synapse_d2_MT_BG'] = {'gain': 0.0, 'K':0.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         #Connections REW to RP, STRD1 and STRD2
         self.params['weight_rew_strD1'] = 10.
@@ -271,7 +266,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['num_neuron_poisson_supervisor'] = 30
         self.params['num_neuron_poisson_input_BG'] = 50
-        self.params['active_supervisor_rate'] = 25.
+        self.params['active_supervisor_rate'] = 500.
         self.params['inactive_supervisor_rate'] = 0.
         self.params['active_poisson_input_rate'] = 20.
         self.params['inactive_poisson_input_rate'] = 2.
@@ -279,8 +274,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['param_poisson_pop_input_BG'] = {}
         self.params['param_poisson_supervisor'] = {}
 
-        self.params['weight_supervisor_strd1'] = 10.
-        self.params['weight_supervisor_strd2'] = 10.
+        self.params['weight_supervisor_strd1'] = 70.
+        self.params['weight_supervisor_strd2'] = 70.
         self.params['delay_supervisor_strd1'] = 1.
         self.params['delay_supervisor_strd2'] = 1.
 
@@ -291,15 +286,19 @@ class global_parameters(ParameterContainer.ParameterContainer):
         
         self.params['num_neuron_states'] = 20
         self.params['param_states_pop'] = {} 
-    """
-        self.params[' '] = 
-        self.params[' '] = 
-        self.params[' '] = 
-        self.params[' '] = 
-        self.params[' '] = 
-        self.params[' '] = 
-        self.params[' '] = 
-    """
+
+        # some filenames
+        self.params['bg_action_volt_fn'] = 'bg_action_volt_'
+        self.params['bg_spikes_fn'] = 'bg_spikes_'
+        """
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+        """
 
     def set_filenames(self, folder_name=None):
         """

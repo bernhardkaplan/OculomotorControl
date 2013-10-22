@@ -22,7 +22,7 @@ class CreateConnections(object):
 
         for nactions in range(self.params['n_actions']):
             nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d1_MT_BG'])
-            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'], weight=self.params['w_ei_mpn'])
+            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
 
             nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
             nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])

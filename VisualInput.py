@@ -43,11 +43,8 @@ class VisualInput(object):
         """
 
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
-        if not dummy: 
-            trajectory = self.update_stimulus_trajectory(action_code)
-            self.create_spike_trains_for_trajectory(local_gids, trajectory)
-        else:
-            self.stim = self.create_dummy_stim(local_gids, action_code)
+        trajectory = self.update_stimulus_trajectory(action_code)
+        self.create_spike_trains_for_trajectory(local_gids, trajectory)
 
         self.iteration += 1
         return self.stim
@@ -133,8 +130,8 @@ class VisualInput(object):
         print 'before update cur mot p', self.current_motion_params
         self.current_motion_params[0] -= action_code[0] # shift x-position by moving according to vx
         self.current_motion_params[1] -= action_code[1] # shift y-position by moving according to vy
-        self.current_motion_params[2] -= action_code[0]  # update v_stim_x
-        self.current_motion_params[3] -= action_code[1]  # update v_stim_y
+        self.current_motion_params[2] = action_code[0]  # update v_stim_x
+        self.current_motion_params[3] = action_code[1]  # update v_stim_y
 
         # calculate how the stimulus will move according to these motion parameters
         x_stim = self.current_motion_params[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
@@ -145,7 +142,6 @@ class VisualInput(object):
         self.current_motion_params[1] = y_stim[-1]
         print 'after update cur mot p', self.current_motion_params
         trajectory = (x_stim, y_stim)
-#        print 'DEBUG trajectory', trajectory
         self.trajectories.append(trajectory) # store for later save 
 
         return trajectory
