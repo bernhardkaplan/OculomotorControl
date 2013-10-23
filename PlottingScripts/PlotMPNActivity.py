@@ -159,7 +159,8 @@ class ActivityPlotter(object):
         print 'plot_retinal_slip loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         t = d[:, 4]
-        x_slip = np.abs(d[:, 0] - .5)
+#        x_slip = np.abs(d[:, 0] - .5)
+        x_slip = d[:, 0] - .5
         output_fn = self.params['data_folder'] + 'mpn_xslip.dat'
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)

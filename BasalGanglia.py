@@ -47,10 +47,10 @@ class BasalGanglia(object):
         # Used to create external poisson process to make the system learns the desired output action by stimulating its relative striatal D1 population and the striatal D2 populations associated with the other actions.
         if self.params['supervised_on']:
             self.supervisor = {}
-            for nactions in range(self.params['n_actions']):
+            for nactions in xrange(self.params['n_actions']):
                 self.supervisor[nactions] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_supervisor'], params = self.params['param_poisson_supervisor']  )
                 for supervisor_neuron in self.supervisor[nactions]:
-                    for i in range(self.params['n_actions']):
+                    for i in xrange(self.params['n_actions']):
                         if i != nactions:
                             nest.DivergentConnect([supervisor_neuron], self.strD2[i], weight=self.params['weight_supervisor_strd2'], delay=self.params['delay_supervisor_strd2'])
                     nest.DivergentConnect([supervisor_neuron], self.strD1[nactions], weight=self.params['weight_supervisor_strd1'], delay=self.params['delay_supervisor_strd1'])
@@ -143,13 +143,13 @@ class BasalGanglia(object):
         action_bins_x = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
         cnt_u, bins = np.histogram(action[0], action_bins_x)
         action_index_x = cnt_u.nonzero()[0][0]
+        print 'debug BG based on supervisor action choose action_index_x:', action_index_x
 
         action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
         cnt_v, bins = np.histogram(action[1], action_bins_y)
         action_index_y = cnt_v.nonzero()[0][0]
 
-#        print 'debug action_index', type(action_index)
-        for nactions in range(self.params['n_actions']):
+        for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
         nest.SetStatus(self.supervisor[action_index_x], {'rate' : self.params['active_supervisor_rate']})
         # TODO:  same for action_index_y
@@ -172,25 +172,15 @@ class BasalGanglia(object):
         Returns the selected action. Calls a selection function e.g. softmax, hardmax, ...
         state -- is (x, y, v_x, v_y) vector-averaging based on MPN spiking activity
         """
-#	action = softmax(self.actions)
-#nothing is computed from BG, here it returns a random int between 0 and n_actions.
-
-        # get the spikes from the network
-#        action = np.random.randint(self.params['n_actions'])
-#        self.recorder_output
-#        for i_, a in enumerate([self.recorder_output]):
-
-
         
         new_event_times = np.array([])
         new_event_gids = np.array([])
         for i_, recorder in enumerate(self.recorder_output.values()):
             all_events = nest.GetStatus(recorder)[0]['events']
             recent_event_idx = all_events['times'] > self.t_current
-            
             if recent_event_idx.size > 0:
-                new_event_times = np.r_[new_event_times, all_events['times'][recent_event_idx].tolist()]
-                new_event_gids = np.r_[new_event_gids, all_events['senders'][recent_event_idx].tolist()]
+                new_event_times = np.r_[new_event_times, all_events['times'][recent_event_idx]]
+                new_event_gids = np.r_[new_event_gids, all_events['senders'][recent_event_idx]]
 
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
@@ -203,7 +193,7 @@ class BasalGanglia(object):
         winning_gid = gids_spiked[winning_nspikes]
         winning_action = self.recorder_output_gidkey[winning_gid]
         output_speed = self.translate_action_to_speed(winning_action) 
-        print 'BG says: do action', winning_action, output_speed
+        print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed
         self.t_current += self.params['t_iteration']
 
         return output_speed
@@ -212,6 +202,7 @@ class BasalGanglia(object):
     def translate_action_to_speed(self, action_idx):
 
         action_bins = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
+        print 'debug BG action_bins', action_bins
         output_speed = action_bins[action_idx]
         return (output_speed, 0)
 

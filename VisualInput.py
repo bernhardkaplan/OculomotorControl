@@ -42,12 +42,15 @@ class VisualInput(object):
         action_code -- a tuple representing the action (direction of eye movement)
         """
 
-        local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
         trajectory = self.update_stimulus_trajectory(action_code)
+        local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
 
         self.iteration += 1
-        return self.stim
+
+#        supervisor_state =  (self.trajectories[-1][0][-1], self.trajectories[-1][1][-1], self.current_motion_params[2], self.current_motion_params[3])
+        supervisor_state = (trajectory[0][-1], trajectory[1][-1], self.current_motion_params[2], self.current_motion_params[3])
+        return self.stim, supervisor_state
 
 
     def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False):
@@ -130,8 +133,8 @@ class VisualInput(object):
         print 'before update cur mot p', self.current_motion_params
         self.current_motion_params[0] -= action_code[0] # shift x-position by moving according to vx
         self.current_motion_params[1] -= action_code[1] # shift y-position by moving according to vy
-        self.current_motion_params[2] = action_code[0]  # update v_stim_x
-        self.current_motion_params[3] = action_code[1]  # update v_stim_y
+        self.current_motion_params[2] -= action_code[0]  # update v_stim_x
+        self.current_motion_params[3] -= action_code[1]  # update v_stim_y
 
         # calculate how the stimulus will move according to these motion parameters
         x_stim = self.current_motion_params[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
@@ -142,7 +145,7 @@ class VisualInput(object):
         self.current_motion_params[1] = y_stim[-1]
         print 'after update cur mot p', self.current_motion_params
         trajectory = (x_stim, y_stim)
-        self.trajectories.append(trajectory) # store for later save 
+#        self.trajectories.append(trajectory) # store for later save 
 
         return trajectory
 
