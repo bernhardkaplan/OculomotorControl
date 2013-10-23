@@ -236,11 +236,11 @@ class BasalGanglia(object):
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]
         winning_action = self.recorder_output_gidkey[winning_gid]
-        output_speed = self.action_bins_x[winning_action]
-        print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed
+        output_speed_x = self.action_bins_x[winning_action]
+        print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
         self.t_current += self.params['t_iteration']
 
-        return output_speed
+        return (output_speed_x, 0)
 
 
 

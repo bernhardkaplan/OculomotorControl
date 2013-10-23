@@ -118,5 +118,5 @@ if __name__ == '__main__':
 
 
     t1 = time.time() - t0
-    print 'Time: %.2f [sec]' % t1
+    print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
