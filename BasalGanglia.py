@@ -95,52 +95,59 @@ class BasalGanglia(object):
 
 # used as long as MT and BG are not directly connected
     def create_input_pop(self):
-	"""
-	Creates the input states populations, and their respective poisson pop,  and connect them to Striatum msns D1 D2 populations
-	"""
-	self.states = {}
-	self.input_poisson = {}
-
-	for nstates in range(self.params['n_states']):
-		self.input_poisson[nstates] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_input_BG'], params = self.params['param_poisson_pop_input_BG']  )
-		self.states[nstates] = nest.Create( self.params['model_exc_neuron'], self.params['num_neuron_states'], params = self.params['param_states_pop']  )
-		for neuron_poisson in self.input_poisson[nstates]:
-			nest.DivergentConnect([neuron_poisson], self.states[nstates], weight=self.params['weight_poisson_input'], delay=self.params['delay_poisson_input'])
-		for neuron_input in self.states[nstates]:
-			for nactions in range(self.params['n_actions']):
-				nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
-				nest.DivergentConnect([neuron_input], self.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
-				nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
-				nest.DivergentConnect([neuron_input], self.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
-	
-	print "BG input stage created"
-
-	pass
-
-
-    def supervised_training(self, action_index):
         """
-	Activates poisson generator of the required, teached, action and inactivates the one of the nondesirable actions.
-	"""
-	for nactions in range(self.params['n_actions']):
-		nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
-	nest.SetStatus(self.supervisor[action_index], {'rate' : self.params['active_supervisor_rate']})
-	pass
+        Creates the input states populations, and their respective poisson pop,  and connect them to Striatum msns D1 D2 populations
+        """
+        self.states = {}
+        self.input_poisson = {}
+
+        for nstates in range(self.params['n_states']):
+            self.input_poisson[nstates] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_input_BG'], params = self.params['param_poisson_pop_input_BG']  )
+            self.states[nstates] = nest.Create( self.params['model_exc_neuron'], self.params['num_neuron_states'], params = self.params['param_states_pop']  )
+            for neuron_poisson in self.input_poisson[nstates]:
+                nest.DivergentConnect([neuron_poisson], self.states[nstates], weight=self.params['weight_poisson_input'], delay=self.params['delay_poisson_input'])
+            for neuron_input in self.states[nstates]:
+                for nactions in range(self.params['n_actions']):
+                    nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
+                    nest.DivergentConnect([neuron_input], self.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
+                    nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
+                    nest.DivergentConnect([neuron_input], self.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
+        
+        print "BG input stage created"
+
+        pass
+
+
+    def supervised_training(self, supervisor_state):
+        """
+        Activates poisson generator of the required, teached, action and inactivates the one of the nondesirable actions.
+        """
+        (x, y, u, v) = supervisor_state 
+
+        # select an action based on the supervisor state information
+        action_bins = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
+        cnt_u, bins = np.histogram(u, action_bins)
+        action_index = cnt_u.nonzero()[0]
+        for nactions in range(self.params['n_actions']):
+            nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
+        nest.SetStatus(self.supervisor[action_index], {'rate' : self.params['active_supervisor_rate']})
+
 
     def set_state(self, state):
-	"""
-	Informs BG about the current state. Used only when input state is internal to BG. Poisson population stimulated.
-	"""
-	for i in range(self.params['n_states']):
-		nest.SetStatus(self.input_poisson[i], {'rate' : self.params['inactive_poisson_input_rate']})
-	nest.SetStatus(self.input_poisson[state], {'rate' : self.params['active_poisson_input_rate']})
+        """
+        Informs BG about the current state. Used only when input state is internal to BG. Poisson population stimulated.
+        """
+        for i in range(self.params['n_states']):
+            nest.SetStatus(self.input_poisson[i], {'rate' : self.params['inactive_poisson_input_rate']})
+        nest.SetStatus(self.input_poisson[state], {'rate' : self.params['active_poisson_input_rate']})
 
 
-	pass
+        pass
 
-    def get_action(self):
+    def get_action(self, state):
         """
 		Returns the selected action. Calls a selection function e.g. softmax, hardmax, ...
+        state -- is (x, y, v_x, v_y) vector-averaging based on MPN spiking activity
 		"""
 #	action = softmax(self.actions)
 #nothing is computed from BG, here it returns a random int between 0 and n_actions.

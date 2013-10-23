@@ -8,7 +8,7 @@ class ParameterContainer(object):
 
     def __init__(self, params_fn=None):
         if params_fn == None:
-            self.params = {}
+#            self.params = {}
             self.set_filenames()
         else:
             self.load_params_from_file(params_fn)
@@ -39,7 +39,7 @@ class ParameterContainer(object):
         print 'Folder name:', self.params['folder_name']
 
 
-    def set_filenames(self, folder_name=None):
+    def set_default_foldernames(self, folder_name=None):
         """
         Set all filenames and subfolders.
 
@@ -58,6 +58,7 @@ class ParameterContainer(object):
                             self.params['figures_folder'], \
                             self.params['tmp_folder'], \
                             self.params['data_folder']]
+
         self.params['params_fn_json'] = '%ssimulation_parameters.json' % (self.params['parameters_folder'])
 
 
@@ -98,6 +99,12 @@ class ParameterContainer(object):
         self.set_filenames()
 
 
+    def set_filenames(self):
+
+        return
+
+
+
 
     def write_parameters_to_file(self, fn=None, params=None):
         """
@@ -116,7 +123,7 @@ class ParameterContainer(object):
             self.create_folders()
         print 'Writing parameters to: %s' % (fn)
         output_file = file(fn, 'w')
-        d = json.dump(params_to_write, output_file)
+        d = json.dump(self.params, output_file, indent=0)
 
 
 

@@ -1,155 +1,111 @@
 """
-    This file contains a bunch of helper functions (in alphabetic order).
+This file contains a bunch of helper functions.
 """
 
 import numpy as np
-import numpy.random as rnd
 import os
+import re
+
+def merge_and_sort_files(merge_pattern, fn_out, sort=True):
+    rnd_nr1 = np.random.randint(0,10**8)
+    rnd_nr2 = rnd_nr1 + 1
+    # merge files from different processors
+    tmp_file = "tmp_%d" % (rnd_nr2)
+    os.system("cat %s* > %s" % (merge_pattern, tmp_file))
+    # sort according to cell id
+    if sort:
+        os.system("sort -gk 1 %s > %s" % (tmp_file, fn_out))
+    os.system("rm %s" % (tmp_file))
 
 
-def set_tuning_prop(params, mode, cell_type):
-    if params['n_grid_dimensions'] == 2:
-        return set_tuning_prop_2D(params, mode, cell_type)
-    else:
-        return set_tuning_prop_1D(params, cell_type)
+def find_files(folder, to_match):
+    list_of_files = []
+    for fn in os.listdir(folder):
+        m = re.match(to_match, fn)
+        if m:
+            list_of_files.append(fn)
 
-
-def set_tuning_prop_1D(params, cell_type='exc'):
-
-    rnd.seed(params['tuning_prop_seed'])
-    if cell_type == 'exc':
-        n_cells = params['n_exc']
-        n_v = params['n_v']
-        n_rf_x = params['n_rf_x']
-        v_max = params['v_max_tp']
-        v_min = params['v_min_tp']
-    else:
-        n_cells = params['n_inh']
-        n_v = params['n_v_inh']
-        n_rf_x = params['n_rf_x_inh']
-        v_max = params['v_max_tp']
-        v_min = params['v_min_tp']
-    tuning_prop = np.zeros((n_cells, 5))
-    if params['log_scale']==1:
-        v_rho = np.linspace(v_min, v_max, num=n_v, endpoint=True)
-    else:
-        v_rho = np.logspace(np.log(v_min)/np.log(params['log_scale']),
-                        np.log(v_max)/np.log(params['log_scale']), num=n_v,
-                        endpoint=True, base=params['log_scale'])
-    n_orientation = params['n_orientation']
-    orientations = np.linspace(0, np.pi, n_orientation, endpoint=False)
-    xlim = (0, params['torus_width'])
-
-    RF = np.linspace(0, params['torus_width'], n_rf_x, endpoint=False)
-    index = 0
-    random_rotation_for_orientation = np.pi*rnd.rand(n_rf_x * n_v * n_orientation) * params['sigma_rf_orientation']
-
-        # todo do the same for v_rho?
-    for i_RF in xrange(n_rf_x):
-        for i_v_rho, rho in enumerate(v_rho):
-            for orientation in orientations:
-            # for plotting this looks nicer, and due to the torus property it doesn't make a difference
-                tuning_prop[index, 0] = (RF[i_RF] + params['sigma_rf_pos'] * rnd.randn()) % params['torus_width']
-                tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
-                tuning_prop[index, 2] = rho * (1. + params['sigma_rf_speed'] * rnd.randn())
-                tuning_prop[index, 3] = 0. # np.sin(theta + random_rotation[index]) * rho * (1. + params['sigma_rf_speed'] * rnd.randn())
-                tuning_prop[index, 4] = (orientation + random_rotation_for_orientation[index]) % np.pi
-
-                index += 1
-
-    return tuning_prop
+    return list_of_files
 
 
 
-
-def set_tuning_prop_2D(params, mode='hexgrid', cell_type='exc'):
+def get_grid_index_mapping(values, bins):
     """
-    Place n_exc excitatory cells in a 4-dimensional space by some mode (random, hexgrid, ...).
-    The position of each cell represents its excitability to a given a 4-dim stimulus.
-    The radius of their receptive field is assumed to be constant (TODO: one coud think that it would depend on the density of neurons?)
-
-    return value:
-        tp = set_tuning_prop(params)
-        tp[:, 0] : x-position
-        tp[:, 1] : y-position
-        tp[:, 2] : u-position (speed in x-direction)
-        tp[:, 3] : v-position (speed in y-direction)
-
-    All x-y values are in range [0..1]. Positios are defined on a torus and a dot moving to a border reappears on the other side (as in Pac-Man)
-    By convention, velocity is such that V=(1,0) corresponds to one horizontal spatial period in one temporal period.
-    This implies that in one frame, a translation is of  ``1. / N_frame`` in cortical space.
+    Returns a 2-dim array (gid, grid_pos) mapping with values.size length, i.e. the indices of values 
+    and the bin index to which each value belongs.
+    values -- the values to be put in a grid
+    bins -- list or array with the 1-dim grid bins 
     """
 
-    rnd.seed(params['tuning_prop_seed'])
-    if cell_type == 'exc':
-        n_cells = params['n_exc']
-        n_theta = params['n_theta']
-        n_v = params['n_v']
-        n_rf_x = params['n_rf_x']
-        n_rf_y = params['n_rf_y']
-        v_max = params['v_max_tp']
-        v_min = params['v_min_tp']
+    bin_idx = np.zeros((len(values), 2), dtype=np.int)
+    for i_, b in enumerate(bins):
+#    for i_ in xrange(len(bins)):
+#        b = bins[i_]
+        idx_in_b = (values > b).nonzero()[0]
+        bin_idx[idx_in_b, 0] = idx_in_b
+        bin_idx[idx_in_b, 1] = i_
+    return bin_idx
+
+
+
+
+def sort_gids_by_distance_to_stimulus(tp, mp, t_start, t_stop, t_cross_visual_field, local_gids=None):
+    """
+    This function return a list of gids sorted by the distances between cells and the stimulus (in the 4-dim tuning-prop space).
+    It calculates the minimal distances between the moving stimulus and the spatial receptive fields of the cells 
+    and adds the distances between the motion_parameters and the preferred direction of each cell.
+
+    Arguments:
+        tp: tuning_properties array 
+        tp[:, 0] : x-pos
+        tp[:, 1] : y-pos
+        tp[:, 2] : x-velocity
+        tp[:, 3] : y-velocity
+        mp: motion_parameters (x0, y0, u0, v0, orientation)
+
+    """
+    if local_gids == None: 
+        n_cells = tp[:, 0].size
     else:
-        n_cells = params['n_inh']
-        n_theta = params['n_theta_inh']
-        n_v = params['n_v_inh']
-        n_rf_x = params['n_rf_x_inh']
-        n_rf_y = params['n_rf_y_inh']
-        if n_v == 1:
-            v_min = params['v_min_tp'] + .5 * (params['v_max_tp'] - params['v_min_tp'])
-            v_max = v_min
-        else:
-            v_max = params['v_max_tp']
-            v_min = params['v_min_tp']
+        n_cells = len(local_gids)
+    x_dist = np.zeros(n_cells) # stores minimal distance between stimulus and cells
+    # it's a linear sum of spatial distance, direction-tuning distance and orientation tuning distance
+    for i in xrange(n_cells):
+        x_dist[i], spatial_dist = get_min_distance_to_stim(mp, tp[i, :], t_start, t_stop, t_cross_visual_field)
 
-    tuning_prop = np.zeros((n_cells, 5))
-    if params['log_scale']==1:
-        v_rho = np.linspace(v_min, v_max, num=n_v, endpoint=True)
+    cells_closest_to_stim_pos = x_dist.argsort()
+    if local_gids != None:
+        gids_closest_to_stim = local_gids[cells_closest_to_stim_pos]
+        return gids_closest_to_stim, x_dist[cells_closest_to_stim_pos]#, cells_closest_to_stim_velocity
     else:
-        v_rho = np.logspace(np.log(v_min)/np.log(params['log_scale']),
-                        np.log(v_max)/np.log(params['log_scale']), num=n_v,
-                        endpoint=True, base=params['log_scale'])
-    v_theta = np.linspace(0, 2*np.pi, n_theta, endpoint=False)
-    n_orientation = params['n_orientation']
-    orientations = np.linspace(0, np.pi, n_orientation, endpoint=False)
-#    orientations = np.linspace(-.5 * np.pi, .5 * np.pi, n_orientation)
-
-    parity = np.arange(params['n_v']) % 2
+        return cells_closest_to_stim_pos, x_dist[cells_closest_to_stim_pos]#, cells_closest_to_stim_velocity
 
 
-    xlim = (0, params['torus_width'])
-    ylim = (0, np.sqrt(3) * params['torus_height'])
+def get_min_distance_to_stim(mp, tp_cell, t_start, t_stop, t_cross_visual_field): 
+    """
+    mp : motion_parameters (x, y, u, v, orientation), orientation is optional
+    tp_cell : same format as mp
+    """
+    time = np.arange(t_start, t_stop, 2) # 2 [ms]
+    spatial_dist = np.zeros(time.shape[0])
+    x_pos_stim = mp[0] + (mp[2] * time + mp[2] * t_start) / t_cross_visual_field
+    y_pos_stim = mp[1] + (mp[3] * time + mp[3] * t_start) / t_cross_visual_field
+    spatial_dist = (tp_cell[0] - x_pos_stim)**2 + (tp_cell[1] - y_pos_stim)**2
+    min_spatial_dist = np.sqrt(np.min(spatial_dist))
 
-    RF = np.zeros((2, n_rf_x * n_rf_y))
-    X, Y = np.mgrid[xlim[0]:xlim[1]:1j*(n_rf_x+1), ylim[0]:ylim[1]:1j*(n_rf_y+1)]
+    velocity_dist = np.sqrt((tp_cell[2] - mp[2])**2 + (tp_cell[3] - mp[3])**2)
 
-    # It's a torus, so we remove the first row and column to avoid redundancy (would in principle not harm)
-    X, Y = X[1:, 1:], Y[1:, 1:]
-    # Add to every even Y a half RF width to generate hex grid
-    Y[::2, :] += (Y[0, 0] - Y[0, 1])/2 # 1./n_RF
-    RF[0, :] = X.ravel()
-    RF[1, :] = Y.ravel() 
-    RF[1, :] /= np.sqrt(3) # scale to get a regular hexagonal grid
+    dist =  min_spatial_dist + velocity_dist
+    return dist, min_spatial_dist
+    
 
-    # wrapping up:
-    index = 0
-    random_rotation = 2*np.pi*rnd.rand(n_rf_x * n_rf_y * n_v * n_theta*n_orientation) * params['sigma_rf_direction']
-    random_rotation_for_orientation = np.pi*rnd.rand(n_rf_x * n_rf_y * n_v * n_theta * n_orientation) * params['sigma_rf_orientation']
-
-        # todo do the same for v_rho?
-    for i_RF in xrange(n_rf_x * n_rf_y):
-        for i_v_rho, rho in enumerate(v_rho):
-            for i_theta, theta in enumerate(v_theta):
-                for orientation in orientations:
-                # for plotting this looks nicer, and due to the torus property it doesn't make a difference
-                    tuning_prop[index, 0] = (RF[0, i_RF] + params['sigma_rf_pos'] * rnd.randn()) % params['torus_width']
-                    tuning_prop[index, 1] = (RF[1, i_RF] + params['sigma_rf_pos'] * rnd.randn()) % params['torus_height']
-                    tuning_prop[index, 2] = np.cos(theta + random_rotation[index] + parity[i_v_rho] * np.pi / n_theta) \
-                            * rho * (1. + params['sigma_rf_speed'] * rnd.randn())
-                    tuning_prop[index, 3] = np.sin(theta + random_rotation[index] + parity[i_v_rho] * np.pi / n_theta) \
-                            * rho * (1. + params['sigma_rf_speed'] * rnd.randn())
-                    tuning_prop[index, 4] = (orientation + random_rotation_for_orientation[index]) % np.pi
-
-                    index += 1
-
-    return tuning_prop
+def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
+    """
+    Returns the spikes fired by the cell with gid
+    all_spikes: 2-dim array containing all spiketimes
+    gid_idx: is the column index in the all_spikes array containing GID information
+    time_idx: is the column index in the all_spikes array containing time information
+    """
+    idx_ = (all_spikes[:, gid_idx] == gid).nonzero()[0]
+    spiketimes = all_spikes[idx_, time_idx]
+    return spiketimes
