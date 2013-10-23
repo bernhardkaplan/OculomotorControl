@@ -40,7 +40,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 150.                 # [ms] total simulation time
+        self.params['t_sim'] = 300.                 # [ms] total simulation time
         self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
@@ -102,7 +102,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 1.0, 'tau_syn_in': 5.0}
         # input parameters
         self.params['w_input_exc_mpn'] = 50. # [nS]
-        self.params['f_max_stim'] = 500.       # [Hz] Max rate of the inhomogenous Poisson process
+        self.params['f_max_stim'] = 300.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
         #                  .05  .05     5000    100
@@ -185,7 +185,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
-        self.params['n_actions'] = 161
+        self.params['n_actions'] = 41
         self.params['n_states'] = 100
 
 

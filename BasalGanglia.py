@@ -15,6 +15,7 @@ class BasalGanglia(object):
             assert (comm.rank == self.pc_id), 'mpi4py and NEST tell me different PIDs!'
             assert (comm.size == self.n_proc), 'mpi4py and NEST tell me different PIDs!'
 
+        self.set_action_speed_mapping_bins() 
         self.strD1 = {}
         self.strD2 = {}
         self.actions = {}
@@ -126,6 +127,51 @@ class BasalGanglia(object):
 
         pass
 
+    def set_action_speed_mapping_bins(self):
+        self.action_bins_x = []
+        n_bins_x = np.int(np.round((self.params['n_actions'] - 1) / 2.))
+        
+        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_x,
+                            endpoint=True, base=self.params['log_scale'])).tolist()
+        v_scale_half.reverse()
+
+        self.action_bins_x += v_scale_half
+        self.action_bins_x += [0.]
+
+        v_scale_half = (np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_x,
+                            endpoint=True, base=self.params['log_scale'])).tolist()
+        self.action_bins_x += v_scale_half
+        print 'BG: action_bins_x', self.action_bins_x
+
+
+        ### the same for the y-direction
+        self.action_bins_y = []
+        n_bins_y = np.int(np.round((self.params['n_actions'] - 1) / 2.))
+        
+        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_y,
+                            endpoint=True, base=self.params['log_scale'])).tolist()
+        v_scale_half.reverse()
+
+        self.action_bins_y += v_scale_half
+        self.action_bins_y += [0.]
+
+        v_scale_half = (np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_y,
+                            endpoint=True, base=self.params['log_scale'])).tolist()
+        self.action_bins_y += v_scale_half
+        print 'BG: action_bins_y', self.action_bins_y
+
+
+    def map_speed_to_action(self, speed, binning):
+        # select an action based on the supervisor state information
+        cnt_u, bins = np.histogram(speed, binning)
+        action_index = cnt_u.nonzero()[0][0]
+        return action_index
+
+
 
     def supervised_training(self, supervisor_state):
         """
@@ -138,12 +184,9 @@ class BasalGanglia(object):
 
         print 'debug supervisor_state', supervisor_state
         print 'debug supervisor action', action
+        action_index_x = self.map_speed_to_action(action[0], self.action_bins_x) # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
+        action_index_y = self.map_speed_to_action(action[1], self.action_bins_y)
 
-        # TODO: logspace instead of linspace
-        # select an action based on the supervisor state information
-        action_bins_x = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
-        cnt_u, bins = np.histogram(action[0], action_bins_x)
-        action_index_x = cnt_u.nonzero()[0][0]
         print 'debug BG based on supervisor action choose action_index_x:', action_index_x
 
         action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
@@ -193,19 +236,12 @@ class BasalGanglia(object):
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]
         winning_action = self.recorder_output_gidkey[winning_gid]
-        output_speed = self.translate_action_to_speed(winning_action) 
+        output_speed = self.action_bins_x[winning_action]
         print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed
         self.t_current += self.params['t_iteration']
 
         return output_speed
 
-
-    def translate_action_to_speed(self, action_idx):
-
-        action_bins = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
-        print 'debug BG action_bins', action_bins
-        output_speed = action_bins[action_idx]
-        return (output_speed, 0)
 
 
     def get_eye_direction(self):
