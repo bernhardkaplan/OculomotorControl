@@ -47,8 +47,6 @@ def get_grid_index_mapping(values, bins):
     return bin_idx
 
 
-
-
 def sort_gids_by_distance_to_stimulus(tp, mp, t_start, t_stop, t_cross_visual_field, local_gids=None):
     """
     This function return a list of gids sorted by the distances between cells and the stimulus (in the 4-dim tuning-prop space).
@@ -109,3 +107,25 @@ def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
     idx_ = (all_spikes[:, gid_idx] == gid).nonzero()[0]
     spiketimes = all_spikes[idx_, time_idx]
     return spiketimes
+
+
+def communicate_local_spikes(gids, comm):
+
+    my_nspikes = {}
+    for i_, gid in enumerate(gids):
+        my_nspikes[gid] = (gids == gid).nonzero()[0].size
+    
+    all_spikes = [{} for pid in xrange(comm.size)]
+    all_spikes[comm.rank] = my_nspikes
+    for pid in xrange(comm.size):
+        all_spikes[pid] = comm.bcast(all_spikes[pid], root=pid)
+    all_nspikes = {} # dictionary containing all cells that spiked during that iteration
+    for pid in xrange(comm.size):
+        for gid in all_spikes[pid].keys():
+            gid_ = gid - 1
+            all_nspikes[gid_] = all_spikes[pid][gid]
+    gids_spiked = np.array(all_nspikes.keys(), dtype=np.int)
+    nspikes =  np.array(all_nspikes.values(), dtype=np.int)
+    comm.barrier()
+    return gids_spiked, nspikes
+
