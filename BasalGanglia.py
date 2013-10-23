@@ -12,7 +12,7 @@ class BasalGanglia(object):
         self.strD2 = {}
         self.actions = {}
         self.rp = {}
-	self.recorder_output= {}
+       	self.recorder_output= {}
 
 #Creates D1 and D2 populations in STRIATUM, connections are created later
 
@@ -87,7 +87,15 @@ class BasalGanglia(object):
 				nest.DivergentConnect([nstate], self.rp[index_rp], model=self.params['states_rp'])   
 			modulo_i += 1
 	
-	
+        self.d1_spike_recorders = []
+        self.d2_spike_recorders = []
+        for nactions in range(self.params['n_actions']):
+            spike_recorder = nest.Create('spike_detector', params={'to_file': False, 'label': 'd1-spikes'+str(nactions)})
+            nest.ConvergentConnect(self.strD1[nactions], spike_recorder)
+            self.d1_spike_recorders.append(spike_recorder)
+            spike_recorder = nest.Create('spike_detector', params={'to_file': False, 'label': 'd2-spikes'+str(nactions)})
+            nest.ConvergentConnect(self.strD2[nactions], spike_recorder)
+            self.d2_spike_recorders.append(spike_recorder)	
 
 	print "BG model completed"
 
@@ -168,3 +176,28 @@ class BasalGanglia(object):
         update the state
         """
         pass
+
+    def get_weights(self, src_pop, tgt_pop):
+        
+    # get the list of connections stored on the current MPI node
+        conns = nest.GetConnections(src_pop, tgt_pop)
+        weights = []
+        for c in conns:
+            cp = nest.GetStatus([c]) # retrieve the dictionary for this connection
+            w = cp[0]['weight']
+            weights.append(w)
+      #     if w != 0:
+      #         my_adj_list[c[1]].append((c[0], cp[0]['weight']))
+      #         n_my_conns += len(conns)
+
+      # print 'Proc %d holds %d connections' % (self.pc_id, n_my_conns)
+      # output_fn = self.params['adj_list_tgt_fn_base'] + 'AS_%d_%d.json' % (self.iteration, self.pc_id)
+      # print 'Saving connection list to: ', output_fn
+      # f = file(output_fn, 'w')
+      # json.dump(my_adj_list, f, indent=0, ensure_ascii=False)
+        return weights
+
+
+    def set_weights(self, src_pop, tgt_pop, conn_mat_ee, src_pop_idx, tgt_pop_idx):
+       # set the connection weight after having loaded the conn_mat_ee
+       nest.SetStatus(nest.GetConnections(src_pop, tgt_pop), {'weight': conn_mat_ee[src_pop_idx, tgt_pop_idx]})

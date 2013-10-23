@@ -10,6 +10,7 @@ import nest
 import numpy as np
 import time
 import os
+import pylab as pl
 try: 
     from mpi4py import MPI
     USE_MPI = True
@@ -55,6 +56,9 @@ if __name__ == '__main__':
         GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
         params = GP.params
     t0 = time.time()
+    
+    weights_sim_pop = {}
+
 
     VI = VisualInput.VisualInput(params)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
@@ -70,6 +74,8 @@ if __name__ == '__main__':
 
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
     network_states_net= np.zeros((params['n_iterations'], 4))
+    staten2D1 = [[0. for i_action in range(params['n_states'])] for j in range(params['n_iterations'])]
+    staten2D2 = [[0. for i_action in range(params['n_states'])] for j in range(params['n_iterations'])]
     for iteration in xrange(params['n_iterations']):
 
         # integrate the real world trajectory and the eye direction and compute spike trains from that
@@ -96,11 +102,16 @@ if __name__ == '__main__':
             comm.barrier()
 
         state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-
+        for nactions in range(params['n_actions']):
+                conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD1[nactions], synapse_model = 'bcpnn_synapse')
+                staten2D1[iteration][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)]) #BG.params['params_synapse_d1_MT_BG']['gain'] * 
+                conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD2[nactions], synapse_model = 'bcpnn_synapse')
+                staten2D2[iteration][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)])
 #        BG.update_poisson_layer(state_)
         network_states_net[iteration, :] = state_
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
         next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
+        weights_sim_pop[iteration] = BG.get_weights(MT.exc_pop, BG.strD2[0])
         actions[iteration + 1, :] = next_state
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
 #        VI.update_retina_image(BG.get_eye_direction())
@@ -113,4 +124,13 @@ if __name__ == '__main__':
 
     t1 = time.time() - t0
     print 'Time: %.2f [sec]' % t1
-
+#    print weights_sim_pop
+    pl.figure(1)
+    pl.subplot(211)
+    pl.plot(staten2D1)
+    pl.ylabel(r'$w_{0j}$')
+    pl.subplot(212)
+    pl.plot(staten2D2)
+    pl.ylabel(r'$w_{0j}$')
+    pl.xlabel('trials')
+    pl.show()
