@@ -330,7 +330,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
     def set_folder_names(self):
 #        super(global_parameters, self).set_default_foldernames(folder_name)
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
-        folder_name = 'Test/'
+        folder_name = 'Test'
+
+        if self.params['supervised_on'] == True:
+            folder_name += '_WithSupervisor/'
+        else:
+            folder_name += '_NoSupervisor/'
+        assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
+
         self.set_folder_name(folder_name)
 
         self.params['parameters_folder'] = "%sParameters/" % self.params['folder_name']
