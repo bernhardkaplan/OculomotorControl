@@ -40,8 +40,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 2500.                 # [ms] total simulation time
-        self.params['t_iteration'] = 100.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_sim'] = 150.                 # [ms] total simulation time
+        self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
         self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
@@ -185,7 +185,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
-        self.params['n_actions'] = 81
+        self.params['n_actions'] = 161
         self.params['n_states'] = 100
 
 

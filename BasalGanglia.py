@@ -139,6 +139,7 @@ class BasalGanglia(object):
         print 'debug supervisor_state', supervisor_state
         print 'debug supervisor action', action
 
+        # TODO: logspace instead of linspace
         # select an action based on the supervisor state information
         action_bins_x = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
         cnt_u, bins = np.histogram(action[0], action_bins_x)
