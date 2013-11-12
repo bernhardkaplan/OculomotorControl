@@ -1,5 +1,6 @@
 import nest
 import numpy as np
+import utils
 
 class MotionPrediction(object):
 
@@ -136,61 +137,22 @@ class MotionPrediction(object):
         based on the spiking activity of the network during the last iteration (t_iteration [ms]).
         """
         all_events = nest.GetStatus(self.exc_spike_recorder)[0]['events']
-#        print 'DEBUG all_events', self.pc_id, all_events
-#        print 't_current', self.t_current
         recent_event_idx = all_events['times'] > self.t_current
-#        print 'recent_event_idx', recent_event_idx
         new_event_times = all_events['times'][recent_event_idx]
         new_event_gids = all_events['senders'][recent_event_idx]
 
-#        print 'new_event_times between %d - %d' % (self.t_current, self.t_current + self.params['t_iteration']),  new_event_times
-#        print 'new_event_gids', new_event_gids
-
         if self.comm != None:
-            gids_spiked, nspikes = self.communicate_local_spikes(new_event_gids)
+            gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
             gids_spiked = new_event_gids.unique() - 1
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
         
-#        print 'DEBUG gids_spiked', gids_spiked
-#        print 'DEBUG nspikes', nspikes.size, nspikes
-
         # for all local gids: count occurence in new_event_gids
         stim_params_readout = self.readout_spiking_activity(tuning_prop_exc, gids_spiked, nspikes)
         self.t_current += self.params['t_iteration']
         return stim_params_readout
-
-#        state_activity = np.array(new_event_gids) / self.params['n_exc_per_mc']
-#        print 'State activity:', state_activity
-#        cnt, bins = np.histogram(state_activity, bins=range(self.params['n_states']))
-#        wta_state = np.argmax(cnt)
-#        self.t_current += self.params['t_iteration']
-#        return wta_state
-
-
-    def communicate_local_spikes(self, gids):
-
-        my_nspikes = {}
-        for i_, gid in enumerate(gids):
-            my_nspikes[gid] = (gids == gid).nonzero()[0].size
-        
-        all_spikes = [{} for pid in xrange(self.comm.size)]
-        all_spikes[self.comm.rank] = my_nspikes
-#        print 'Before broadcast %d has :' % (self.pc_id), all_spikes
-        for pid in xrange(self.comm.size):
-            all_spikes[pid] = self.comm.bcast(all_spikes[pid], root=pid)
-#        print 'After broadcast %d has now:' % (self.pc_id), all_spikes
-        all_nspikes = {} # dictionary containing all cells that spiked during that iteration
-        for pid in xrange(self.comm.size):
-            for gid in all_spikes[pid].keys():
-                gid_ = gid - 1
-                all_nspikes[gid_] = all_spikes[pid][gid]
-#        print 'After broadcast %d has now nspikes:' % (self.pc_id), all_nspikes
-        gids_spiked = np.array(all_nspikes.keys(), dtype=np.int)
-        nspikes =  np.array(all_nspikes.values(), dtype=np.int)
-        return gids_spiked, nspikes
 
 
     def readout_spiking_activity(self, tuning_prop, gids, nspikes):

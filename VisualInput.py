@@ -42,15 +42,15 @@ class VisualInput(object):
         action_code -- a tuple representing the action (direction of eye movement)
         """
 
+        trajectory = self.update_stimulus_trajectory(action_code)
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
-        if not dummy: 
-            trajectory = self.update_stimulus_trajectory(action_code)
-            self.create_spike_trains_for_trajectory(local_gids, trajectory)
-        else:
-            self.stim = self.create_dummy_stim(local_gids, action_code)
+        self.create_spike_trains_for_trajectory(local_gids, trajectory)
 
         self.iteration += 1
-        return self.stim
+
+#        supervisor_state =  (self.trajectories[-1][0][-1], self.trajectories[-1][1][-1], self.current_motion_params[2], self.current_motion_params[3])
+        supervisor_state = (trajectory[0][-1], trajectory[1][-1], self.current_motion_params[2], self.current_motion_params[3])
+        return self.stim, supervisor_state
 
 
     def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False):
@@ -145,8 +145,7 @@ class VisualInput(object):
         self.current_motion_params[1] = y_stim[-1]
         print 'after update cur mot p', self.current_motion_params
         trajectory = (x_stim, y_stim)
-#        print 'DEBUG trajectory', trajectory
-        self.trajectories.append(trajectory) # store for later save 
+#        self.trajectories.append(trajectory) # store for later save 
 
         return trajectory
 

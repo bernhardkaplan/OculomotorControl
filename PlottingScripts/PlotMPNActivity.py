@@ -5,15 +5,13 @@ print 'cmd_subfolder', cmd_subfolder
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import numpy as np
-import pylab
-import matplotlib
-import pylab
-import numpy as np
 import sys
 import os
 import utils
 import re
+import numpy as np
+import pylab
+import matplotlib
 
 
 class ActivityPlotter(object):

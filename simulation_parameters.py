@@ -26,6 +26,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.set_default_params()
             self.set_visual_input_params()
             self.set_mpn_params()
+            self.set_bg_params()
         else:
             self.load_params_from_file(params_fn)
 
@@ -39,7 +40,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 1000.                 # [ms] total simulation time
+        self.params['t_sim'] = 300.                 # [ms] total simulation time
         self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
@@ -50,12 +51,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         self.params['w_exc_mpn_bg'] = 10.
 
-        # #####################################
-        # BASAL GANGLIA PARAMETERS
-        # #####################################
-        self.params['n_exc_bg'] = 100
-        self.params['n_actions'] = 3
-        self.params['n_states'] = 10
+        # initial motion parameters
         self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
@@ -106,7 +102,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 1.0, 'tau_syn_in': 5.0}
         # input parameters
         self.params['w_input_exc_mpn'] = 50. # [nS]
-        self.params['f_max_stim'] = 500.       # [Hz] Max rate of the inhomogenous Poisson process
+        self.params['f_max_stim'] = 300.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
         #                  .05  .05     5000    100
@@ -184,6 +180,125 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
 
 
+    def set_bg_params(self):
+        """
+        Parameters for Basal Ganglia        
+        """
+
+        self.params['n_actions'] = 41
+        self.params['n_states'] = 100
+
+
+        ## STR
+        self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
+        self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
+        self.params['num_msn_d1'] = 30
+        self.params['num_msn_d2'] = 30
+        self.params['param_msn_d1'] = {'fmax':20.0, 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
+        self.params['param_msn_d2'] = {'fmax':200.0, 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
+
+        
+        ## Output GPi/SNr
+        self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
+        self.params['num_actions_output'] = 1
+        self.params['param_bg_output'] = {'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
+        
+        self.params['str_to_output_exc_w'] = 10.
+        self.params['str_to_output_inh_w'] = -10.
+        self.params['str_to_output_exc_delay'] = 1. 
+        self.params['str_to_output_inh_delay'] = 1.
+        
+        ## RP and REWARD
+        self.params['model_rp_neuron'] = 'iaf_cond_alpha_bias'
+        self.params['num_rp_neurons'] = 15
+        self.params['param_rp_neuron'] = {'fmax':200., 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2., 'gain': 0.}
+
+        self.params['model_rew_neuron'] = 'iaf_cond_alpha'
+        self.params['num_rew_neurons'] = 20
+        self.params['param_rew_neuron'] = {} # to adapt parms to aif_cond_alpha neuron model
+        self.params['model_poisson_rew'] = 'poisson_generator'
+        self.params['num_poisson_rew'] = 20
+        self.params['weight_poisson_rew'] = 10.
+        self.params['delay_poisson_rew'] = 1.
+        self.params['param_poisson_rew'] = {}# to adapt parms to aif_cond_alpha neuron model
+
+        self.params['weight_rp_rew'] = -5. #inhibition of the dopaminergic neurons in rew by the current reward prediction from rp[current state, selected action]
+        self.params['delay_rp_rew'] = 1.
+
+
+        #Connections Actions and States to RP
+        self.epsilon = 0.01
+        self.tau_i = 10.
+        self.tau_j = 10.
+        self.tau_e = 100.
+        self.tau_p = 100000.
+
+        self.params['actions_rp'] = 'bcpnn_synapse'
+        self.params['param_actions_rp'] = {'gain': 0.0, 'K':1.0,'fmax': 200.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['states_rp'] = 'bcpnn_synapse'
+        self.params['param_states_rp'] = {'gain': 0.0, 'K':1.0,'fmax': 200.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+
+        self.params['bcpnn'] = 'bcpnn_synapse'
+        self.params['param_bcpnn'] =  {'gain': 0.0, 'K':1.0,'fmax': 200.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        # during learning gain == 0. K = 1.0 : --> 'offline' learning
+        # after learning: gain == 1. K = .0
+
+        #Connections States Actions
+        self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
+        self.params['params_synapse_d1_MT_BG'] = {'gain': 0.0, 'K':0.0,'fmax': 200.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
+        self.params['params_synapse_d2_MT_BG'] = {'gain': 0.0, 'K':0.0,'fmax': 200.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+
+        #Connections REW to RP, STRD1 and STRD2
+        self.params['weight_rew_strD1'] = 10.
+        self.params['weight_rew_strD2'] = 10.
+        self.params['delay_rew_strD1'] = 1.
+        self.params['delay_rew_strD2'] = 1.
+
+        self.params['weight_rew_rp'] = 10.
+        self.params['delay_rew_rp'] = 1.
+
+        #Spike detectors params 	
+        self.params['spike_detector_output_action'] = {"withgid":True, "withtime":True} 
+
+        #Supervised Learning
+        self.params['supervised_on'] = True
+
+        self.params['num_neuron_poisson_supervisor'] = 30
+        self.params['num_neuron_poisson_input_BG'] = 50
+        self.params['active_supervisor_rate'] = 500.
+        self.params['inactive_supervisor_rate'] = 0.
+        self.params['active_poisson_input_rate'] = 20.
+        self.params['inactive_poisson_input_rate'] = 2.
+        
+        self.params['param_poisson_pop_input_BG'] = {}
+        self.params['param_poisson_supervisor'] = {}
+
+        self.params['weight_supervisor_strd1'] = 70.
+        self.params['weight_supervisor_strd2'] = 70.
+        self.params['delay_supervisor_strd1'] = 1.
+        self.params['delay_supervisor_strd2'] = 1.
+
+        self.params['weight_poisson_input'] = 10.
+        self.params['delay_poisson_input'] = 1.
+
+        self.params['are_MT_BG_connected'] = True
+        
+        self.params['num_neuron_states'] = 20
+        self.params['param_states_pop'] = {} 
+
+        # some filenames
+        self.params['bg_action_volt_fn'] = 'bg_action_volt_'
+        self.params['bg_spikes_fn'] = 'bg_spikes_'
+        """
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+            self.params[' '] = 
+        """
 
     def set_filenames(self, folder_name=None):
         """
@@ -211,21 +326,34 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
         self.params['motion_params_fn'] = self.params['data_folder'] + 'motion_params.txt'
 
+        # connection filenames
+        self.params['mpn_bgd1_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connections'
+        self.params['mpn_bgd2_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d2_connections'
+
 
     def set_folder_names(self):
 #        super(global_parameters, self).set_default_foldernames(folder_name)
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
-        folder_name = 'Test/'
+        folder_name = 'Test'
+
+        if self.params['supervised_on'] == True:
+            folder_name += '_WithSupervisor/'
+        else:
+            folder_name += '_NoSupervisor/'
+        assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
+
         self.set_folder_name(folder_name)
 
         self.params['parameters_folder'] = "%sParameters/" % self.params['folder_name']
         self.params['figures_folder'] = "%sFigures/" % self.params['folder_name']
+        self.params['connections_folder'] = "%sConnections/" % self.params['folder_name']
         self.params['tmp_folder'] = "%stmp/" % self.params['folder_name']
         self.params['data_folder'] = '%sData/' % (self.params['folder_name']) # for storage of analysis results etc
         self.params['folder_names'] = [self.params['folder_name'], \
                             self.params['parameters_folder'], \
                             self.params['figures_folder'], \
                             self.params['tmp_folder'], \
+                            self.params['connections_folder'], \
                             self.params['data_folder']]
 
         self.params['params_fn_json'] = '%ssimulation_parameters.json' % (self.params['parameters_folder'])

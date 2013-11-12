@@ -42,6 +42,7 @@ def remove_files_from_folder(folder):
 
 if __name__ == '__main__':
 
+    t1 = time.time()
     if len(sys.argv) > 1: # re-run an old parameter file
         param_fn = sys.argv[1]
         if os.path.isdir(param_fn): # go to the path containing the json object storing old parameters
@@ -54,6 +55,7 @@ if __name__ == '__main__':
         GP = simulation_parameters.global_parameters()
         GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
         params = GP.params
+
     t0 = time.time()
 
     VI = VisualInput.VisualInput(params)
@@ -64,20 +66,33 @@ if __name__ == '__main__':
         remove_files_from_folder(params['input_folder_mpn'])
     
     VI.set_pc_id(pc_id)
-    BG = BasalGanglia.BasalGanglia(params)
-    CC = CreateConnections.CreateConnections(params)
-#    CC.connect_mt_to_bg(MT, BG)
+    BG = BasalGanglia.BasalGanglia(params, comm)
+    CC = CreateConnections.CreateConnections(params, comm)
+    CC.connect_mt_to_bg(MT, BG)
+
+#    strD1_gids = BG.get_cell_gids(network='strD1')
+#    strD2_gids = BG.get_cell_gids(network='strD2')
+#    action_gids = BG.get_cell_gids(network='actions')
+#    print 'strD1 gids:', strD1_gids
+#    print 'strD2 gids:', strD2_gids
+#    print 'action gids:', action_gids
+#    exit(1)
 
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
     network_states_net= np.zeros((params['n_iterations'], 4))
     for iteration in xrange(params['n_iterations']):
 
         # integrate the real world trajectory and the eye direction and compute spike trains from that
-        stim = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
-        print 'DEBUG next stim pos: (x,y) (u, v)', VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+        # and get the state information BEFORE MPN perceives anything
+        # in order to set a supervisor signal
+        stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
+
+        print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (iteration, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+        print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration, pc_id), supervisor_state
+        BG.supervised_training(supervisor_state)
 
         if params['debug_mpn']:
-            print 'debug stim', pc_id, len(stim), MT.local_idx_exc
+            print 'Saving spike trains...'
             save_spike_trains(params, iteration, stim, MT.local_idx_exc)
 
         # compute BG input (for supervised learning)
@@ -87,6 +102,8 @@ if __name__ == '__main__':
 
         # remove MT.update_input etc
         MT.update_input(stim) # run the network for some time 
+        if comm != None:
+            comm.barrier()
         nest.Simulate(params['t_iteration'])
         if comm != None:
             comm.barrier()
@@ -96,10 +113,13 @@ if __name__ == '__main__':
 #        BG.update_poisson_layer(state_)
         network_states_net[iteration, :] = state_
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
-        next_state = BG.select_action(state_) # BG returns the network_states_net of the next stimulus
+        next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
         actions[iteration + 1, :] = next_state
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
+#        exit(1)
 #        VI.update_retina_image(BG.get_eye_direction())
+
+    CC.get_weights(MT, BG)
 
     if pc_id == 0:
         np.savetxt(params['actions_taken_fn'], actions)
@@ -108,5 +128,5 @@ if __name__ == '__main__':
 
 
     t1 = time.time() - t0
-    print 'Time: %.2f [sec]' % t1
+    print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
