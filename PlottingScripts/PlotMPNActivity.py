@@ -28,6 +28,7 @@ class ActivityPlotter(object):
         self.x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
         self.load_tuning_prop()
 
+
     def load_tuning_prop(self):
         print 'ActivityPlotter.load_tuning_prop ...'
         self.tuning_prop_exc = np.loadtxt(self.params['tuning_prop_exc_fn'])

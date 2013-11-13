@@ -4,7 +4,6 @@ import json
 import ParameterContainer
 
 class global_parameters(ParameterContainer.ParameterContainer):
-#class global_parameters(object):
     """
     The parameter class storing the simulation parameters 
     is derived from the ParameterContainer class.
@@ -32,6 +31,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         super(global_parameters, self).__init__() # call the constructor of the super/mother class
 
+
     def set_default_params(self):
         """
         Here all the simulation parameters NOT being filenames are set.
@@ -40,11 +40,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 300.                 # [ms] total simulation time
+        self.params['t_sim'] = 600.                 # [ms] total simulation time
         self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
         self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
+        self.params['training'] = True
 
         # #####################################
         # CONNECTING MPN --> BG
@@ -262,7 +263,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_output_action'] = {"withgid":True, "withtime":True} 
 
         #Supervised Learning
-        self.params['supervised_on'] = True
+        self.params['supervised_on'] = self.params['training']
 
         self.params['num_neuron_poisson_supervisor'] = 30
         self.params['num_neuron_poisson_input_BG'] = 50
@@ -290,6 +291,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # some filenames
         self.params['bg_action_volt_fn'] = 'bg_action_volt_'
         self.params['bg_spikes_fn'] = 'bg_spikes_'
+        self.params['bg_spikes_fn_merged'] = 'bg_merged_spikes.dat'
         """
             self.params[' '] = 
             self.params[' '] = 
@@ -329,6 +331,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # connection filenames
         self.params['mpn_bgd1_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connections'
         self.params['mpn_bgd2_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d2_connections'
+
+        self.params['mpn_bgd1_merged_conn_fn'] = self.params['connections_folder'] + 'mpn_bg_d1_merged_connections.txt'
+        self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'mpn_bg_d2_merged_connections.txt'
 
 
     def set_folder_names(self):

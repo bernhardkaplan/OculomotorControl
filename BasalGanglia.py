@@ -30,9 +30,7 @@ class BasalGanglia(object):
         #Creates D1 and D2 populations in STRIATUM, connections are created later
         for nactions in range(self.params['n_actions']):
             self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params= self.params['param_msn_d1'])
-            print 'debug strD1 [%d]:' % nactions, self.strD1
             self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params= self.params['param_msn_d2'])
-            print 'debug strD2 [%d]:' % nactions, self.strD2
 
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
         for nactions in range(self.params['n_actions']):
@@ -60,24 +58,27 @@ class BasalGanglia(object):
 
 
         else: 
-        # Creates the reward population and its poisson input and the RP population and then connects theses different populations.
-            self.rew = nest.Create( self.params['model_rew_neuron'], self.params['num_rew_neurons'], params= self.params['param_rew_neuron'] )
-            for index_rp in range(self.params['n_actions'] * self.params['n_states']):
-                self.rp[index_rp] = nest.Create(self.params['model_rp_neuron'], self.params['num_rp_neurons'], params= self.params['param_rp_neuron'] )
-            for nron_rew in self.rew:
-                nest.ConvergentConnect( self.rp[index_rp], [nron_rew], weight=self.params['weight_rp_rew'], delay=self.params['delay_rp_rew']  )
-            self.poisson_rew = nest.Create( self.params['model_poisson_rew'], self.params['num_poisson_rew'], params=self.params['param_poisson_rew'] )
-            for nron_poisson in self.poisson_rew :
-                nest.DivergentConnect([nron_poisson], self.rew, weight=self.params['weight_poisson_rew'], delay=self.params['delay_poisson_rew'])
+            pass
+
+            # Creates the reward population and its poisson input and the RP population and then connects theses different populations.
+#            self.rew = nest.Create( self.params['model_rew_neuron'], self.params['num_rew_neurons'], params= self.params['param_rew_neuron'] )
+#            for index_rp in range(self.params['n_actions'] * self.params['n_states']):
+#                self.rp[index_rp] = nest.Create(self.params['model_rp_neuron'], self.params['num_rp_neurons'], params= self.params['param_rp_neuron'] )
+#            for nron_rew in self.rew:
+#                nest.ConvergentConnect( self.rp[index_rp], [nron_rew], weight=self.params['weight_rp_rew'], delay=self.params['delay_rp_rew']  )
+#            self.poisson_rew = nest.Create( self.params['model_poisson_rew'], self.params['num_poisson_rew'], params=self.params['param_poisson_rew'] )
+#            for nron_poisson in self.poisson_rew :
+#                nest.DivergentConnect([nron_poisson], self.rew, weight=self.params['weight_poisson_rew'], delay=self.params['delay_poisson_rew'])
 
 
             # Connects reward population back to the STR D1 and D2 populations, and to the RP, to inform them about the outcome (positive or negative compared to the prediction)
-            for neur_rew in self.rew:
-                for i_action in range(self.params['n_actions']):
-                    nest.DivergentConnect([neur_rew], self.strD1[i_action], weight=self.params['weight_rew_strD1'], delay=self.params['delay_rew_strD1'] )
-                    nest.DivergentConnect([neur_rew], self.strD2[i_action], weight=self.params['weight_rew_strD2'], delay=self.params['delay_rew_strD2'] )
-                for i_rp in range(self.params['n_states'] * self.params['n_actions']):
-                    nest.DivergentConnect([neur_rew], self.rp[i_rp], weight=self.params['weight_rew_rp'], delay=self.params['delay_rew_rp'] )
+#            for neur_rew in self.rew:
+#                for i_action in range(self.params['n_actions']):
+#                    nest.DivergentConnect([neur_rew], self.strD1[i_action], weight=self.params['weight_rew_strD1'], delay=self.params['delay_rew_strD1'] )
+#                    nest.DivergentConnect([neur_rew], self.strD2[i_action], weight=self.params['weight_rew_strD2'], delay=self.params['delay_rew_strD2'] )
+#                for i_rp in range(self.params['n_states'] * self.params['n_actions']):
+#                    nest.DivergentConnect([neur_rew], self.rp[i_rp], weight=self.params['weight_rew_rp'], delay=self.params['delay_rew_rp'] )
+
 
 
 
@@ -91,16 +92,18 @@ class BasalGanglia(object):
             self.create_input_pop()
 
         if not self.params['supervised_on']:
-        # Creates RP populations and the connections from states and actions to the corresponding RP populations
-            modulo_i = 0
-            for index_rp in range(self.params['n_actions'] * self.params['n_states']):
-                nest.SetDefaults( self.params['bcpnn'], params= self.params['param_actions_rp'])
-                for naction in self.actions[modulo_i % self.params['n_states']]:
-                    nest.DivergentConnect([naction], self.rp[index_rp], model=self.params['actions_rp'])
-                nest.SetDefaults(self.params['bcpnn'], params=self.params['param_states_rp'])
-                for nstate in self.states[int( modulo_i / self.params['n_actions'] ) ]:
-                    nest.DivergentConnect([nstate], self.rp[index_rp], model=self.params['states_rp'])   
-                modulo_i += 1
+            pass 
+            # Creates RP populations and the connections from states and actions to the corresponding RP populations
+#            modulo_i = 0
+#            for index_rp in range(self.params['n_actions'] * self.params['n_states']):
+#                nest.SetDefaults( self.params['bcpnn'], params= self.params['param_actions_rp'])
+#                for naction in self.actions[modulo_i % self.params['n_states']]:
+#                    nest.DivergentConnect([naction], self.rp[index_rp], model=self.params['actions_rp'])
+#                nest.SetDefaults(self.params['bcpnn'], params=self.params['param_states_rp'])
+#                for nstate in self.states[int( modulo_i / self.params['n_actions'] ) ]:
+#                    nest.DivergentConnect([nstate], self.rp[index_rp], model=self.params['states_rp'])   
+#                modulo_i += 1
+
 
         print "BG model completed"
 
@@ -259,6 +262,7 @@ class BasalGanglia(object):
             for nactions in range(self.params['n_actions']):
                 cell_gids.append(self.actions[nactions])
         return cell_gids
+
 
     def get_eye_direction(self):
         """

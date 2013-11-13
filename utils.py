@@ -8,17 +8,27 @@ import re
 
 def merge_and_sort_files(merge_pattern, fn_out, sort=True):
     rnd_nr1 = np.random.randint(0,10**8)
-    rnd_nr2 = rnd_nr1 + 1
     # merge files from different processors
-    tmp_file = "tmp_%d" % (rnd_nr2)
-    os.system("cat %s* > %s" % (merge_pattern, tmp_file))
+    tmp_file = "tmp_%d" % (rnd_nr1)
+    cmd = "cat %s* > %s" % (merge_pattern, tmp_file)
+    print 'utils.merge_and_sort_files: ', cmd
+    os.system(cmd)
     # sort according to cell id
     if sort:
         os.system("sort -gk 1 %s > %s" % (tmp_file, fn_out))
+    else:
+        os.system('mv %s %s' % (tmp_file, fn_out))
     os.system("rm %s" % (tmp_file))
 
 
 def find_files(folder, to_match):
+    """
+    Use re module to find files in folder and return list of files matching the 'to_match' string
+    Arguments:
+    folder -- string to folder
+    to_match -- a string (regular expression) to match all files in folder
+
+    """
     list_of_files = []
     for fn in os.listdir(folder):
         m = re.match(to_match, fn)

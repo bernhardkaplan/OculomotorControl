@@ -70,14 +70,6 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params, comm)
     CC.connect_mt_to_bg(MT, BG)
 
-#    strD1_gids = BG.get_cell_gids(network='strD1')
-#    strD2_gids = BG.get_cell_gids(network='strD2')
-#    action_gids = BG.get_cell_gids(network='actions')
-#    print 'strD1 gids:', strD1_gids
-#    print 'strD2 gids:', strD2_gids
-#    print 'action gids:', action_gids
-#    exit(1)
-
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
     network_states_net= np.zeros((params['n_iterations'], 4))
     for iteration in xrange(params['n_iterations']):
@@ -95,12 +87,6 @@ if __name__ == '__main__':
             print 'Saving spike trains...'
             save_spike_trains(params, iteration, stim, MT.local_idx_exc)
 
-        # compute BG input (for supervised learning)
-#        target_action = VI.transform_trajectory_to_action()
-        # BG.update_input(stim) #--> updates the Poisson-populations coding for the state
-        # BG.train_action_output(target_action)
-
-        # remove MT.update_input etc
         MT.update_input(stim) # run the network for some time 
         if comm != None:
             comm.barrier()
@@ -110,14 +96,11 @@ if __name__ == '__main__':
 
         state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
-#        BG.update_poisson_layer(state_)
         network_states_net[iteration, :] = state_
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
         next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
         actions[iteration + 1, :] = next_state
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
-#        exit(1)
-#        VI.update_retina_image(BG.get_eye_direction())
 
     CC.get_weights(MT, BG)
 

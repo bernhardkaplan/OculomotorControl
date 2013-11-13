@@ -1,4 +1,7 @@
 import nest
+import numpy as np
+import os
+import utils
 
 class CreateConnections(object):
 
@@ -33,6 +36,26 @@ class CreateConnections(object):
 
 
 
+
+    def connect_mt_to_bg_after_training(self, mpn_net, bg_net, training_params):
+        """
+        Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
+        based on the weights found in conn_folder
+        """
+
+        print 'debug', os.path.exists(training_params['mpn_bgd1_merged_conn_fn'])
+
+        if not os.path.exists(training_params['mpn_bgd1_merged_conn_fn']):
+            # merge the connection files
+            merge_pattern = training_params['mpn_bgd1_conn_fn_base']
+            fn_out = training_params['mpn_bgd1_merged_conn_fn']
+            utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+
+        print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
+        mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
+
+
+
     def get_weights(self, src_pop, tgt_pop):
         """
         After training get the weights between the MPN state layer and the BG action layer
@@ -48,18 +71,23 @@ class CreateConnections(object):
             if conns != None:
                 for c in conns:
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
-                    w = cp[0]['weight'] 
                     if (cp[0]['synapse_model'] == 'bcpnn_synapse'):
-                        D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], cp[0]['weight'])
-
+                        pi = cp[0]['p_i']
+                        pj = cp[0]['p_j']
+                        pij = cp[0]['p_ij']
+                        w = np.log(pij / (pi * pj))
+                        D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
 
             conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions]) # get the list of connections stored on the current MPI node
             if conns != None:
                 for c in conns:
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
-                    w = cp[0]['weight'] 
                     if (cp[0]['synapse_model'] == 'bcpnn_synapse'):
-                        D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], cp[0]['weight'])
+                        pi = cp[0]['p_i']
+                        pj = cp[0]['p_j']
+                        pij = cp[0]['p_ij']
+                        w = np.log(pij / (pi * pj))
+                        D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
 
         fn_out = self.params['mpn_bgd1_conn_fn_base'] + '%d.txt' % (self.pc_id)
         print 'Writing connections to:', fn_out
