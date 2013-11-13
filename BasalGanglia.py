@@ -127,7 +127,6 @@ class BasalGanglia(object):
 
         print "BG input stage created"
 
-        pass
 
 
 
