@@ -37,6 +37,7 @@ if __name__ == '__main__':
 #        exit(1)
     GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
 
+    assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
     training_folder = os.path.abspath(sys.argv[1]) # contains the EPTH and OB activity of simple patterns
     print 'Training folder:', training_folder
     training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'

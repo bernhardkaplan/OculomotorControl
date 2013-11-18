@@ -27,7 +27,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.set_mpn_params()
             self.set_bg_params()
         else:
-            self.load_params_from_file(params_fn)
+            self.params = self.load_params_from_file(params_fn)
 
         super(global_parameters, self).__init__() # call the constructor of the super/mother class
 
@@ -339,7 +339,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
     def set_folder_names(self):
 #        super(global_parameters, self).set_default_foldernames(folder_name)
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
-        folder_name = 'Test'
+
+        if self.params['training']:
+            folder_name = 'Test'
+        else:
+            folder_name = 'Training'
 
         if self.params['supervised_on'] == True:
             folder_name += '_WithSupervisor/'
@@ -369,4 +373,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['folder_names'].append(self.params['spiketimes_folder_mpn'])
         self.params['folder_names'].append(self.params['input_folder_mpn'])
         self.create_folders()
+
+
+    def load_params_from_file(self, fn):
+        """
+        Loads the file via json from a filename
+        Returns the simulation parameters stored in a file 
+        Keyword arguments:
+        fn -- file name
+        """
+        f = file(fn, 'r')
+        print 'Loading parameters from', fn
+        self.params = json.load(f)
+        return self.params
+
 
