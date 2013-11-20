@@ -10,6 +10,7 @@ import nest
 import numpy as np
 import time
 import os
+import pylab as pl
 try: 
     from mpi4py import MPI
     USE_MPI = True
@@ -58,6 +59,10 @@ if __name__ == '__main__':
 
     t0 = time.time()
 
+    weights_sim = {}
+    staten2D1 = [[0. for i_action in range(params['n_actions'])] for j in range(params['n_iterations'])]
+    staten2D2 = [[0. for i_action in range(params['n_actions'])] for j in range(params['n_iterations'])]
+
     VI = VisualInput.VisualInput(params)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
@@ -67,7 +72,7 @@ if __name__ == '__main__':
     
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)
-    CC = CreateConnections.CreateConnections(params)
+    CC = CreateConnections.CreateConnections(params, comm)
     CC.connect_mt_to_bg(MT, BG)
 
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
@@ -102,7 +107,13 @@ if __name__ == '__main__':
 
         state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
+        for nactions in range(params['n_actions']):
+            conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD1[nactions], synapse_model = 'bcpnn_synapse')
+            staten2D1[iteration][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)]) #BG.params['params_synapse_d1_MT_BG']['gain'] * 
+            conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD2[nactions], synapse_model = 'bcpnn_synapse')
+            staten2D2[iteration][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)])
 #        BG.update_poisson_layer(state_)
+        weights_sim[iteration] = BG.get_weights(MT.exc_pop, BG.strD1[0])
         network_states_net[iteration, :] = state_
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
         next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
@@ -119,4 +130,50 @@ if __name__ == '__main__':
 
     t1 = time.time() - t0
     print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
+    BG.stop_supervisor()
+    print 'supervised learning completed'
+    CC.get_weights(MT, BG)
 
+#   for test in range(params['n_iterations']/2, params['n_iterations']):
+#       stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[test, :])
+#
+#       print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (test, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+#
+#
+#
+#       MT.update_input(stim) # run the network for some time 
+#       if comm != None:
+#           comm.barrier()
+#       nest.Simulate(params['t_iteration'])
+#       if comm != None:
+#           comm.barrier()
+#
+#       state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+#
+#       for nactions in range(params['n_actions']):
+#           conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD1[nactions], synapse_model = 'bcpnn_synapse')
+#           staten2D1[test][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)]) #BG.params['params_synapse_d1_MT_BG']['gain'] * 
+#           conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD2[nactions], synapse_model = 'bcpnn_synapse')
+#           staten2D2[test][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)])
+#        BG.update_poisson_layer(state_)
+#       weights_sim[test] = BG.get_weights(MT.exc_pop, BG.strD1[0])
+#       network_states_net[test, :] = state_
+#       print 'Iteration: %d\t%d\tState before action: ' % (test, pc_id), state_
+#       next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
+#       actions[test + 1, :] = next_state
+#       print 'Iteration: %d\t%d\tState after action: ' % (test, pc_id), next_state
+#       test += 1
+#   t1 = time.time() - t0
+#   print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
+
+
+#    print 'weight simu ', weights_sim
+    pl.figure(1)
+    pl.subplot(211)
+    pl.plot(staten2D1)
+    pl.ylabel(r'$w_{0j}$')
+    pl.subplot(212)
+    pl.plot(staten2D2)
+    pl.ylabel(r'$w_{0j}$')
+    pl.xlabel('trials')
+    pl.show()

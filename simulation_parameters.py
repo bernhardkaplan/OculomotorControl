@@ -40,10 +40,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 600.                 # [ms] total simulation time
-        self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_sim'] = 90.                 # [ms] total simulation time
+        self.params['t_iteration'] = 15.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['dt'] = 0.1                      # [ms]
-        self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
+        self.params['n_iterations'] = int(round(2*self.params['t_sim'] / self.params['t_iteration']))
         self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
 
         # #####################################
@@ -185,8 +185,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
-        self.params['n_actions'] = 81
-        self.params['n_states'] = 100
+        self.params['n_actions'] = 11
+        self.params['n_states'] = 10
 
 
         ## STR
@@ -230,24 +230,26 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.epsilon = 0.01
         self.tau_i = 10.
         self.tau_j = 10.
-        self.tau_e = 100.
-        self.tau_p = 100000.
+        self.tau_e = 50.
+        self.tau_p = 1000.
+        self.gain = 0.
+        self.K = 1.
 
         self.params['actions_rp'] = 'bcpnn_synapse'
-        self.params['param_actions_rp'] = {'gain': 0.0, 'K':1.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_actions_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         self.params['states_rp'] = 'bcpnn_synapse'
-        self.params['param_states_rp'] = {'gain': 0.0, 'K':1.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_states_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         self.params['bcpnn'] = 'bcpnn_synapse'
-        self.params['param_bcpnn'] =  {'gain': 0.0, 'K':1.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_bcpnn'] =  {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         # during learning gain == 0. K = 1.0 : --> 'offline' learning
         # after learning: gain == 1. K = .0
 
         #Connections States Actions
         self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_MT_BG'] = {'gain': 0.0, 'K':0.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['params_synapse_d1_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d2_MT_BG'] = {'gain': 0.0, 'K':0.0,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['params_synapse_d2_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         #Connections REW to RP, STRD1 and STRD2
         self.params['weight_rew_strD1'] = 10.
@@ -270,6 +272,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['inactive_supervisor_rate'] = 0.
         self.params['active_poisson_input_rate'] = 20.
         self.params['inactive_poisson_input_rate'] = 2.
+        self.params['supervisor_off'] = 0.
         
         self.params['param_poisson_pop_input_BG'] = {}
         self.params['param_poisson_supervisor'] = {}
@@ -326,10 +329,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
         self.params['motion_params_fn'] = self.params['data_folder'] + 'motion_params.txt'
 
+        # connection filenames
+        self.params['mpn_bgd1_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connections'
+        self.params['mpn_bgd2_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d2_connections'
+
+        self.params['mpn_bgd1_merged_conn_fn'] = self.params['connections_folder'] + 'mpn_bg_d1_merged_connections.txt'
+        self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'mpn_bg_d2_merged_connections.txt'
+
 
     def set_folder_names(self):
-#        super(global_parameters, self).set_default_foldernames(folder_name)
-#        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
+    #    super(global_parameters, self).set_default_foldernames(folder_name)
+    #    folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
         folder_name = 'Test'
 
         if self.params['supervised_on'] == True:
@@ -342,12 +352,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['parameters_folder'] = "%sParameters/" % self.params['folder_name']
         self.params['figures_folder'] = "%sFigures/" % self.params['folder_name']
+        self.params['connections_folder'] = "%sConnections/" % self.params['folder_name']
         self.params['tmp_folder'] = "%stmp/" % self.params['folder_name']
         self.params['data_folder'] = '%sData/' % (self.params['folder_name']) # for storage of analysis results etc
         self.params['folder_names'] = [self.params['folder_name'], \
                             self.params['parameters_folder'], \
                             self.params['figures_folder'], \
                             self.params['tmp_folder'], \
+                            self.params['connections_folder'], \
                             self.params['data_folder']]
 
         self.params['params_fn_json'] = '%ssimulation_parameters.json' % (self.params['parameters_folder'])

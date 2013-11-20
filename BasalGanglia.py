@@ -77,6 +77,15 @@ class BasalGanglia(object):
                 for i_rp in range(self.params['n_states'] * self.params['n_actions']):
                     nest.DivergentConnect([neur_rew], self.rp[i_rp], weight=self.params['weight_rew_rp'], delay=self.params['delay_rew_rp'] )
 
+        self.d1_spike_recorders = []
+        self.d2_spike_recorders = []
+        for nactions in range(self.params['n_actions']):
+            spike_recorder = nest.Create('spike_detector', params={'to_file': False, 'label': 'd1-spikes'+str(nactions)})
+            nest.ConvergentConnect(self.strD1[nactions], spike_recorder)
+            self.d1_spike_recorders.append(spike_recorder)
+            spike_recorder = nest.Create('spike_detector', params={'to_file': False, 'label': 'd2-spikes'+str(nactions)})
+            nest.ConvergentConnect(self.strD2[nactions], spike_recorder)
+            self.d2_spike_recorders.append(spike_recorder)
 
 
 
@@ -99,6 +108,8 @@ class BasalGanglia(object):
                 for nstate in self.states[int( modulo_i / self.params['n_actions'] ) ]:
                     nest.DivergentConnect([nstate], self.rp[index_rp], model=self.params['states_rp'])   
                 modulo_i += 1
+             
+
 
         print "BG model completed"
 
@@ -198,6 +209,9 @@ class BasalGanglia(object):
         nest.SetStatus(self.supervisor[action_index_x], {'rate' : self.params['active_supervisor_rate']})
         # TODO:  same for action_index_y
         
+    def stop_supervisor(self):
+        for nactions in xrange(self.params['n_actions']):
+            nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['supervisor_off']})
 
 
     def set_state(self, state):
@@ -238,11 +252,49 @@ class BasalGanglia(object):
         winning_action = self.recorder_output_gidkey[winning_gid]
         output_speed_x = self.action_bins_x[winning_action]
         print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
+        print 'Activity is ', len(new_event_times)
         self.t_current += self.params['t_iteration']
 
         return (output_speed_x, 0)
 
 
+    def get_weights(self, src_pop, tgt_pop):
+        # get the list of connections stored on the current MPI node
+        conns = nest.GetConnections(src_pop, tgt_pop)
+        weights = []
+        for c in conns:
+            cp = nest.GetStatus([c]) # retrieve the dictionary for this connection
+            w = cp[0]['weight']
+            weights.append(w)
+      #     if w != 0:
+      #         my_adj_list[c[1]].append((c[0], cp[0]['weight']))
+      #         n_my_conns += len(conns)
+
+      # print 'Proc %d holds %d connections' % (self.pc_id, n_my_conns)
+      # output_fn = self.params['adj_list_tgt_fn_base'] + 'AS_%d_%d.json' % (self.iteration, self.pc_id)
+      # print 'Saving connection list to: ', output_fn
+      # f = file(output_fn, 'w')
+      # json.dump(my_adj_list, f, indent=0, ensure_ascii=False)
+        return weights
+
+
+    def set_weights(self, src_pop, tgt_pop, conn_mat_ee, src_pop_idx, tgt_pop_idx):
+       # set the connection weight after having loaded the conn_mat_ee
+       nest.SetStatus(nest.GetConnections(src_pop, tgt_pop), {'weight': conn_mat_ee[src_pop_idx, tgt_pop_idx]})
+
+    def set_gain(self, gain):
+        # nest.SetStatus(nest.GetConnections(self.strD1))
+
+
+        
+        
+       # for pop in range(self.params['n_actions']):
+       #     for msnd1 in self.strD1[pop]:
+       #         nest.SetStatus(msnd1, {'gain':gain})
+       #     for msnd2 in self.strD2[pop]:
+       #         nest.SetStatus(msnd2, {'gain':gain})
+
+        pass
 
     def get_eye_direction(self):
         """
