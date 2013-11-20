@@ -66,7 +66,12 @@ class ActivityPlotter(object):
         ax = fig.add_subplot(111)
         cax = ax.pcolormesh(d)#, cmap='binary')
 
-        ax.set_title('Input spikes')
+        if self.params['training']:
+            testtraining = 'training'
+        else:
+            testtraining = 'testing'
+
+        ax.set_title('Input spikes during %s' % testtraining)
         ax.set_ylim((0, d.shape[0]))
         ax.set_xlim((0, d.shape[1]))
         ax.set_ylabel('Iteration')
@@ -134,7 +139,12 @@ class ActivityPlotter(object):
         ax = fig.add_subplot(111)
         cax = ax.pcolormesh(d)#, cmap='binary')
 
-        ax.set_title('Output spikes clustered by x-pos')
+        if self.params['training']:
+            testtraining = 'training'
+        else:
+            testtraining = 'testing'
+
+        ax.set_title('Output spikes during %s clustered by x-pose' % testtraining)
         ax.set_ylim((0, d.shape[0]))
         ax.set_xlim((0, d.shape[1]))
         ax.set_ylabel('Iteration')
@@ -253,7 +263,7 @@ if __name__ == '__main__':
     Plotter = ActivityPlotter(params)#, it_max=1)
     Plotter.plot_input()
     Plotter.plot_output()
-    Plotter.plot_retinal_slip()
+#    Plotter.plot_retinal_slip()
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
     Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
     fig.savefig(params['figures_folder'] + 'rasterplot_mpn_in_and_out.png')

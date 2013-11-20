@@ -56,6 +56,11 @@ if __name__ == '__main__':
         GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
         params = GP.params
 
+    if not params['training']:
+        print 'Set training = True!'
+        exit(1)
+    
+
     t0 = time.time()
 
     VI = VisualInput.VisualInput(params)
