@@ -6,6 +6,16 @@ import numpy as np
 import os
 import re
 
+def extract_trace(d, gid):
+    """
+    d : voltage trace from a saved with compatible_output=False
+    gid : cell_gid
+    """
+    indices = (d[:, 0] == gid).nonzero()[0]
+    time_axis, volt = d[indices, 1], d[indices, 2]
+    return time_axis, volt
+
+
 def merge_and_sort_files(merge_pattern, fn_out, sort=True):
     rnd_nr1 = np.random.randint(0,10**8)
     # merge files from different processors

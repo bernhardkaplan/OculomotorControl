@@ -38,6 +38,7 @@ class ActivityPlotter(object):
         ax = fig.add_subplot(111)
         ax.plot(spikes, gids, 'o', markersize=3, color='k')
 
+
     def get_nspikes_interval(self, d, t0, t1):
         """
         d -- np.array containg the spike times (col 0 - gids, col 1 - times)
@@ -49,6 +50,29 @@ class ActivityPlotter(object):
             idx = ((cell_spikes >= t0) == (cell_spikes <= t1)).nonzero()[0]
             nspikes[gid - 1] = idx.size
         return nspikes
+
+
+    def plot_action_voltages(self):
+
+        volt_fns = utils.find_files(self.params['spiketimes_folder_mpn'], 'bg_action_volt_')
+
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        print volt_fns
+        for fn in volt_fns:
+            path = self.params['spiketimes_folder_mpn'] + fn
+            print 'path', path
+            try:
+                d = np.loadtxt(path)
+                gids = np.unique(d[:, 0])
+                for gid in gids:
+                    time_axis, volt = utils.extract_trace(d, gid)
+                    ax.plot(time_axis, volt, label='%d' % gid, lw=2)
+            except:
+                pass
+
+
+
 
 
 if __name__ == '__main__':
@@ -70,5 +94,6 @@ if __name__ == '__main__':
     print 'Merging spikes ...'
     utils.merge_and_sort_files(params['spiketimes_folder_mpn'] + params['bg_spikes_fn'], params['spiketimes_folder_mpn'] + params['bg_spikes_fn_merged'])
     Plotter = ActivityPlotter(params)#, it_max=1)
-    Plotter.plot_raster_simple()
+#    Plotter.plot_raster_simple()
+    Plotter.plot_action_voltages()
     pylab.show()
