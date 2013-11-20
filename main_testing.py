@@ -30,11 +30,9 @@ if __name__ == '__main__':
 
     GP = simulation_parameters.global_parameters()
     params = GP.params
-#    print 'New folder:', params['folder_name']
-#    ok = raw_input('\nContinue to create this folder structure? Parameters therein will be overwritten\n\ty / Y / blank = OK; anything else --> exit\n')
-#    if not ((ok == '') or (ok.capitalize() == 'Y')):
-#        print 'quit'
-#        exit(1)
+    if params['training']:
+        print 'Set training = False!'
+        exit(1)
     GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
 
     assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
@@ -58,13 +56,12 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params)
     CC.connect_mt_to_bg_after_training(MT, BG, training_params)
 
-    exit(1)
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
     network_states_net= np.zeros((params['n_iterations'], 4))
     for iteration in xrange(params['n_iterations']):
         stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
         if params['debug_mpn']:
-            print 'Saving spike trains...'
+            print 'Iteration %d: Saving spike trains...' % iteration
             save_spike_trains(params, iteration, stim, MT.local_idx_exc)
         MT.update_input(stim) # run the network for some time 
         if comm != None:

@@ -64,6 +64,7 @@ if __name__ == '__main__':
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder_mpn'])
         remove_files_from_folder(params['input_folder_mpn'])
+        remove_files_from_folder(params['connections_folder'])
     
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)

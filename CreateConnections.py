@@ -43,16 +43,38 @@ class CreateConnections(object):
         based on the weights found in conn_folder
         """
 
-        print 'debug', os.path.exists(training_params['mpn_bgd1_merged_conn_fn'])
-
         if not os.path.exists(training_params['mpn_bgd1_merged_conn_fn']):
             # merge the connection files
             merge_pattern = training_params['mpn_bgd1_conn_fn_base']
             fn_out = training_params['mpn_bgd1_merged_conn_fn']
             utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
 
+        if not os.path.exists(training_params['mpn_bgd2_merged_conn_fn']):
+            # merge the connection files
+            merge_pattern = training_params['mpn_bgd2_conn_fn_base']
+            fn_out = training_params['mpn_bgd2_merged_conn_fn']
+            utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+
         print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
         mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
+        n_lines = mpn_d1_conn_list[:, 0].size 
+        for line in xrange(n_lines):
+            src, tgt, w = mpn_d1_conn_list[line, :]
+            if w != 0.:
+                w *= self.params['mpn_bg_weight_amplification']
+                nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
+
+        print 'Loading MPN - BG D2 connections from:', training_params['mpn_bgd2_merged_conn_fn']
+        mpn_d2_conn_list = np.loadtxt(training_params['mpn_bgd2_merged_conn_fn'])
+        n_lines = mpn_d2_conn_list[:, 0].size 
+        for line in xrange(n_lines):
+            src, tgt, w = mpn_d2_conn_list[line, :]
+            if w != 0.:
+                w *= self.params['mpn_bg_weight_amplification']
+                nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
+
+#            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
+#            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
 
 
 
