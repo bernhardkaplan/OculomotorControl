@@ -18,8 +18,8 @@ d = numpy.loadtxt(fn, skiprows=1)
 #print "exp mean weight:", numpy.exp(d[:,2].mean())
 fig = pylab.figure()
 
-bin_width = 1e-3
-x_max = d[:,2].max() / 2.
+bin_width = 5e-2
+x_max = d[:,2].max()
 data, bins = numpy.histogram(d[:,2], x_max/bin_width)
 ax = fig.add_subplot(111)
 ax.bar(bins[:-1], data, width=bin_width/2.)

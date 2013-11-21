@@ -10,7 +10,7 @@ import nest
 import numpy as np
 import time
 import os
-from main import remove_files_from_folder, save_spike_trains
+from main_training import remove_files_from_folder, save_spike_trains
 
 try: 
     from mpi4py import MPI
@@ -74,9 +74,17 @@ if __name__ == '__main__':
 
         network_states_net[iteration, :] = state_
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
-        next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
-        actions[iteration + 1, :] = next_state
+        try:
+            next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
+            actions[iteration + 1, :] = next_state
+        except:
+            break
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
+
+    if pc_id == 0:
+        np.savetxt(params['actions_taken_fn'], actions)
+        np.savetxt(params['network_states_fn'], network_states_net)
+        np.savetxt(params['motion_params_fn'], VI.motion_params)
 
     t1 = time.time() - t0
     print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)

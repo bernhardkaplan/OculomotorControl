@@ -164,28 +164,28 @@ class ActivityPlotter(object):
         pylab.savefig(output_fig)
 
 
-    def plot_retinal_slip(self):
-        print 'plot_retinal_slip loads:', self.params['motion_params_fn']
+    def plot_retinal_displacement(self):
+        print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         t = d[:, 4]
-        x_slip = np.abs(d[:, 0] - .5)
-        output_fn = self.params['data_folder'] + 'mpn_xslip.dat'
+        x_displacement = np.abs(d[:, 0] - .5)
+        output_fn = self.params['data_folder'] + 'mpn_xdisplacement.dat'
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        ax.plot(t, x_slip)
+        ax.plot(t, x_displacement)
 
-        ymin, ymax = x_slip.min(), x_slip.max()
+        ymin, ymax = x_displacement.min(), x_displacement.max()
         for it_ in xrange(self.params['n_iterations']):
             t0 = it_ * self.params['t_iteration']
 #            t1 = (it_ + 1) * self.params['t_iteration']
             ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
 
         ax.set_xlabel('Time [ms]')
-        ax.set_ylabel('Retinal slip (x-dim)')
-        output_fig = self.params['figures_folder'] + 'mpn_slip.png'
+        ax.set_ylabel('Retinal displacement (x-dim)')
+        output_fig = self.params['figures_folder'] + 'mpn_displacement.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
@@ -263,7 +263,8 @@ if __name__ == '__main__':
     Plotter = ActivityPlotter(params)#, it_max=1)
     Plotter.plot_input()
     Plotter.plot_output()
-#    Plotter.plot_retinal_slip()
+    if params['training']:
+        Plotter.plot_retinal_displacement()
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
     Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
     fig.savefig(params['figures_folder'] + 'rasterplot_mpn_in_and_out.png')

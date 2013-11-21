@@ -263,6 +263,17 @@ class BasalGanglia(object):
                 cell_gids.append(self.actions[nactions])
         return cell_gids
 
+    def write_cell_gids_to_file(self):
+        d = {}
+        cell_types = ['strD1', 'strD2', 'actions']
+        for cell_type in cell_types:
+            cell_gids = self.get_cell_gids(cell_type)
+            d[cell_type] = (np.min(cell_gids), np.max(cell_gids))
+        output_fn = self.params['parameters_folder'] + 'bg_cell_gids.json'
+        print 'Writing cell_gids to:', output_fn
+        f = file(output_fn, 'w')
+        json.dump(d, f, indent=0)
+
 
     def get_eye_direction(self):
         """

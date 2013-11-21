@@ -40,8 +40,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_sim'] = 100.                 # [ms] total simulation time
-        self.params['t_iteration'] = 20.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_sim'] = 7 * self.params['t_iteration']# [ms] total simulation time
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
         self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
@@ -103,7 +103,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 1.0, 'tau_syn_in': 5.0}
         # input parameters
         self.params['w_input_exc_mpn'] = 50. # [nS]
-        self.params['f_max_stim'] = 300.       # [Hz] Max rate of the inhomogenous Poisson process
+        self.params['f_max_stim'] = 1000.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
         #                  .05  .05     5000    100
@@ -187,8 +187,19 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['n_actions'] = 21
-        self.params['n_states'] = 20
+        self.params['n_states'] = 40
 
+
+
+        #Connections Actions and States to RP
+        self.epsilon = 0.01
+        self.tau_i = 10.
+        self.tau_j = 10.
+        self.tau_e = 100.
+        self.tau_p = max(1000., self.params['t_sim'])
+        self.gain = 0.
+        self.K = 50.
+        self.params['fmax'] = 20.
 
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
@@ -199,8 +210,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
         self.params['num_msn_d1'] = 30
         self.params['num_msn_d2'] = 30
-        self.params['param_msn_d1'] = {'fmax':20.0, 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
-        self.params['param_msn_d2'] = {'fmax':20.0, 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
+        self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
+        self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
 
         
         ## Output GPi/SNr
@@ -216,7 +227,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## RP and REWARD
         self.params['model_rp_neuron'] = 'iaf_cond_alpha_bias'
         self.params['num_rp_neurons'] = 15
-        self.params['param_rp_neuron'] = {'fmax':20., 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2., 'gain': 0.}
+        self.params['param_rp_neuron'] = {'fmax': self.params['fmax'], 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2., 'gain': 0.}
 
         self.params['model_rew_neuron'] = 'iaf_cond_alpha'
         self.params['num_rew_neurons'] = 20
@@ -231,30 +242,21 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['delay_rp_rew'] = 1.
 
 
-        #Connections Actions and States to RP
-        self.epsilon = 0.01
-        self.tau_i = 10.
-        self.tau_j = 10.
-        self.tau_e = 100.
-        self.tau_p = 10000.
-        self.gain = 0.
-        self.K = 1.
-
         self.params['actions_rp'] = 'bcpnn_synapse'
-        self.params['param_actions_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_actions_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         self.params['states_rp'] = 'bcpnn_synapse'
-        self.params['param_states_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_states_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         self.params['bcpnn'] = 'bcpnn_synapse'
-        self.params['param_bcpnn'] =  {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_bcpnn'] =  {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         # during learning gain == 0. K = 1.0 : --> 'offline' learning
         # after learning: gain == 1. K = .0
 
         #Connections States Actions
         self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['params_synapse_d1_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d2_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': 20.0,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['params_synapse_d2_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         #Connections REW to RP, STRD1 and STRD2
         self.params['weight_rew_strD1'] = 10.
@@ -351,10 +353,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             folder_name = 'Test'
 
-        if self.params['supervised_on'] == True:
-            folder_name += '_WithSupervisor/'
-        else:
-            folder_name += '_NoSupervisor/'
+        folder_name += '_nExcMpn%d_nStates%d_nActions%d_it%d-%d/' % \
+                (self.params['n_exc_mpn'], self.params['n_states'], self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'])
+#        if self.params['supervised_on'] == True:
+#            folder_name += '_WithSupervisor/'
+#        else:
+#            folder_name += '_NoSupervisor/'
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
         self.set_folder_name(folder_name)
