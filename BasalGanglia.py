@@ -37,7 +37,7 @@ class BasalGanglia(object):
         for nactions in range(self.params['n_actions']):
             self.actions[nactions] = nest.Create(self.params['model_bg_output_neuron'], self.params['num_actions_output'], params= self.params['param_bg_output'])
             self.recorder_output[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_output_action'])
-            self.recorder_output_gidkey[self.recorder_output[nactions][0]] = nactions
+            self.recorder_output_gidkey[self.actions[nactions][0]] = nactions
             nest.SetStatus(self.recorder_output[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['bg_spikes_fn']}])
             nest.ConvergentConnect(self.actions[nactions], self.recorder_output[nactions])
             for neuron in self.actions[nactions]:
@@ -241,11 +241,11 @@ class BasalGanglia(object):
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
-        print 'new_event_gids', new_event_gids
-        print 'nspikes', nspikes
-        print 'gids_spiked', gids_spiked
-        print 'recorder_output_gidkey', self.pc_id, self.recorder_output_gidkey
-        print 'recorder_output', self.pc_id, self.recorder_output
+#        print 'new_event_gids', new_event_gids
+#        print 'nspikes', nspikes
+#        print 'gids_spiked', gids_spiked
+#        print 'recorder_output_gidkey', self.pc_id, self.recorder_output_gidkey
+#        print 'recorder_output', self.pc_id, self.recorder_output
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]
         winning_action = self.recorder_output_gidkey[winning_gid]
@@ -267,16 +267,18 @@ class BasalGanglia(object):
         elif network == 'actions':
             for nactions in range(self.params['n_actions']):
                 cell_gids.append(self.actions[nactions])
+        elif network == 'actions':
+            for nactions in range(self.params['n_actions']):
+                cell_gids.append(self.recorder_output[nactions])
         return cell_gids
 
 
     def write_cell_gids_to_file(self):
         d = {}
-        cell_types = ['strD1', 'strD2', 'actions']
+        cell_types = ['strD1', 'strD2', 'actions', 'recorder']
         for cell_type in cell_types:
-            cell_gids = self.get_cell_gids(cell_type)
-            d[cell_type] = (np.min(cell_gids), np.max(cell_gids))
-        output_fn = self.params['parameters_folder'] + 'bg_cell_gids.json'
+            d[cell_type] = self.get_cell_gids(cell_type)
+        output_fn = self.params['parameters_folder'] + 'bg_cell_gids_pcid%d.json' % self.pc_id
         print 'Writing cell_gids to:', output_fn
         f = file(output_fn, 'w')
         json.dump(d, f, indent=0)

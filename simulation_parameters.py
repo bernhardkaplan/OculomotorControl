@@ -40,7 +40,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_iteration'] = 40.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['t_sim'] = 7 * self.params['t_iteration']# [ms] total simulation time
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
