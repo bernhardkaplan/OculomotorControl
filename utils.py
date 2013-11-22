@@ -6,6 +6,14 @@ import numpy as np
 import os
 import re
 
+
+def get_plus_minus(rnd):
+    """
+    Returns either -1., or +1. as float.
+    rnd -- should be your numpy.random RNG
+    """
+    return (rnd.randint(-1, 1) + .5) * 2
+
 def extract_trace(d, gid):
     """
     d : voltage trace from a saved with compatible_output=False

@@ -16,6 +16,7 @@ class VisualInput(object):
         self.iteration = 0
         self.t_current = 0 # stores the 'current' time
         np.random.seed(self.params['visual_stim_seed'])
+        self.RNG = np.random
 
         self.tuning_prop_exc = self.set_tuning_prop('exc')
         self.tuning_prop_inh = self.set_tuning_prop('inh')
@@ -32,6 +33,21 @@ class VisualInput(object):
 #        self.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])
 
 
+    def create_training_sequence(self):
+        """
+        When training with multiple stimuli, this function returns the initial motion parameters for 
+        the new stimulus
+        """
+        mp_training = np.zeros((self.params['n_training_stim'], 4))
+        for i_stim in xrange(self.params['n_training_stim']):
+            x0 = np.random.rand() * .5
+            plus_minus = utils.get_plus_minus(self.RNG)
+            v0 = (self.params['v_max_tp'] * np.random.rand() + self.params['v_min_tp']) * plus_minus
+            mp_training[i_stim, 0] = x0
+            mp_training[i_stim, 2] = v0
+        np.savetxt(self.params['training_sequence_fn'], mp_training)
+        return mp_training 
+
 
     def compute_input(self, local_gids, action_code, dummy=False):
         """
@@ -45,11 +61,8 @@ class VisualInput(object):
         trajectory = self.update_stimulus_trajectory(action_code)
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
-
-        self.iteration += 1
-
-#        supervisor_state =  (self.trajectories[-1][0][-1], self.trajectories[-1][1][-1], self.current_motion_params[2], self.current_motion_params[3])
         supervisor_state = (trajectory[0][-1], trajectory[1][-1], self.current_motion_params[2], self.current_motion_params[3])
+        self.iteration += 1
         return self.stim, supervisor_state
 
 
@@ -301,6 +314,17 @@ class VisualInput(object):
                 print gid, '\t', distances[i], self.tuning_prop_exc[gid, :]
 
         return self.gids_to_record_exc
+
+
+    def set_empty_input(self, local_gids):
+        """
+        At the last iteration for each stimulus return an empty spike train
+        """
+
+        local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
+        for i_, gid in enumerate(local_gids):
+            self.stim[i_] = []
+        return self.stim
 
 
     def set_pc_id(self, pc_id):

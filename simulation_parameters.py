@@ -40,10 +40,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
+        self.params['n_training_stim'] = 2  # number of different stimuli presented during training
         self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['t_sim'] = 7 * self.params['t_iteration']# [ms] total simulation time
+        self.params['n_iterations_per_stim'] = 8
+        self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
         self.params['dt'] = 0.1                      # [ms]
-        self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
+        self.params['n_iterations'] = self.params['n_training_stim'] * self.params['n_iterations_per_stim']
         self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
         self.params['training'] = True
 
@@ -102,7 +104,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 1.0, 'tau_syn_in': 5.0}
         # input parameters
-        self.params['w_input_exc_mpn'] = 50. # [nS]
+        self.params['w_input_exc_mpn'] = 100. # [nS]
         self.params['f_max_stim'] = 1000.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
@@ -124,8 +126,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         self.params['gids_to_record_mpn'] = None
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
-        self.params['sigma_rf_pos'] = .00 # some variability in the position of RFs
-        self.params['sigma_rf_speed'] = .00 # some variability in the speed of RFs
+        self.params['sigma_rf_pos'] = .05 # some variability in the position of RFs
+        self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 20
@@ -323,7 +325,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_inh_volt_fn'] = 'mpn_inh_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-
+        self.params['training_sequence_fn'] = self.params['parameters_folder'] + 'training_stimuli_parameters.txt'
+        
         # input spike files
         self.params['input_st_fn_mpn'] = self.params['input_folder_mpn'] + 'input_spikes_'
         self.params['input_rate_fn_mpn'] = self.params['input_folder_mpn'] + 'input_rate_'
@@ -354,12 +357,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             folder_name = 'Test'
 
-        folder_name += '_nExcMpn%d_nStates%d_nActions%d_it%d-%d/' % \
-                (self.params['n_exc_mpn'], self.params['n_states'], self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'])
-#        if self.params['supervised_on'] == True:
-#            folder_name += '_WithSupervisor/'
-#        else:
-#            folder_name += '_NoSupervisor/'
+        folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d/' % \
+                (self.params['n_training_stim'], self.params['n_exc_mpn'], self.params['n_states'], \
+                self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'])
+
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
         self.set_folder_name(folder_name)

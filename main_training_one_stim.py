@@ -79,47 +79,37 @@ if __name__ == '__main__':
 
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
     network_states_net= np.zeros((params['n_iterations'], 4))
-    iteration_cnt = 0
-    training_stimuli = VI.create_training_sequence()
-    for i_stim in xrange(params['n_training_stim']):
-        VI.current_motion_params = training_stimuli[i_stim, :]
-        for it in xrange(params['n_iterations_per_stim']):
+    for iteration in xrange(params['n_iterations']):
 
-            if it == params['n_iterations_per_stim'] - 1:
-                VI.set_empty_input(MT.local_idx_exc)
-            else:
-                # integrate the real world trajectory and the eye direction and compute spike trains from that
-                # and get the state information BEFORE MPN perceives anything
-                # in order to set a supervisor signal
-                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
+        # integrate the real world trajectory and the eye direction and compute spike trains from that
+        # and get the state information BEFORE MPN perceives anything
+        # in order to set a supervisor signal
+        stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
 
-            print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
-            print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
-            BG.supervised_training(supervisor_state)
+        print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (iteration, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+        print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration, pc_id), supervisor_state
+        BG.supervised_training(supervisor_state)
 
-            if params['debug_mpn']:
-                print 'Saving spike trains...'
-                save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
+        if params['debug_mpn']:
+            print 'Saving spike trains...'
+            save_spike_trains(params, iteration, stim, MT.local_idx_exc)
 
-            MT.update_input(stim) # run the network for some time 
-            if comm != None:
-                comm.barrier()
-            nest.Simulate(params['t_iteration'])
-            if comm != None:
-                comm.barrier()
+        MT.update_input(stim) # run the network for some time 
+        if comm != None:
+            comm.barrier()
+        nest.Simulate(params['t_iteration'])
+        if comm != None:
+            comm.barrier()
 
-            state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+        state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
-            if pc_id == 0:
-                print 'Debug state', iteration_cnt, state_
-            network_states_net[iteration_cnt, :] = state_
+        print 'debug state', iteration, state_
+        network_states_net[iteration, :] = state_
 
-            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
-            next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
-            actions[iteration_cnt + 1, :] = next_state
-            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_state
-
-            iteration_cnt += 1
+        print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
+        next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
+        actions[iteration + 1, :] = next_state
+        print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
 
     CC.get_weights(MT, BG)
 
