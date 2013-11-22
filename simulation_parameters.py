@@ -40,12 +40,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 40.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['t_sim'] = 7 * self.params['t_iteration']# [ms] total simulation time
         self.params['dt'] = 0.1                      # [ms]
         self.params['n_iterations'] = int(round(self.params['t_sim'] / self.params['t_iteration']))
         self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
-        self.params['training'] = False
+        self.params['training'] = True
 
         # #####################################
         # CONNECTING MPN --> BG
@@ -85,7 +85,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_rf_x'] = self.params['n_rf']
             self.params['n_rf_y'] = 1
-            self.params['n_theta'] = 2 # 2 because it's rightwards or leftwards 
+            self.params['n_theta'] = 1 # 2 because it's rightwards or leftwards 
 
 
 
@@ -114,6 +114,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ##############################
         # network properties, size, number of preferred directions
         self.params['n_v'] = 10
+        assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['n_hc'] = self.params['n_rf_x'] * self.params['n_rf_y']
         self.params['n_mc_per_hc'] = self.params['n_v'] * self.params['n_theta']
         self.params['n_mc'] = self.params['n_hc'] * self.params['n_mc_per_hc']
@@ -123,8 +124,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         self.params['gids_to_record_mpn'] = None
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
-        self.params['sigma_rf_pos'] = .05 # some variability in the position of RFs
-        self.params['sigma_rf_speed'] = .30 # some variability in the speed of RFs
+        self.params['sigma_rf_pos'] = .00 # some variability in the position of RFs
+        self.params['sigma_rf_speed'] = .00 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 20
@@ -144,7 +145,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_rf_inh'] = int(round(self.params['fraction_inh_cells_mpn'] * self.params['n_rf']))
         self.params['n_rf_x_inh'] = np.int(np.sqrt(self.params['n_rf_inh'] * np.sqrt(3)))
         # np.sqrt(np.sqrt(3)) comes from resolving the problem "how to quantize the square with a hex grid of a total of n_rf dots?"
-        self.params['n_rf_y_inh'] = np.int(np.sqrt(self.params['n_rf_inh'])) 
+        self.params['n_rf_y_inh'] = 1 # np.int(np.sqrt(self.params['n_rf_inh'])) 
         self.params['n_inh_mpn' ] = self.params['n_rf_x_inh'] * self.params['n_rf_y_inh'] * self.params['n_theta_inh'] * self.params['n_v_inh'] * self.params['n_exc_per_mc']
         self.params['n_cells_mpn'] = self.params['n_exc_mpn'] + self.params['n_inh_mpn']
         print 'n_cells_mpn: %d\tn_exc_mpn: %d\tn_inh_mpn: %d\nn_inh_mpn / n_exc_mpn = %.3f\tn_inh_mpn / n_cells_mpn = %.3f' \

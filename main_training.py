@@ -73,6 +73,7 @@ if __name__ == '__main__':
     
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)
+    BG.write_cell_gids_to_file()
     CC = CreateConnections.CreateConnections(params, comm)
     CC.connect_mt_to_bg(MT, BG)
 
@@ -102,7 +103,9 @@ if __name__ == '__main__':
 
         state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
+        print 'debug state', iteration, state_
         network_states_net[iteration, :] = state_
+
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
         next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
         actions[iteration + 1, :] = next_state

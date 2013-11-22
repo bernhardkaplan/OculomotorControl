@@ -154,11 +154,11 @@ class VisualInput(object):
 
     def set_tuning_prop(self, cell_type):
 
-        return self.set_tuning_prop_2D(cell_type)
-#        if self.params['n_grid_dimensions'] == 2:
-#            return self.set_tuning_prop_2D(mode, cell_type)
-#        else:
-#            return self.set_tuning_prop_1D(cell_type)
+#        return self.set_tuning_prop_2D(cell_type)
+        if self.params['n_grid_dimensions'] == 2:
+            return self.set_tuning_prop_2D(mode, cell_type)
+        else:
+            return self.set_tuning_prop_1D(cell_type)
 
 
     def set_tuning_prop_1D(self, cell_type='exc'):
@@ -177,32 +177,31 @@ class VisualInput(object):
             v_max = self.params['v_max_tp']
             v_min = self.params['v_min_tp']
         if self.params['log_scale']==1:
-            v_rho = np.linspace(v_min, v_max, num=n_v, endpoint=True)
+            v_rho_half = np.linspace(v_min, v_max, num=n_v/2, endpoint=True)
         else:
-            v_rho = np.logspace(np.log(v_min)/np.log(self.params['log_scale']),
-                            np.log(v_max)/np.log(self.params['log_scale']), num=n_v,
+            v_rho_half = np.logspace(np.log(v_min)/np.log(self.params['log_scale']),
+                            np.log(v_max)/np.log(self.params['log_scale']), num=n_v/2,
                             endpoint=True, base=self.params['log_scale'])
 
+        v_rho = np.zeros(n_v)
+        v_rho[:n_v/2] = -v_rho_half
+        v_rho[n_v/2:] = v_rho_half
         RF = np.linspace(0, self.params['visual_field_width'], n_rf_x, endpoint=False)
         index = 0
         random_rotation_for_orientation = np.pi*np.random.rand(self.params['n_exc_per_mc'] * n_rf_x * n_v) * self.params['sigma_rf_orientation']
 
-        tuning_prop = np.zeros((n_cells, 5))
-
+        tuning_prop = np.zeros((n_cells, 4))
 
         for i_RF in xrange(n_rf_x):
             for i_v_rho, rho in enumerate(v_rho):
-                for orientation in orientations:
-                    for i_in_mc in xrange(self.params['n_exc_per_mc']):
-                    # for plotting this looks nicer, and due to the torus property it doesn't make a difference
-                        tuning_prop[index, 0] = (RF[i_RF] + self.params['sigma_rf_pos'] * np.random.randn()) % self.params['visual_field_width']
-                        tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
-                        tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
-                        tuning_prop[index, 3] = 0. # np.sin(theta + random_rotation[index]) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
-                        tuning_prop[index, 4] = (orientation + random_rotation_for_orientation[index]) % np.pi
-
-                        index += 1
-
+                for i_in_mc in xrange(self.params['n_exc_per_state']):
+                    tuning_prop[index, 0] = (RF[i_RF] + self.params['sigma_rf_pos'] * np.random.randn()) % self.params['visual_field_width']
+                    tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
+                    tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
+                    tuning_prop[index, 3] = 0. 
+                    index += 1
+        print 'debug', n_v, n_rf_x, n_v * n_rf_x, self.params['n_exc_per_state'], cell_type
+        assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
         return tuning_prop
 
 
@@ -257,18 +256,18 @@ class VisualInput(object):
                             np.log(v_max)/np.log(self.params['log_scale']), num=n_v,
                             endpoint=True, base=self.params['log_scale'])
 
-        v_theta = np.linspace(0, 2*np.pi, n_theta, endpoint=False)
-        print 'v_theta:', v_theta
 
         parity = np.arange(self.params['n_v']) % 2
-
+#        print 'debug parity', parity
 
         # wrapping up:
         index = 0
         if self.params['n_grid_dimensions'] == 1:
             random_rotation = np.zeros(n_cells)
+            v_theta = np.linspace(-np.pi, np.pi, n_theta, endpoint=False)
         else:
             random_rotation = 2*np.pi*np.random.rand(n_rf_x * n_rf_y * n_v * n_theta) * self.params['sigma_rf_direction']
+            v_theta = np.linspace(0, 2*np.pi, n_theta, endpoint=False)
 
         for i_RF in xrange(n_rf_x * n_rf_y):
             for i_v_rho, rho in enumerate(v_rho):
@@ -276,12 +275,13 @@ class VisualInput(object):
                     for i_ in xrange(self.params['n_exc_per_state']):
                         tuning_prop[index, 0] = np.random.uniform()
                         tuning_prop[index, 1] = np.random.uniform()
+                        print 'debug', np.cos(theta + random_rotation[index] + parity[i_v_rho] * np.pi / n_theta)
                         tuning_prop[index, 2] = np.cos(theta + random_rotation[index] + parity[i_v_rho] * np.pi / n_theta) \
                                 * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                         tuning_prop[index, 3] = np.sin(theta + random_rotation[index] + parity[i_v_rho] * np.pi / n_theta) \
                                 * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                         index += 1
-
+        assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
         if self.params['n_grid_dimensions'] == 1:
             tuning_prop[:, 1] = .5
             tuning_prop[:, 3] = .0

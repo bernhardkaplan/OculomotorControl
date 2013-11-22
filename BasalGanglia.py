@@ -1,6 +1,7 @@
 import numpy as np
 import nest
 import utils
+import json
 
 
 
@@ -20,8 +21,8 @@ class BasalGanglia(object):
         self.strD2 = {}
         self.actions = {}
         self.rp = {}
-        self.recorder_output= {}
-        self.recorder_output_gidkey = {}
+        self.recorder_output= {} # the actual NEST recorder object, indexed by naction
+        self.recorder_output_gidkey = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
 
         self.t_current = 0 
         self.voltmeter_action = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
@@ -236,10 +237,15 @@ class BasalGanglia(object):
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
-            gids_spiked = new_event_gids.unique() - 1
+            gids_spiked = new_event_gids.unique()
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
+        print 'new_event_gids', new_event_gids
+        print 'nspikes', nspikes
+        print 'gids_spiked', gids_spiked
+        print 'recorder_output_gidkey', self.pc_id, self.recorder_output_gidkey
+        print 'recorder_output', self.pc_id, self.recorder_output
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]
         winning_action = self.recorder_output_gidkey[winning_gid]
@@ -262,6 +268,7 @@ class BasalGanglia(object):
             for nactions in range(self.params['n_actions']):
                 cell_gids.append(self.actions[nactions])
         return cell_gids
+
 
     def write_cell_gids_to_file(self):
         d = {}

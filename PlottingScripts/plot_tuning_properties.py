@@ -19,13 +19,13 @@ class Plotter(object):
 
     def __init__(self, params, it_max=None):
         self.params = params
-
-
-    def plot_tuning_prop(self):
         tp_fn = self.params['tuning_prop_exc_fn']
         print 'Loading', tp_fn
-        tp = np.loadtxt(tp_fn)
+        self.tp = np.loadtxt(tp_fn)
 
+    def plot_tuning_prop(self):
+
+        tp = self.tp
         fig = pylab.figure()
 
         ax1 = fig.add_subplot(221)
@@ -47,7 +47,17 @@ class Plotter(object):
         cnt, bins = np.histogram(tp[:, 2], bins=20)
         ax4.bar(bins[:-1], cnt, width=bins[1]-bins[0])
 
+    def plot_tuning_space(self):
 
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.set_xlabel('Receptive field center $x$')
+        ax.set_ylabel('Preferred speed')
+        for i in xrange(self.tp[:, 0].size):
+            ax.plot(self.tp[i, 0], self.tp[i, 2], 'o', c='k')
+
+        ylim = ax.get_ylim()
+        ax.set_ylim((1.1 * ylim[0], 1.1 * ylim[1]))
 
 if __name__ == '__main__':
 
@@ -68,4 +78,6 @@ if __name__ == '__main__':
     
     Plotter = Plotter(params)#, it_max=1)
     Plotter.plot_tuning_prop()
+    Plotter.plot_tuning_space()
+
     pylab.show()
