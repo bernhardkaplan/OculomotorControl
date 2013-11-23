@@ -24,11 +24,12 @@ except:
 
 
 def save_spike_trains(params, iteration, stim_list, gid_list):
+    assert (len(stim_list) == len(gid_list))
     n_units = len(stim_list)
     fn_base = params['input_st_fn_mpn']
-    for i_ in xrange(n_units):
+    for i_, nest_gid in enumerate(gid_list):
         if len(stim_list[i_]) > 0:
-            fn = fn_base + '%d_%d.dat' % (iteration, gid_list[i_] - 1)
+            fn = fn_base + '%d_%d.dat' % (iteration, nest_gid - 1)
             np.savetxt(fn, stim_list[i_])
 
 
@@ -86,7 +87,7 @@ if __name__ == '__main__':
         for it in xrange(params['n_iterations_per_stim']):
 
             if it == params['n_iterations_per_stim'] - 1:
-                VI.set_empty_input(MT.local_idx_exc)
+                stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
                 # and get the state information BEFORE MPN perceives anything
@@ -101,6 +102,7 @@ if __name__ == '__main__':
                 print 'Saving spike trains...'
                 save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
 
+#            print 'debug iteration %d stim' % (iteration_cnt), stim
             MT.update_input(stim) # run the network for some time 
             if comm != None:
                 comm.barrier()
@@ -123,12 +125,13 @@ if __name__ == '__main__':
 
     CC.get_weights(MT, BG)
 
+    t1 = time.time() - t0
+    print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
+
     if pc_id == 0:
         np.savetxt(params['actions_taken_fn'], actions)
         np.savetxt(params['network_states_fn'], network_states_net)
         np.savetxt(params['motion_params_fn'], VI.motion_params)
+        os.system('python PlottingScripts/PlotMPNActivity.py')
 
-
-    t1 = time.time() - t0
-    print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 

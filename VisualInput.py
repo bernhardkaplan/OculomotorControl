@@ -213,7 +213,7 @@ class VisualInput(object):
                     tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
                     index += 1
-        print 'debug', n_v, n_rf_x, n_v * n_rf_x, self.params['n_exc_per_state'], cell_type
+#        print 'debug', n_v, n_rf_x, n_v * n_rf_x, self.params['n_exc_per_state'], cell_type
         assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
         return tuning_prop
 
@@ -322,9 +322,13 @@ class VisualInput(object):
         """
 
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
+        supervisor_state = [0., 0., 0., 0.]
         for i_, gid in enumerate(local_gids):
             self.stim[i_] = []
-        return self.stim
+        self.motion_params[self.iteration, -1] = self.t_current
+        self.iteration += 1
+        self.t_current += self.params['t_iteration']
+        return self.stim, supervisor_state
 
 
     def set_pc_id(self, pc_id):

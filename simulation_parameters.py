@@ -115,7 +115,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # EXCITATORY NETWORK PARAMETERS
         # ##############################
         # network properties, size, number of preferred directions
-        self.params['n_v'] = 10
+        self.params['n_v'] = 16
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['n_hc'] = self.params['n_rf_x'] * self.params['n_rf_y']
         self.params['n_mc_per_hc'] = self.params['n_v'] * self.params['n_theta']

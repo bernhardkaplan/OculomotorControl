@@ -196,10 +196,9 @@ class BasalGanglia(object):
         action_index_y = self.map_speed_to_action(action[1], self.action_bins_y)
 
         print 'debug BG based on supervisor action choose action_index_x:', action_index_x
-
-        action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
-        cnt_v, bins = np.histogram(action[1], action_bins_y)
-        action_index_y = cnt_v.nonzero()[0][0]
+#        action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
+#        cnt_v, bins = np.histogram(action[1], action_bins_y)
+#        action_index_y = cnt_v.nonzero()[0][0]
 
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})

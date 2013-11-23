@@ -51,13 +51,16 @@ class Plotter(object):
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel('Receptive field center $x$')
-        ax.set_ylabel('Preferred speed')
+        ax.set_xlabel('Receptive field center $x$', fontsize=18)
+        ax.set_ylabel('Preferred speed', fontsize=18)
         for i in xrange(self.tp[:, 0].size):
             ax.plot(self.tp[i, 0], self.tp[i, 2], 'o', c='k')
 
         ylim = ax.get_ylim()
         ax.set_ylim((1.1 * ylim[0], 1.1 * ylim[1]))
+        output_fn = self.params['figures_folder'] + 'tuning_space.png'
+        print 'Saving to:', output_fn
+        pylab.savefig(output_fn)
 
 if __name__ == '__main__':
 
