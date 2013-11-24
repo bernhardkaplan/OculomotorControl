@@ -40,7 +40,7 @@ class VisualInput(object):
         """
         mp_training = np.zeros((self.params['n_training_stim'], 4))
         for i_stim in xrange(self.params['n_training_stim']):
-            x0 = np.random.rand() * .5
+            x0 = np.random.rand()
             plus_minus = utils.get_plus_minus(self.RNG)
             v0 = (self.params['v_max_tp'] * np.random.rand() + self.params['v_min_tp']) * plus_minus
             mp_training[i_stim, 0] = x0
@@ -140,6 +140,7 @@ class VisualInput(object):
         # update the motion parameters based on the action
 
         # store the motion parameters at the beginning of this iteration
+        print 'debug self.motion_params.shape', self.motion_params.shape, 'self.iteration:', self.iteration, 'self.n_stim_dim ', self.n_stim_dim, 'self.current_motion_params', self.current_motion_params, 'shape', self.current_motion_params.shape
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
         self.motion_params[self.iteration, -1] = self.t_current
 

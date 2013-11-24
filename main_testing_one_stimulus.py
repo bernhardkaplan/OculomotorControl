@@ -58,46 +58,28 @@ if __name__ == '__main__':
 
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
     network_states_net= np.zeros((params['n_iterations'], 4))
-    training_stimuli = np.loadtxt(training_params['training_sequence_fn'])
+    for iteration in xrange(params['n_iterations']):
+        stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
+        if params['debug_mpn']:
+            print 'Iteration %d: Saving spike trains...' % iteration
+            save_spike_trains(params, iteration, stim, MT.local_idx_exc)
+        MT.update_input(stim) # run the network for some time 
+        if comm != None:
+            comm.barrier()
+        nest.Simulate(params['t_iteration'])
+        if comm != None:
+            comm.barrier()
 
-    iteration_cnt = 0
-    for i_stim in xrange(params['n_testing_stim']):
-        VI.current_motion_params = training_stimuli[i_stim, :]
-        for it in xrange(params['n_iterations']):
+        state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
-            if it == params['n_iterations_per_stim'] - 1:
-                stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
-            else:
-                # integrate the real world trajectory and the eye direction and compute spike trains from that
-                # and get the state information BEFORE MPN perceives anything
-                # in order to set a supervisor signal
-                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
-
-            print 'DEBUG, comparison global iteration i_stim %d it %d iteration_cnt %d, VI: %d' % (i_stim, it, iteration_cnt, VI.iteration)
-            if params['debug_mpn']:
-                print 'Iteration %d: Saving spike trains...' % iteration_cnt
-                save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
-            MT.update_input(stim) # run the network for some time 
-            if comm != None:
-                comm.barrier()
-            nest.Simulate(params['t_iteration'])
-            if comm != None:
-                comm.barrier()
-
-            state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-
-            network_states_net[iteration_cnt, :] = state_
-            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
-
-            try:
-                next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
-                actions[iteration_cnt + 1, :] = next_state
-            except:
-                break
-            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_state
-            iteration_cnt += 1
-            if comm != None:
-                comm.barrier()
+        network_states_net[iteration, :] = state_
+        print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
+        try:
+            next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
+            actions[iteration + 1, :] = next_state
+        except:
+            break
+        print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
 
     if pc_id == 0:
         np.savetxt(params['actions_taken_fn'], actions)

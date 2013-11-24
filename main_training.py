@@ -122,6 +122,9 @@ if __name__ == '__main__':
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_state
 
             iteration_cnt += 1
+            if comm != None:
+                comm.barrier()
+
 
     CC.get_weights(MT, BG)
 
