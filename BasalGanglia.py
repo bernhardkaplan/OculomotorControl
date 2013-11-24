@@ -245,6 +245,9 @@ class BasalGanglia(object):
 #        print 'gids_spiked', gids_spiked
 #        print 'recorder_output_gidkey', self.pc_id, self.recorder_output_gidkey
 #        print 'recorder_output', self.pc_id, self.recorder_output
+        if len(nspikes) == 0:
+            self.t_current += self.params['t_iteration']
+            return (0, 0)
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]
         winning_action = self.recorder_output_gidkey[winning_gid]

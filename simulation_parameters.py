@@ -40,12 +40,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['n_training_stim'] = 20  # number of different stimuli presented during training
-        self.params['n_testing_stim'] = 20  # number of different stimuli presented during training
+        self.params['n_training_stim'] = 5 # number of different stimuli presented during training
+        self.params['n_testing_stim'] = 5  # number of different stimuli presented during training
         self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_iterations_per_stim'] = 8
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_training_stim'] * self.params['n_iterations_per_stim']
         else:
@@ -71,7 +72,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['visual_stim_seed'] = 123
+        self.params['visual_stim_seed'] = 1234
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
         self.params['debug_mpn'] = True
@@ -120,7 +121,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # EXCITATORY NETWORK PARAMETERS
         # ##############################
         # network properties, size, number of preferred directions
-        self.params['n_v'] = 16
+        self.params['n_v'] = 12
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['n_hc'] = self.params['n_rf_x'] * self.params['n_rf_y']
         self.params['n_mc_per_hc'] = self.params['n_v'] * self.params['n_theta']
@@ -194,7 +195,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
-        self.params['n_actions'] = 21
+        self.params['n_actions'] = 41
         self.params['n_states'] = 40
 
 

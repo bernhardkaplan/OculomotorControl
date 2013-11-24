@@ -63,7 +63,7 @@ if __name__ == '__main__':
     iteration_cnt = 0
     for i_stim in xrange(params['n_testing_stim']):
         VI.current_motion_params = training_stimuli[i_stim, :]
-        for it in xrange(params['n_iterations']):
+        for it in xrange(params['n_iterations_per_stim']):
 
             if it == params['n_iterations_per_stim'] - 1:
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
@@ -89,11 +89,8 @@ if __name__ == '__main__':
             network_states_net[iteration_cnt, :] = state_
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
 
-            try:
-                next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
-                actions[iteration_cnt + 1, :] = next_state
-            except:
-                break
+            next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
+            actions[iteration_cnt + 1, :] = next_state
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_state
             iteration_cnt += 1
             if comm != None:
@@ -103,6 +100,7 @@ if __name__ == '__main__':
         np.savetxt(params['actions_taken_fn'], actions)
         np.savetxt(params['network_states_fn'], network_states_net)
         np.savetxt(params['motion_params_fn'], VI.motion_params)
+        os.system('python PlottingScripts/PlotMPNActivity.py')
 
     t1 = time.time() - t0
     print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)

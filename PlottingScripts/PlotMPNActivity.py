@@ -12,7 +12,8 @@ import re
 import numpy as np
 import pylab
 import matplotlib
-
+from FigureCreator import plot_params
+pylab.rcParams.update(plot_params)
 
 class ActivityPlotter(object):
 
@@ -168,6 +169,7 @@ class ActivityPlotter(object):
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         t = d[:, 4]
+        t += .5 * self.params['t_iteration']
         x_displacement = np.abs(d[:, 0] - .5)
         output_fn = self.params['data_folder'] + 'mpn_xdisplacement.dat'
         print 'Saving data to:', output_fn
@@ -177,17 +179,24 @@ class ActivityPlotter(object):
         ax = fig.add_subplot(111)
         ax.plot(t, x_displacement)
 
-        ymin, ymax = x_displacement.min(), x_displacement.max()
-        for it_ in xrange(self.params['n_iterations']):
-            t0 = it_ * self.params['t_iteration']
-#            t1 = (it_ + 1) * self.params['t_iteration']
-            ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
-
+        self.plot_vertical_lines(ax)
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal displacement (x-dim)')
         output_fig = self.params['figures_folder'] + 'mpn_displacement.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
+
+
+    def plot_vertical_lines(self, ax, params=None):
+        if params == None:
+            params = self.params
+        (ymin, ymax) = ax.get_ylim()
+        for i_stim in xrange(params['n_training_stim']):
+            t0 = i_stim * params['n_iterations_per_stim'] * params['t_iteration']
+            ax.plot((t0, t0), (ymin, ymax), ls='-', lw=2, c='k')
+            for it_ in xrange(params['n_iterations_per_stim']):
+                t0 = it_ * params['t_iteration'] + i_stim * params['n_iterations_per_stim'] * params['t_iteration']
+                ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
 
 
     def plot_raster_sorted(self, title='', cell_type='exc', sort_idx=0):
@@ -207,6 +216,11 @@ class ActivityPlotter(object):
         fig = pylab.figure()
         ax = fig.add_subplot(111)
         ax.set_title(title)
+        ax.set_xlabel('Time [ms]')
+        if sort_idx == 0:
+            ax.set_ylabel('Cells sorted by RF-position')
+        elif sort_idx == 2:
+            ax.set_ylabel('Cells sorted by preferred speed')
         for i_, gid in enumerate(tp_idx_sorted):
             spikes = utils.get_spiketimes(spikes_unsrtd, gid + 1)
             nspikes = spikes.size
@@ -240,7 +254,7 @@ class ActivityPlotter(object):
                 fn_ = self.params['input_folder_mpn'] + fn
                 d = np.loadtxt(fn_)
                 ax.plot(d, y_pos_of_cell * np.ones(d.size), 'o', markersize=3, alpha=.1, color='b')
-
+        self.plot_vertical_lines(ax)
 
 if __name__ == '__main__':
 
@@ -263,8 +277,8 @@ if __name__ == '__main__':
     Plotter = ActivityPlotter(params)#, it_max=1)
     Plotter.plot_input()
     Plotter.plot_output()
-    if params['training']:
-        Plotter.plot_retinal_displacement()
+#    if params['training']:
+    Plotter.plot_retinal_displacement()
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
     Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
     fig.savefig(params['figures_folder'] + 'rasterplot_mpn_in_and_out.png')

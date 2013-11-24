@@ -155,16 +155,17 @@ class MotionPrediction(object):
         return stim_params_readout
 
 
-    def readout_spiking_activity(self, tuning_prop, gids, nspikes):
+    def readout_spiking_activity(self, tuning_prop, nest_gids, nspikes):
 
-        if len(gids) == 0:
+        if len(nest_gids) == 0:
             print '\nWARNING:\n\tNo spikes on core %d emitted!!!\n\tMotion Prediction Network was silent!\nReturning nonevalid stimulus prediction\n' % (self.pc_id)
             return [0, 0, 0, 0]
 
         confidence = nspikes / float(nspikes.sum())
         n_dim = tuning_prop[0, :].size
         prediction = np.zeros(n_dim)
-        for i_, gid in enumerate(gids):
+        for i_, nest_gid in enumerate(nest_gids):
+            gid = nest_gid - 1
             prediction += tuning_prop[gid, :] * confidence[i_]
         return prediction
 
