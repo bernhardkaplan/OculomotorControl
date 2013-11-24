@@ -42,7 +42,11 @@ class VisualInput(object):
         for i_stim in xrange(self.params['n_training_stim']):
             x0 = np.random.rand()
             plus_minus = utils.get_plus_minus(self.RNG)
-            v0 = (self.params['v_max_tp'] * np.random.rand() + self.params['v_min_tp']) * plus_minus
+            # choose a random cell index and add some noise to the v value 
+            rnd_idx = np.random.randint(0, self.params['n_exc_mpn'])
+            v0 = self.tuning_prop_exc[rnd_idx, 2]
+            v0 *= .4 * np.random.rand() + .8
+            v0 *= plus_minus
             mp_training[i_stim, 0] = x0
             mp_training[i_stim, 2] = v0
         np.savetxt(self.params['training_sequence_fn'], mp_training)
@@ -140,7 +144,7 @@ class VisualInput(object):
         # update the motion parameters based on the action
 
         # store the motion parameters at the beginning of this iteration
-        print 'debug self.motion_params.shape', self.motion_params.shape, 'self.iteration:', self.iteration, 'self.n_stim_dim ', self.n_stim_dim, 'self.current_motion_params', self.current_motion_params, 'shape', self.current_motion_params.shape
+#        print 'debug self.motion_params.shape', self.motion_params.shape, 'self.iteration:', self.iteration, 'self.n_stim_dim ', self.n_stim_dim, 'self.current_motion_params', self.current_motion_params, 'shape', self.current_motion_params.shape
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
         self.motion_params[self.iteration, -1] = self.t_current
 
@@ -322,9 +326,9 @@ class VisualInput(object):
         At the last iteration for each stimulus return an empty spike train
         """
 
-        local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
+        local_gids = np.array(local_gids)
         supervisor_state = [0., 0., 0., 0.]
-        for i_, gid in enumerate(local_gids):
+        for i_ in xrange(len(local_gids)):
             self.stim[i_] = []
         self.motion_params[self.iteration, -1] = self.t_current
         self.iteration += 1

@@ -2,6 +2,7 @@ import nest
 import numpy as np
 import os
 import utils
+import time
 
 class CreateConnections(object):
 
@@ -17,6 +18,9 @@ class CreateConnections(object):
         if comm != None:
             self.pc_id = comm.rank
             self.n_proc = comm.size
+        else:
+            self.pc_id = 0
+            self.n_proc = 1
 
 
     def connect_mt_to_bg(self, src_net, tgt_net):
@@ -43,17 +47,23 @@ class CreateConnections(object):
         based on the weights found in conn_folder
         """
 
-        if not os.path.exists(training_params['mpn_bgd1_merged_conn_fn']):
-            # merge the connection files
-            merge_pattern = training_params['mpn_bgd1_conn_fn_base']
-            fn_out = training_params['mpn_bgd1_merged_conn_fn']
-            utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+        if self.pc_id == 0:
+            if not os.path.exists(training_params['mpn_bgd1_merged_conn_fn']):
+                # merge the connection files
+                merge_pattern = training_params['mpn_bgd1_conn_fn_base']
+                fn_out = training_params['mpn_bgd1_merged_conn_fn']
+                utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+        else:
+            time.sleep(0.1)
 
-        if not os.path.exists(training_params['mpn_bgd2_merged_conn_fn']):
-            # merge the connection files
-            merge_pattern = training_params['mpn_bgd2_conn_fn_base']
-            fn_out = training_params['mpn_bgd2_merged_conn_fn']
-            utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+        if self.pc_id == 0:
+            if not os.path.exists(training_params['mpn_bgd2_merged_conn_fn']):
+                # merge the connection files
+                merge_pattern = training_params['mpn_bgd2_conn_fn_base']
+                fn_out = training_params['mpn_bgd2_merged_conn_fn']
+                utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+        else:
+            time.sleep(0.1)
 
         print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
         mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
@@ -124,6 +134,5 @@ class CreateConnections(object):
         D2_f.close()
 
 
-
-    def get_connection_kernel(self, src_gid):
-        return 0
+    def set_pc_id(self, pc_id):
+        self.pc_id = pc_id

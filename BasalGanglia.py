@@ -190,8 +190,8 @@ class BasalGanglia(object):
         action[0] = (x - .5) + u * self.params['t_iteration'] / self.params['t_cross_visual_field']
         action[1] = (y - .5) + v * self.params['t_iteration'] / self.params['t_cross_visual_field']
 
-        print 'debug supervisor_state', supervisor_state
-        print 'debug supervisor action', action
+#        print 'debug supervisor_state', supervisor_state
+#        print 'debug supervisor action', action
         action_index_x = self.map_speed_to_action(action[0], self.action_bins_x) # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
         action_index_y = self.map_speed_to_action(action[1], self.action_bins_y)
 

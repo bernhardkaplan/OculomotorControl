@@ -52,6 +52,10 @@ class Plotter(object):
         self.AP = ActivityPlotter(self.test_params)
         self.AP.plot_vertical_lines(ax)
 
+        output_fn = self.test_params['figures_folder'] + 'comparison_training_test_xdisplacement.png'
+        print 'Saving figure to:', output_fn
+        pylab.savefig(output_fn, dpi=300)
+
 
 
 if __name__ == '__main__':

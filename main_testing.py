@@ -33,7 +33,6 @@ if __name__ == '__main__':
     if params['training']:
         print 'Set training = False!'
         exit(1)
-    GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
 
     assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
     training_folder = os.path.abspath(sys.argv[1]) # contains the EPTH and OB activity of simple patterns
@@ -42,6 +41,8 @@ if __name__ == '__main__':
     training_param_tool = simulation_parameters.global_parameters(params_fn=training_params_fn)
     training_params = training_param_tool.params
 
+    GP.params['training_params'] = training_params
+    GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
     motion_params = np.loadtxt(training_params['motion_params_fn'])
 
 
@@ -54,6 +55,7 @@ if __name__ == '__main__':
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)
     CC = CreateConnections.CreateConnections(params)
+    CC.set_pc_id(pc_id)
     CC.connect_mt_to_bg_after_training(MT, BG, training_params)
 
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)

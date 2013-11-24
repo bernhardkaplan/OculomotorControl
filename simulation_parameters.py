@@ -40,13 +40,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['n_training_stim'] = 5 # number of different stimuli presented during training
-        self.params['n_testing_stim'] = 5  # number of different stimuli presented during training
+        self.params['n_training_stim'] = 10 # number of different stimuli presented during training
+        self.params['n_testing_stim'] = 10  # number of different stimuli presented during training
         self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 8
+        self.params['n_iterations_per_stim'] = 6
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_training_stim'] * self.params['n_iterations_per_stim']
         else:
@@ -195,8 +195,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
-        self.params['n_actions'] = 41
-        self.params['n_states'] = 40
+        self.params['n_actions'] = 21
+        self.params['n_states'] = 20
 
 
 
