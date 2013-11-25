@@ -42,8 +42,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['n_training_stim'] = 10 # number of different stimuli presented during training
         self.params['n_testing_stim'] = 10  # number of different stimuli presented during training
-        self.params['t_iteration'] = 30.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 6
+        self.params['t_iteration'] = 15.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['n_iterations_per_stim'] = 8
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
 #        self.params['training'] = True
         self.params['training'] = False
@@ -60,8 +60,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         self.params['w_exc_mpn_bg'] = 10.
 
-        # initial motion parameters
-        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        # initial 
+        self.params['initial_state'] = (.5, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+#        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
     def set_visual_input_params(self):
@@ -121,7 +122,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # EXCITATORY NETWORK PARAMETERS
         # ##############################
         # network properties, size, number of preferred directions
-        self.params['n_v'] = 12
+        self.params['n_v'] = 16
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['n_hc'] = self.params['n_rf_x'] * self.params['n_rf_y']
         self.params['n_mc_per_hc'] = self.params['n_v'] * self.params['n_theta']
@@ -137,7 +138,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 20
-        self.params['v_max_tp'] = 2.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
+        self.params['v_max_tp'] = 4.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.05  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['blur_X'], self.params['blur_V'] = .05, .05
         self.params['blur_theta'] = 1.0

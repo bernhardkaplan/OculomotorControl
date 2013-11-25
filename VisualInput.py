@@ -18,6 +18,7 @@ class VisualInput(object):
         np.random.seed(self.params['visual_stim_seed'])
         self.RNG = np.random
 
+        self.supervisor_state = [0., 0.]
         self.tuning_prop_exc = self.set_tuning_prop('exc')
         self.tuning_prop_inh = self.set_tuning_prop('inh')
         print 'Saving tuning properties exc to:', self.params['tuning_prop_exc_fn']
@@ -40,14 +41,20 @@ class VisualInput(object):
         """
         mp_training = np.zeros((self.params['n_training_stim'], 4))
         for i_stim in xrange(self.params['n_training_stim']):
-            x0 = np.random.rand()
             plus_minus = utils.get_plus_minus(self.RNG)
+#            x0 = .3 #np.random.rand()
+            x0 = .6 * np.random.rand() + .2
             # choose a random cell index and add some noise to the v value 
+#            v0 = self.params['v_max_tp']
+#            while v0 > .7 * self.params['v_max_tp']:
             rnd_idx = np.random.randint(0, self.params['n_exc_mpn'])
-            v0 = self.tuning_prop_exc[rnd_idx, 2]
-            v0 *= .4 * np.random.rand() + .8
+#            v0 = self.tuning_prop_exc[rnd_idx, 2]
+#            v0 *= .4 * np.random.rand() + .8
+            v0 = np.random.rand()
+            plus_minus = utils.get_plus_minus(self.RNG)
             v0 *= plus_minus
             mp_training[i_stim, 0] = x0
+            mp_training[i_stim, 1] = .5
             mp_training[i_stim, 2] = v0
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
@@ -65,9 +72,10 @@ class VisualInput(object):
         trajectory = self.update_stimulus_trajectory(action_code)
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
-        supervisor_state = (trajectory[0][-1], trajectory[1][-1], self.current_motion_params[2], self.current_motion_params[3])
+#        supervisor_state = (trajectory[0][-1], trajectory[1][-1], \
+#                self.current_motion_params[2], self.current_motion_params[3])
         self.iteration += 1
-        return self.stim, supervisor_state
+        return self.stim, self.supervisor_state
 
 
     def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False):
@@ -119,6 +127,8 @@ class VisualInput(object):
         motion_params: 4-element tuple with the current stimulus position and direction
         """
 
+        # TODO: 
+        # iteration over cells, look up tuning width (blur_x/v) for cell_gid
         n_cells = tuning_prop[:, 0].size
         blur_X, blur_V = self.params['blur_X'], self.params['blur_V'] #0.5, 0.5
         x_stim, y_stim, u_stim, v_stim = motion_params[0], motion_params[1], motion_params[2], motion_params[3]
@@ -145,12 +155,12 @@ class VisualInput(object):
 
         # store the motion parameters at the beginning of this iteration
 #        print 'debug self.motion_params.shape', self.motion_params.shape, 'self.iteration:', self.iteration, 'self.n_stim_dim ', self.n_stim_dim, 'self.current_motion_params', self.current_motion_params, 'shape', self.current_motion_params.shape
+        print 'self.motion_params', self.motion_params[self.iteration, :]
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
         self.motion_params[self.iteration, -1] = self.t_current
 
-        print 'before update cur mot p', self.current_motion_params
-        self.current_motion_params[0] -= action_code[0] # shift x-position by moving according to vx
-        self.current_motion_params[1] -= action_code[1] # shift y-position by moving according to vy
+        print 'before update current motion parameters', self.current_motion_params
+        print 'Debug action_code', action_code
         self.current_motion_params[2] -= action_code[0]  # update v_stim_x
         self.current_motion_params[3] -= action_code[1]  # update v_stim_y
 
@@ -161,8 +171,14 @@ class VisualInput(object):
         # update the retinal position to the position of the stimulus at the end of the iteration
         self.current_motion_params[0] = x_stim[-1]
         self.current_motion_params[1] = y_stim[-1]
-        print 'after update cur mot p', self.current_motion_params
+        print 'after update current motion parameters', self.current_motion_params
         trajectory = (x_stim, y_stim)
+
+        self.supervisor_state[0] = .4 * (x_stim[-1] - .5) / (self.params['t_iteration'] / self.params['t_cross_visual_field']) + self.current_motion_params[2]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
+        self.supervisor_state[1] = .4 * (y_stim[-1] - .5) / (self.params['t_iteration'] / self.params['t_cross_visual_field']) + self.current_motion_params[3]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
+#        self.supervisor_state[0] = self.current_motion_params[2]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
+#        self.supervisor_state[1] = self.current_motion_params[3]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
+        print 'Supervised_state', self.supervisor_state
 #        self.trajectories.append(trajectory) # store for later save 
 
         return trajectory
@@ -327,13 +343,13 @@ class VisualInput(object):
         """
 
         local_gids = np.array(local_gids)
-        supervisor_state = [0., 0., 0., 0.]
         for i_ in xrange(len(local_gids)):
             self.stim[i_] = []
         self.motion_params[self.iteration, -1] = self.t_current
         self.iteration += 1
         self.t_current += self.params['t_iteration']
-        return self.stim, supervisor_state
+        self.supervisor_state = [0., 0.]
+        return self.stim, self.supervisor_state
 
 
     def set_pc_id(self, pc_id):
@@ -348,7 +364,6 @@ class VisualInput(object):
         """
         t_integrate = self.params['t_iteration']
         print 'Creating dummy spike trains', self.t_current
-#        stim = [ [] for unit in xrange(self.params['n_exc_per_mc'])]
         stim = [ [] for gid in xrange(len(local_gids))]
 
         for i_, gid in enumerate(local_gids):

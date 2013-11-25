@@ -173,10 +173,28 @@ class BasalGanglia(object):
         print 'BG: action_bins_y', self.action_bins_y
 
 
-    def map_speed_to_action(self, speed, binning):
+    def map_speed_to_action(self, speed, binning, xy='x'):
         # select an action based on the supervisor state information
-        cnt_u, bins = np.histogram(speed, binning)
-        action_index = cnt_u.nonzero()[0][0]
+        if xy == 'x':
+            if speed > self.params['v_max_tp']:
+                action_index = self.params['n_actions'] - 1
+            elif (speed < (-1.) * self.params['v_max_tp']):
+                action_index = 0
+            else:
+                cnt_u, bins = np.histogram(speed, binning)
+                action_index = cnt_u.nonzero()[0][0]
+
+        else:
+            if speed > self.params['v_max_tp']:
+                action_index = self.params['n_actions'] - 1
+            elif (speed < (-1.) * self.params['v_max_tp']):
+                action_index = 0
+            else:
+                cnt_u, bins = np.histogram(speed, binning)
+                print 'speed, cnt_u', speed, cnt_u
+                action_index = cnt_u.nonzero()[0][0]
+
+        print 'BG.map_speed_to_action: speed=%.3f --> ' % (speed), action_index
         return action_index
 
 
@@ -185,10 +203,12 @@ class BasalGanglia(object):
         """
         Activates poisson generator of the required, teached, action and inactivates the one of the nondesirable actions.
         """
-        (x, y, u, v) = supervisor_state 
+        (u, v) = supervisor_state 
         action = [0, 0]
-        action[0] = (x - .5) + u * self.params['t_iteration'] / self.params['t_cross_visual_field']
-        action[1] = (y - .5) + v * self.params['t_iteration'] / self.params['t_cross_visual_field']
+#        action[0] = (x - .5) + u * self.params['t_iteration'] / self.params['t_cross_visual_field']
+#        action[1] = (y - .5) + v * self.params['t_iteration'] / self.params['t_cross_visual_field']
+        action[0] = u 
+        action[1] = v 
 
 #        print 'debug supervisor_state', supervisor_state
 #        print 'debug supervisor action', action

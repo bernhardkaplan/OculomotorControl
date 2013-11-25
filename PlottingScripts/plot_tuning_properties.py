@@ -14,6 +14,8 @@ import sys
 import os
 import utils
 
+from FigureCreator import plot_params
+pylab.rcParams.update(plot_params)
 
 class Plotter(object):
 
@@ -54,10 +56,11 @@ class Plotter(object):
         ax.set_xlabel('Receptive field center $x$', fontsize=18)
         ax.set_ylabel('Preferred speed', fontsize=18)
         for i in xrange(self.tp[:, 0].size):
-            ax.plot(self.tp[i, 0], self.tp[i, 2], 'o', c='k')
+            ax.plot(self.tp[i, 0], self.tp[i, 2], 'o', markersize=5, c='k')
 
         ylim = ax.get_ylim()
         ax.set_ylim((1.1 * ylim[0], 1.1 * ylim[1]))
+#        ax.set_ylim((-3, 3))
         output_fn = self.params['figures_folder'] + 'tuning_space.png'
         print 'Saving to:', output_fn
         pylab.savefig(output_fn)
