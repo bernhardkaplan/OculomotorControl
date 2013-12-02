@@ -40,13 +40,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['n_training_stim'] = 10 # number of different stimuli presented during training
-        self.params['n_testing_stim'] = 10  # number of different stimuli presented during training
+        self.params['n_training_stim'] = 1 # number of different stimuli presented during training
+        self.params['n_testing_stim'] = 1  # number of different stimuli presented during training
         self.params['t_iteration'] = 15.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_iterations_per_stim'] = 8
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_training_stim'] * self.params['n_iterations_per_stim']
         else:
@@ -61,7 +61,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['w_exc_mpn_bg'] = 10.
 
         # initial 
-        self.params['initial_state'] = (.5, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
@@ -140,7 +140,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_to_record_mpn'] = 20
         self.params['v_max_tp'] = 4.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.05  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['blur_X'], self.params['blur_V'] = .05, .05
+        self.params['blur_X'], self.params['blur_V'] = .2, .2
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -208,12 +208,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_e = 100.
         self.tau_p = max(1000., self.params['t_sim'])
         self.gain = 0.
-        self.K = 50.
+        self.K = 1.
         self.params['fmax'] = 20.
 
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 100.
+        self.params['mpn_bg_weight_amplification'] = 1000.
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'

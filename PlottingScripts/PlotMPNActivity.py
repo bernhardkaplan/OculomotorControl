@@ -179,11 +179,15 @@ class ActivityPlotter(object):
         ax = fig.add_subplot(111)
         ax.plot(t, x_displacement, lw=3)
 
+        if self.params['training']:
+            ax.set_title('Training')
+        else:
+            ax.set_title('Testing')
         self.plot_vertical_lines(ax)
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal displacement (x-dim)')
         ax.set_xlim((0, self.params['t_sim']))
-        ax.set_ylim((0, 1.2))
+#        ax.set_ylim((0, 1.2))
         output_fig = self.params['figures_folder'] + 'mpn_displacement.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)

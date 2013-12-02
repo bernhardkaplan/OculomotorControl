@@ -72,6 +72,10 @@ class ActivityPlotter(object):
                 pass
 
 
+    def plot_action_spikes(self):
+        
+        fns = utils.find_files(self.params['parameters_folder'], 'bg_cell_gids_pcid(\d+).json')
+        print 'fns:', fns
 
 
 
@@ -95,5 +99,6 @@ if __name__ == '__main__':
     utils.merge_and_sort_files(params['spiketimes_folder_mpn'] + params['bg_spikes_fn'], params['spiketimes_folder_mpn'] + params['bg_spikes_fn_merged'])
     Plotter = ActivityPlotter(params)#, it_max=1)
 #    Plotter.plot_raster_simple()
-    Plotter.plot_action_voltages()
-    pylab.show()
+#    Plotter.plot_action_voltages()
+    Plotter.plot_action_spikes()
+#    pylab.show()
