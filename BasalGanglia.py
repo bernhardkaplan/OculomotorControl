@@ -16,6 +16,7 @@ class BasalGanglia(object):
             assert (comm.rank == self.pc_id), 'mpi4py and NEST tell me different PIDs!'
             assert (comm.size == self.n_proc), 'mpi4py and NEST tell me different PIDs!'
 
+        self.iteration = 0
         self.set_action_speed_mapping_bins() 
         self.strD1 = {}
         self.strD2 = {}
@@ -175,26 +176,16 @@ class BasalGanglia(object):
 
     def map_speed_to_action(self, speed, binning, xy='x'):
         # select an action based on the supervisor state information
-        if xy == 'x':
-            if speed > self.params['v_max_tp']:
-                action_index = self.params['n_actions'] - 1
-            elif (speed < (-1.) * self.params['v_max_tp']):
-                action_index = 0
-            else:
-                cnt_u, bins = np.histogram(speed, binning)
-                action_index = cnt_u.nonzero()[0][0]
-
+        if speed > self.params['v_max_tp']:
+            action_index = self.params['n_actions'] - 1
+        elif (speed < (-1.) * self.params['v_max_tp']):
+            action_index = 0
         else:
-            if speed > self.params['v_max_tp']:
-                action_index = self.params['n_actions'] - 1
-            elif (speed < (-1.) * self.params['v_max_tp']):
-                action_index = 0
-            else:
-                cnt_u, bins = np.histogram(speed, binning)
-                print 'speed, cnt_u', speed, cnt_u
-                action_index = cnt_u.nonzero()[0][0]
+            cnt_u, bins = np.histogram(speed, binning)
+            action_index = cnt_u.nonzero()[0][0]
 
-        print 'BG.map_speed_to_action: speed=%.3f --> ' % (speed), action_index
+        if xy == 'x':
+            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : speed=%.3f --> action: %d ' % (self.pc_id, self.iteration, speed, action_index)
         return action_index
 
 
@@ -212,8 +203,8 @@ class BasalGanglia(object):
 
 #        print 'debug supervisor_state', supervisor_state
 #        print 'debug supervisor action', action
-        action_index_x = self.map_speed_to_action(action[0], self.action_bins_x) # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
-        action_index_y = self.map_speed_to_action(action[1], self.action_bins_y)
+        action_index_x = self.map_speed_to_action(action[0], self.action_bins_x, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
+        action_index_y = self.map_speed_to_action(action[1], self.action_bins_y, xy='y')
 
         print 'debug BG based on supervisor action choose action_index_x:', action_index_x
 #        action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
@@ -275,6 +266,7 @@ class BasalGanglia(object):
         print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
         self.t_current += self.params['t_iteration']
 
+        self.iteration += 1
         return (output_speed_x, 0)
 
 

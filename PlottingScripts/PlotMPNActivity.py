@@ -233,6 +233,11 @@ class ActivityPlotter(object):
             y_ = np.ones(spikes.size) * tp[gid, sort_idx]
             ax.plot(spikes, y_, 'o', markersize=3, color='k')
 
+        xlim = ax.get_xlim()
+        if sort_idx == 0:
+            ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', lw=3, c='k')
+        elif sort_idx == 2:
+            ax.plot((xlim[0], xlim[1]), (.0, .0), ls='--', lw=3, c='k')
         return fig, ax
 
 
@@ -262,6 +267,49 @@ class ActivityPlotter(object):
                 ax.plot(d, y_pos_of_cell * np.ones(d.size), 'o', markersize=3, alpha=.1, color='b')
         self.plot_vertical_lines(ax)
 
+
+    def plot_training_sequence(self):
+        """
+        plots the 1D training sequence
+
+         ^ stimulus
+         | number
+         |
+         |      ->
+         |    <----
+         |  ->
+         +---------------->
+            x-start-pos
+        """
+
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Perceived stimuli')
+        ax.set_ylabel('Iteration within one training stimulus')
+        ax.set_xlabel('Start x-position')
+
+        motion_params = np.loadtxt(self.params['motion_params_fn'])
+        n_stim = motion_params[:, 0].size
+        mp = np.zeros((n_stim, 5))
+        for i in xrange(n_stim):
+            mp[i, :] = motion_params[i, :]
+            mp[i, 1] = i
+            print 'Debug stim and motion_params', i, mp[i, :]
+            ax.annotate('(%.2f, %.2f)' % (mp[i, 0], mp[i, 2]), (max(0, mp[i, 0] - .1), mp[i, 1] + .2))
+        
+        ax.quiver(mp[:, 0], mp[:, 1], mp[:, 2], mp[:, 3], \
+                  angles='xy', scale_units='xy', scale=1, headwidth=4, pivot='tail')#, width=0.007)
+
+        xmin = mp[np.argmin(mp[:, 2]), 0] + mp[np.argmin(mp[:, 2]), 2] - .5
+        xmax = mp[np.argmax(mp[:, 2]), 0] + mp[np.argmax(mp[:, 2]), 2] + .5
+        ax.plot((.5 ,.5), (0, n_stim), ls='--', c='k')
+        ax.set_xlim((xmin, xmax))
+        ax.set_ylim((-.5, n_stim + 0.5))
+
+        return fig
+
+
+
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
@@ -281,13 +329,26 @@ if __name__ == '__main__':
     
     utils.merge_and_sort_files(params['spiketimes_folder_mpn'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder_mpn'] + params['mpn_exc_spikes_fn_merged'])
     Plotter = ActivityPlotter(params)#, it_max=1)
-    Plotter.plot_input()
-    Plotter.plot_output()
+    fig = Plotter.plot_training_sequence()
+    output_fn = params['figures_folder'] + 'training_sequence.png'
+    print 'Saving to', output_fn
+    fig.savefig(output_fn)
+
+#    Plotter.plot_input()
+#    Plotter.plot_output()
 #    if params['training']:
     Plotter.plot_retinal_displacement()
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
     Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
-    fig.savefig(params['figures_folder'] + 'rasterplot_mpn_in_and_out.png')
+    output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
+    print 'Saving to', output_fn
+    fig.savefig(output_fn)
+
+    fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
+    Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+    output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
+    print 'Saving to', output_fn
+    fig.savefig(output_fn)
 
 #    Plotter.plot_raster_sorted(title='Exc cells sorted by $v_x$', sort_idx=2)
     pylab.show()

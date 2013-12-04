@@ -42,11 +42,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['n_training_stim'] = 1 # number of different stimuli presented during training
         self.params['n_testing_stim'] = 1  # number of different stimuli presented during training
-        self.params['t_iteration'] = 15.             # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 8
+        self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
+        self.params['n_iterations_per_stim'] = 20
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_training_stim'] * self.params['n_iterations_per_stim']
         else:
@@ -61,7 +62,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['w_exc_mpn_bg'] = 10.
 
         # initial 
-        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+#        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.9, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
@@ -138,12 +140,27 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 20
-        self.params['v_max_tp'] = 4.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
-        self.params['v_min_tp'] = 0.05  # [a.u.] minimal velocity in visual space for tuning property distribution
+        self.params['v_max_tp'] = 6.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
+        self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['blur_X'], self.params['blur_V'] = .2, .2
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
+        # receptive field size parameters
+        # receptive field sizes are determined by their relative position (for x/y relative to .5, for u/v relative to 0.)
+        # rf_size = rf_size_gradient * |relative_rf_pos| + min_rf_size
+        # check for reference: Dow 1981 "Magnification Factor and Receptive Field Size in Foveal Striate Cortex of the Monkey"
+        self.params['rf_size_x_gradient'] = .2  # receptive field size for x-pos increases with distance to .5
+        self.params['rf_size_y_gradient'] = .2  # receptive field size for y-pos increases with distance to .5
+        self.params['rf_size_x_min'] = .02      # cells situated at .5 have this receptive field size
+        self.params['rf_size_y_min'] = .02      # cells situated at .5 have this receptive field size
+        self.params['rf_size_vx_gradient'] = .2 # receptive field size for vx-pos increases with distance to 0.0
+        self.params['rf_size_vy_gradient'] = .2 #
+        self.params['rf_size_vx_min'] = .02 # cells situated at .5 have this receptive field size
+        self.params['rf_size_vy_min'] = .02 # cells situated at .5 have this receptive field size
+
+        # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
+        self.params['supervisor_amp_param'] = 1.
 
         # ##############################
         # INHIBITOTY NETWORK PARAMETERS
@@ -341,6 +358,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # tuning properties
         self.params['tuning_prop_exc_fn'] = self.params['parameters_folder'] + 'tuning_prop_exc.txt'
         self.params['tuning_prop_inh_fn'] = self.params['parameters_folder'] + 'tuning_prop_inh.txt'
+        self.params['receptive_fields_exc_fn'] = self.params['parameters_folder'] + 'receptive_field_sizes_exc.txt'
         self.params['gids_to_record_fn_mp'] = self.params['parameters_folder'] + 'gids_to_record_mpn.txt'
         # storage for actions (BG), network states (MPN) and motion parameters (on Retina)
         self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt'

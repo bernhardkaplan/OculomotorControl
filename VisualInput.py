@@ -26,6 +26,7 @@ class VisualInput(object):
         print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
         np.savetxt(self.params['tuning_prop_exc_fn'], self.tuning_prop_exc)
         np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
+        np.savetxt(self.params['receptive_fields_exc_fn'], self.rf_sizes)
 
         self.current_motion_params = list(self.params['initial_state'])
         # store the motion parameters seen on the retina
@@ -42,41 +43,49 @@ class VisualInput(object):
         """
         mp_training = np.zeros((self.params['n_training_stim'], 4))
 
+        if self.params['n_training_stim'] == 1:
+            x0 = self.params['initial_state'][0]
+            v0 = self.params['initial_state'][2]
+            mp_training[0, 0] = x0
+            mp_training[0, 1] = .5
+            mp_training[0, 2] = v0
+        else:
+            for i_stim in xrange(self.params['n_training_stim']):
+    #            plus_minus = utils.get_plus_minus(self.RNG)
+                plus_minus = (-1.)**i_stim
+    #            x0 = .2 #np.random.rand()
+                x0 = np.random.rand()
+    #            x0 *= plus_minus
+    #            x0 += .5
+    #            x0 = .6 * np.random.rand() + .2
+                # choose a random cell index and add some noise to the v value 
+                v0 = self.params['v_max_tp']
+                while v0 > .7 * self.params['v_max_tp']:
+                    rnd_idx = np.random.randint(0, self.params['n_exc_mpn'])
+                    v0 = self.tuning_prop_exc[rnd_idx, 2]
+                    v0 *= .4 * np.random.rand() + .8
+                plus_minus = utils.get_plus_minus(self.RNG)
+                v0 *= plus_minus
 
-        for i_stim in xrange(self.params['n_training_stim']):
-#            plus_minus = utils.get_plus_minus(self.RNG)
-            plus_minus = (-1.)**i_stim
-            x0 = .3 #np.random.rand()
-            x0 *= plus_minus
-            x0 += .5
-#            x0 = .6 * np.random.rand() + .2
-            # choose a random cell index and add some noise to the v value 
-#            v0 = self.params['v_max_tp']
-#            while v0 > .7 * self.params['v_max_tp']:
-#            rnd_idx = np.random.randint(0, self.params['n_exc_mpn'])
-#            v0 = self.tuning_prop_exc[rnd_idx, 2]
-#            v0 *= .4 * np.random.rand() + .8
-#            v0 = np.random.rand()
-#            plus_minus = utils.get_plus_minus(self.RNG)
-            v0 = .5
-            v0 *= plus_minus
-            mp_training[i_stim, 0] = x0
-            mp_training[i_stim, 1] = .5
-            mp_training[i_stim, 2] = v0
+                mp_training[i_stim, 0] = x0
+                mp_training[i_stim, 1] = .5
+                mp_training[i_stim, 2] = v0
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
 
 
-    def compute_input(self, local_gids, action_code, dummy=False):
+    def compute_input(self, local_gids, action_code, v_eye, network_state, dummy=False):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
-        Keyword arguments:
+        Arguments:
         local_gids -- the GIDS for which the stimulus needs to be computed
         action_code -- a tuple representing the action (direction of eye movement)
+        v_eye -- list with two elements [vx, vy]
+        network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-        trajectory = self.update_stimulus_trajectory(action_code)
+        trajectory = self.update_stimulus_trajectory(action_code, v_eye, network_state)
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
 #        supervisor_state = (trajectory[0][-1], trajectory[1][-1], \
@@ -106,7 +115,7 @@ class VisualInput(object):
             motion_params = (x_stim, y_stim, self.current_motion_params[2], self.current_motion_params[3])
             # get the envelope of the Poisson process for this timestep
 #            L_input[:, i_time] = self.get_input(self.tuning_prop_exc[local_gids, :], motion_params) 
-            L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_size_x[local_gids], self.rf_size_v[local_gids], motion_params) 
+            L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params) 
             L_input[:, i_time] *= self.params['f_max_stim']
 
         input_nspikes = np.zeros((len(local_gids), 2))
@@ -155,6 +164,7 @@ class VisualInput(object):
         """
         Arguments:
         tuning_prop: the 4-dim tuning properties of local cells
+        blur_X: the tuning widths (receptive field sizes) of local cells (corresponding to the tuning prop)
         motion_params: 4-element tuple with the current stimulus position and direction
         """
 
@@ -174,41 +184,70 @@ class VisualInput(object):
         return L
 
 
-    def update_stimulus_trajectory(self, action_code):
+    def update_stimulus_trajectory(self, action_code, v_eye, network_state):
         """
+        Update the motion parameters based on the action
+
         Keyword arguments:
         action_code -- a tuple representing the action (direction of eye movement)
+        v_eye -- [vx, vy] eye velocity 
+        network_state -- [x, y, vx, vy] 'prediction' based on sensory neurons
+        network_state[2:4]  = v_object
         """
+
         t_integrate = self.params['t_iteration']
         time_axis = np.arange(0, t_integrate, self.params['dt_input_mpn'])
-        # update the motion parameters based on the action
 
         # store the motion parameters at the beginning of this iteration
 #        print 'debug self.motion_params.shape', self.motion_params.shape, 'self.iteration:', self.iteration, 'self.n_stim_dim ', self.n_stim_dim, 'self.current_motion_params', self.current_motion_params, 'shape', self.current_motion_params.shape
-        print 'self.motion_params', self.motion_params[self.iteration, :]
-        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
-        self.motion_params[self.iteration, -1] = self.t_current
 
         print 'before update current motion parameters', self.current_motion_params
         print 'Debug action_code', action_code
+
+        # not working, need to separate current_motion_params (for update x_stim) from perceived_motion_params again (for calculating input response)
+#        displ_wx = (1. - np.abs(network_state[0] - .5) / .5)
+#        displ_wy = (1. - np.abs(network_state[1] - .5) / .5)
+#        self.current_motion_params[2] -= displ_wx * action_code[0]  # update v_stim_x
+#        self.current_motion_params[3] -= displ_wy * action_code[1]  # update v_stim_y
+        # calculate how the stimulus will move according to these motion parameters
+#        x_stim = network_state[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
+#        y_stim = network_state[3] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
+
+        # working version
         self.current_motion_params[2] -= action_code[0]  # update v_stim_x
         self.current_motion_params[3] -= action_code[1]  # update v_stim_y
-
-        # calculate how the stimulus will move according to these motion parameters
+#         calculate how the stimulus will move according to these motion parameters
         x_stim = self.current_motion_params[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
         y_stim = self.current_motion_params[3] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
-        
+
         # update the retinal position to the position of the stimulus at the end of the iteration
         self.current_motion_params[0] = x_stim[-1]
         self.current_motion_params[1] = y_stim[-1]
         print 'after update current motion parameters', self.current_motion_params
         trajectory = (x_stim, y_stim)
+        
+        delta_x = (x_stim[-1] - .5)
+        delta_y = (y_stim[-1] - .5)
+        delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
+        k = self.params['supervisor_amp_param']
 
-        self.supervisor_state[0] = .2 * (x_stim[-1] - .5) / (self.params['t_iteration'] / self.params['t_cross_visual_field']) + self.current_motion_params[2]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
-        self.supervisor_state[1] = .2 * (y_stim[-1] - .5) / (self.params['t_iteration'] / self.params['t_cross_visual_field']) + self.current_motion_params[3]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
+#        dvx = k * np.abs(delta_x) / .5 * delta_x / delta_t + network_state[2] + self.current_motion_params[2] - v_eye[0]
+#        dvy = k * np.abs(delta_x) / .5 * delta_x / delta_t + network_state[3] + self.current_motion_params[3] - v_eye[1]
+#        self.supervisor_state[0] = dvx
+#        self.supervisor_state[1] = dvy
+
+        self.supervisor_state[0] = k * np.abs(delta_x) / .5 * delta_x / delta_t + network_state[2] + self.current_motion_params[2]
+        self.supervisor_state[1] = k * np.abs(delta_y) / .5 * delta_y / delta_t + network_state[3] + self.current_motion_params[3]
+
+#        self.supervisor_state[0] = .2 * (x_stim[-1] - .5) /  + self.current_motion_params[2]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
+#        self.supervisor_state[1] = .2 * (y_stim[-1] - .5) / (self.params['t_iteration'] / self.params['t_cross_visual_field']) + self.current_motion_params[3]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
 #        self.supervisor_state[0] = self.current_motion_params[2]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
 #        self.supervisor_state[1] = self.current_motion_params[3]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
-        print 'Supervised_state', self.supervisor_state
+        print 'Supervised_state[%d] = ' % (self.iteration), self.supervisor_state
+
+        print 'self.motion_params', self.motion_params[self.iteration, :]
+        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
+        self.motion_params[self.iteration, -1] = self.t_current
 #        self.trajectories.append(trajectory) # store for later save 
 
         return trajectory
@@ -219,14 +258,19 @@ class VisualInput(object):
     def set_receptive_fields(self, cell_type):
         """
         Can be called only after set_tuning_prop.
+        Receptive field sizes increase linearly depending on their relative position.
         """
-        self.rf_size_x = .5 * np.abs(self.tuning_prop_exc[:, 0] - .5)
-        self.rf_size_v = .2 * self.tuning_prop_exc[:, 2] 
+        n_cells = self.params['n_exc_mpn']
+        rfs = np.zeros((n_cells, 4))
+        rfs[:, 0] = self.params['rf_size_x_gradient'] * np.abs(self.tuning_prop_exc[:, 0] - .5) + self.params['rf_size_x_min']
+        rfs[:, 1] = self.params['rf_size_y_gradient'] * np.abs(self.tuning_prop_exc[:, 1] - .5) + self.params['rf_size_y_min']
+        rfs[:, 2] = self.params['rf_size_vx_gradient'] * np.abs(self.tuning_prop_exc[:, 2]) + self.params['rf_size_vx_min']
+        rfs[:, 3] = self.params['rf_size_vy_gradient'] * np.abs(self.tuning_prop_exc[:, 3]) + self.params['rf_size_vy_min']
+        return rfs
 
 
     def set_tuning_prop(self, cell_type):
 
-#        return self.set_tuning_prop_2D(cell_type)
         if self.params['n_grid_dimensions'] == 2:
             return self.set_tuning_prop_2D(mode, cell_type)
         else:

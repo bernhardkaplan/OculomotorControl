@@ -8,6 +8,7 @@ if cmd_subfolder not in sys.path:
 import numpy as np
 import pylab
 import matplotlib
+from matplotlib import mlab, cm
 import pylab
 import numpy as np
 import sys
@@ -28,7 +29,7 @@ class Plotter(object):
     def plot_tuning_prop(self):
 
         tp = self.tp
-        fig = pylab.figure()
+        fig = pylab.figure(figsize=(12, 12))
 
         ax1 = fig.add_subplot(221)
         ax2 = fig.add_subplot(222)
@@ -49,6 +50,7 @@ class Plotter(object):
         cnt, bins = np.histogram(tp[:, 2], bins=20)
         ax4.bar(bins[:-1], cnt, width=bins[1]-bins[0])
 
+
     def plot_tuning_space(self):
 
         fig = pylab.figure()
@@ -64,6 +66,44 @@ class Plotter(object):
         output_fn = self.params['figures_folder'] + 'tuning_space.png'
         print 'Saving to:', output_fn
         pylab.savefig(output_fn)
+
+
+    def plot_tuning_curves(self, idx):
+        """
+        idx: integer between 0 - 3 for the column in tuning properties, i.e. the dimension to be plotted
+        """
+        rfs = np.loadtxt(self.params['receptive_fields_exc_fn'])
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        n_cells = self.params['n_exc_mpn']
+        assert (n_cells  == rfs[:, 0].size), 'Mismatch in parameters given to plot_tuning_properties and simulation_parameters.py'
+        n_dots = 100
+#        n_rnd = n_cells
+#        rnd_gids = np.random.randint(0, self.params['n_exc_mpn'], n_rnd)
+        rnd_gids = range(0, n_cells)
+
+        color_code = self.tp[rnd_gids, idx]
+        norm = matplotlib.mpl.colors.Normalize(vmin=color_code.min(), vmax=color_code.max())
+        m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cm.jet)
+        rgba_colors = m.to_rgba(color_code)
+        print 'idx', idx
+        for i_, gid in enumerate(rnd_gids):
+            mu, sigma = self.tp[gid, idx], rfs[gid, idx]
+            x_ = np.linspace(mu - 3 * sigma, mu + 3 * sigma, n_dots)
+            y = np.exp(-.5 * (x_ - mu)**2 / sigma**2)
+#            print 'GID %d\tmu %.2e sigma %.2e\tL_max = %.2e, 1/L_max = %.2e' % (i_, mu, sigma, y.max(), 1 / y.max())
+            ax.plot(x_, y, color=rgba_colors[i_])
+
+        if idx == 0:
+            ax.set_xlabel('RF x-position')
+        elif idx == 1:
+            ax.set_xlabel('RF y-position')
+        elif idx == 2:
+            ax.set_xlabel('Speed in x-direction')
+        elif idx == 3:
+            ax.set_xlabel('Speed in y-direction')
+        ax.set_ylabel('Poisson rate envelope')
+
 
 if __name__ == '__main__':
 
@@ -85,5 +125,7 @@ if __name__ == '__main__':
     Plotter = Plotter(params)#, it_max=1)
     Plotter.plot_tuning_prop()
     Plotter.plot_tuning_space()
+    Plotter.plot_tuning_curves(0)
+    Plotter.plot_tuning_curves(2)
 
     pylab.show()

@@ -58,8 +58,10 @@ if __name__ == '__main__':
 
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
     network_states_net= np.zeros((params['n_iterations'], 4))
+    v_eye = [0., 0.]
     for iteration in xrange(params['n_iterations']):
-        stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
+#        stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
+        stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration, :], v_eye, network_states_net[iteration, :])
         if params['debug_mpn']:
             print 'Iteration %d: Saving spike trains...' % iteration
             save_spike_trains(params, iteration, stim, MT.local_idx_exc)
@@ -77,6 +79,8 @@ if __name__ == '__main__':
         try:
             next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
             actions[iteration + 1, :] = next_state
+            v_eye[0] += next_state[0]
+            v_eye[1] += next_state[1]
         except:
             break
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
