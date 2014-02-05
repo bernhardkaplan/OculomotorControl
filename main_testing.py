@@ -66,7 +66,7 @@ if __name__ == '__main__':
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_testing_stim']):
         print 'debug vi current_motion_params', VI.current_motion_params
-        print 'debug vi training stimli', training_stimuli[i_stim, :]
+#        print 'debug vi training stimli', training_stimuli[i_stim, :]
         VI.current_motion_params = training_stimuli[i_stim, :]
         for it in xrange(params['n_iterations_per_stim']):
 
