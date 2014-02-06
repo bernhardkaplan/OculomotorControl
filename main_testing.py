@@ -56,6 +56,9 @@ if __name__ == '__main__':
     BG = BasalGanglia.BasalGanglia(params, comm)
     CC = CreateConnections.CreateConnections(params)
     CC.set_pc_id(pc_id)
+
+    if comm != None:
+        comm.barrier()
     CC.connect_mt_to_bg_after_training(MT, BG, training_params)
 
     actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)

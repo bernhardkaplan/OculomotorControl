@@ -85,7 +85,7 @@ class VisualInput(object):
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-        trajectory, supervisor_state = self.update_stimulus_trajectory(action_code, v_eye, network_state)
+        trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code, v_eye, network_state)
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
 #        supervisor_state = (trajectory[0][-1], trajectory[1][-1], \
@@ -196,36 +196,32 @@ class VisualInput(object):
         """
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
 
-        # update the current motion parameters based on the action that was selected for this iteration
-#        self.current_motion_params[2] -= action_code[0]  # update v_stim_x
-#        self.current_motion_params[3] -= action_code[1]  # update v_stim_y
-
-        # calculate how the stimulus will move according to the current_motion_params
-        x_stim = self.current_motion_params[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
-        y_stim = self.current_motion_params[3] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
+        # calculate where the stimulus will move according to the current_motion_params
+        x_stim = (self.current_motion_params[2] - action_code[0]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
+        y_stim = (self.current_motion_params[3] - action_code[1]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
         trajectory = (x_stim, y_stim)
+
+        # update the current motion parameters based on the action that was selected for this iteration
+        self.current_motion_params[0] = x_stim[-1]
+        self.current_motion_params[1] = y_stim[-1]
+        # TODO: try this in addition
+#        self.current_motion_params[2] = action_code[0]  # update v_stim_x
+#        self.current_motion_params[3] = action_code[1]  # update v_stim_y
 
         # compute the supervisor signal taking into account:
         # - the trajectory position at the end of the iteration
         # - the knowledge about the motion (current_motion_params
         # - and / or the 
-        delta_x = (x_stim[-1] - .5)
-        delta_y = (y_stim[-1] - .5)
+        delta_x_end = (x_stim[-1] - .5)
+        delta_y_end = (y_stim[-1] - .5)
         delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
         k = self.params['supervisor_amp_param']
 
         # omniscient supervisor
-        self.supervisor_state[0] = k * np.abs(delta_x) / .5 * delta_x / delta_t + network_state[2] + self.current_motion_params[2]
-        self.supervisor_state[1] = k * np.abs(delta_y) / .5 * delta_y / delta_t + network_state[3] + self.current_motion_params[3]
-
-#        self.supervisor_state[0] = k * delta_x / .5 * (1./ delta_t) + self.current_motion_params[2]
-#        self.supervisor_state[1] = k * delta_y / .5 * (1./ delta_t) + self.current_motion_params[3]
-#        self.supervisor_state[0] = k * np.abs(delta_x) / .5 * delta_x / delta_t + self.current_motion_params[2]
-#        self.supervisor_state[1] = k * np.abs(delta_y) / .5 * delta_y / delta_t + self.current_motion_params[3]
+        self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
+        self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
 
         # supervisor dependent on measurements from visual sensory layer --> network_state
-#        self.supervisor_state[0] = k * np.abs(delta_x) / .5 * delta_x / delta_t + network_state[2]
-#        self.supervisor_state[1] = k * np.abs(delta_y) / .5 * delta_y / delta_t + network_state[3]
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
         self.motion_params[self.iteration, -1] = self.t_current
 

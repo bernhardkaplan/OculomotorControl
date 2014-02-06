@@ -40,11 +40,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['n_training_stim'] = 20 # number of different stimuli presented during training
-        self.params['n_testing_stim'] = 10  # number of different stimuli presented during training
+        self.params['n_training_stim'] = 30# number of different stimuli presented during training
+        self.params['n_testing_stim'] = 30# number of different stimuli presented during training
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
-        self.params['n_iterations_per_stim'] = 20
+        self.params['n_iterations_per_stim'] = 15
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
         self.params['training'] = True
 #        self.params['training'] = False
@@ -378,9 +378,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
 
         if self.params['training']:
-            folder_name = 'Training'
+            folder_name = 'NewTraining'
         else:
-            folder_name = 'Test'
+            folder_name = 'NewTest'
 
         folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d/' % \
                 (self.params['n_training_stim'], self.params['n_exc_mpn'], self.params['n_states'], \
