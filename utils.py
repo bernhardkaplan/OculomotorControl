@@ -5,6 +5,7 @@ This file contains a bunch of helper functions.
 import numpy as np
 import os
 import re
+import Reward
 
 def merge_and_sort_files(merge_pattern, fn_out, sort=True):
     rnd_nr1 = np.random.randint(0,10**8)
@@ -108,7 +109,6 @@ def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
     spiketimes = all_spikes[idx_, time_idx]
     return spiketimes
 
-
 def communicate_local_spikes(gids, comm):
 
     my_nspikes = {}
@@ -129,3 +129,21 @@ def communicate_local_spikes(gids, comm):
     comm.barrier()
     return gids_spiked, nspikes
 
+
+
+def communicate_reward(comm, reward, state, action, iteration):
+    rew = 0
+    if comm.rank == 0:
+        rew = reward.compute_reward(state, action, iteration)
+    rew = comm.bcast(rew, root=0)
+    comm.barrier()
+    return rew
+
+def communicate_action(comm, possible):
+    action = 0
+    if comm.rank == 0:
+        action = np.random.randint(possible)
+    action = comm.bcast(action, root=0)
+    comm.barrier()
+    return action
+    

@@ -1,16 +1,26 @@
 import sys
 import os
-import VisualInput
-import MotionPrediction
+import nest
 import BasalGanglia
+import Reward
 import json
 import simulation_parameters
-import CreateConnections
-import nest
+import utils
 import numpy as np
 import time
-import os
+import tempfile
+
+os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
+import matplotlib
+matplotlib.use('Agg')
 import pylab as pl
+
+# Load BCPNN synapse and bias-iaf neuron module                                                                                                
+if (not 'bcpnn_synapse' in nest.Models()):
+    nest.sr('(/cfs/klemming/nobackup/b/berthet/code/modules/bcpnn_module/share/nest/sli) addpath') #t/tully/sequences/share/nest/sli
+    nest.Install('/cfs/klemming/nobackup/b/berthet/code/modules/bcpnn_module/lib/nest/pt_module') #t/tully/sequences/lib/nest/pt_module
+
+
 try: 
     from mpi4py import MPI
     USE_MPI = True
@@ -21,6 +31,14 @@ except:
     USE_MPI = False
     pc_id, n_proc, comm = 0, 1, None
     print "MPI not used"
+
+
+
+nest.ResetKernel()
+# load bcpnn synapse module and iaf neuron with bias
+#if (not 'bcpnn_synapse' in nest.Models('synapses')):
+#    nest.Install('pt_module')
+nest.SetKernelStatus({"overwrite_files": True})
 
 
 
@@ -59,121 +77,178 @@ if __name__ == '__main__':
 
     t0 = time.time()
 
-    weights_sim = {}
+    #weights_sim = {}
     staten2D1 = [[0. for i_action in range(params['n_actions'])] for j in range(params['n_iterations'])]
     staten2D2 = [[0. for i_action in range(params['n_actions'])] for j in range(params['n_iterations'])]
-
-    VI = VisualInput.VisualInput(params)
-    MT = MotionPrediction.MotionPrediction(params, VI, comm)
-
-    if pc_id == 0:
-        remove_files_from_folder(params['spiketimes_folder_mpn'])
-        remove_files_from_folder(params['input_folder_mpn'])
+	
+    action2D1 = [[0. for i_state in range(params['n_states'])] for j in range(params['n_iterations'])]
+    action2D2 = [[0. for i_state in range(params['n_states'])] for j in range(params['n_iterations'])]
+#    if pc_id == 0:
+#        remove_files_from_folder(params['spiketimes_folder_mpn'])
+#        remove_files_from_folder(params['input_folder_mpn'])
     
-    VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)
-    CC = CreateConnections.CreateConnections(params, comm)
-    CC.connect_mt_to_bg(MT, BG)
+    R = Reward.Reward(params)
 
-    actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
-    network_states_net= np.zeros((params['n_iterations'], 4))
+    actions = np.empty(params['n_iterations']) 
+    states  = np.empty(params['n_iterations']) 
+    rewards = np.empty(params['n_iterations']) 
+#    network_states_net= np.zeros((params['n_iterations'], 4))
+    block = 0
     for iteration in xrange(params['n_iterations']):
+        
+        print 'ITERATION', iteration
 
-        # integrate the real world trajectory and the eye direction and compute spike trains from that
-        # and get the state information BEFORE MPN perceives anything
-        # in order to set a supervisor signal
-        stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration, :])
-
-        print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (iteration, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
-        print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration, pc_id), supervisor_state
-        BG.supervised_training(supervisor_state)
-
-        if params['debug_mpn']:
-            print 'Saving spike trains...'
-            save_spike_trains(params, iteration, stim, MT.local_idx_exc)
-
-        # compute BG input (for supervised learning)
-#        target_action = VI.transform_trajectory_to_action()
-        # BG.update_input(stim) #--> updates the Poisson-populations coding for the state
-        # BG.train_action_output(target_action)
-
-        # remove MT.update_input etc
-        MT.update_input(stim) # run the network for some time 
+        state = iteration % params['n_states']
+       
+        BG.set_state(state)
+        BG.set_gain(1.)
+        BG.set_kappa_OFF()
         if comm != None:
             comm.barrier()
-        nest.Simulate(params['t_iteration'])
+        nest.Simulate(params['t_selection'])
         if comm != None:
             comm.barrier()
 
-        state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-
+		# record weights between state 0 and all actions for both d1 and d2 pathways
         for nactions in range(params['n_actions']):
-            conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD1[nactions], synapse_model = 'bcpnn_synapse')
-            staten2D1[iteration][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)]) #BG.params['params_synapse_d1_MT_BG']['gain'] * 
-            conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD2[nactions], synapse_model = 'bcpnn_synapse')
+            # conn = nest.FindConnections(source = BG.states[0], target = BG.strD1[nactions][0], synapse_model = 'bcpnn_synapse')
+            conn = nest.GetConnections(source = BG.states[0], target = BG.strD1[nactions], synapse_model = 'bcpnn_synapse')
+            staten2D1[iteration][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)]) 
+            conn = nest.GetConnections(source = BG.states[0], target = BG.strD2[nactions], synapse_model = 'bcpnn_synapse')
+            # conn = nest.FindConnections(source = BG.states[0], target = BG.strD2[nactions][0], synapse_model = 'bcpnn_synapse')
             staten2D2[iteration][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)])
-#        BG.update_poisson_layer(state_)
-        weights_sim[iteration] = BG.get_weights(MT.exc_pop, BG.strD1[0])
-        network_states_net[iteration, :] = state_
-        print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
-        next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
-        actions[iteration + 1, :] = next_state
-        print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
-#        exit(1)
-#        VI.update_retina_image(BG.get_eye_direction())
+            print 'debug: WEIGHTS CHECK staten2D2:', staten2D2[iteration][nactions] 
+            for a in nest.GetStatus(conn):
+                print 'source:', a['source'] ,'target:', a['target'], 'TRACESCHECK PI ', a['p_i']
+                print 'source:', a['source'] ,'target:', a['target'], 'TRACESCHECK PJ ', a['p_j']
+                print 'source:', a['source'] ,'target:', a['target'], 'TRACESCHECK PIJ', a['p_ij']
+                print 'DATA pi pj pij', a['p_i'], a['p_j'], a['p_ij'], 'RATIO', a['p_ij']/(a['p_i']*a['p_j']) 
+                print 'LOG', np.log( a['p_ij']/(a['p_i']*a['p_j']) ) 
 
+
+		# record weights between all the states and action 0 for both d1 and d2 pathways
+        for nstates in range(params['n_states']):
+            conn = nest.GetConnections(source = BG.states[nstates], target = BG.strD1[0], synapse_model = 'bcpnn_synapse')
+            # conn = nest.FindConnections(source = BG.states[nstates], target = BG.strD1[0][0], synapse_model = 'bcpnn_synapse')
+            action2D1[iteration][nstates] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)]) 
+            conn = nest.GetConnections(source = BG.states[nstates], target = BG.strD2[0], synapse_model = 'bcpnn_synapse')
+            # conn = nest.FindConnections(source = BG.states[nstates], target = BG.strD2[0][0], synapse_model = 'bcpnn_synapse')
+            action2D2[iteration][nstates] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)])
+            print 'debug: WEIGHTS CHECK action2D2 :', np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)]) 
+
+       # weights_sim[iteration] = BG.get_weights(BG.states[0], BG.strD1[:])
+        states[iteration] = state
+        actions[iteration] = BG.get_action() # BG returns the selected action
+        
+        #BG.stop_state()
+        #BG.set_gain(1.)
+        BG.set_efference_copy(actions[iteration])
+        if comm != None:
+            comm.barrier()
+        nest.Simulate(params['t_efference'])
+        if comm != None:
+            comm.barrier()
+
+        rew = utils.communicate_reward(comm, R , state, actions[iteration], block )
+        
+        rewards[iteration] = rew
+
+        print 'REWARD =', rew
+        BG.set_gain(0.)
+        if rew == 1:
+            BG.set_kappa_ON(0.01, states[iteration], actions[iteration])
+        else:
+            BG.set_kappa_ON(-0.01, states[iteration], actions[iteration])
+        BG.set_reward(rew)
+        #BG.stop_efference()
+
+        if comm != None:
+            comm.barrier()
+        nest.Simulate(params['t_reward'])
+        if comm != None:
+            comm.barrier()
+
+        BG.set_gain(0.)
+        BG.set_kappa_OFF()
+        BG.set_rest()
+        if comm != None:
+            comm.barrier()
+        
+        nest.Simulate(params['t_rest'])
+        if comm != None:
+            comm.barrier()   
+        block = int (iteration / params['block_len'])
+    
+
+    # END of SIMULATION LOOP
     if pc_id == 0:
         np.savetxt(params['actions_taken_fn'], actions)
-        np.savetxt(params['network_states_fn'], network_states_net)
-        np.savetxt(params['motion_params_fn'], VI.motion_params)
+        np.savetxt(params['states_fn'], states)
+        np.savetxt(params['rewards_fn'], rewards)
+        
+        exc_sptimes = nest.GetStatus(BG.recorder_d1[0])[0]['events']['times']
+        for i_proc in xrange(1,n_proc ):
+            exc_sptimes = np.r_[exc_sptimes, comm.recv(source=i_proc)]
+       
+    else:
+        comm.send(nest.GetStatus(BG.recorder_d1[0])[0]['events']['times'],dest=0)
+    if comm != None:
+        comm.barrier()
+    if pc_id == 0:
+        exc_spids = nest.GetStatus(BG.recorder_d1[0])[0]['events']['senders']
+        for i_proc in xrange(1, n_proc):
+            exc_spids = np.r_[exc_spids, comm.recv(source=i_proc)]
+        pl.figure(33)
+        pl.scatter(exc_sptimes, exc_spids,s=1.)
+        binsize = 10
+        bins=np.arange(0, params['t_sim']+1, binsize)
+        c_exc,b = np.histogram(exc_sptimes,bins=bins)
+        rate_exc = c_exc*(1000./binsize)*(1./params['num_msn_d1'])
+        pl.plot(b[0:-1],rate_exc)
+        pl.title('firing rate of STR D1 action 0')
+        pl.savefig('fig3_firingrate.pdf')
+    else:
+        comm.send(nest.GetStatus(BG.recorder_d1[0])[0]['events']['senders'],dest=0)
+    if comm != None:
+        comm.barrier()
 
-
-    t1 = time.time() - t0
-    print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
-    BG.stop_supervisor()
-    print 'supervised learning completed'
-    CC.get_weights(MT, BG)
-
-#   for test in range(params['n_iterations']/2, params['n_iterations']):
-#       stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[test, :])
-#
-#       print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (test, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
-#
-#
-#
-#       MT.update_input(stim) # run the network for some time 
-#       if comm != None:
-#           comm.barrier()
-#       nest.Simulate(params['t_iteration'])
-#       if comm != None:
-#           comm.barrier()
-#
-#       state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-#
-#       for nactions in range(params['n_actions']):
-#           conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD1[nactions], synapse_model = 'bcpnn_synapse')
-#           staten2D1[test][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)]) #BG.params['params_synapse_d1_MT_BG']['gain'] * 
-#           conn = nest.GetConnections(source = MT.exc_pop, target = BG.strD2[nactions], synapse_model = 'bcpnn_synapse')
-#           staten2D2[test][nactions] = np.mean([(np.log(a['p_ij']/(a['p_i']*a['p_j']))) for a in nest.GetStatus(conn)])
-#        BG.update_poisson_layer(state_)
-#       weights_sim[test] = BG.get_weights(MT.exc_pop, BG.strD1[0])
-#       network_states_net[test, :] = state_
-#       print 'Iteration: %d\t%d\tState before action: ' % (test, pc_id), state_
-#       next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
-#       actions[test + 1, :] = next_state
-#       print 'Iteration: %d\t%d\tState after action: ' % (test, pc_id), next_state
-#       test += 1
-#   t1 = time.time() - t0
-#   print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
+    #CC.get_weights(, BG)  implement in BG or utils
 
 
 #    print 'weight simu ', weights_sim
-    pl.figure(1)
-    pl.subplot(211)
-    pl.plot(staten2D1)
-    pl.ylabel(r'$w_{0j}$')
-    pl.subplot(212)
-    pl.plot(staten2D2)
-    pl.ylabel(r'$w_{0j}$')
-    pl.xlabel('trials')
-    pl.show()
+    if pc_id ==1:	
+        t1 = time.time() - t0
+        print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
+
+        print 'learning completed'
+        pl.figure(1)
+        pl.subplot(211)
+        pl.title('D1')
+        pl.plot(staten2D1)
+        pl.ylabel(r'$w_{0j}$')
+        pl.subplot(212)
+        pl.title('D2')
+        pl.plot(staten2D2)
+        pl.ylabel(r'$w_{0j}$')
+        pl.xlabel('trials')
+        pl.suptitle('Computed weights from state 0 to all actions')
+        pl.savefig('fig1_allactions.pdf')
+
+        pl.figure(2)
+        pl.subplot(211)
+        pl.plot(action2D1)
+        pl.title('D1')
+        pl.ylabel(r'$w_{0j}$')
+        pl.subplot(212)
+        pl.plot(action2D2)
+        pl.ylabel(r'$w_{0j}$')
+        pl.title('D2')
+        pl.xlabel('trials')
+        pl.suptitle('Computed weights from all states to action 0')
+        pl.savefig('fig2_allstates.pdf')
+#		pl.show()	
+#		pl.show()
+        print 'States ', states
+        print 'Actions ', actions
+        print 'Rewards ', rewards
