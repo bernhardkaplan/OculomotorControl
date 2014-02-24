@@ -115,6 +115,7 @@ if __name__ == '__main__':
         print 'Iteration: %d\t%d\tState after action: ' % (iteration, pc_id), next_state
 
     CC.get_weights(MT, BG)
+    CC.merge_connection_files(params)
 
     if pc_id == 0:
         np.savetxt(params['actions_taken_fn'], actions)

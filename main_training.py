@@ -130,6 +130,7 @@ if __name__ == '__main__':
 
 
     CC.get_weights(MT, BG)
+    CC.merge_connection_files(params)
 
     t1 = time.time() - t0
     print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)

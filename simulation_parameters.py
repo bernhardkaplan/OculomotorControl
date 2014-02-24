@@ -40,14 +40,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['n_training_stim'] = 30# number of different stimuli presented during training
-        self.params['n_testing_stim'] = 30# number of different stimuli presented during training
+        self.params['n_training_stim'] = 1# number of different stimuli presented during training
+        self.params['n_testing_stim'] = 1# number of different stimuli presented during training
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
-        self.params['n_iterations_per_stim'] = 15
+        self.params['n_iterations_per_stim'] = 20
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_training_stim'] * self.params['n_iterations_per_stim']
         else:
@@ -216,8 +216,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_actions'] = 21
         self.params['n_states'] = 20
 
-
-
         #Connections Actions and States to RP
         self.epsilon = 0.01
         self.tau_i = 10.
@@ -237,9 +235,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
         self.params['num_msn_d1'] = 30
         self.params['num_msn_d2'] = 30
+        self.params['n_cells_D1'] = self.params['num_msn_d1'] * self.params['n_actions']
+        self.params['n_cells_D2'] = self.params['num_msn_d2'] * self.params['n_actions']
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
         self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
-
         
         ## Output GPi/SNr
         self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
@@ -362,6 +361,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['gids_to_record_fn_mp'] = self.params['parameters_folder'] + 'gids_to_record_mpn.txt'
         # storage for actions (BG), network states (MPN) and motion parameters (on Retina)
         self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt'
+        self.params['bg_action_bins_fn'] = self.params['data_folder'] + 'bg_actions_bins.txt'
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
         self.params['motion_params_fn'] = self.params['data_folder'] + 'motion_params.txt'
 
@@ -369,8 +369,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_bgd1_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connections'
         self.params['mpn_bgd2_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d2_connections'
 
-        self.params['mpn_bgd1_merged_conn_fn'] = self.params['connections_folder'] + 'mpn_bg_d1_merged_connections.txt'
-        self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'mpn_bg_d2_merged_connections.txt'
+        self.params['mpn_bgd1_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d1_connections.txt'
+        self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connections.txt'
 
 
     def set_folder_names(self):
@@ -378,9 +378,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
 
         if self.params['training']:
-            folder_name = 'NewTraining'
+            folder_name = 'Training'
         else:
-            folder_name = 'NewTest'
+            folder_name = 'Test'
 
         folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d/' % \
                 (self.params['n_training_stim'], self.params['n_exc_mpn'], self.params['n_states'], \

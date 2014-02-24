@@ -31,7 +31,7 @@ class CreateConnections(object):
 
         """
 
-        for nactions in range(self.params['n_actions']):
+        for nactions in xrange(self.params['n_actions']):
             nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d1_MT_BG'])
             nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
 
@@ -41,30 +41,38 @@ class CreateConnections(object):
 
 
 
+    def merge_connection_files(self, params):
+        if self.pc_id == 0:
+            if not os.path.exists(params['mpn_bgd1_merged_conn_fn']):
+                # merge the connection files
+                merge_pattern = params['mpn_bgd1_conn_fn_base']
+                fn_out = params['mpn_bgd1_merged_conn_fn']
+                utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
+#                d_unsorted = np.loadtxt(fn_out)
+#                d = utils.filter_connection_list(d_unsorted)
+#                np.savetxt(fn_out, d, fmt='%.3e')
+        if self.comm != None:
+            self.comm.barrier()
+
+        if self.pc_id == 0:
+            if not os.path.exists(params['mpn_bgd2_merged_conn_fn']):
+                # merge the connection files
+                merge_pattern = params['mpn_bgd2_conn_fn_base']
+                fn_out = params['mpn_bgd2_merged_conn_fn']
+                utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
+#                d_unsorted = np.loadtxt(fn_out)
+#                d = utils.filter_connection_list(d_unsorted)
+#                np.savetxt(fn_out, d, fmt='%.3e')
+        if self.comm != None:
+            self.comm.barrier()
+
+
     def connect_mt_to_bg_after_training(self, mpn_net, bg_net, training_params):
         """
         Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
         based on the weights found in conn_folder
         """
-
-        if self.pc_id == 0:
-            if not os.path.exists(training_params['mpn_bgd1_merged_conn_fn']):
-                # merge the connection files
-                merge_pattern = training_params['mpn_bgd1_conn_fn_base']
-                fn_out = training_params['mpn_bgd1_merged_conn_fn']
-                utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
-        else:
-            time.sleep(0.1)
-
-        if self.pc_id == 0:
-            if not os.path.exists(training_params['mpn_bgd2_merged_conn_fn']):
-                # merge the connection files
-                merge_pattern = training_params['mpn_bgd2_conn_fn_base']
-                fn_out = training_params['mpn_bgd2_merged_conn_fn']
-                utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
-        else:
-            time.sleep(0.1)
-
+        self.merge_connection_files(training_params)
         print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
         mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
         n_lines = mpn_d1_conn_list[:, 0].size 

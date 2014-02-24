@@ -53,6 +53,7 @@ if __name__ == '__main__':
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)
+    BG.write_cell_gids_to_file()
     CC = CreateConnections.CreateConnections(params)
     CC.connect_mt_to_bg_after_training(MT, BG, training_params)
 

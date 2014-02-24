@@ -4,7 +4,6 @@ import utils
 import json
 
 
-
 class BasalGanglia(object):
 
     def __init__(self, params, comm=None):
@@ -32,6 +31,7 @@ class BasalGanglia(object):
         #Creates D1 and D2 populations in STRIATUM, connections are created later
         for nactions in range(self.params['n_actions']):
             self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params= self.params['param_msn_d1'])
+        for nactions in range(self.params['n_actions']):
             self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params= self.params['param_msn_d2'])
 
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
@@ -173,6 +173,12 @@ class BasalGanglia(object):
         self.action_bins_y += v_scale_half
         print 'BG: action_bins_y', self.action_bins_y
 
+        output_array = np.zeros((len(self.action_bins_x), 2))
+#        header = '# first row: action_x, 2nd row: action_y'
+        output_array[:, 0] = self.action_bins_x
+        output_array[:, 1] = self.action_bins_y
+        np.savetxt(self.params['bg_action_bins_fn'], output_array)#, header=header)
+
 
     def map_speed_to_action(self, speed, binning, xy='x'):
         # select an action based on the supervisor state information
@@ -295,7 +301,7 @@ class BasalGanglia(object):
         output_fn = self.params['parameters_folder'] + 'bg_cell_gids_pcid%d.json' % self.pc_id
         print 'Writing cell_gids to:', output_fn
         f = file(output_fn, 'w')
-        json.dump(d, f, indent=0)
+        json.dump(d, f, indent=2)
 
 
     def get_eye_direction(self):

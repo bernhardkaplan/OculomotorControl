@@ -37,6 +37,7 @@ def merge_and_sort_files(merge_pattern, fn_out, sort=True):
     else:
         os.system('mv %s %s' % (tmp_file, fn_out))
     os.system("rm %s" % (tmp_file))
+    print 'utils.merge_and_sort_files output: ', fn_out
 
 
 def find_files(folder, to_match):
@@ -157,4 +158,14 @@ def communicate_local_spikes(gids, comm):
     nspikes =  np.array(all_nspikes.values(), dtype=np.int)
     comm.barrier()
     return gids_spiked, nspikes
+
+
+def filter_connection_list(d):
+    """
+    d -- 3 columnar connection list:
+      src     tgt     weight
+    returns only those rows with weight != 0
+    """
+    valid_idx = (d[:, 2] != 0).nonzero()[0]
+    return d[valid_idx, :]
 

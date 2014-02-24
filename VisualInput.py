@@ -205,8 +205,6 @@ class VisualInput(object):
         self.current_motion_params[0] = x_stim[-1]
         self.current_motion_params[1] = y_stim[-1]
         # TODO: try this in addition
-#        self.current_motion_params[2] = action_code[0]  # update v_stim_x
-#        self.current_motion_params[3] = action_code[1]  # update v_stim_y
 
         # compute the supervisor signal taking into account:
         # - the trajectory position at the end of the iteration
