@@ -46,8 +46,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 20
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_training_stim'] * self.params['n_iterations_per_stim']
         else:
@@ -242,7 +242,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         
         ## Output GPi/SNr
         self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
-        self.params['num_actions_output'] = 1
+        self.params['num_actions_output'] = 10
         self.params['param_bg_output'] = {'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
         
         self.params['str_to_output_exc_w'] = 10.

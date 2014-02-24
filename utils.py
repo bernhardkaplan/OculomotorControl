@@ -151,8 +151,8 @@ def communicate_local_spikes(gids, comm):
     all_nspikes = {} # dictionary containing all cells that spiked during that iteration
     for pid in xrange(comm.size):
         for gid in all_spikes[pid].keys():
-            gid_ = gid
-#            gid_ = gid - 1
+#            gid_ = gid
+            gid_ = gid - 1
             all_nspikes[gid_] = all_spikes[pid][gid]
     gids_spiked = np.array(all_nspikes.keys(), dtype=np.int)
     nspikes =  np.array(all_nspikes.values(), dtype=np.int)

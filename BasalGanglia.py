@@ -253,21 +253,17 @@ class BasalGanglia(object):
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
-            gids_spiked = new_event_gids.unique()
+            gids_spiked = new_event_gids.unique() - 1 # maybe here should be a - 1 (if there is one in communicate_local_spikes)
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
-#        print 'new_event_gids', new_event_gids
-#        print 'nspikes', nspikes
-#        print 'gids_spiked', gids_spiked
-#        print 'recorder_output_gidkey', self.pc_id, self.recorder_output_gidkey
-#        print 'recorder_output', self.pc_id, self.recorder_output
         if len(nspikes) == 0:
             self.t_current += self.params['t_iteration']
             return (0, 0)
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]
-        winning_action = self.recorder_output_gidkey[winning_gid]
+        print 'winning_gid', winning_gid
+        winning_action = self.recorder_output_gidkey[winning_gid+1]
         output_speed_x = self.action_bins_x[winning_action]
         print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
         self.t_current += self.params['t_iteration']
