@@ -215,6 +215,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['n_actions'] = 21
         self.params['n_states'] = 20
+        self.params['random_divconnect_poisson'] = 0.75
+        self.params['random_connect_voltmeter'] = 0.05
 
         #Connections Actions and States to RP
         self.epsilon = 0.01
@@ -293,48 +295,58 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['weight_rew_rp'] = 10.
         self.params['delay_rew_rp'] = 1.
 
-        #Spike detectors params 	
+        # --> TODO: check which params are (not) used?
+        #Spike detectors params, copied from BG branch
+        self.params['spike_detector_action'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_d1'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_d2'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_states'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_efference'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_rew'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_rp'] = {"withgid":True, "withtime":True}
+
+        #Spike detectors params, old from my branch 
         self.params['spike_detector_output_action'] = {"withgid":True, "withtime":True} 
+        self.params['spike_detector_test_rp'] = {"withgid":True, "withtime":True}
 
         #Supervised Learning
         self.params['supervised_on'] = self.params['training']
-
         self.params['num_neuron_poisson_supervisor'] = 30
         self.params['num_neuron_poisson_input_BG'] = 50
         self.params['active_supervisor_rate'] = 500.
         self.params['inactive_supervisor_rate'] = 0.
         self.params['active_poisson_input_rate'] = 20.
         self.params['inactive_poisson_input_rate'] = 2.
-        
         self.params['param_poisson_pop_input_BG'] = {}
         self.params['param_poisson_supervisor'] = {}
-
         self.params['weight_supervisor_strd1'] = 70.
         self.params['weight_supervisor_strd2'] = 70.
         self.params['delay_supervisor_strd1'] = 1.
         self.params['delay_supervisor_strd2'] = 1.
-
         self.params['weight_poisson_input'] = 10.
         self.params['delay_poisson_input'] = 1.
-
         self.params['are_MT_BG_connected'] = True
-        
-        self.params['num_neuron_states'] = 20
+        self.params['num_neuron_states'] = 30
         self.params['param_states_pop'] = {} 
 
-        # some filenames
-        self.params['bg_action_volt_fn'] = 'bg_action_volt_'
-        self.params['bg_spikes_fn'] = 'bg_spikes_'
-        self.params['bg_spikes_fn_merged'] = 'bg_merged_spikes.dat'
-        """
-            self.params[' '] = 
-            self.params[' '] = 
-            self.params[' '] = 
-            self.params[' '] = 
-            self.params[' '] = 
-            self.params[' '] = 
-            self.params[' '] = 
-        """
+        # Reinforcement Learning
+        self.params['num_neuron_poisson_efference'] = 40
+        self.params['num_neuron_poisson_input_BG'] = 100
+        self.params['active_full_efference_rate'] = 40.
+        self.params['inactive_efference_rate'] = 0.
+        self.params['active_poisson_input_rate'] = 50.
+        self.params['inactive_poisson_input_rate'] = 0.5
+        self.params['supervisor_off'] = 0.
+        self.params['active_poisson_rew_rate'] = 70.
+        self.params['inactive_poisson_rew_rate'] = 1.
+        self.params['param_poisson_efference'] = {}
+        self.params['weight_efference_strd1'] = 15.
+        self.params['weight_efference_strd2'] = 15.
+        self.params['delay_efference_strd1'] = 1.
+        self.params['delay_efference_strd2'] = 1.
+
+        
+
 
     def set_filenames(self, folder_name=None):
         """
@@ -349,6 +361,27 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
         self.params['training_sequence_fn'] = self.params['parameters_folder'] + 'training_stimuli_parameters.txt'
+
+        # bg files:
+        self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['d1_spikes_fn'] = 'd1_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['d1_volt_fn'] = 'd1_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['d2_spikes_fn'] = 'd2_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['d2_volt_fn'] = 'd2_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['actions_spikes_fn'] = 'actions_spikes_'
+        self.params['actions_volt_fn'] = 'actions_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['efference_spikes_fn'] = 'efference_spikes_'
+        self.params['rew_spikes_fn'] = 'rew_spikes_'
+        self.params['rew_volt_fn'] = 'rew_volt_'
+        self.params['rp_spikes_fn'] = 'rp_spikes_'
+        self.params['rp_volt_fn'] = 'rp_volt_'
+
+
+        # some filenames, TODO: check if required
+        self.params['bg_action_volt_fn'] = 'bg_action_volt_'
+        self.params['bg_spikes_fn'] = 'bg_spikes_'
+        self.params['bg_spikes_fn_merged'] = 'bg_merged_spikes.dat'
+
         
         # input spike files
         self.params['input_st_fn_mpn'] = self.params['input_folder_mpn'] + 'input_spikes_'
