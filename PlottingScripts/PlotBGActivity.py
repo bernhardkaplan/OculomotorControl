@@ -12,6 +12,7 @@ import re
 import numpy as np
 import pylab
 import matplotlib
+import MergeSpikefiles
 
 
 class ActivityPlotter(object):
@@ -26,6 +27,7 @@ class ActivityPlotter(object):
         self.n_x_ticks = 10
         self.x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
 
+        self.rp_markersize = 3
 
     def plot_raster_simple(self):
         # first find files in Spikes folder 
@@ -72,11 +74,23 @@ class ActivityPlotter(object):
                 pass
 
 
-    def plot_action_spikes(self):
-        
-        fns = utils.find_files(self.params['parameters_folder'], 'bg_cell_gids_pcid(\d+).json')
-        print 'fns:', fns
 
+    def plot_spikes_for_celltype(self, celltype, color='k', gid_offset=0, marker='o'):
+        xa = -(self.params['t_sim']/10)
+        recorder_type = 'spikes'
+        mean = 0
+        for naction in range(self.params['n_actions']):
+            data = np.loadtxt(self.params['spiketimes_folder'] + str(naction) + celltype + '_merged_' + recorder_type + '.dat')
+            if len(data)<2:
+                print 'no data in', celltype, naction
+            else:
+                data[:, 0] += gid_offset
+                pylab.plot(data[:,1], data[:,0], linestyle='None', marker='o', c=color, markeredgewidth=0, markersize=self.rp_markersize)
+#                pylab.plot(data[:,1], data[:,0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
+                mean += (np.min(data[:,0]) + np.max(data[:,0]))/2
+        mean = mean / self.params['n_actions']
+        pylab.text(xa, mean, celltype, color=color)
+        print 'mean', mean
 
 
 if __name__ == '__main__':
@@ -96,9 +110,36 @@ if __name__ == '__main__':
         params = param_tool.params
 
     print 'Merging spikes ...'
-    utils.merge_and_sort_files(params['spiketimes_folder_mpn'] + params['bg_spikes_fn'], params['spiketimes_folder_mpn'] + params['bg_spikes_fn_merged'])
+    if params['training']:
+        cell_types = ['d1', 'd2', 'actions', 'supervisor']
+    else:
+        cell_types = ['d1', 'd2', 'actions']
+    cell_types_volt = ['d1', 'd2', 'actions']
+
+    print 'nstates ', params['n_states'], 'nactions ', params['n_actions']
+    MS = MergeSpikefiles.MergeSpikefiles(params)
+    for cell_type in cell_types:
+        print 'Merging spiketimes file for %s ' % (cell_type)
+        for naction in range(params['n_actions']):
+            print 'Merging spiketimes file for %d ' % (naction)
+            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
+            output_fn = params['spiketimes_folder'] + str(naction) + params['%s_spikes_fn_merged' % cell_type] 
+            MS.merge_spiketimes_files(merge_pattern, output_fn)
+
     Plotter = ActivityPlotter(params)#, it_max=1)
+    colors = ['b','g', 'r', 'c', 'm', 'y', 'k']
+    markers = ['|', '-', 'o', 'D', '+', '4', 'v', 's']
+
+    offset = 0
+    for z, cell_type in enumerate(cell_types):
+        cl = colors[z % len(colors)]
+        marker = markers[z % len(colors)]
+        print 'debug', cl, marker, cell_type
+#        if cell_type == 'd2':
+#            offset = -params['n_cells_D1']
+        Plotter.plot_spikes_for_celltype(cell_type, color=cl, gid_offset=offset, marker=marker)
+
 #    Plotter.plot_raster_simple()
 #    Plotter.plot_action_voltages()
-    Plotter.plot_action_spikes()
-#    pylab.show()
+#    Plotter.plot_action_spikes()
+    pylab.show()

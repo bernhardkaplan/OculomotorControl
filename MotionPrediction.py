@@ -28,7 +28,7 @@ class MotionPrediction(object):
 #        self.connect_exc_inh()
         self.record_voltages(self.params['gids_to_record_mpn'])
 
-        nest.SetKernelStatus({'data_path':self.params['spiketimes_folder_mpn'], 'overwrite_files': True})
+        nest.SetKernelStatus({'data_path':self.params['spiketimes_folder'], 'overwrite_files': True})
 #        print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
 #        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
 

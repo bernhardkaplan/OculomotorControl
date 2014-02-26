@@ -21,18 +21,29 @@ def load_params_from_folder(folder_name):
     return params
 
 
-def plot_matrix(d):
+def plot_matrix(d, title=None):
     fig = pylab.figure()
     ax = fig.add_subplot(111)
     print "plotting .... "
-    cax = ax.pcolormesh(d)
+    cax = ax.pcolormesh(d, cmap='bwr')
     ax.set_xlim((0, n_tgt))
     ax.set_ylim((0, n_src))
+    if title != None:
+        ax.set_title(title)
     pylab.colorbar(cax)
     pylab.savefig(output_fn)
     output_fn2 = output_fn.rsplit(".dat")[0] + ".png"
     pylab.savefig(output_fn2)
+
     print "Output file:", output_fn
+
+
+def is_it_d1(fn):
+    if fn.find('d1') != -1:
+        return True
+    else:
+        return False
+
 
 
 if __name__ == '__main__':
@@ -52,13 +63,19 @@ if __name__ == '__main__':
     print 'Loading ', conn_list_fn
     data = np.loadtxt(conn_list_fn)
 
+    is_it_d1 = is_it_d1(conn_list_fn)
+    if is_it_d1:
+        tgt_cell_type = 'D1'
+    else:
+        tgt_cell_type = 'D2'
     src_cell_type = 'mpn'
-    tgt_cell_type = 'D2'
+
     if src_cell_type == 'mpn':
         n_src = params['n_exc_mpn']
         src_offset = 1
     else:
         src_offset = data[:, 0].min()
+
     if tgt_cell_type == 'D1' or tgt_cell_type == 'D2':
         n_tgt = params['n_cells_%s' % tgt_cell_type]
         cell_gid_fn = params['parameters_folder'] + 'bg_cell_gids_pcid0.json'
@@ -79,8 +96,9 @@ if __name__ == '__main__':
     for c in xrange(data[:,0].size):
         src = data[c, 0] - src_offset
         tgt = data[c, 1] - tgt_offset
+#        print 'debug', src, tgt, c
         conn_mat[src, tgt] = data[c, 2]
 
     output_fn = conn_list_fn.rsplit(".")[0] + "_cmap.png"
-    plot_matrix(conn_mat)
+    plot_matrix(conn_mat, title=conn_list_fn)
     pylab.show()

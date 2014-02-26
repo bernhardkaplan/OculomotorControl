@@ -116,8 +116,8 @@ class ActivityPlotter(object):
 
 
     def plot_output(self):
-        merged_spike_fn = self.params['spiketimes_folder_mpn'] + self.params['mpn_exc_spikes_fn_merged']
-        utils.merge_and_sort_files(self.params['spiketimes_folder_mpn'] + self.params['mpn_exc_spikes_fn'], merged_spike_fn)
+        merged_spike_fn = self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn_merged']
+        utils.merge_and_sort_files(self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn'], merged_spike_fn)
         spike_data = np.loadtxt(merged_spike_fn)
         d = np.zeros((self.it_max, self.x_grid.size)) #self.x_grid.size, self.it_max))
         nspikes_thresh = 1
@@ -216,7 +216,7 @@ class ActivityPlotter(object):
 
         tp_idx_sorted = tp[:, sort_idx].argsort() # + 1 because nest indexing
 
-        merged_spike_fn = self.params['spiketimes_folder_mpn'] + self.params['mpn_exc_spikes_fn_merged']
+        merged_spike_fn = self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn_merged']
         spikes_unsrtd = np.loadtxt(merged_spike_fn)
 
         fig = pylab.figure()
@@ -327,7 +327,7 @@ if __name__ == '__main__':
         params = param_tool.params
 
     
-    utils.merge_and_sort_files(params['spiketimes_folder_mpn'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder_mpn'] + params['mpn_exc_spikes_fn_merged'])
+    utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
     Plotter = ActivityPlotter(params)#, it_max=1)
     fig = Plotter.plot_training_sequence()
     output_fn = params['figures_folder'] + 'training_sequence.png'

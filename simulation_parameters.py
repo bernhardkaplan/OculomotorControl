@@ -46,8 +46,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 20
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_training_stim'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_training_stim'] * self.params['n_iterations_per_stim']
         else:
@@ -63,7 +63,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.9, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.9, .5, 1.3, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
@@ -230,7 +230,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 1000.
+        self.params['mpn_bg_weight_amplification'] = 5.
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
@@ -308,9 +308,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #Spike detectors params, old from my branch 
         self.params['spike_detector_output_action'] = {"withgid":True, "withtime":True} 
         self.params['spike_detector_test_rp'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_supervisor'] = {"withgid":True, "withtime":True}
 
         #Supervised Learning
-        self.params['supervised_on'] = self.params['training']
+        self.params['supervised_on'] = True
         self.params['num_neuron_poisson_supervisor'] = 30
         self.params['num_neuron_poisson_input_BG'] = 50
         self.params['active_supervisor_rate'] = 500.
@@ -354,27 +355,45 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.set_folder_names()
-        self.params['mpn_exc_volt_fn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['mpn_exc_spikes_fn'] = 'mpn_exc_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['mpn_exc_spikes_fn_merged'] = 'mpn_exc_merged_spikes.dat' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['mpn_inh_volt_fn'] = 'mpn_inh_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['mpn_exc_volt_fn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['mpn_exc_spikes_fn'] = 'mpn_exc_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['mpn_exc_spikes_fn_merged'] = 'mpn_exc_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['mpn_inh_volt_fn'] = 'mpn_inh_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['training_sequence_fn'] = self.params['parameters_folder'] + 'training_stimuli_parameters.txt'
 
+
         # bg files:
-        self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['d1_spikes_fn'] = 'd1_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['d1_volt_fn'] = 'd1_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['d2_spikes_fn'] = 'd2_spikes_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
-        self.params['d2_volt_fn'] = 'd2_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d1_spikes_fn'] = 'd1_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d1_volt_fn'] = 'd1_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d2_spikes_fn'] = 'd2_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d2_volt_fn'] = 'd2_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['actions_spikes_fn'] = 'actions_spikes_'
-        self.params['actions_volt_fn'] = 'actions_volt_' # data_path is already set to spiketimes_folder_mpn --> files will be in this subfolder
+        self.params['actions_volt_fn'] = 'actions_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['efference_spikes_fn'] = 'efference_spikes_'
+        self.params['supervisor_spikes_fn'] = 'supervisor_spikes_'
         self.params['rew_spikes_fn'] = 'rew_spikes_'
         self.params['rew_volt_fn'] = 'rew_volt_'
         self.params['rp_spikes_fn'] = 'rp_spikes_'
         self.params['rp_volt_fn'] = 'rp_volt_'
+
+        # merged filenames: CELLTYPE_merged_VOLT/SPIKES.dat
+        self.params['states_spikes_fn_merged'] = 'states_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d1_spikes_fn_merged'] = 'd1_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d1_volt_fn_merged'] = 'd1_merged_volt.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d2_volt_fn_merged'] = 'd2_merged_volt.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d2_spikes_fn_merged'] = 'd2_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['actions_spikes_fn_merged'] = 'actions_merged_spikes.dat'
+        self.params['actions_volt_fn_merged'] = 'actions_merged_volt.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['efference_spikes_fn_merged'] = 'efference_merged_spikes.dat'
+        self.params['supervisor_spikes_fn_merged'] = 'supervisor_merged_spikes.dat'
+        self.params['rew_spikes_fn_merged'] = 'rew_merged_spikes.dat'
+        self.params['rew_volt_fn_merged'] = 'rew_merged_volt.dat'
+        self.params['rp_spikes_fn_merged'] = 'rp_merged_spikes.dat'
+        self.params['rp_volt_fn_merged'] = 'rp_merged_volt.dat'
+
 
 
         # some filenames, TODO: check if required
@@ -439,8 +458,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
 
         self.params['input_folder_mpn'] = '%sInputSpikes_MPN/' % (self.params['folder_name'])
-        self.params['spiketimes_folder_mpn'] = '%sSpikes/' % self.params['folder_name']
-        self.params['folder_names'].append(self.params['spiketimes_folder_mpn'])
+        self.params['spiketimes_folder'] = '%sSpikes/' % self.params['folder_name']
+        self.params['folder_names'].append(self.params['spiketimes_folder'])
         self.params['folder_names'].append(self.params['input_folder_mpn'])
         self.create_folders()
 

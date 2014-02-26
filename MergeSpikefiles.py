@@ -1,7 +1,8 @@
 import os
 import numpy
 import sys
-import simulation_parameters
+import json
+#import simulation_parameters
 
 class MergeSpikefiles(object):
 
@@ -48,27 +49,63 @@ if __name__ == '__main__':
 
     """
 #    assert (len(sys.argv) > 2), 'ERROR: folder and cell_type not given\n' + info_txt
-    try:
-        folder = sys.argv[1]
-        params_fn = os.path.abspath(folder) + '/Parameters/simulation_parameters.json'
-        param_tool = simulation_parameters.global_parameters(params_fn=params_fn)
-    except:
-        param_tool = simulation_parameters.global_parameters()
-
-    params = param_tool.params
-
-    try:
-        cell_type = sys.argv[2]
-    except:
-        cell_types = ['mpn_exc', 'mpn_inh']
+#   try:
+#       folder = sys.argv[1]
+#       params_fn = os.path.abspath(folder) + '/Parameters/simulation_parameters.json'
+#       param_tool = simulation_parameters.global_parameters(params_fn=params_fn)
+#   except:
+#       param_tool = simulation_parameters.global_parameters()
 
 
+    fparam = 'Test/Parameters/simulation_parameters.json'
+    f = open(fparam, 'r')
+    params = json.load(f)
+
+#    params = param_tool.params
+
+    cell_types = ['d1', 'd2', 'actions', 'efference']
+    cell_types_volt = ['d1', 'd2', 'actions']
+
+    print 'nstates ', params['n_states'], 'nactions ', params['n_actions']
     MS = MergeSpikefiles(params)
     for cell_type in cell_types:
 #        print 'Merging nspike file for %s ' % (cell_type)
 #        MS.merge_nspike_files(params['%s_spike_fn_base' % cell_type], params['%s_spikes_merged_fn_base' % cell_type])
         print 'Merging spiketimes file for %s ' % (cell_type)
-        merge_pattern = params['spiketimes_folder_mpn'] + params['%s_spikes_fn' % cell_type]
-        output_fn = params['spiketimes_folder_mpn'] + params['%s_spikes_fn_merged' % cell_type]
+        for naction in range(params['n_actions']):
+            print 'Merging spiketimes file for %d ' % (naction)
+            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
+            output_fn = params['spiketimes_folder'] + str(naction) + params['%s_spikes_fn_merged' % cell_type] 
+            MS.merge_spiketimes_files(merge_pattern, output_fn)
+    print 'Merging spiketimes file for states '
+    cell_type = 'states'
+    for nstate in range(params['n_states']):
+        print 'Merging spiketimes file for %d ' % (nstate)
+        merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(nstate)
+        output_fn =  params['spiketimes_folder'] + str(nstate) + params['%s_spikes_fn_merged' % cell_type] 
         MS.merge_spiketimes_files(merge_pattern, output_fn)
+
+    print 'Merging spiketimes file for rp'
+    cell_type = 'rp'
+    for i in range(params['n_states']*params['n_actions']):
+        print 'Merging spiketimes file for %d ' % (i)
+        merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(i)
+        output_fn =  params['spiketimes_folder'] + str(i) + params['%s_spikes_fn_merged' % cell_type] 
+        MS.merge_spiketimes_files(merge_pattern, output_fn)
+
+    for cell_type in cell_types_volt:
+#        print 'Merging voltmeter data file for %s ' % (cell_type)
+        print 'Merging voltmeter recordings file for %s ' % (cell_type)
+        for naction in range(params['n_actions']):
+            merge_pattern = params['spiketimes_folder'] + params['%s_volt_fn' % cell_type] + str(naction)
+            output_fn = params['spiketimes_folder'] + str(naction) + params['%s_volt_fn_merged' % cell_type]
+            MS.merge_spiketimes_files(merge_pattern, output_fn)
+
+# need to add merging for rp and rew volt data
+
+    cell_type = 'rew'
+    print 'Merging spikes recordings file for %s ' % (cell_type)
+    merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] 
+    output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type]
+    MS.merge_spiketimes_files(merge_pattern, output_fn)
         

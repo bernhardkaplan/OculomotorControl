@@ -68,7 +68,7 @@ if __name__ == '__main__':
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
     if pc_id == 0:
-        remove_files_from_folder(params['spiketimes_folder_mpn'])
+        remove_files_from_folder(params['spiketimes_folder'])
         remove_files_from_folder(params['input_folder_mpn'])
         remove_files_from_folder(params['connections_folder'])
     

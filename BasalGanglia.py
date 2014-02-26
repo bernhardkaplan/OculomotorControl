@@ -24,6 +24,7 @@ class BasalGanglia(object):
         self.recorder_output= {} # the actual NEST recorder object, indexed by naction
         self.recorder_output_gidkey = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.efference_copy = {}
+        self.supervisor = {}
         # Recording devices
         self.recorder_output= {}
         self.recorder_output_gidkey = {}
@@ -31,6 +32,7 @@ class BasalGanglia(object):
         self.recorder_d2 = {}
         self.recorder_states = {}
         self.recorder_efference = {}
+        self.recorder_supervisor = {}
         self.recorder_rp = {}
         self.recorder_rew = nest.Create("spike_detector", params= self.params['spike_detector_rew'])
         nest.SetStatus(self.recorder_rew,[{"to_file": True, "withtime": True, 'label' : self.params['rew_spikes_fn']}])
@@ -54,6 +56,8 @@ class BasalGanglia(object):
             self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params= self.params['param_msn_d1'])
         for nactions in range(self.params['n_actions']):
             self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params= self.params['param_msn_d2'])
+
+        for nactions in range(self.params['n_actions']):
             self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
             nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_volt_fn']+ str(nactions)}])
             self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
@@ -87,6 +91,19 @@ class BasalGanglia(object):
 
 
         print 'debug recorder gid', self.recorder_output_gidkey
+        # create supervisor
+        if (self.params['training'] and self.params['supervised_on']):
+            print 'DEBUG No supervisor connected'
+            for nactions in xrange(self.params['n_actions']):
+                self.supervisor[nactions] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_supervisor'], params = self.params['param_poisson_supervisor']  )
+                for i in xrange(self.params['n_actions']):
+                     if i != nactions:
+                         nest.DivergentConnect(self.supervisor[nactions], self.strD2[i], weight=self.params['weight_supervisor_strd2'], delay=self.params['delay_supervisor_strd2'])
+                     else:
+                         nest.DivergentConnect(self.supervisor[nactions], self.strD1[i], weight=self.params['weight_supervisor_strd1'], delay=self.params['delay_supervisor_strd1'])
+                self.recorder_supervisor[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_supervisor'])
+                nest.SetStatus(self.recorder_supervisor[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['supervisor_spikes_fn']+ str(nactions)}])
+                nest.ConvergentConnect(self.supervisor[nactions], self.recorder_supervisor[nactions])
 
         # Creates and connects the EFFERENCE COPY population. This actives the D1 population coding for the selected action and the D2 populations of non-selected actions, in STR
         for nactions in xrange(self.params['n_actions']):
