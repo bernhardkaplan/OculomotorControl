@@ -59,9 +59,9 @@ class BasalGanglia(object):
 
         for nactions in range(self.params['n_actions']):
             self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
-            nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_volt_fn']+ str(nactions)}])
+            nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['strD1_volt_fn']+ str(nactions)}])
             self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
-            nest.SetStatus(self.voltmeter_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d2_volt_fn']+ str(nactions)}])
+            nest.SetStatus(self.voltmeter_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['strD2_volt_fn']+ str(nactions)}])
 
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
         for nactions in range(self.params['n_actions']):
@@ -74,8 +74,8 @@ class BasalGanglia(object):
             for ind in xrange(self.params['num_actions_output']):
                 self.recorder_output_gidkey[self.actions[nactions][ind]] = nactions
             nest.SetStatus(self.recorder_output[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_spikes_fn']+ str(nactions)}])
-            nest.SetStatus(self.recorder_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_spikes_fn']+ str(nactions)}])
-            nest.SetStatus(self.recorder_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d2_spikes_fn']+ str(nactions)}])
+            nest.SetStatus(self.recorder_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['strD1_spikes_fn']+ str(nactions)}])
+            nest.SetStatus(self.recorder_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['strD2_spikes_fn']+ str(nactions)}])
             nest.ConvergentConnect(self.actions[nactions], self.recorder_output[nactions])
             nest.ConvergentConnect(self.strD1[nactions], self.recorder_d1[nactions])
             nest.ConvergentConnect(self.strD2[nactions], self.recorder_d2[nactions])
@@ -465,7 +465,7 @@ class BasalGanglia(object):
         cell_types = ['strD1', 'strD2', 'actions', 'recorder']
         for cell_type in cell_types:
             d[cell_type] = self.get_cell_gids(cell_type)
-        output_fn = self.params['parameters_folder'] + 'bg_cell_gids_pcid%d.json' % self.pc_id
+        output_fn = self.params['bg_gids_fn']
         print 'Writing cell_gids to:', output_fn
         f = file(output_fn, 'w')
         json.dump(d, f, indent=2)
