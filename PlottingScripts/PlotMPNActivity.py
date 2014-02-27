@@ -197,7 +197,7 @@ class ActivityPlotter(object):
         if params == None:
             params = self.params
         (ymin, ymax) = ax.get_ylim()
-        for i_stim in xrange(params['n_training_stim']):
+        for i_stim in xrange(params['n_stim_training']):
             t0 = i_stim * params['n_iterations_per_stim'] * params['t_iteration']
             ax.plot((t0, t0), (ymin, ymax), ls='-', lw=2, c='k')
             for it_ in xrange(params['n_iterations_per_stim']):

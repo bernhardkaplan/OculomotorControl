@@ -75,22 +75,37 @@ class ActivityPlotter(object):
 
 
 
-    def plot_spikes_for_celltype(self, celltype, color='k', gid_offset=0, marker='o'):
-        xa = -(self.params['t_sim']/10)
+    def plot_spikes_for_celltype(self, celltype, color='k', gid_offset=0, marker='o', ylim=None, ax=None):
         recorder_type = 'spikes'
-        mean = 0
+
+        pylab.subplots_adjust(left=0.15)
+        if ax == None:
+            print 'creating figure'
+            fig = pylab.figure()
+            ax = fig.add_subplot(111)
+        else:
+            print 'no fig created'
+
         for naction in range(self.params['n_actions']):
             data = np.loadtxt(self.params['spiketimes_folder'] + str(naction) + celltype + '_merged_' + recorder_type + '.dat')
             if len(data)<2:
                 print 'no data in', celltype, naction
             else:
                 data[:, 0] += gid_offset
-                pylab.plot(data[:,1], data[:,0], linestyle='None', marker='o', c=color, markeredgewidth=0, markersize=self.rp_markersize)
-#                pylab.plot(data[:,1], data[:,0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
-                mean += (np.min(data[:,0]) + np.max(data[:,0]))/2
-        mean = mean / self.params['n_actions']
-        pylab.text(xa, mean, celltype, color=color)
-        print 'mean', mean
+                ax.plot(data[:,1], data[:,0], linestyle='None', marker='o', c=color, markeredgewidth=0, markersize=self.rp_markersize)
+#                ax.plot(data[:,1], data[:,0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
+
+        if ylim != None:
+            ax.set_ylim(ylim)
+        mn, mx = utils.get_min_max_gids(params, cell_type)
+        ypos_label = .5 * (mx - mn) + mn
+        xa = - (self.params['t_sim'] / 6.)
+        ax.text(xa, ypos_label, celltype, color=color, fontsize=16)
+        if self.params['training']:
+            ax.set_title('Spikes during training, w_mpn_bg factor=%.1f' % self.params['mpn_bg_weight_amplification'])
+        else:
+            ax.set_title('Spikes during testing, w_mpn_bg factor=%.1f' % self.params['mpn_bg_weight_amplification'])
+        return ax
 
 
 if __name__ == '__main__':
@@ -111,10 +126,12 @@ if __name__ == '__main__':
 
     print 'Merging spikes ...'
     if params['training']:
-        cell_types = ['d1', 'd2', 'actions', 'supervisor']
+        cell_types = ['strD1', 'strD2', 'actions']#, 'supervisor']
+#        cell_types = ['actions', 'strD1', 'strD2']#, 'supervisor']
     else:
-        cell_types = ['d1', 'd2', 'actions']
-    cell_types_volt = ['d1', 'd2', 'actions']
+#        cell_types = ['actions', 'strD1', 'strD2']
+        cell_types = ['strD1', 'strD2', 'actions']#, 'supervisor']
+    cell_types_volt = ['strD1', 'strD2', 'actions']
 
     print 'nstates ', params['n_states'], 'nactions ', params['n_actions']
     MS = MergeSpikefiles.MergeSpikefiles(params)
@@ -126,19 +143,33 @@ if __name__ == '__main__':
             output_fn = params['spiketimes_folder'] + str(naction) + params['%s_spikes_fn_merged' % cell_type] 
             MS.merge_spiketimes_files(merge_pattern, output_fn)
 
+    # determine axes limits beforehand
+    gid_min, gid_max = np.infty, -np.infty
+    for z, cell_type in enumerate(cell_types):
+        mn, mx= utils.get_min_max_gids(params, cell_type)
+        gid_min, gid_max = min(mn, gid_min), max(mx, gid_max)
+
     Plotter = ActivityPlotter(params)#, it_max=1)
     colors = ['b','g', 'r', 'c', 'm', 'y', 'k']
     markers = ['|', '-', 'o', 'D', '+', '4', 'v', 's']
 
+    ax = None
     offset = 0
+    gid_min, gid_max = np.infty, -np.infty
     for z, cell_type in enumerate(cell_types):
+        mn, mx= utils.get_min_max_gids(params, cell_type)
+        gid_min, gid_max = min(mn, gid_min), max(mx, gid_max)
         cl = colors[z % len(colors)]
         marker = markers[z % len(colors)]
-        print 'debug', cl, marker, cell_type
+#        print 'debug', cl, marker, cell_type
 #        if cell_type == 'd2':
 #            offset = -params['n_cells_D1']
-        Plotter.plot_spikes_for_celltype(cell_type, color=cl, gid_offset=offset, marker=marker)
+#        print 'Cell type gid min max',cell_type, gid_min, gid_max
+        ax = Plotter.plot_spikes_for_celltype(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax)
 
+    output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + '%.1f.png' % (params['mpn_bg_weight_amplification'])
+    print 'Saving figure to:', output_fig
+    pylab.savefig(output_fig, dpi=300)
 #    Plotter.plot_raster_simple()
 #    Plotter.plot_action_voltages()
 #    Plotter.plot_action_spikes()

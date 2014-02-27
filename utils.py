@@ -5,7 +5,33 @@ This file contains a bunch of helper functions.
 import numpy as np
 import os
 import re
+import json
 
+
+def get_min_max_gids(params, cell_type):
+    """
+    cell_type -- string possibly values:
+        ['d1', 'd2', 'actions', 'supervisor']
+    """
+    fn = params['bg_gids_fn']
+    f = file(fn, 'r')
+    d = json.load(f)
+    gid_min, gid_max = np.infty, -np.infty
+    cell_gids = d[cell_type]
+    for gids in cell_gids:
+        gid_min = min(gid_min, min(gids))
+        gid_max = max(gid_max, max(gids))
+    return gid_min, gid_max
+
+
+def get_colorlist():
+    colorlist = ['k', 'b', 'r', 'g', 'm', 'c', 'y', '#FF6600', '#CCFF00', \
+            '#808000', '#D35F8D']
+    return colorlist
+
+def get_linestyles():
+    linestyles = ['-', ':', '--', '-.']
+    return linestyles
 
 def get_plus_minus(rnd):
     """
