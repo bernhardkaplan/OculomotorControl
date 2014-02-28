@@ -42,27 +42,39 @@ class CreateConnections(object):
 
 
     def merge_connection_files(self, params):
+
+        # merge the final weight files
         if self.pc_id == 0:
             if not os.path.exists(params['mpn_bgd1_merged_conn_fn']):
                 # merge the connection files
                 merge_pattern = params['mpn_bgd1_conn_fn_base']
                 fn_out = params['mpn_bgd1_merged_conn_fn']
                 utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
-#                d_unsorted = np.loadtxt(fn_out)
-#                d = utils.filter_connection_list(d_unsorted)
-#                np.savetxt(fn_out, d, fmt='%.3e')
-        if self.comm != None:
-            self.comm.barrier()
 
-        if self.pc_id == 0:
             if not os.path.exists(params['mpn_bgd2_merged_conn_fn']):
                 # merge the connection files
                 merge_pattern = params['mpn_bgd2_conn_fn_base']
                 fn_out = params['mpn_bgd2_merged_conn_fn']
                 utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
-#                d_unsorted = np.loadtxt(fn_out)
-#                d = utils.filter_connection_list(d_unsorted)
-#                np.savetxt(fn_out, d, fmt='%.3e')
+        if self.comm != None:
+            self.comm.barrier()
+
+
+        if params['weight_tracking']:
+            # Merge the _dev files recorded for tracking the weights
+            if self.pc_id == 0:
+                for it in xrange(self.params['n_iterations']):
+                    fn_merged = self.params['mpn_bgd1_merged_conntracking_fn_base'] + 'it%d.txt' % (it)
+                    if not os.path.exists(fn_merged):
+                        # merge the connection files
+                        merge_pattern = params['mpn_bgd1_conntracking_fn_base']
+                        utils.merge_and_sort_files(merge_pattern, fn_merged, sort=True)
+                for it in xrange(self.params['n_iterations']):
+                    fn_merged = self.params['mpn_bgd2_merged_conntracking_fn_base'] + 'it%d.txt' % (it)
+                    if not os.path.exists(fn_merged):
+                        # merge the connection files
+                        merge_pattern = params['mpn_bgd2_conntracking_fn_base']
+                        utils.merge_and_sort_files(merge_pattern, fn_merged, sort=True)
         if self.comm != None:
             self.comm.barrier()
 
@@ -96,7 +108,7 @@ class CreateConnections(object):
 
 
 
-    def get_weights(self, src_pop, tgt_pop):
+    def get_weights(self, src_pop, tgt_pop, iteration=None):
         """
         After training get the weights between the MPN state layer and the BG action layer
         """
@@ -105,7 +117,7 @@ class CreateConnections(object):
         D1_conns = ''
         D2_conns = ''
         for nactions in range(self.params['n_actions']):
-            print 'action %d' % nactions
+            print 'action %d' % nactions, 'iteration:', iteration
 
             conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions]) # get the list of connections stored on the current MPI node
             if conns != None:
@@ -116,7 +128,8 @@ class CreateConnections(object):
                         pj = cp[0]['p_j']
                         pij = cp[0]['p_ij']
                         w = np.log(pij / (pi * pj))
-                        D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
+                        if w != 0.:
+                            D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
 
             conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions]) # get the list of connections stored on the current MPI node
             if conns != None:
@@ -127,15 +140,24 @@ class CreateConnections(object):
                         pj = cp[0]['p_j']
                         pij = cp[0]['p_ij']
                         w = np.log(pij / (pi * pj))
-                        D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
+                        if w != 0.:
+                            D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
 
-        fn_out = self.params['mpn_bgd1_conn_fn_base'] + '%d.txt' % (self.pc_id)
+        if iteration == None:
+            fn_out = self.params['mpn_bgd1_conn_fn_base'] + '%d.txt' % (self.pc_id)
+        else:
+            fn_out = self.params['mpn_bgd1_conntracking_fn_base'] + 'it%d_%d.txt' % (iteration, self.pc_id)
+
         print 'Writing connections to:', fn_out
         D1_f = file(fn_out, 'w')
         D1_f.write(D1_conns)
         D1_f.close()
 
-        fn_out = self.params['mpn_bgd2_conn_fn_base'] + '%d.txt' % (self.pc_id)
+        if iteration == None:
+            fn_out = self.params['mpn_bgd2_conn_fn_base'] + '%d.txt' % (self.pc_id)
+        else:
+            fn_out = self.params['mpn_bgd2_conntracking_fn_base'] + 'it%d_%d.txt' % (iteration, self.pc_id)
+
         print 'Writing connections to:', fn_out
         D2_f = file(fn_out, 'w')
         D2_f.write(D2_conns)

@@ -40,14 +40,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['n_stim_training'] = 2# number of different stimuli presented during training
-        self.params['n_stim_testing'] = 2# number of different stimuli presented during training
+        self.params['n_stim_training'] = 1# number of different stimuli presented during training
+        self.params['n_stim_testing'] = 1# number of different stimuli presented during training
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
-        self.params['n_iterations_per_stim'] = 20
+        self.params['n_iterations_per_stim'] = 15
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
 #        self.params['training'] = True
         self.params['training'] = False
+        self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
+
 
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_stim_training'] * self.params['n_iterations_per_stim']
@@ -64,7 +66,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.9, .5, 1.3, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.9, .5, 0.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
@@ -214,8 +216,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
-        self.params['n_actions'] = 21
-        self.params['n_states'] = 20
+        self.params['n_actions'] = 15
+        self.params['n_states'] = 14
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.05
 
@@ -224,14 +226,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_i = 10.
         self.tau_j = 10.
         self.tau_e = 100.
-        self.tau_p = max(1000., self.params['t_sim'])
+#        self.tau_p = max(1000., self.params['t_sim'])
+        self.tau_p = self.params['t_sim']
         self.gain = 0.
         self.K = 1.
-        self.params['fmax'] = 20.
+        self.params['fmax'] = 50.
 
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 2.8
+        self.params['mpn_bg_weight_amplification'] = 3.5
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
@@ -240,8 +243,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['num_msn_d2'] = 30
         self.params['n_cells_strD1'] = self.params['num_msn_d1'] * self.params['n_actions']
         self.params['n_cells_strD2'] = self.params['num_msn_d2'] * self.params['n_actions']
-        self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
-        self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2.0, 'gain': 0.0}
+        self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
+                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': 0.0}
+        self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e, \
+                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': 0.0}
         
         ## Output GPi/SNr
         self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
@@ -256,7 +261,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## RP and REWARD
         self.params['model_rp_neuron'] = 'iaf_cond_alpha_bias'
         self.params['num_rp_neurons'] = 15
-        self.params['param_rp_neuron'] = {'fmax': self.params['fmax'], 'tau_j': 10.,'tau_e': 100.,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2., 'gain': 0.}
+        self.params['param_rp_neuron'] = {'fmax': self.params['fmax'], 'tau_i':self.tau_i, 'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2., 'gain': 0.}
 
         self.params['model_rew_neuron'] = 'iaf_cond_alpha'
         self.params['num_rew_neurons'] = 20
@@ -283,9 +288,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         #Connections States Actions
         self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['params_synapse_d1_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K, \
+                'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
+                'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
         self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d2_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['params_synapse_d2_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K, \
+                'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
+                'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
         #Connections REW to RP, STRD1 and STRD2
         self.params['weight_rew_strD1'] = 10.
@@ -418,7 +427,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['receptive_fields_exc_fn'] = self.params['parameters_folder'] + 'receptive_field_sizes_exc.txt'
         self.params['gids_to_record_fn_mp'] = self.params['parameters_folder'] + 'gids_to_record_mpn.txt'
         # storage for actions (BG), network states (MPN) and motion parameters (on Retina)
-        self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt'
+        self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt' # contains (vx, vy, action_index)
         self.params['bg_action_bins_fn'] = self.params['data_folder'] + 'bg_actions_bins.txt'
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
         self.params['motion_params_fn'] = self.params['data_folder'] + 'motion_params.txt'
@@ -426,9 +435,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # connection filenames
         self.params['mpn_bgd1_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connections'
         self.params['mpn_bgd2_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d2_connections'
-
         self.params['mpn_bgd1_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d1_connections.txt'
         self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connections.txt'
+
+        # connection development / tracking 
+        self.params['mpn_bgd1_conntracking_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connection_dev_'
+        self.params['mpn_bgd2_conntracking_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d2_connection_dev_'
+        self.params['mpn_bgd1_merged_conntracking_fn_base'] = self.params['connections_folder'] + 'merged_mpn_bg_d1_connection_dev_'
+        self.params['mpn_bgd2_merged_conntracking_fn_base'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connection_dev_'
 
 
     def set_folder_names(self):
@@ -436,11 +450,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
 
         if self.params['training']:
-            folder_name = 'Training'
+            folder_name = 'Training_taup%d' % (self.params['params_synapse_d1_MT_BG']['tau_p'])
         else:
             folder_name = 'Test'
 
-        folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.1f/' % \
+        folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f/' % \
                 (self.params['n_stim_training'], self.params['n_exc_mpn'], self.params['n_states'], \
                 self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'], self.params['mpn_bg_weight_amplification'])
 

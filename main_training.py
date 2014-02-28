@@ -78,12 +78,12 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params, comm)
     CC.connect_mt_to_bg(MT, BG)
 
-    actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
+    actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net= np.zeros((params['n_iterations'], 4))
     iteration_cnt = 0
     training_stimuli = VI.create_training_sequence()
     v_eye = [0., 0.]
-    for i_stim in xrange(params['n_training_stim']):
+    for i_stim in xrange(params['n_stim_training']):
         VI.current_motion_params = training_stimuli[i_stim, :]
         for it in xrange(params['n_iterations_per_stim']):
 
@@ -97,7 +97,8 @@ if __name__ == '__main__':
 
             print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
             print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
-            BG.supervised_training(supervisor_state)
+            (action_index_x, action_index_y) = BG.supervised_training(supervisor_state)
+            print 'DEBUG action_index_x / y:', action_index_x, action_index_y
 
             if params['debug_mpn']:
                 print 'Saving spike trains...'
@@ -118,16 +119,18 @@ if __name__ == '__main__':
             network_states_net[iteration_cnt, :] = state_
 
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
-            next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
-            v_eye[0] += next_state[0]
-            v_eye[1] += next_state[1]
-            actions[iteration_cnt + 1, :] = next_state
-            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_state
+            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            v_eye[0] += next_action[0]
+            v_eye[1] += next_action[1]
+            actions[iteration_cnt + 1, :] = next_action
+            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
+
+            if params['weight_tracking']:
+                CC.get_weights(MT, BG, iteration=iteration_cnt)
 
             iteration_cnt += 1
             if comm != None:
                 comm.barrier()
-
 
     CC.get_weights(MT, BG)
     CC.merge_connection_files(params)
@@ -140,5 +143,6 @@ if __name__ == '__main__':
         np.savetxt(params['network_states_fn'], network_states_net)
         np.savetxt(params['motion_params_fn'], VI.motion_params)
         os.system('python PlottingScripts/PlotMPNActivity.py')
+        os.system('python PlottingScripts/PlotBGActivity.py')
 
 

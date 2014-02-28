@@ -8,7 +8,17 @@ import re
 import json
 
 
-def get_min_max_gids(params, cell_type):
+def compare_actions_taken(training_params, test_params):
+    actions_training = np.loadtxt(training_params['actions_taken_fn'])
+    actions_test = np.loadtxt(test_params['actions_taken_fn'])
+    n_actions = actions_training[:, 0].size
+    for i_ in xrange(n_actions):
+        if actions_training[i_, 2] != actions_test[i_, 2]:
+            print '\nComparison between actions taken during training and testing diverge in iteration %d: training acion index' % (i_), actions_training[i_, 2], ' test', actions_test[i_, 2]
+    get_min_max_gids_for_bg
+
+
+def get_min_max_gids_for_bg(params, cell_type):
     """
     cell_type -- string possibly values:
         ['d1', 'd2', 'actions', 'supervisor']

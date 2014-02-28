@@ -1,15 +1,15 @@
 import sys
 import os
+import numpy as np
+import json
+import time
+import nest
 import VisualInput
 import MotionPrediction
 import BasalGanglia
-import json
 import simulation_parameters
 import CreateConnections
-import nest
-import numpy as np
-import time
-import os
+import utils
 from main_training import remove_files_from_folder, save_spike_trains
 
 try: 
@@ -40,6 +40,13 @@ if __name__ == '__main__':
     training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
     training_param_tool = simulation_parameters.global_parameters(params_fn=training_params_fn)
     training_params = training_param_tool.params
+    actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
+    network_states_net= np.zeros((params['n_iterations'], 4))
+    training_stimuli = np.zeros((training_params['n_stim_training'], 4))
+    training_stimuli_= np.loadtxt(training_params['training_sequence_fn'])
+    training_stimuli = training_stimuli_
+    print 'debug', training_params['training_sequence_fn'], '\n', training_stimuli
+    training_stimuli.reshape((training_params['n_stim_training'], 4))
 
     GP.params['training_params'] = training_params
     GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
@@ -62,16 +69,15 @@ if __name__ == '__main__':
         comm.barrier()
     CC.connect_mt_to_bg_after_training(MT, BG, training_params)
 
-    actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
-    network_states_net= np.zeros((params['n_iterations'], 4))
-    training_stimuli = np.loadtxt(training_params['training_sequence_fn'])
-
     iteration_cnt = 0
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_stim_testing']):
         print 'debug vi current_motion_params', VI.current_motion_params
-#        print 'debug vi training stimli', training_stimuli[i_stim, :]
-        VI.current_motion_params = training_stimuli[i_stim, :]
+        print 'debug vi training stimli', training_stimuli.shape, '\n', training_stimuli
+        if len(training_stimuli.shape) == 1:
+            VI.current_motion_params = training_stimuli
+        else:
+            VI.current_motion_params = training_stimuli[i_stim, :]
         for it in xrange(params['n_iterations_per_stim']):
 
             if it == params['n_iterations_per_stim'] - 1:
@@ -99,11 +105,12 @@ if __name__ == '__main__':
             network_states_net[iteration_cnt, :] = state_
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
 
-            next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
-            v_eye[0] += next_state[0]
-            v_eye[1] += next_state[1]
-            actions[iteration_cnt + 1, :] = next_state
-            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_state
+            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            v_eye[0] += next_action[0]
+            v_eye[1] += next_action[1]
+            print 'debug next_action', next_action
+            actions[iteration_cnt + 1, :] = next_action
+            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             iteration_cnt += 1
             if comm != None:
                 comm.barrier()
@@ -112,7 +119,11 @@ if __name__ == '__main__':
         np.savetxt(params['actions_taken_fn'], actions)
         np.savetxt(params['network_states_fn'], network_states_net)
         np.savetxt(params['motion_params_fn'], VI.motion_params)
+        utils.compare_actions_taken(training_params, params)
         os.system('python PlottingScripts/PlotMPNActivity.py')
+        os.system('python PlottingScripts/PlotBGActivity.py')
+
+
 
     t1 = time.time() - t0
     print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)

@@ -351,4 +351,4 @@ if __name__ == '__main__':
     fig.savefig(output_fn)
 
 #    Plotter.plot_raster_sorted(title='Exc cells sorted by $v_x$', sort_idx=2)
-    pylab.show()
+#    pylab.show()

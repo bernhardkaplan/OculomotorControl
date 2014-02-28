@@ -41,16 +41,16 @@ class VisualInput(object):
         When training with multiple stimuli, this function returns the initial motion parameters for 
         the new stimulus
         """
-        mp_training = np.zeros((self.params['n_training_stim'], 4))
+        mp_training = np.zeros((self.params['n_stim_training'], 4))
 
-        if self.params['n_training_stim'] == 1:
+        if self.params['n_stim_training'] == 1:
             x0 = self.params['initial_state'][0]
             v0 = self.params['initial_state'][2]
             mp_training[0, 0] = x0
             mp_training[0, 1] = .5
             mp_training[0, 2] = v0
         else:
-            for i_stim in xrange(self.params['n_training_stim']):
+            for i_stim in xrange(self.params['n_stim_training']):
     #            plus_minus = utils.get_plus_minus(self.RNG)
                 plus_minus = (-1.)**i_stim
     #            x0 = .2 #np.random.rand()

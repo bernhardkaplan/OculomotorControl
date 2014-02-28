@@ -265,21 +265,24 @@ class BasalGanglia(object):
 
     def supervised_training(self, supervisor_state):
         """
-        Activates poisson generator of the required, teached, action and inactivates the one of the nondesirable actions.
+        Activates poisson generator of the required, teached, action and inactivates those of the nondesirable actions.
+        The supervisor_state --- (u, v) is mapped to discretized states
         """
         (u, v) = supervisor_state 
-        action = [0, 0]
+        action_index_x = self.map_speed_to_action(u, self.action_bins_x, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
+        action_index_y = self.map_speed_to_action(v, self.action_bins_y, xy='y')
+#        action = [0, 0]
 #        action[0] = (x - .5) + u * self.params['t_iteration'] / self.params['t_cross_visual_field']
 #        action[1] = (y - .5) + v * self.params['t_iteration'] / self.params['t_cross_visual_field']
-        action[0] = u 
-        action[1] = v 
+#        action[0] = u 
+#        action[1] = v 
 
 #        print 'debug supervisor_state', supervisor_state
 #        print 'debug supervisor action', action
-        action_index_x = self.map_speed_to_action(action[0], self.action_bins_x, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
-        action_index_y = self.map_speed_to_action(action[1], self.action_bins_y, xy='y')
+#        action_index_x = self.map_speed_to_action(action[0], self.action_bins_x, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
+#        action_index_y = self.map_speed_to_action(action[1], self.action_bins_y, xy='y')
 
-        print 'debug BG based on supervisor action choose action_index_x: %d ~ v_eye = %.2f ' % (action_index_x, self.action_bins_x[action_index_x])
+        print 'Debug BG based on supervisor action choose action_index_x: %d ~ v_eye = %.2f ' % (action_index_x, self.action_bins_x[action_index_x])
 #        action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
 #        cnt_v, bins = np.histogram(action[1], action_bins_y)
 #        action_index_y = cnt_v.nonzero()[0][0]
@@ -288,7 +291,9 @@ class BasalGanglia(object):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
         nest.SetStatus(self.supervisor[action_index_x], {'rate' : self.params['active_supervisor_rate']})
         # TODO:  same for action_index_y
+        return (action_index_x, action_index_y)
         
+
     def stop_efference(self):
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.efference_copy[nactions], {'rate' : self.params['inactive_efference_rate']})
@@ -297,10 +302,9 @@ class BasalGanglia(object):
 
 
 
-    def get_action(self, state):
+    def get_action(self):
         """
         Returns the selected action. Calls a selection function e.g. softmax, hardmax, ...
-        state -- is (x, y, v_x, v_y) vector-averaging based on MPN spiking activity
         """
         
         new_event_times = np.array([])
@@ -321,7 +325,7 @@ class BasalGanglia(object):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
         if len(nspikes) == 0:
             self.t_current += self.params['t_iteration']
-            return (0, 0)
+            return (0, 0, np.nan) # maye use 0 instead of np.nan
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]
         print 'winning_gid', winning_gid
@@ -331,7 +335,7 @@ class BasalGanglia(object):
         self.t_current += self.params['t_iteration']
 
         self.iteration += 1
-        return (output_speed_x, 0)
+        return (output_speed_x, 0, winning_action)
 
 
     def set_reward(self, rew):

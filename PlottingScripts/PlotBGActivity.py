@@ -97,14 +97,14 @@ class ActivityPlotter(object):
 
         if ylim != None:
             ax.set_ylim(ylim)
-        mn, mx = utils.get_min_max_gids(params, cell_type)
+        mn, mx = utils.get_min_max_gids_for_bg(params, cell_type)
         ypos_label = .5 * (mx - mn) + mn
         xa = - (self.params['t_sim'] / 6.)
         ax.text(xa, ypos_label, celltype, color=color, fontsize=16)
         if self.params['training']:
-            ax.set_title('Spikes during training, w_mpn_bg factor=%.1f' % self.params['mpn_bg_weight_amplification'])
+            ax.set_title('Spikes during training, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
         else:
-            ax.set_title('Spikes during testing, w_mpn_bg factor=%.1f' % self.params['mpn_bg_weight_amplification'])
+            ax.set_title('Spikes during testing, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
         return ax
 
 
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     # determine axes limits beforehand
     gid_min, gid_max = np.infty, -np.infty
     for z, cell_type in enumerate(cell_types):
-        mn, mx= utils.get_min_max_gids(params, cell_type)
+        mn, mx= utils.get_min_max_gids_for_bg(params, cell_type)
         gid_min, gid_max = min(mn, gid_min), max(mx, gid_max)
 
     Plotter = ActivityPlotter(params)#, it_max=1)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     offset = 0
     gid_min, gid_max = np.infty, -np.infty
     for z, cell_type in enumerate(cell_types):
-        mn, mx= utils.get_min_max_gids(params, cell_type)
+        mn, mx= utils.get_min_max_gids_for_bg(params, cell_type)
         gid_min, gid_max = min(mn, gid_min), max(mx, gid_max)
         cl = colors[z % len(colors)]
         marker = markers[z % len(colors)]
@@ -167,7 +167,7 @@ if __name__ == '__main__':
 #        print 'Cell type gid min max',cell_type, gid_min, gid_max
         ax = Plotter.plot_spikes_for_celltype(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax)
 
-    output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + '%.1f.png' % (params['mpn_bg_weight_amplification'])
+    output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + '%.2f.png' % (params['mpn_bg_weight_amplification'])
     print 'Saving figure to:', output_fig
     pylab.savefig(output_fig, dpi=300)
 #    Plotter.plot_raster_simple()
