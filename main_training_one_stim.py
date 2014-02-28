@@ -77,7 +77,7 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params, comm)
     CC.connect_mt_to_bg(MT, BG)
 
-    actions = np.zeros((params['n_iterations'] + 1, 2)) # the first row gives the initial action, [0, 0] (vx, vy)
+    actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net= np.zeros((params['n_iterations'], 4))
     v_eye = [0., 0.]
     for iteration in xrange(params['n_iterations']):
@@ -89,7 +89,8 @@ if __name__ == '__main__':
 
         print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (iteration, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
         print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration, pc_id), supervisor_state
-        BG.supervised_training(supervisor_state)
+        (action_index_x, action_index_y) = BG.supervised_training(supervisor_state)
+        print 'DEBUG action_index_x / y:', action_index_x, action_index_y
 
         if params['debug_mpn']:
             print 'Saving spike trains...'
@@ -108,7 +109,7 @@ if __name__ == '__main__':
         network_states_net[iteration, :] = state_
 
         print 'Iteration: %d\t%d\tState before action: ' % (iteration, pc_id), state_
-        next_state = BG.get_action(state_) # BG returns the network_states_net of the next stimulus
+        next_state = BG.get_action()#state_) # BG returns the network_states_net of the next stimulus
         v_eye[0] += next_state[0]
         v_eye[1] += next_state[1]
         actions[iteration + 1, :] = next_state
