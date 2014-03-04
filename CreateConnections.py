@@ -67,13 +67,13 @@ class CreateConnections(object):
                     fn_merged = self.params['mpn_bgd1_merged_conntracking_fn_base'] + 'it%d.txt' % (it)
                     if not os.path.exists(fn_merged):
                         # merge the connection files
-                        merge_pattern = params['mpn_bgd1_conntracking_fn_base']
+                        merge_pattern = params['mpn_bgd1_conntracking_fn_base'] + 'it%d_' % it
                         utils.merge_and_sort_files(merge_pattern, fn_merged, sort=True)
                 for it in xrange(self.params['n_iterations']):
                     fn_merged = self.params['mpn_bgd2_merged_conntracking_fn_base'] + 'it%d.txt' % (it)
                     if not os.path.exists(fn_merged):
                         # merge the connection files
-                        merge_pattern = params['mpn_bgd2_conntracking_fn_base']
+                        merge_pattern = params['mpn_bgd2_conntracking_fn_base'] + 'it%d_' % it
                         utils.merge_and_sort_files(merge_pattern, fn_merged, sort=True)
         if self.comm != None:
             self.comm.barrier()

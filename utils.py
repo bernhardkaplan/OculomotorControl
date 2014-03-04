@@ -9,13 +9,30 @@ import json
 
 
 def compare_actions_taken(training_params, test_params):
-    actions_training = np.loadtxt(training_params['actions_taken_fn'])
-    actions_test = np.loadtxt(test_params['actions_taken_fn'])
+
+    fn_training = training_params['actions_taken_fn']
+    fn_test = test_params['actions_taken_fn']
+    print 'utils.compare_actions_taken checking files:', fn_training, '\n', fn_test
+    actions_training = np.loadtxt(fn_training)
+    actions_test = np.loadtxt(fn_test)
     n_actions = actions_training[:, 0].size
+    incorrect_iterations = []
     for i_ in xrange(n_actions):
         if actions_training[i_, 2] != actions_test[i_, 2]:
-            print '\nComparison between actions taken during training and testing diverge in iteration %d: training acion index' % (i_), actions_training[i_, 2], ' test', actions_test[i_, 2]
-    get_min_max_gids_for_bg
+            incorrect_iterations.append(i_)
+
+    gids_to_check = {}
+
+    # open test params to get BG gids
+    f = file(test_params['bg_gids_fn'], 'r')
+    bg_gids = json.load(f)
+    for i_, it in enumerate(np.unique(incorrect_iterations)):
+        print 'Incorrect iteration %d: training acion index' % (it), actions_training[it, 2], ' test', actions_test[it, 2]
+        gids_to_check[it] = {}
+        gids_to_check[it]['strD1'] = bg_gids['strD1'][actions_training[it, 2].astype(np.int)]
+        gids_to_check[it]['strD2'] = bg_gids['strD2'][actions_training[it, 2].astype(np.int)]
+    return gids_to_check, incorrect_iterations
+        
 
 
 def get_min_max_gids_for_bg(params, cell_type):
@@ -173,6 +190,16 @@ def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
     spiketimes = all_spikes[idx_, time_idx]
     return spiketimes
 
+def get_spiketimes_within_interval(spike_data, t0, t1):
+    """
+    all_spikes: 2-dim array containing all spiketimes
+    return those spike times which are between > t0 and <= t1
+    """
+
+    t0_idx = set((spike_data[:, 1] > t0).nonzero()[0])
+    t1_idx = set((spike_data[:, 1] <= t1).nonzero()[0])
+    valid_idx = list(t0_idx.intersection(t1_idx))
+    return spike_data[valid_idx, :]
 
 def communicate_local_spikes(gids, comm):
 

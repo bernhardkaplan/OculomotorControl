@@ -40,28 +40,26 @@ class MergeSpikefiles(object):
 
 
 if __name__ == '__main__':
-    info_txt = \
-    """
-    Usage:
-        python MergeSpikeFiles.py [FOLDER] [CELLTYPE] 
-        or
-        python MergeSpikeFiles.py [FOLDER] [CELLTYPE] [PATTERN_NUMBER]
-
-    """
+#    info_txt = \
+#    """
+#    Usage:
+#        python MergeSpikeFiles.py [FOLDER] [CELLTYPE] 
+#        or
+#        python MergeSpikeFiles.py [FOLDER] [CELLTYPE] [PATTERN_NUMBER]
+#    """
 #    assert (len(sys.argv) > 2), 'ERROR: folder and cell_type not given\n' + info_txt
-#   try:
-#       folder = sys.argv[1]
-#       params_fn = os.path.abspath(folder) + '/Parameters/simulation_parameters.json'
-#       param_tool = simulation_parameters.global_parameters(params_fn=params_fn)
-#   except:
-#       param_tool = simulation_parameters.global_parameters()
 
+#    fparam = 'Test/Parameters/simulation_parameters.json'
+#    f = open(fparam, 'r')
+#    params = json.load(f)
 
-    fparam = 'Test/Parameters/simulation_parameters.json'
-    f = open(fparam, 'r')
-    params = json.load(f)
-
-#    params = param_tool.params
+   try:
+       folder = sys.argv[1]
+       params_fn = os.path.abspath(folder) + '/Parameters/simulation_parameters.json'
+       param_tool = simulation_parameters.global_parameters(params_fn=params_fn)
+   except:
+       param_tool = simulation_parameters.global_parameters()
+    params = param_tool.params
 
     cell_types = ['d1', 'd2', 'actions', 'efference']
     cell_types_volt = ['d1', 'd2', 'actions']

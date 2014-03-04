@@ -35,7 +35,7 @@ if __name__ == '__main__':
         exit(1)
 
     assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
-    training_folder = os.path.abspath(sys.argv[1]) # contains the EPTH and OB activity of simple patterns
+    training_folder = os.path.abspath(sys.argv[1]) 
     print 'Training folder:', training_folder
     training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
     training_param_tool = simulation_parameters.global_parameters(params_fn=training_params_fn)
