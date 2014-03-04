@@ -53,12 +53,12 @@ if __name__ == '__main__':
 #    f = open(fparam, 'r')
 #    params = json.load(f)
 
-   try:
-       folder = sys.argv[1]
-       params_fn = os.path.abspath(folder) + '/Parameters/simulation_parameters.json'
-       param_tool = simulation_parameters.global_parameters(params_fn=params_fn)
-   except:
-       param_tool = simulation_parameters.global_parameters()
+    try:
+        folder = sys.argv[1]
+        params_fn = os.path.abspath(folder) + '/Parameters/simulation_parameters.json'
+        param_tool = simulation_parameters.global_parameters(params_fn=params_fn)
+    except:
+        param_tool = simulation_parameters.global_parameters()
     params = param_tool.params
 
     cell_types = ['d1', 'd2', 'actions', 'efference']
