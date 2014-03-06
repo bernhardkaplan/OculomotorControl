@@ -62,12 +62,15 @@ if __name__ == '__main__':
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)
     BG.write_cell_gids_to_file()
+
     CC = CreateConnections.CreateConnections(params)
     CC.set_pc_id(pc_id)
 
     if comm != None:
         comm.barrier()
-    CC.connect_mt_to_bg_after_training(MT, BG, training_params)
+    CC.connect_mt_to_bg_after_training(MT, BG, training_params, params)
+    BG.set_bias('d1')
+    BG.set_bias('d2')
 
     iteration_cnt = 0
     v_eye = [0., 0.]
