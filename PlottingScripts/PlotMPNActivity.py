@@ -197,12 +197,15 @@ class ActivityPlotter(object):
         if params == None:
             params = self.params
         (ymin, ymax) = ax.get_ylim()
+        it_cnt = 0
         for i_stim in xrange(params['n_stim_training']):
             t0 = i_stim * params['n_iterations_per_stim'] * params['t_iteration']
             ax.plot((t0, t0), (ymin, ymax), ls='-', lw=2, c='k')
             for it_ in xrange(params['n_iterations_per_stim']):
                 t0 = it_ * params['t_iteration'] + i_stim * params['n_iterations_per_stim'] * params['t_iteration']
                 ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
+                ax.annotate(str(it_cnt), xy=(t0 + .5 * params['t_iteration'], ymin + (ymax - ymin) * .05))
+                it_cnt += 1
 
 
     def plot_raster_sorted(self, title='', cell_type='exc', sort_idx=0):

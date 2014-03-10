@@ -315,14 +315,18 @@ class BasalGanglia(object):
         Returns the selected action. Calls a selection function e.g. softmax, hardmax, ...
         """
         
+        print 'BG.get_action ...'
         new_event_times = np.array([])
         new_event_gids = np.array([])
+        t_new = self.t_current + self.params['t_iteration']
         for i_, recorder in enumerate(self.recorder_output.values()):
             all_events = nest.GetStatus(recorder)[0]['events']
             recent_event_idx = all_events['times'] > self.t_current
+#            print 'debug recorder %d size:' % (i_), all_events['times'], all_events['senders']
             if recent_event_idx.size > 0:
                 new_event_times = np.r_[new_event_times, all_events['times'][recent_event_idx]]
                 new_event_gids = np.r_[new_event_gids, all_events['senders'][recent_event_idx]]
+            nest.SetStatus(recorder, [{'start': t_new}])
 
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)

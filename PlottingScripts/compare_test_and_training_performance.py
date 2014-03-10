@@ -36,12 +36,19 @@ class Plotter(object):
         fn = params['data_folder'] + 'mpn_xdisplacement.dat'
         print 'Loading data:', fn
         d = np.loadtxt(fn)
+
         xdispl = np.abs(d[:, 0] - .5)
         t_axis = d[:, 4]
         t_axis += .5 * params['t_iteration']
+        n_iterations = d[:, 0].size
+        for stim in xrange(params['n_stim']):
+            for it_ in xrange(params['n_iterations_per_stim'] - 2):
+                it_1 = it_ + stim*params['n_iterations_per_stim']
+                it_2 = it_ + stim*params['n_iterations_per_stim'] + 2
+                p1, = ax.plot(t_axis[it_1:it_2], xdispl[it_1:it_2], c=color, lw=3, ls=ls)
+                print 'debug', t_axis[it_1:it_2], xdispl[it_1:it_2]
 
-        p1, = ax.plot(t_axis, xdispl, c=color, lw=3, ls=ls)
-
+#        p1, = ax.plot(t_axis, xdispl, c=color, lw=3, ls=ls)
         self.plots.append(p1)
         self.legend_labels.append(legend_label)
 

@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
 
-    VI = VisualInput.VisualInput(params)
+    VI = VisualInput.VisualInput(params, pc_id=pc_id)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
     if pc_id == 0:

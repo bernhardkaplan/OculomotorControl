@@ -4,7 +4,7 @@ import utils
 
 class VisualInput(object):
 
-    def __init__(self, params, pc_id=0):
+    def __init__(self, params, pc_id=0, visual_stim_seed=None):
         """
         Keyword arguments
         params -- dictionary that contains 
