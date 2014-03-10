@@ -235,8 +235,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 5.0
-        self.params['mpn_bg_bias_amplification'] = .1
+        self.params['mpn_bg_weight_amplification'] = 20.0
+        self.params['mpn_bg_bias_amplification'] = 20.
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'

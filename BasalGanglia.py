@@ -376,8 +376,7 @@ class BasalGanglia(object):
             bias_value = bias_values[gid] * self.params['mpn_bg_bias_amplification']
             action_idx = self.gid_to_action[int(gid)]
             within_subpop_idx = int(gid) - self.bg_offset[cell_type] - action_idx * self.params['num_msn_%s' % cell_type]
-            print 'DEBUG set_bias gid bias', gid, bias_value, action_idx, within_subpop_idx
-            nest.SetStatus([pop[action_idx][within_subpop_idx]], {'bias' : bias_value})
+            nest.SetStatus([pop[action_idx][within_subpop_idx]], {'I_e' : bias_value})
 
 
     def set_gain(self, gain):
