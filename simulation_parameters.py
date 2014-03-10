@@ -47,8 +47,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
 #        self.params['training'] = True
         self.params['training'] = False
-        self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
-
+        self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
+        self.params['sim_id'] = '1fastStim'
 
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_stim_training'] * self.params['n_iterations_per_stim']
@@ -65,7 +65,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.9, .5, 0.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.9, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
 
@@ -215,6 +215,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
+        self.params['bg_cell_types'] = ['d1', 'd2', 'actions', 'recorder']
         self.params['n_actions'] = 15
         self.params['n_states'] = 14
         self.params['random_divconnect_poisson'] = 0.75
@@ -228,24 +229,34 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.tau_p = max(1000., self.params['t_sim'])
         self.tau_p = self.params['t_sim']
         self.gain = 0.
+        self.params['gain_after_training'] = 50.0
         self.K = 1.
         self.params['fmax'] = 50.
 
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 4.0
+        self.params['mpn_bg_weight_amplification'] = 5.0
+        self.params['mpn_bg_bias_amplification'] = .1
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
         self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
         self.params['num_msn_d1'] = 30
         self.params['num_msn_d2'] = 30
-        self.params['n_cells_strD1'] = self.params['num_msn_d1'] * self.params['n_actions']
-        self.params['n_cells_strD2'] = self.params['num_msn_d2'] * self.params['n_actions']
-        self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
-                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': 0.0}
-        self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e, \
-                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': 0.0}
+        self.params['n_cells_d1'] = self.params['num_msn_d1'] * self.params['n_actions']
+        self.params['n_cells_d2'] = self.params['num_msn_d2'] * self.params['n_actions']
+
+
+        if self.params['training']:
+            self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
+                    'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': 0.0}
+            self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e, \
+                    'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': 0.0}
+        else:
+            self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
+                    'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain_after_training']}
+            self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e, \
+                    'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain_after_training']}
         
         ## Output GPi/SNr
         self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
@@ -296,10 +307,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
         #Connections REW to RP, STRD1 and STRD2
-        self.params['weight_rew_strD1'] = 10.
-        self.params['weight_rew_strD2'] = 10.
-        self.params['delay_rew_strD1'] = 1.
-        self.params['delay_rew_strD2'] = 1.
+        self.params['weight_rew_d1'] = 10.
+        self.params['weight_rew_d2'] = 10.
+        self.params['delay_rew_d1'] = 1.
+        self.params['delay_rew_d2'] = 1.
 
         self.params['weight_rew_rp'] = 10.
         self.params['delay_rew_rp'] = 1.
@@ -375,10 +386,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # bg files:
         self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['strD1_spikes_fn'] = 'strD1_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['strD1_volt_fn'] = 'strD1_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['strD2_spikes_fn'] = 'strD2_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['strD2_volt_fn'] = 'strD2_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d1_spikes_fn'] = 'd1_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d1_volt_fn'] = 'd1_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d2_spikes_fn'] = 'd2_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d2_volt_fn'] = 'd2_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['actions_spikes_fn'] = 'actions_spikes_'
         self.params['actions_volt_fn'] = 'actions_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['efference_spikes_fn'] = 'efference_spikes_'
@@ -389,18 +400,19 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['rp_volt_fn'] = 'rp_volt_'
 
         # merged filenames: CELLTYPE_merged_VOLT/SPIKES.dat
-        self.params['states_spikes_fn_merged'] = 'states_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['strD1_spikes_fn_merged'] = 'strD1_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['strD1_volt_fn_merged'] = 'strD1_merged_volt.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['strD2_volt_fn_merged'] = 'strD2_merged_volt.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['strD2_spikes_fn_merged'] = 'strD2_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['actions_spikes_fn_merged'] = 'actions_merged_spikes.dat'
+        self.params['states_spikes_fn_merged'] = 'states_merged_spikes' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d1_spikes_fn_merged'] = 'd1_merged_spikes' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d2_spikes_fn_merged'] = 'd2_merged_spikes' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['actions_spikes_fn_merged'] = 'actions_merged_spikes'
+        self.params['efference_spikes_fn_merged'] = 'efference_merged_spikes'
+        self.params['supervisor_spikes_fn_merged'] = 'supervisor_merged_spikes'
+        self.params['rew_spikes_fn_merged'] = 'rew_merged_spikes'
+        self.params['rp_spikes_fn_merged'] = 'rp_merged_spikes'
+        # voltage files
+        self.params['d1_volt_fn_merged'] = 'd1_merged_volt.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['d2_volt_fn_merged'] = 'd2_merged_volt.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['actions_volt_fn_merged'] = 'actions_merged_volt.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['efference_spikes_fn_merged'] = 'efference_merged_spikes.dat'
-        self.params['supervisor_spikes_fn_merged'] = 'supervisor_merged_spikes.dat'
-        self.params['rew_spikes_fn_merged'] = 'rew_merged_spikes.dat'
         self.params['rew_volt_fn_merged'] = 'rew_merged_volt.dat'
-        self.params['rp_spikes_fn_merged'] = 'rp_merged_spikes.dat'
         self.params['rp_volt_fn_merged'] = 'rp_merged_volt.dat'
 
         # figure filenames
@@ -444,18 +456,25 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_bgd2_merged_conntracking_fn_base'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connection_dev_'
 
 
+        #bias filenames
+        self.params['bias_d1_fn_base'] = self.params['connections_folder'] + 'bias_d1_'
+        self.params['bias_d2_fn_base'] = self.params['connections_folder'] + 'bias_d2_'
+        self.params['bias_d1_merged_fn'] = self.params['connections_folder'] + 'bias_d1_merged.json'
+        self.params['bias_d2_merged_fn'] = self.params['connections_folder'] + 'bias_d2_merged.json'
+
     def set_folder_names(self):
 #        super(global_parameters, self).set_default_foldernames(folder_name)
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
 
         if self.params['training']:
-            folder_name = 'Training_taup%d' % (self.params['params_synapse_d1_MT_BG']['tau_p'])
+            folder_name = 'Training_%s_taup%d' % (self.params['sim_id'], self.params['params_synapse_d1_MT_BG']['tau_p'])
         else:
-            folder_name = 'Test'
+            folder_name = 'Test_%s_' % (self.params['sim_id'])
 
-        folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f/' % \
+        folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
                 (self.params['n_stim_training'], self.params['n_exc_mpn'], self.params['n_states'], \
-                self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'], self.params['mpn_bg_weight_amplification'])
+                self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'], \
+                self.params['mpn_bg_weight_amplification'], self.params['mpn_bg_bias_amplification'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

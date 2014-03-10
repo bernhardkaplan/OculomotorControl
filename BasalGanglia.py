@@ -22,12 +22,11 @@ class BasalGanglia(object):
         self.actions = {}
         self.rp = {}
         self.recorder_output= {} # the actual NEST recorder object, indexed by naction
-        self.recorder_output_gidkey = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
+        self.gid_to_action = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
+        self.gid_to_action_via_spikerecorder= {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.efference_copy = {}
         self.supervisor = {}
         # Recording devices
-        self.recorder_output= {}
-        self.recorder_output_gidkey = {}
         self.recorder_d1 = {}
         self.recorder_d2 = {}
         self.recorder_states = {}
@@ -51,17 +50,29 @@ class BasalGanglia(object):
 #        self.voltmeter_action = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
 #        nest.SetStatus(self.voltmeter_action,[{"to_file": True, "withtime": True, 'label' : self.params['bg_action_volt_fn']}])
 
+        self.bg_offset = {}
+        self.bg_offset['d1'] = np.infty
+        self.bg_offset['d2'] = np.infty
+        self.bg_offset['actions'] = np.infty
+
         #Creates D1 and D2 populations in STRIATUM, connections are created later
         for nactions in range(self.params['n_actions']):
             self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params= self.params['param_msn_d1'])
+            for gid in self.strD1[nactions]:
+                self.gid_to_action[gid] = nactions
+                self.bg_offset['d1'] = min(gid, self.bg_offset['d1'])
+
         for nactions in range(self.params['n_actions']):
             self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params= self.params['param_msn_d2'])
+            for gid in self.strD2[nactions]:
+                self.gid_to_action[gid] = nactions
+                self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
 
         for nactions in range(self.params['n_actions']):
             self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
-            nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['strD1_volt_fn']+ str(nactions)}])
+            nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_volt_fn']+ str(nactions)}])
             self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
-            nest.SetStatus(self.voltmeter_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['strD2_volt_fn']+ str(nactions)}])
+            nest.SetStatus(self.voltmeter_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d2_volt_fn']+ str(nactions)}])
 
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
         for nactions in range(self.params['n_actions']):
@@ -72,10 +83,11 @@ class BasalGanglia(object):
             self.recorder_d1[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_d1'])
             self.recorder_d2[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_d2'])
             for ind in xrange(self.params['num_actions_output']):
-                self.recorder_output_gidkey[self.actions[nactions][ind]] = nactions
+                self.gid_to_action_via_spikerecorder[self.actions[nactions][ind]] = nactions
+                self.bg_offset['actions'] = min(gid, self.bg_offset['actions'])
             nest.SetStatus(self.recorder_output[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_spikes_fn']+ str(nactions)}])
-            nest.SetStatus(self.recorder_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['strD1_spikes_fn']+ str(nactions)}])
-            nest.SetStatus(self.recorder_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['strD2_spikes_fn']+ str(nactions)}])
+            nest.SetStatus(self.recorder_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_spikes_fn']+ str(nactions)}])
+            nest.SetStatus(self.recorder_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d2_spikes_fn']+ str(nactions)}])
             nest.ConvergentConnect(self.actions[nactions], self.recorder_output[nactions])
             nest.ConvergentConnect(self.strD1[nactions], self.recorder_d1[nactions])
             nest.ConvergentConnect(self.strD2[nactions], self.recorder_d2[nactions])
@@ -87,10 +99,6 @@ class BasalGanglia(object):
             nest.RandomConvergentConnect(self.voltmeter_d1[nactions], self.strD1[nactions], int(self.params['random_connect_voltmeter']*self.params['num_msn_d1']))
             nest.RandomConvergentConnect(self.voltmeter_d2[nactions], self.strD2[nactions], int(self.params['random_connect_voltmeter']*self.params['num_msn_d2']))
 
-#            nest.ConvergentConnect(self.voltmeter_action, self.actions[nactions])
-
-
-        print 'debug recorder gid', self.recorder_output_gidkey
         # create supervisor
         if (self.params['training'] and self.params['supervised_on']):
             print 'DEBUG No supervisor connected'
@@ -143,8 +151,8 @@ class BasalGanglia(object):
             # Connects reward population back to the STR D1 and D2 populations, and to the RP, to inform them about the outcome (positive or negative compared to the prediction)
             for neur_rew in self.rew:
                 for i_action in range(self.params['n_actions']):
-                    nest.DivergentConnect([neur_rew], self.strD1[i_action], weight=self.params['weight_rew_strD1'], delay=self.params['delay_rew_strD1'] )
-                    nest.DivergentConnect([neur_rew], self.strD2[i_action], weight=self.params['weight_rew_strD2'], delay=self.params['delay_rew_strD2'] )
+                    nest.DivergentConnect([neur_rew], self.strD1[i_action], weight=self.params['weight_rew_d1'], delay=self.params['delay_rew_d1'] )
+                    nest.DivergentConnect([neur_rew], self.strD2[i_action], weight=self.params['weight_rew_d2'], delay=self.params['delay_rew_d2'] )
                 for i_rp in range(self.params['n_states'] * self.params['n_actions']):
                     nest.DivergentConnect([neur_rew], self.rp[i_rp], weight=self.params['weight_rew_rp'], delay=self.params['delay_rew_rp'] )
             nest.ConvergentConnect(self.rew, self.recorder_rew)
@@ -329,7 +337,7 @@ class BasalGanglia(object):
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]
         print 'winning_gid', winning_gid
-        winning_action = self.recorder_output_gidkey[winning_gid+1]
+        winning_action = self.gid_to_action_via_spikerecorder[winning_gid+1]
         output_speed_x = self.action_bins_x[winning_action]
         print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
         self.t_current += self.params['t_iteration']
@@ -353,6 +361,24 @@ class BasalGanglia(object):
        # set the connection weight after having loaded the conn_mat_ee
        nest.SetStatus(nest.GetConnections(src_pop, tgt_pop), {'weight': conn_mat_ee[src_pop_idx, tgt_pop_idx]})
        # nest.SetStatus(nest.FindConnections(src_pop, tgt_pop), {'weight': conn_mat_ee[src_pop_idx, tgt_pop_idx]})
+
+
+    def set_bias(self, cell_type):
+        #
+        f = file(self.params['bias_%s_merged_fn' % cell_type], 'r')
+        bias_values = json.load(f)
+        if cell_type == 'd1':
+            pop = self.strD1
+        elif cell_type == 'd2':
+            pop = self.strD2
+
+        for gid in bias_values.keys(): 
+            bias_value = bias_values[gid] * self.params['mpn_bg_bias_amplification']
+            action_idx = self.gid_to_action[int(gid)]
+            within_subpop_idx = int(gid) - self.bg_offset[cell_type] - action_idx * self.params['num_msn_%s' % cell_type]
+            print 'DEBUG set_bias gid bias', gid, bias_value, action_idx, within_subpop_idx
+            nest.SetStatus([pop[action_idx][within_subpop_idx]], {'bias' : bias_value})
+
 
     def set_gain(self, gain):
         # implement option to change locally to d1 or d2 or RP
@@ -447,27 +473,23 @@ class BasalGanglia(object):
     			nest.SetStatus(nest.GetConnections(self.states[nstate], self.rp[int(index_rp / self.params['n_actions'])]), {'K':0.})
             nest.SetStatus(self.rp[index_rp], {'kappa':0.} )
 
-    def get_cell_gids(self, network='strD1'):
+    def get_cell_gids(self, cell_type):
         cell_gids = []
-        if network == 'strD1':
+        if cell_type == 'd1':
             for nactions in range(self.params['n_actions']):
                 cell_gids.append(self.strD1[nactions])
-        elif network == 'strD2':
+        elif cell_type == 'd2':
             for nactions in range(self.params['n_actions']):
                 cell_gids.append(self.strD2[nactions])
-        elif network == 'actions':
+        elif cell_type == 'actions':
             for nactions in range(self.params['n_actions']):
                 cell_gids.append(self.actions[nactions])
-        elif network == 'actions':
-            for nactions in range(self.params['n_actions']):
-                cell_gids.append(self.recorder_output[nactions])
         return cell_gids
 
 
     def write_cell_gids_to_file(self):
         d = {}
-        cell_types = ['strD1', 'strD2', 'actions', 'recorder']
-        for cell_type in cell_types:
+        for cell_type in self.params['bg_cell_types']:
             d[cell_type] = self.get_cell_gids(cell_type)
         output_fn = self.params['bg_gids_fn']
         print 'Writing cell_gids to:', output_fn

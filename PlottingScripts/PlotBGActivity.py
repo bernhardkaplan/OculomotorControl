@@ -11,8 +11,8 @@ import utils
 import re
 import numpy as np
 import pylab
-import matplotlib
 import MergeSpikefiles
+import PlotMPNActivity
 
 
 class ActivityPlotter(object):
@@ -26,7 +26,6 @@ class ActivityPlotter(object):
         self.n_bins_x = 30
         self.n_x_ticks = 10
         self.x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
-
         self.rp_markersize = 3
 
     def plot_raster_simple(self):
@@ -75,7 +74,7 @@ class ActivityPlotter(object):
 
 
 
-    def plot_spikes_for_celltype(self, celltype, color='k', gid_offset=0, marker='o', ylim=None, ax=None):
+    def plot_spikes_for_cell_type(self, cell_type, color='k', gid_offset=0, marker='o', ylim=None, ax=None):
         recorder_type = 'spikes'
 
         pylab.subplots_adjust(left=0.15)
@@ -87,20 +86,20 @@ class ActivityPlotter(object):
             print 'no fig created'
 
         for naction in range(self.params['n_actions']):
-            data = np.loadtxt(self.params['spiketimes_folder'] + str(naction) + celltype + '_merged_' + recorder_type + '.dat')
+#            data = np.loadtxt(self.params['spiketimes_folder'] + cell_type + str(naction) + '_merged_' + recorder_type + '.dat')
+            data = np.loadtxt(self.params['spiketimes_folder'] + self.params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat')
             if len(data)<2:
-                print 'no data in', celltype, naction
+                print 'no data in', cell_type, naction
             else:
                 data[:, 0] += gid_offset
-                ax.plot(data[:,1], data[:,0], linestyle='None', marker='o', c=color, markeredgewidth=0, markersize=self.rp_markersize)
-#                ax.plot(data[:,1], data[:,0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
+                ax.plot(data[:,1], data[:,0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
 
         if ylim != None:
             ax.set_ylim(ylim)
         mn, mx = utils.get_min_max_gids_for_bg(params, cell_type)
         ypos_label = .5 * (mx - mn) + mn
         xa = - (self.params['t_sim'] / 6.)
-        ax.text(xa, ypos_label, celltype, color=color, fontsize=16)
+        ax.text(xa, ypos_label, cell_type, color=color, fontsize=16)
         if self.params['training']:
             ax.set_title('Spikes during training, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
         else:
@@ -126,32 +125,22 @@ if __name__ == '__main__':
 
     print 'Merging spikes ...'
     if params['training']:
-        cell_types = ['strD1', 'strD2', 'actions']#, 'supervisor']
-#        cell_types = ['actions', 'strD1', 'strD2']#, 'supervisor']
+        cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
     else:
-#        cell_types = ['actions', 'strD1', 'strD2']
-        cell_types = ['strD1', 'strD2', 'actions']#, 'supervisor']
-    cell_types_volt = ['strD1', 'strD2', 'actions']
+        cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
+    cell_types_volt = ['d1', 'd2', 'actions']
 
-    print 'nstates ', params['n_states'], 'nactions ', params['n_actions']
     MS = MergeSpikefiles.MergeSpikefiles(params)
     for cell_type in cell_types:
-        print 'Merging spiketimes file for %s ' % (cell_type)
         for naction in range(params['n_actions']):
-            print 'Merging spiketimes file for %d ' % (naction)
             merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
-            output_fn = params['spiketimes_folder'] + str(naction) + params['%s_spikes_fn_merged' % cell_type] 
+            output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
             MS.merge_spiketimes_files(merge_pattern, output_fn)
 
-    # determine axes limits beforehand
-    gid_min, gid_max = np.infty, -np.infty
-    for z, cell_type in enumerate(cell_types):
-        mn, mx= utils.get_min_max_gids_for_bg(params, cell_type)
-        gid_min, gid_max = min(mn, gid_min), max(mx, gid_max)
-
     Plotter = ActivityPlotter(params)#, it_max=1)
-    colors = ['b','g', 'r', 'c', 'm', 'y', 'k']
-    markers = ['|', '-', 'o', 'D', '+', '4', 'v', 's']
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+    markers = ['o']
+#    markers = ['|', '-', 'o', 'D', '+', '4', 'v', 's']
 
     ax = None
     offset = 0
@@ -160,13 +149,11 @@ if __name__ == '__main__':
         mn, mx= utils.get_min_max_gids_for_bg(params, cell_type)
         gid_min, gid_max = min(mn, gid_min), max(mx, gid_max)
         cl = colors[z % len(colors)]
-        marker = markers[z % len(colors)]
-#        print 'debug', cl, marker, cell_type
-#        if cell_type == 'd2':
-#            offset = -params['n_cells_D1']
-#        print 'Cell type gid min max',cell_type, gid_min, gid_max
-        ax = Plotter.plot_spikes_for_celltype(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax)
+        marker = markers[z % len(markers)]
+        ax = Plotter.plot_spikes_for_cell_type(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax)
 
+    PMPN = PlotMPNActivity.ActivityPlotter(params)
+    PMPN.plot_vertical_lines(ax, params)
     output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + '%.2f.png' % (params['mpn_bg_weight_amplification'])
     print 'Saving figure to:', output_fig
     pylab.savefig(output_fig, dpi=300)

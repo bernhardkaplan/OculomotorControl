@@ -3,6 +3,7 @@ import numpy as np
 import os
 import utils
 import time
+import json
 
 class CreateConnections(object):
 
@@ -41,68 +42,90 @@ class CreateConnections(object):
 
 
 
-    def merge_connection_files(self, params):
+    def merge_connection_files(self, training_params, test_params=None):
 
         # merge the final weight files
         if self.pc_id == 0:
-            if not os.path.exists(params['mpn_bgd1_merged_conn_fn']):
-                # merge the connection files
-                merge_pattern = params['mpn_bgd1_conn_fn_base']
-                fn_out = params['mpn_bgd1_merged_conn_fn']
-                utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
 
-            if not os.path.exists(params['mpn_bgd2_merged_conn_fn']):
-                # merge the connection files
-                merge_pattern = params['mpn_bgd2_conn_fn_base']
-                fn_out = params['mpn_bgd2_merged_conn_fn']
-                utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
+            for cell_type in ['d1', 'd2']:
+                if not os.path.exists(training_params['mpn_bg%s_merged_conn_fn' % cell_type]):
+                    # merge the connection files
+                    merge_pattern = training_params['mpn_bg%s_conn_fn_base' % cell_type]
+                    fn_out = training_params['mpn_bg%s_merged_conn_fn' % cell_type]
+                    utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
+
+                if test_params != None: 
+                    bias_fns = utils.find_files(training_params['connections_folder'], 'bias_%s_pc' % cell_type)
+                    all_bias = {}
+                    for fn in bias_fns:
+                        bias_fn = training_params['connections_folder'] + fn
+                        f = file(bias_fn, 'r')
+                        bias_data = json.load(f)
+                        all_bias.update(bias_data)
+                    f_out = file(test_params['bias_%s_merged_fn' % cell_type], 'w')
+                    json.dump(all_bias, f_out, indent=0)
+
         if self.comm != None:
             self.comm.barrier()
 
-
-        if params['weight_tracking']:
+        if training_params['weight_tracking']:
             # Merge the _dev files recorded for tracking the weights
             if self.pc_id == 0:
-                for it in xrange(self.params['n_iterations']):
-                    fn_merged = self.params['mpn_bgd1_merged_conntracking_fn_base'] + 'it%d.txt' % (it)
+                for it in xrange(self.training_params['n_iterations']):
+                    fn_merged = self.training_params['mpn_bgd1_merged_conntracking_fn_base'] + 'it%d.txt' % (it)
                     if not os.path.exists(fn_merged):
                         # merge the connection files
-                        merge_pattern = params['mpn_bgd1_conntracking_fn_base'] + 'it%d_' % it
+                        merge_pattern = training_params['mpn_bgd1_conntracking_fn_base'] + 'it%d_' % it
                         utils.merge_and_sort_files(merge_pattern, fn_merged, sort=True)
-                for it in xrange(self.params['n_iterations']):
-                    fn_merged = self.params['mpn_bgd2_merged_conntracking_fn_base'] + 'it%d.txt' % (it)
+                for it in xrange(self.training_params['n_iterations']):
+                    fn_merged = self.training_params['mpn_bgd2_merged_conntracking_fn_base'] + 'it%d.txt' % (it)
                     if not os.path.exists(fn_merged):
                         # merge the connection files
-                        merge_pattern = params['mpn_bgd2_conntracking_fn_base'] + 'it%d_' % it
+                        merge_pattern = training_params['mpn_bgd2_conntracking_fn_base'] + 'it%d_' % it
                         utils.merge_and_sort_files(merge_pattern, fn_merged, sort=True)
         if self.comm != None:
             self.comm.barrier()
 
 
-    def connect_mt_to_bg_after_training(self, mpn_net, bg_net, training_params):
+    def connect_mt_to_bg_after_training(self, mpn_net, bg_net, training_params, test_params):
         """
         Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
         based on the weights found in conn_folder
         """
-        self.merge_connection_files(training_params)
+        self.merge_connection_files(training_params, test_params)
         print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
         mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
+        mpn_d1_conns_debug = ''
         n_lines = mpn_d1_conn_list[:, 0].size 
         for line in xrange(n_lines):
             src, tgt, w = mpn_d1_conn_list[line, :]
             if w != 0.:
                 w *= self.params['mpn_bg_weight_amplification']
+                mpn_d1_conns_debug += '%d\t%d\t%.4e\n' % (src, tgt, w)
                 nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
 
         print 'Loading MPN - BG D2 connections from:', training_params['mpn_bgd2_merged_conn_fn']
         mpn_d2_conn_list = np.loadtxt(training_params['mpn_bgd2_merged_conn_fn'])
+        mpn_d2_conns_debug = ''
         n_lines = mpn_d2_conn_list[:, 0].size 
         for line in xrange(n_lines):
             src, tgt, w = mpn_d2_conn_list[line, :]
             if w != 0.:
                 w *= self.params['mpn_bg_weight_amplification']
+                mpn_d2_conns_debug += '%d\t%d\t%.4e\n' % (src, tgt, w)
                 nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
 
+        mpn_d1_debug_fn = test_params['mpn_bgd1_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
+        print 'Saving the realized connections to %s' % mpn_d1_debug_fn
+        f = file(mpn_d1_debug_fn, 'w')
+        f.write(mpn_d1_conns_debug)
+        f.close()
+
+        mpn_d2_debug_fn = test_params['mpn_bgd2_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
+        print 'Saving the realized connections to %s' % mpn_d2_debug_fn
+        f = file(mpn_d2_debug_fn, 'w')
+        f.write(mpn_d2_conns_debug)
+        f.close()
 #            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
 #            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
 
@@ -116,10 +139,12 @@ class CreateConnections(object):
         print 'Writing weights to files...'
         D1_conns = ''
         D2_conns = ''
+        bias_d1 = {}
+        bias_d2 = {}
         for nactions in range(self.params['n_actions']):
             print 'action %d' % nactions, 'iteration:', iteration
 
-            conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions]) # get the list of connections stored on the current MPI node
+            conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
             if conns != None:
                 for c in conns:
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
@@ -130,8 +155,11 @@ class CreateConnections(object):
                         w = np.log(pij / (pi * pj))
                         if w != 0.:
                             D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
+                            bias_d1[cp[0]['target']] = cp[0]['bias']
+#                            bias_d1[cp[0]['target']] = np.log(cp[0]['bias'])
 
-            conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions]) # get the list of connections stored on the current MPI node
+
+            conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
             if conns != None:
                 for c in conns:
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
@@ -142,11 +170,18 @@ class CreateConnections(object):
                         w = np.log(pij / (pi * pj))
                         if w != 0.:
                             D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
+                            bias_d2[cp[0]['target']] = cp[0]['bias']
+#                        bias_d2[cp[0]['target']] = np.log(cp[0]['bias'])
 
         if iteration == None:
             fn_out = self.params['mpn_bgd1_conn_fn_base'] + '%d.txt' % (self.pc_id)
         else:
             fn_out = self.params['mpn_bgd1_conntracking_fn_base'] + 'it%d_%d.txt' % (iteration, self.pc_id)
+
+        bias_d1_f = file(self.params['bias_d1_fn_base'] + 'pc%d.json' % self.pc_id, 'w')
+        json.dump(bias_d1, bias_d1_f, indent=0)
+        bias_d2_f = file(self.params['bias_d2_fn_base'] + 'pc%d.json' % self.pc_id, 'w')
+        json.dump(bias_d2, bias_d2_f, indent=0)
 
         print 'Writing connections to:', fn_out
         D1_f = file(fn_out, 'w')
