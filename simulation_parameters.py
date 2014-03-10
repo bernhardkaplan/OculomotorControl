@@ -45,9 +45,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
-        self.params['weight_tracking'] = True # if True weights will be written to file after each iteration --> use only for debugging / plotting
+#        self.params['training'] = True
+        self.params['training'] = False
+        self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
 
 
         if self.params['training']:
@@ -61,7 +61,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         # CONNECTING MPN --> BG
         # #####################################
-        self.params['w_exc_mpn_bg'] = 10.
+        self.params['w_exc_mpn_bg'] = 25.
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
@@ -142,7 +142,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 20
-        self.params['v_max_tp'] = 6.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
+        self.params['v_max_tp'] = 8.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['blur_X'], self.params['blur_V'] = .2, .2
         self.params['blur_theta'] = 1.0
@@ -233,7 +233,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 3.5
+        self.params['mpn_bg_weight_amplification'] = 4.0
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
