@@ -14,7 +14,7 @@ import numpy as np
 import sys
 import os
 import utils
-
+import matplotlib.patches as mpatches
 from FigureCreator import plot_params
 pylab.rcParams.update(plot_params)
 
@@ -25,6 +25,9 @@ class Plotter(object):
         tp_fn = self.params['tuning_prop_exc_fn']
         print 'Loading', tp_fn
         self.tp = np.loadtxt(tp_fn)
+        print 'Loading', self.params['receptive_fields_exc_fn']
+        self.rfs = np.loadtxt(self.params['receptive_fields_exc_fn'])
+
 
     def plot_tuning_prop(self):
 
@@ -72,12 +75,12 @@ class Plotter(object):
         """
         idx: integer between 0 - 3 for the column in tuning properties, i.e. the dimension to be plotted
         """
-        rfs = np.loadtxt(self.params['receptive_fields_exc_fn'])
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        n_cells = self.params['n_exc_mpn']
-        assert (n_cells  == rfs[:, 0].size), 'Mismatch in parameters given to plot_tuning_properties and simulation_parameters.py'
-        n_dots = 100
+#        n_cells = self.params['n_exc_mpn']
+        n_cells = 100
+#        assert (n_cells  == self.rfs[:, 0].size), 'Mismatch in parameters given to plot_tuning_properties and simulation_parameters.py'
+        n_dots = 100 # for one curve
 #        n_rnd = n_cells
 #        rnd_gids = np.random.randint(0, self.params['n_exc_mpn'], n_rnd)
         rnd_gids = range(0, n_cells)
@@ -88,7 +91,7 @@ class Plotter(object):
         rgba_colors = m.to_rgba(color_code)
         print 'idx', idx
         for i_, gid in enumerate(rnd_gids):
-            mu, sigma = self.tp[gid, idx], rfs[gid, idx]
+            mu, sigma = self.tp[gid, idx], self.rfs[gid, idx]
             x_ = np.linspace(mu - 3 * sigma, mu + 3 * sigma, n_dots)
             y = np.exp(-.5 * (x_ - mu)**2 / sigma**2)
 #            print 'GID %d\tmu %.2e sigma %.2e\tL_max = %.2e, 1/L_max = %.2e' % (i_, mu, sigma, y.max(), 1 / y.max())
@@ -103,6 +106,36 @@ class Plotter(object):
         elif idx == 3:
             ax.set_xlabel('Speed in y-direction')
         ax.set_ylabel('Poisson rate envelope')
+
+
+    def plot_tuning_width_distribution(self):
+        """
+        Creates a two dimensional plot with rf_center on x-axis and rf-size on the y-axis
+        """
+        n_cells = self.params['n_exc_mpn']
+        assert (n_cells  == self.rfs[:, 0].size), 'Mismatch in parameters given to plot_tuning_properties and simulation_parameters.py'
+
+        fig = pylab.figure()
+        pylab.subplots_adjust(hspace=0.5)
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+
+        x_axis = self.tp[:, 0]
+        y_axis = self.rfs[:, 0]
+        ax1.plot(x_axis, y_axis, marker='o', linestyle='None', markersize=5, c='k')
+        ax1.set_xlabel('RF_x center')
+        ax1.set_ylabel('RF_x size')
+        ax1.set_title('Preferred position tuning widths')
+
+        x_axis = self.tp[:, 2]
+        y_axis = self.rfs[:, 2]
+        ax2.plot(x_axis, y_axis, marker='o', linestyle='None', markersize=5, c='k')
+        ax2.set_title('Preferred speed tuning widths')
+        ax2.set_xlabel('RF_vx center')
+        ax2.set_ylabel('RF_vx size')
+
+        # alternatively use 
+        # for all gid: mpatches.Ellipse(self, xy, width, height, angle=0.0, **kwargs)
 
 
 if __name__ == '__main__':
@@ -127,5 +160,6 @@ if __name__ == '__main__':
     Plotter.plot_tuning_space()
     Plotter.plot_tuning_curves(0)
     Plotter.plot_tuning_curves(2)
+    Plotter.plot_tuning_width_distribution()
 
     pylab.show()
