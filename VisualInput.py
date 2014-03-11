@@ -133,7 +133,8 @@ class VisualInput(object):
             self.stim[i_] = st
 
         self.t_current += self.params['t_iteration']
-        np.savetxt(self.params['input_nspikes_fn_mpn'] + 'it%d_%d.dat' % (self.iteration, self.pc_id), input_nspikes, fmt='%d\t%d')
+        if self.params['debug_mpn']:
+            np.savetxt(self.params['input_nspikes_fn_mpn'] + 'it%d_%d.dat' % (self.iteration, self.pc_id), input_nspikes, fmt='%d\t%d')
         return self.stim
 
 
