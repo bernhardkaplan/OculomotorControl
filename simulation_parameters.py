@@ -39,8 +39,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['n_stim_training'] = 5# number of different stimuli presented during training
-        self.params['n_stim_testing'] = 1# number of different stimuli presented during training
+        self.params['Cluster'] = False
+        self.params['n_stim_training'] = 100# number of different stimuli presented during training
+        self.params['n_stim_testing'] = 50# number of different stimuli presented during training
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
@@ -48,6 +49,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['training'] = True
         self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
+        self.params['sim_id'] = 'longTraining'
 
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_stim_training'] * self.params['n_iterations_per_stim']
@@ -76,7 +78,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['visual_stim_seed'] = 1234
+        self.params['visual_stim_seed'] = 4321
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
         self.params['debug_mpn'] = True
