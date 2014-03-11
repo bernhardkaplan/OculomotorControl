@@ -201,6 +201,7 @@ def get_spiketimes_within_interval(spike_data, t0, t1):
     valid_idx = list(t0_idx.intersection(t1_idx))
     return spike_data[valid_idx, :]
 
+
 def communicate_local_spikes(gids, comm):
 
     my_nspikes = {}

@@ -77,6 +77,7 @@ class BasalGanglia(object):
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
         for nactions in range(self.params['n_actions']):
             self.actions[nactions] = nest.Create(self.params['model_bg_output_neuron'], self.params['num_actions_output'], params= self.params['param_bg_output'])
+        for nactions in range(self.params['n_actions']):
             self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
             nest.SetStatus(self.voltmeter_action[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_volt_fn']+ str(nactions)}])
             self.recorder_output[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_action'])
@@ -317,12 +318,14 @@ class BasalGanglia(object):
         
         new_event_times = np.array([])
         new_event_gids = np.array([])
+        t_new = self.t_current + self.params['t_iteration']
         for i_, recorder in enumerate(self.recorder_output.values()):
             all_events = nest.GetStatus(recorder)[0]['events']
             recent_event_idx = all_events['times'] > self.t_current
             if recent_event_idx.size > 0:
                 new_event_times = np.r_[new_event_times, all_events['times'][recent_event_idx]]
                 new_event_gids = np.r_[new_event_gids, all_events['senders'][recent_event_idx]]
+            nest.SetStatus(recorder, [{'start': t_new}])
 
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
