@@ -99,6 +99,7 @@ class CreateConnections(object):
             if w != 0.:
                 w *= self.params['mpn_bg_weight_amplification']
                 mpn_d1_conns_debug += '%d\t%d\t%.4e\n' % (src, tgt, w)
+#                print 'debug %d\t%d\t%.4e\n' % (src, tgt, w)
                 nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
 
         print 'Loading MPN - BG D2 connections from:', training_params['mpn_bgd2_merged_conn_fn']

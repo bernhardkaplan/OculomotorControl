@@ -40,14 +40,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['Cluster'] = False
-        self.params['n_stim_training'] = 100# number of different stimuli presented during training
+        self.params['n_stim_training'] = 1# number of different stimuli presented during training
         self.params['n_stim_testing'] = 1# number of different stimuli presented during training
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -62,9 +62,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.9, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.9, .5, -0.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'test'
+        self.params['sim_id'] = 'np8'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -240,8 +240,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 1.25
-        self.params['mpn_bg_bias_amplification'] = 10.0
+        self.params['mpn_bg_weight_amplification'] = 1.5
+        self.params['mpn_bg_bias_amplification'] = 1.0
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
