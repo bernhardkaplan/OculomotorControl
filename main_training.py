@@ -142,7 +142,8 @@ if __name__ == '__main__':
         np.savetxt(params['actions_taken_fn'], actions)
         np.savetxt(params['network_states_fn'], network_states_net)
         np.savetxt(params['motion_params_fn'], VI.motion_params)
-        os.system('python PlottingScripts/PlotMPNActivity.py')
-        os.system('python PlottingScripts/PlotBGActivity.py')
+        if not params['Cluster']:
+            os.system('python PlottingScripts/PlotMPNActivity.py')
+            os.system('python PlottingScripts/PlotBGActivity.py')
 
 

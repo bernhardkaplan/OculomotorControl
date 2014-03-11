@@ -47,8 +47,6 @@ class BasalGanglia(object):
         nest.SetStatus(self.voltmeter_rew, [{"to_file": True, "withtime": True, 'label' : self.params['rew_volt_fn']}])
 
         self.t_current = 0 
-#        self.voltmeter_action = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
-#        nest.SetStatus(self.voltmeter_action,[{"to_file": True, "withtime": True, 'label' : self.params['bg_action_volt_fn']}])
 
         self.bg_offset = {}
         self.bg_offset['d1'] = np.infty
@@ -69,18 +67,20 @@ class BasalGanglia(object):
                 self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
 
         for nactions in range(self.params['n_actions']):
-            self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
-            nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_volt_fn']+ str(nactions)}])
-            self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
-            nest.SetStatus(self.voltmeter_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d2_volt_fn']+ str(nactions)}])
+            if self.params['record_bg_volt']:
+                self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
+                nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_volt_fn']+ str(nactions)}])
+                self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
+                nest.SetStatus(self.voltmeter_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d2_volt_fn']+ str(nactions)}])
 
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
         for nactions in range(self.params['n_actions']):
             self.actions[nactions] = nest.Create(self.params['model_bg_output_neuron'], self.params['num_actions_output'], params= self.params['param_bg_output'])
 
         for nactions in range(self.params['n_actions']):
-            self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
-            nest.SetStatus(self.voltmeter_action[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_volt_fn']+ str(nactions)}])
+            if self.params['record_bg_volt']:
+                self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
+                nest.SetStatus(self.voltmeter_action[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_volt_fn']+ str(nactions)}])
             self.recorder_output[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_action'])
             self.recorder_d1[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_d1'])
             self.recorder_d2[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_d2'])
@@ -97,9 +97,10 @@ class BasalGanglia(object):
                 nest.ConvergentConnect(self.strD1[nactions], [neuron], weight=self.params['str_to_output_exc_w'], delay=self.params['str_to_output_exc_delay']) 
                 nest.ConvergentConnect(self.strD2[nactions], [neuron], weight=self.params['str_to_output_inh_w'], delay=self.params['str_to_output_inh_delay'])	
 
-            nest.ConvergentConnect(self.voltmeter_action[nactions], self.actions[nactions])
-            nest.RandomConvergentConnect(self.voltmeter_d1[nactions], self.strD1[nactions], int(self.params['random_connect_voltmeter']*self.params['num_msn_d1']))
-            nest.RandomConvergentConnect(self.voltmeter_d2[nactions], self.strD2[nactions], int(self.params['random_connect_voltmeter']*self.params['num_msn_d2']))
+            if self.params['record_bg_volt']:
+                nest.ConvergentConnect(self.voltmeter_action[nactions], self.actions[nactions])
+                nest.RandomConvergentConnect(self.voltmeter_d1[nactions], self.strD1[nactions], int(self.params['random_connect_voltmeter']*self.params['num_msn_d1']))
+                nest.RandomConvergentConnect(self.voltmeter_d2[nactions], self.strD2[nactions], int(self.params['random_connect_voltmeter']*self.params['num_msn_d2']))
 
         # create supervisor
         if (self.params['training'] and self.params['supervised_on']):

@@ -40,16 +40,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['Cluster'] = False
-        self.params['n_stim_training'] = 100# number of different stimuli presented during training
-        self.params['n_stim_testing'] = 50# number of different stimuli presented during training
+        self.params['n_stim_training'] = 1# number of different stimuli presented during training
+        self.params['n_stim_testing'] = 1# number of different stimuli presented during training
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
-        self.params['sim_id'] = 'longTraining'
 
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_stim_training'] * self.params['n_iterations_per_stim']
@@ -216,6 +215,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
+        self.params['record_bg_volt'] = False
         self.params['bg_cell_types'] = ['d1', 'd2', 'actions', 'recorder']
         self.params['n_actions'] = 21
         self.params['n_states'] = 20
