@@ -75,7 +75,6 @@ if __name__ == '__main__':
     
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)
-    BG.write_cell_gids_to_file()
     CC = CreateConnections.CreateConnections(params, comm)
     CC.connect_mt_to_bg(MT, BG)
 
@@ -92,14 +91,14 @@ if __name__ == '__main__':
         for it in xrange(params['n_iterations_per_stim']):
 
             if it == params['n_iterations_per_stim'] - 1:
-                stim, supervisor_state = VI.set_empty_input(MT.exc_pop)
-#                stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
+#                stim, supervisor_state = VI.set_empty_input(MT.exc_pop)
+                stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
                 # and get the state information BEFORE MPN perceives anything
                 # in order to set a supervisor signal
-                stim, supervisor_state = VI.compute_input(MT.exc_pop, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
-#                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
+#                stim, supervisor_state = VI.compute_input(MT.exc_pop, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
+                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
 
             print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
             print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
@@ -108,8 +107,8 @@ if __name__ == '__main__':
 
             if params['debug_mpn']:
                 print 'Saving spike trains...'
-                save_spike_trains(params, iteration_cnt, stim, MT.exc_pop)
-#                save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
+#                save_spike_trains(params, iteration_cnt, stim, MT.exc_pop)
+                save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
 
 #            print 'debug iteration %d stim' % (iteration_cnt), stim
             MT.update_input(stim) # run the network for some time 

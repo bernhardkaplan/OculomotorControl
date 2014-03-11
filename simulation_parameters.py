@@ -46,8 +46,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -62,9 +62,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.9, .5, -0.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.9, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'np8'
+        self.params['sim_id'] = 'test'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -80,7 +80,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['visual_stim_seed'] = 4321
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
-        self.params['debug_mpn'] = False
+        self.params['debug_mpn'] = True
         self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 
@@ -241,7 +241,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['mpn_bg_weight_amplification'] = 1.5
-        self.params['mpn_bg_bias_amplification'] = 1.0
+        self.params['mpn_bg_bias_amplification'] = 10.0
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
@@ -431,6 +431,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['bg_spikes_fn_merged'] = 'bg_merged_spikes.dat'
 
         self.params['bg_gids_fn'] = self.params['parameters_folder'] + 'bg_cell_gids.json'
+        self.params['mpn_gids_fn'] = self.params['parameters_folder'] + 'mpn_cell_gids.json'
         
         # input spike files
         self.params['input_st_fn_mpn'] = self.params['input_folder_mpn'] + 'input_spikes_'

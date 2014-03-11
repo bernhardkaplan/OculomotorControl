@@ -1,6 +1,7 @@
 import nest
 import numpy as np
 import utils
+import json
 
 class MotionPrediction(object):
 
@@ -18,8 +19,8 @@ class MotionPrediction(object):
         self.current_state = None
 
         self.list_of_populations = []
-#        self.local_idx_exc = []
-#        self.local_idx_inh = []
+        self.local_idx_exc = []
+        self.local_idx_inh = []
         self.spike_times_container = []
 
         self.setup_synapse_types()
@@ -33,6 +34,7 @@ class MotionPrediction(object):
 #        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
 
         self.t_current = 0
+        self.write_cell_gids_to_file()
 
 
 
@@ -56,10 +58,10 @@ class MotionPrediction(object):
         stim -- list of spike trains with length = self.params['n_exc_mpn']
 
         """
-        for i_ in xrange(self.params['n_exc_mpn']):
-            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
-#        for i_, gid in enumerate(self.local_idx_exc):
+#        for i_ in xrange(self.params['n_exc_mpn']):
 #            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
+        for i_, gid in enumerate(self.local_idx_exc):
+            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
 #            print 't_current: %d udpating input stimulus spiketrains:' % self.t_current, i_, stim[i_]
 
 
@@ -70,16 +72,20 @@ class MotionPrediction(object):
 
         self.exc_pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_exc_mpn'], params=cell_params)
         self.list_of_populations.append(self.exc_pop)
-#        self.local_idx_exc += self.get_local_indices(self.exc_pop) # get the GIDS of the neurons that are local to the process
+        self.local_idx_exc += self.get_local_indices(self.exc_pop) # get the GIDS of the neurons that are local to the process
 
         self.stimulus = nest.Create('spike_generator', self.params['n_exc_mpn'])
-        # connect stimuli containers to the local cells
-        for gid in xrange(self.params['n_exc_mpn']):
-            nest.Connect([self.stimulus[gid]], [self.exc_pop[gid - 1]], model='input_exc_0')
 
-            # old:
-#        for i_, gid in enumerate(self.local_idx_exc):
-#            nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
+        # old
+#        self.stimulus = nest.Create('spike_generator', len(self.local_idx_exc))
+        # connect stimuli containers to the local cells
+
+        # old:
+        for i_, gid in enumerate(self.local_idx_exc):
+            nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
+        # new
+#        for gid in xrange(self.params['n_exc_mpn']):
+#            nest.Connect([self.stimulus[gid]], [self.exc_pop[gid]], model='input_exc_0')
 
         self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':self.params['mpn_exc_spikes_fn']})
         nest.ConvergentConnect(self.exc_pop, self.exc_spike_recorder)
@@ -92,7 +98,7 @@ class MotionPrediction(object):
 
         self.inh_pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_inh_mpn'], params=cell_params)
         self.list_of_populations.append(self.inh_pop)
-#        self.local_idx_inh += self.get_local_indices(self.inh_pop) # get the GIDS of the neurons that are local to the process
+        self.local_idx_inh += self.get_local_indices(self.inh_pop) # get the GIDS of the neurons that are local to the process
 
         self.inh_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':self.params['mpn_inh_spikes_fn']})
         nest.ConvergentConnect(self.inh_pop, self.inh_spike_recorder)
@@ -178,6 +184,16 @@ class MotionPrediction(object):
         nest.SetStatus(self.voltmeter,[{"to_file": True, "withtime": True, 'label' : self.params['mpn_exc_volt_fn']}])
             
         nest.ConvergentConnect(self.voltmeter, gids_to_record)
+
+
+    def write_cell_gids_to_file(self):
+        d = {}
+        d['exc'] = self.exc_pop
+        d['inh'] = self.inh_pop
+        output_fn = self.params['mpn_gids_fn']
+        print 'Writing cell_gids to:', output_fn
+        f = file(output_fn, 'w')
+        json.dump(d, f, indent=2)
 
 
     def get_indices_for_gid(self, gid):

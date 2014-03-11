@@ -182,8 +182,10 @@ class BasalGanglia(object):
                     for neuron_s in self.states[istate]:
                         nest.DivergentConnect([neuron_s], self.rp[iaction + istate*self.params['n_actions']], model=self.params['states_rp'] )
 
-
+        self.write_cell_gids_to_file()
         print "BG model completed"
+
+
 
     # used as long as MT and BG are not directly connected
     def create_input_pop(self):

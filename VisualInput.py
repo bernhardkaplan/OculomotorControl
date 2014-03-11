@@ -122,7 +122,6 @@ class VisualInput(object):
         # depending on trajectory and the tp create a spike train
         for i_, gid in enumerate(local_gids):
             rate_of_t = np.array(L_input[i_, :]) 
-            output_fn = self.params['input_rate_fn_mpn'] + str(gid) + '.dat'
             n_steps = rate_of_t.size
             st = []
             for i in xrange(n_steps):
@@ -133,8 +132,8 @@ class VisualInput(object):
             self.stim[i_] = st
 
         self.t_current += self.params['t_iteration']
-        if self.params['debug_mpn']:
-            np.savetxt(self.params['input_nspikes_fn_mpn'] + 'it%d_%d.dat' % (self.iteration, self.pc_id), input_nspikes, fmt='%d\t%d')
+#        if self.params['debug_mpn']:
+#            np.savetxt(self.params['input_nspikes_fn_mpn'] + 'it%d_%d.dat' % (self.iteration, self.pc_id), input_nspikes, fmt='%d\t%d')
         return self.stim
 
 
