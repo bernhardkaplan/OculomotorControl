@@ -11,9 +11,6 @@ class CreateConnections(object):
         
         self.params = params
 
-        nest.CopyModel('static_synapse', 'mpn_bg_exc', \
-                {'weight': self.params['w_exc_mpn_bg'], 'receptor_type': 0})  # numbers must be consistent with cell_params_exc
-
         nest.SetDefaults(self.params['bcpnn'], params=self.params['param_bcpnn'])
         self.comm = comm
         if comm != None:

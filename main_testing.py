@@ -34,6 +34,7 @@ if __name__ == '__main__':
         print 'Set training = False!'
         exit(1)
 
+
     assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
     training_folder = os.path.abspath(sys.argv[1]) 
     print 'Training folder:', training_folder
