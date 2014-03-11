@@ -40,14 +40,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['Cluster'] = False
-        self.params['n_stim_training'] = 1# number of different stimuli presented during training
+        self.params['n_stim_training'] = 100# number of different stimuli presented during training
         self.params['n_stim_testing'] = 1# number of different stimuli presented during training
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -63,8 +63,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
         self.params['initial_state'] = (.9, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-#        self.params['sim_id'] = 'mult'
-        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
+#        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
+        self.params['sim_id'] = 'test'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -80,7 +80,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['visual_stim_seed'] = 4321
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
-        self.params['debug_mpn'] = True
+        self.params['debug_mpn'] = False
         self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 
@@ -387,7 +387,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['training_sequence_fn'] = self.params['parameters_folder'] + 'training_stimuli_parameters.txt'
-
 
         # bg files:
         self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder

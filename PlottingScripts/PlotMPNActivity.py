@@ -342,13 +342,15 @@ if __name__ == '__main__':
 #    if params['training']:
     Plotter.plot_retinal_displacement()
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
-    Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
+    if params['debug_mpn']:
+        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
     output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
     print 'Saving to', output_fn
     fig.savefig(output_fn)
 
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
-    Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+    if params['debug_mpn']:
+        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
     output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
     print 'Saving to', output_fn
     fig.savefig(output_fn)
