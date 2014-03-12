@@ -106,7 +106,7 @@ class ParameterContainer(object):
 
 
 
-    def write_parameters_to_file(self, fn=None, params=None):
+    def write_parameters_to_file(self, fn=None, params_to_write=None):
         """
         This function must be called from 'outside' the class.
         Keyword arguments:
@@ -116,7 +116,7 @@ class ParameterContainer(object):
 
         if fn == None:
             fn = self.params['params_fn_json']
-        if params == None:
+        if params_to_write == None:
             params_to_write = self.params
         if not (os.path.isdir(params_to_write['folder_name'])):
             print 'Creating folder:\n\t%s' % params_to_write['folder_name']

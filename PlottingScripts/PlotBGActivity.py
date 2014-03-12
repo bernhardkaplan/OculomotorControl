@@ -96,7 +96,7 @@ class ActivityPlotter(object):
 
         if ylim != None:
             ax.set_ylim(ylim)
-        mn, mx = utils.get_min_max_gids_for_bg(params, cell_type)
+        mn, mx = utils.get_min_max_gids_for_bg(self.params, cell_type)
         ypos_label = .5 * (mx - mn) + mn
         xa = - (self.params['t_sim'] / 6.)
         ax.text(xa, ypos_label, cell_type, color=color, fontsize=16)
@@ -160,4 +160,4 @@ if __name__ == '__main__':
 #    Plotter.plot_raster_simple()
 #    Plotter.plot_action_voltages()
 #    Plotter.plot_action_spikes()
-    pylab.show()
+#    pylab.show()

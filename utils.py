@@ -15,7 +15,7 @@ def compare_actions_taken(training_params, test_params):
     print 'utils.compare_actions_taken checking files:', fn_training, '\n', fn_test
     actions_training = np.loadtxt(fn_training)
     actions_test = np.loadtxt(fn_test)
-    n_actions = actions_training[:, 0].size
+    n_actions = actions_test[:, 0].size
     incorrect_iterations = []
     for i_ in xrange(n_actions):
         if actions_training[i_, 2] != actions_test[i_, 2]:

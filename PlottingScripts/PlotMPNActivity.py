@@ -168,8 +168,8 @@ class ActivityPlotter(object):
     def plot_retinal_displacement(self):
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
-        t = d[:, 4]
-        t += .5 * self.params['t_iteration']
+        t_axis = d[:, 4]
+        t_axis += .5 * self.params['t_iteration']
         x_displacement = np.abs(d[:, 0] - .5)
         output_fn = self.params['data_folder'] + 'mpn_xdisplacement.dat'
         print 'Saving data to:', output_fn
@@ -177,7 +177,14 @@ class ActivityPlotter(object):
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        ax.plot(t, x_displacement, lw=3)
+
+        for stim in xrange(params['n_stim']):
+            for it_ in xrange(params['n_iterations_per_stim'] - 2):
+                it_1 = it_ + stim * params['n_iterations_per_stim']
+                it_2 = it_ + stim * params['n_iterations_per_stim'] + 2
+                p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=3, c='b')
+
+#        ax.plot(t, x_displacement, lw=3)
 
         if self.params['training']:
             ax.set_title('Training')
@@ -297,7 +304,7 @@ class ActivityPlotter(object):
         for i in xrange(n_stim):
             mp[i, :] = motion_params[i, :]
             mp[i, 1] = i
-            print 'Debug stim and motion_params', i, mp[i, :]
+#            print 'Debug stim and motion_params', i, mp[i, :]
             ax.annotate('(%.2f, %.2f)' % (mp[i, 0], mp[i, 2]), (max(0, mp[i, 0] - .1), mp[i, 1] + .2))
         
         ax.quiver(mp[:, 0], mp[:, 1], mp[:, 2], mp[:, 3], \
@@ -315,6 +322,7 @@ class ActivityPlotter(object):
 
 if __name__ == '__main__':
 
+    print 'DEBUG', len(sys.argv), sys.argv[1]
     if len(sys.argv) > 1:
         param_fn = sys.argv[1]
         if os.path.isdir(param_fn):
@@ -342,15 +350,15 @@ if __name__ == '__main__':
 #    if params['training']:
     Plotter.plot_retinal_displacement()
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
-    if params['debug_mpn']:
-        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
+#    if params['debug_mpn']:
+#        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
     output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
     print 'Saving to', output_fn
     fig.savefig(output_fn)
 
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
-    if params['debug_mpn']:
-        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+#    if params['debug_mpn']:
+#        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
     output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
     print 'Saving to', output_fn
     fig.savefig(output_fn)

@@ -86,7 +86,7 @@ class VisualInput(object):
         """
 
         trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code, v_eye, network_state)
-        local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS --> grrrrr :(
+        local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
 #        supervisor_state = (trajectory[0][-1], trajectory[1][-1], \
 #                self.current_motion_params[2], self.current_motion_params[3])
@@ -243,8 +243,7 @@ class VisualInput(object):
         # store the motion parameters at the beginning of this iteration
 #        print 'debug self.motion_params.shape', self.motion_params.shape, 'self.iteration:', self.iteration, 'self.n_stim_dim ', self.n_stim_dim, 'self.current_motion_params', self.current_motion_params, 'shape', self.current_motion_params.shape
 
-        print 'before update current motion parameters', self.current_motion_params
-        print 'Debug action_code', action_code
+        print 'before update current motion parameters', self.current_motion_params, 'action_code', action_code
 
         # not working, need to separate current_motion_params (for update x_stim) from perceived_motion_params again (for calculating input response)
 #        displ_wx = (1. - np.abs(network_state[0] - .5) / .5)
@@ -434,7 +433,6 @@ class VisualInput(object):
                     for i_ in xrange(self.params['n_exc_per_state']):
                         tuning_prop[index, 0] = np.random.uniform()
                         tuning_prop[index, 1] = np.random.uniform()
-                        print 'debug', np.cos(theta + random_rotation[index] + parity[i_v_rho] * np.pi / n_theta)
                         tuning_prop[index, 2] = np.cos(theta + random_rotation[index] + parity[i_v_rho] * np.pi / n_theta) \
                                 * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                         tuning_prop[index, 3] = np.sin(theta + random_rotation[index] + parity[i_v_rho] * np.pi / n_theta) \
