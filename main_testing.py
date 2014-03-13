@@ -31,7 +31,6 @@ if __name__ == '__main__':
     assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
     training_folder = os.path.abspath(sys.argv[1]) 
     print 'Training folder:', training_folder
-#    exit(1)
 
     GP = simulation_parameters.global_parameters()
     if comm != None:
@@ -42,10 +41,10 @@ if __name__ == '__main__':
         testing_folder = os.path.abspath(sys.argv[2]) 
         testing_params_fn = os.path.abspath(testing_folder) + '/Parameters/simulation_parameters.json'
         testing_param_tool = simulation_parameters.global_parameters(params_fn=testing_params_fn)
+
         testing_params_json = testing_param_tool.params
         testing_params = {}
         for k in testing_params_json.keys():
-#            print '\n\n', type(k), '\t', k, '\t', type(testing_params_json[k]), testing_params_json[k]
             if type(testing_params_json[k]) == type({}):
                 d = testing_params_json[k]
                 d_new = {}
@@ -56,20 +55,23 @@ if __name__ == '__main__':
                 testing_params[str(k)] = str(testing_params_json[k])
             else:
                 testing_params[str(k)] = testing_params_json[k]
-#        print 'TESTING PARAMS'
-#        for k in testing_params.keys():
-#            print '\n\n', type(k), '\t', k, '\t', type(testing_params[k]), testing_params[k]
+#        print 'DEBUG loading testing_param json fn', testing_params['params_fn_json']
+#        print 'DEBUG loading testing_param folder_name', testing_params['folder_name']
+#        exit(1)
 
     if testing_params['training']:
         print 'Set training = False!'
         exit(1)
 
-#    if comm != None:
-#        comm.barrier()
-
+    if comm != None:
+        comm.barrier()
 #    exit(1)
 #    GP.params = testing_params
-    GP.write_parameters_to_file(fn=testing_params['params_fn_json'], params_to_write=testing_params) # write_parameters_to_file MUST be called before every simulation
+
+    print 'DEBUG', testing_params['folder_name'], '\n', testing_params['data_folder'], '\n', testing_params['params_fn_json']
+    print 'DEBUG is it None?', testing_params == None
+#    GP.write_parameters_to_file(fn=testing_params['params_fn_json'], params_to_write=testing_params) # write_parameters_to_file MUST be called before every simulation
+    GP.write_parameters_to_file(testing_params['params_fn_json'], testing_params) # write_parameters_to_file MUST be called before every simulation
     training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
     print 'Loading training parameters from', training_params_fn
     training_param_tool = simulation_parameters.global_parameters(params_fn=training_params_fn)
@@ -100,7 +102,37 @@ if __name__ == '__main__':
 
     if comm != None:
         comm.barrier()
+
+
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
     CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params)
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+    # #####################################
+
     if comm != None:
         comm.barrier()
     BG.set_bias('d1')
@@ -112,10 +144,9 @@ if __name__ == '__main__':
 
     iteration_cnt = 0
     v_eye = [0., 0.]
-#    for i_stim in xrange(testing_params['n_stim_testing']):
     for i_, i_stim in enumerate(testing_params['testing_stimuli']):
-        print 'debug vi current_motion_params', VI.current_motion_params
-        print 'debug vi training stimli', training_stimuli.shape, '\n', training_stimuli
+#        print 'debug vi current_motion_params', VI.current_motion_params
+#        print 'debug vi training stimli', training_stimuli.shape, '\n', training_stimuli
         if len(training_stimuli.shape) == 1:
             VI.current_motion_params = training_stimuli
         else:
@@ -131,7 +162,6 @@ if __name__ == '__main__':
 #                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
                 stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
 
-            print 'DEBUG, comparison global iteration i_stim %d it %d iteration_cnt %d, VI: %d' % (i_stim, it, iteration_cnt, VI.iteration)
             if testing_params['debug_mpn']:
                 print 'Iteration %d: Saving spike trains...' % iteration_cnt
                 save_spike_trains(testing_params, iteration_cnt, stim, MT.local_idx_exc)
@@ -157,15 +187,20 @@ if __name__ == '__main__':
             if comm != None:
                 comm.barrier()
 
+    print 'Debug data_folder AFTER sim', testing_params['data_folder']
     if pc_id == 0:
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
         utils.compare_actions_taken(training_params, testing_params)
+        print 'DEBUG after run testing_params[folder_name]', testing_params['folder_name']
+        print ('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])
         os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])
         os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
+        print('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
         os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
-
+        print('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
+        print 'Debug data folder after plotting:', testing_params['data_folder']
     if comm != None:
         comm.barrier()
 

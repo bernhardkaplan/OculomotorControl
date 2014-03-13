@@ -41,7 +41,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['n_stim_training'] = 1# number of different stimuli presented during training
-        self.params['testing_stimuli'] = range(1, 11)
+        self.params['testing_stimuli'] = range(0, 10)
         self.params['n_stim_testing'] = len(self.params['testing_stimuli'])
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
@@ -380,7 +380,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         This funcion is called if no params_fn is passed 
         """
 
-        self.set_folder_names()
+        print 'DEBUG SIMPARAM.set_filenames', folder_name
+        self.set_folder_names(folder_name)
+
         self.params['mpn_exc_volt_fn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_exc_spikes_fn'] = 'mpn_exc_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_exc_spikes_fn_merged'] = 'mpn_exc_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
@@ -468,23 +470,27 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['bias_d1_merged_fn'] = self.params['connections_folder'] + 'bias_d1_merged.json'
         self.params['bias_d2_merged_fn'] = self.params['connections_folder'] + 'bias_d2_merged.json'
 
-    def set_folder_names(self):
+    def set_folder_names(self, folder_name=None):
 #        super(global_parameters, self).set_default_foldernames(folder_name)
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
 
-        if self.params['training']:
-            folder_name = 'Training_%s_taup%d' % (self.params['sim_id'], self.params['params_synapse_d1_MT_BG']['tau_p'])
-        else:
-            folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['testing_stimuli'][0], self.params['testing_stimuli'][-1])
+        if folder_name == None:
+            if self.params['training']:
+                folder_name = 'Training_%s_taup%d' % (self.params['sim_id'], self.params['params_synapse_d1_MT_BG']['tau_p'])
+            else:
+                folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['testing_stimuli'][0], self.params['testing_stimuli'][-1])
 
-        folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
-                (self.params['n_stim_training'], self.params['n_exc_mpn'], self.params['n_states'], \
-                self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'], \
-                self.params['mpn_bg_weight_amplification'], self.params['mpn_bg_bias_amplification'])
+            folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
+                    (self.params['n_stim_training'], self.params['n_exc_mpn'], self.params['n_states'], \
+                    self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'], \
+                    self.params['mpn_bg_weight_amplification'], self.params['mpn_bg_bias_amplification'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
-        self.set_folder_name(folder_name)
+        print 'DEBUG SIMPARM folder_name', folder_name
+        self.params['folder_name'] = folder_name
+        print 'DEBUG SIMPARM self.foldername', self.params['folder_name']
+#        exit(1)
 
         self.params['parameters_folder'] = '%sParameters/' % self.params['folder_name']
         self.params['figures_folder'] = '%sFigures/' % self.params['folder_name']
@@ -505,7 +511,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spiketimes_folder'] = '%sSpikes/' % self.params['folder_name']
         self.params['folder_names'].append(self.params['spiketimes_folder'])
         self.params['folder_names'].append(self.params['input_folder_mpn'])
-        self.create_folders()
+#        self.create_folders()
 
 
     def load_params_from_file(self, fn):

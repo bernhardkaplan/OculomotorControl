@@ -11,7 +11,6 @@ import pylab
 import numpy as np 
 import utils
 import json
-import simulation_parameters
 #from matplotlib import cm
 
 def load_params_from_folder(folder_name):

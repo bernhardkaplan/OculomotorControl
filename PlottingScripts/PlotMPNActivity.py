@@ -322,7 +322,6 @@ class ActivityPlotter(object):
 
 if __name__ == '__main__':
 
-    print 'DEBUG', len(sys.argv), sys.argv[1]
     if len(sys.argv) > 1:
         param_fn = sys.argv[1]
         if os.path.isdir(param_fn):
@@ -331,15 +330,17 @@ if __name__ == '__main__':
         f = file(param_fn, 'r')
         print 'Loading parameters from', param_fn
         params = json.load(f)
-
     else:
         import simulation_parameters
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    
+    print 'DEBUG PlotMPNActivity param_fn', param_fn
+    print 'DEBUG PlotMPNActivity params[folder_name]', params['folder_name']
+
     utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
     Plotter = ActivityPlotter(params)#, it_max=1)
+    print 'DEBUG asdkfja', Plotter.params['tuning_prop_exc_fn']
     fig = Plotter.plot_training_sequence()
     output_fn = params['figures_folder'] + 'training_sequence.png'
     print 'Saving to', output_fn

@@ -90,6 +90,7 @@ if __name__ == '__main__':
         f = file(test_param_fn, 'r')
         print 'Loading test parameters from', test_param_fn
         test_params = json.load(f)
+        print 'Debug comp', test_params['data_folder']
 
         c = colorlist[(i_ + 1) % len(colorlist)]
         ls = linestyles[(i_ + 1) % len(linestyles)]
@@ -104,4 +105,4 @@ if __name__ == '__main__':
     output_fn = training_params['figures_folder'] + 'comparison_training_test_xdisplacement.png'
     print 'Saving figure to:', output_fn
     pylab.savefig(output_fn, dpi=300)
-    pylab.show()
+#    pylab.show()
