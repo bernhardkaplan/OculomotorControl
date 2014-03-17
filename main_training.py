@@ -10,6 +10,7 @@ import nest
 import numpy as np
 import time
 import os
+import utils
 
 try: 
     from mpi4py import MPI
@@ -52,7 +53,8 @@ if __name__ == '__main__':
         assert os.path.exists(param_fn), 'ERROR: Can not find %s - please give an existing parameter filename or folder name to re-run a simulation' % (param_fn)
         f = file(param_fn, 'r')
         print 'Loading parameters from', param_fn
-        params = json.load(f)
+        json_params = json.load(f)
+        params = utils.convert_to_NEST_conform_dict(json_params)
     else: # run a simulation with parameters as set in simulation_parameters
         GP = simulation_parameters.global_parameters()
         GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation

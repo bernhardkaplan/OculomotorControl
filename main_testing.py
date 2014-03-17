@@ -43,19 +43,7 @@ if __name__ == '__main__':
         testing_param_tool = simulation_parameters.global_parameters(params_fn=testing_params_fn)
 
         testing_params_json = testing_param_tool.params
-        testing_params = {}
-        for k in testing_params_json.keys():
-            if type(testing_params_json[k]) == type({}):
-                d = testing_params_json[k]
-                d_new = {}
-                for key in d.keys():
-                    d_new[str(key)] = d[key]
-                testing_params[k] = d_new
-            elif type(testing_params_json[k]) == unicode:
-                testing_params[str(k)] = str(testing_params_json[k])
-            else:
-                testing_params[str(k)] = testing_params_json[k]
-
+        testing_params = utils.convert_to_NEST_conform_dict(testing_params_json)
     if testing_params['training']:
         print 'Set training = False!'
         exit(1)
