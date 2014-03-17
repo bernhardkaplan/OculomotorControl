@@ -197,12 +197,15 @@ class ActivityPlotter(object):
         if params == None:
             params = self.params
         (ymin, ymax) = ax.get_ylim()
+        it_cnt = 0
         for i_stim in xrange(params['n_stim_training']):
             t0 = i_stim * params['n_iterations_per_stim'] * params['t_iteration']
             ax.plot((t0, t0), (ymin, ymax), ls='-', lw=2, c='k')
             for it_ in xrange(params['n_iterations_per_stim']):
                 t0 = it_ * params['t_iteration'] + i_stim * params['n_iterations_per_stim'] * params['t_iteration']
                 ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
+                ax.annotate(str(it_cnt), xy=(t0 + .5 * params['t_iteration'], ymin + (ymax - ymin) * .05))
+                it_cnt += 1
 
 
     def plot_raster_sorted(self, title='', cell_type='exc', sort_idx=0):
@@ -339,13 +342,15 @@ if __name__ == '__main__':
 #    if params['training']:
     Plotter.plot_retinal_displacement()
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
-    Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
+    if params['debug_mpn']:
+        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
     output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
     print 'Saving to', output_fn
     fig.savefig(output_fn)
 
     fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
-    Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+    if params['debug_mpn']:
+        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
     output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
     print 'Saving to', output_fn
     fig.savefig(output_fn)

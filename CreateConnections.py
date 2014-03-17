@@ -11,9 +11,6 @@ class CreateConnections(object):
         
         self.params = params
 
-        nest.CopyModel('static_synapse', 'mpn_bg_exc', \
-                {'weight': self.params['w_exc_mpn_bg'], 'receptor_type': 0})  # numbers must be consistent with cell_params_exc
-
         nest.SetDefaults(self.params['bcpnn'], params=self.params['param_bcpnn'])
         self.comm = comm
         if comm != None:
@@ -102,6 +99,7 @@ class CreateConnections(object):
             if w != 0.:
                 w *= self.params['mpn_bg_weight_amplification']
                 mpn_d1_conns_debug += '%d\t%d\t%.4e\n' % (src, tgt, w)
+#                print 'debug %d\t%d\t%.4e\n' % (src, tgt, w)
                 nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
 
         print 'Loading MPN - BG D2 connections from:', training_params['mpn_bgd2_merged_conn_fn']
