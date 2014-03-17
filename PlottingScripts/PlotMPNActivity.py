@@ -14,6 +14,9 @@ import pylab
 import matplotlib
 from FigureCreator import plot_params
 pylab.rcParams.update(plot_params)
+import simulation_parameters
+import matplotlib
+from matplotlib import cm
 
 class ActivityPlotter(object):
 
@@ -28,7 +31,6 @@ class ActivityPlotter(object):
         self.n_x_ticks = 10
         self.x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
         self.load_tuning_prop()
-
 
     def load_tuning_prop(self):
         print 'ActivityPlotter.load_tuning_prop ...'
@@ -165,24 +167,36 @@ class ActivityPlotter(object):
         pylab.savefig(output_fig)
 
 
-    def plot_retinal_displacement(self):
+    def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
+        if stim_range == None:
+            stim_range = self.params['test_stim_range']
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
-        t_axis = d[:, 4]
+        it_min = stim_range[0] * self.params['n_iterations_per_stim']
+        it_max = stim_range[1] * self.params['n_iterations_per_stim']
+        t_axis = d[it_min:it_max, 4]
         t_axis += .5 * self.params['t_iteration']
-        x_displacement = np.abs(d[:, 0] - .5)
+        x_displacement = np.abs(d[it_min:it_max, 0] - .5)
+#        x_displacement = np.zeros(it_max - it_min)
         output_fn = self.params['data_folder'] + 'mpn_xdisplacement.dat'
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
-        fig = pylab.figure()
-        ax = fig.add_subplot(111)
+        if ax == None:
+            fig = pylab.figure()
+            ax = fig.add_subplot(111)
 
-        for stim in xrange(params['n_stim']):
-            for it_ in xrange(params['n_iterations_per_stim'] - 2):
-                it_1 = it_ + stim * params['n_iterations_per_stim']
-                it_2 = it_ + stim * params['n_iterations_per_stim'] + 2
-                p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=3, c='b')
+        for stim in xrange(stim_range[0], stim_range[1]):
+            it_start_stim = stim * self.params['n_iterations_per_stim']
+            it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - 1
+            x_displacement_stim = np.abs(d[it_start_stim:it_stop_stim, 0] - .5)
+#            x_displacement[it_start_stim:it_stop_stim] = x_displacement_stim
+            for it_ in xrange(self.params['n_iterations_per_stim'] - 2):
+                it_1 = it_ + stim * self.params['n_iterations_per_stim']
+                it_2 = it_ + stim * self.params['n_iterations_per_stim'] + 2
+                p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
+#                p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
+#            ax.plot((stim + 1) * self.param['n_iterations_per_stim'], 
 
 #        ax.plot(t, x_displacement, lw=3)
 
@@ -190,29 +204,41 @@ class ActivityPlotter(object):
             ax.set_title('Training')
         else:
             ax.set_title('Testing')
-        self.plot_vertical_lines(ax)
+        self.plot_vertical_lines(ax, show_iterations=False)
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal displacement (x-dim)')
-        ax.set_xlim((0, self.params['t_sim']))
+        t0 = it_min * self.params['t_iteration']
+        t1 = it_max * self.params['t_iteration']
+        ax.set_xlim((t0, t1))
 #        ax.set_ylim((0, 1.2))
         output_fig = self.params['figures_folder'] + 'mpn_displacement.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
+        return (t_axis, x_displacement)
 
 
-    def plot_vertical_lines(self, ax, params=None):
+    def plot_vertical_lines(self, ax, params=None, time_scale=True, show_iterations=True):
+        """
+        if time_scale == True: the x-axis units is ms
+        if time_scale == False: the x-axis units is iterations
+        """
         if params == None:
             params = self.params
         (ymin, ymax) = ax.get_ylim()
         it_cnt = 0
-        for i_stim in xrange(params['n_stim_training']):
-            t0 = i_stim * params['n_iterations_per_stim'] * params['t_iteration']
+        if time_scale:
+            t_scale = params['t_iteration']
+        else:
+            t_scale = 1
+        for i_stim in xrange(params['n_stim']):
+            t0 = i_stim * params['n_iterations_per_stim'] * t_scale
             ax.plot((t0, t0), (ymin, ymax), ls='-', lw=2, c='k')
-            for it_ in xrange(params['n_iterations_per_stim']):
-                t0 = it_ * params['t_iteration'] + i_stim * params['n_iterations_per_stim'] * params['t_iteration']
-                ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
-                ax.annotate(str(it_cnt), xy=(t0 + .5 * params['t_iteration'], ymin + (ymax - ymin) * .05))
-                it_cnt += 1
+            if show_iterations:
+                for it_ in xrange(params['n_iterations_per_stim']):
+                    t0 = it_ * t_scale + i_stim * params['n_iterations_per_stim'] * t_scale
+                    ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
+                    ax.annotate(str(it_cnt), xy=(t0 + .5 * t_scale, ymin + (ymax - ymin) * .05))
+                    it_cnt += 1
 
 
     def plot_raster_sorted(self, title='', cell_type='exc', sort_idx=0):
@@ -320,49 +346,181 @@ class ActivityPlotter(object):
 
 
 
+
+class MetaAnalysisClass(object):
+
+    def __init__(self, argv, plot_training_folder=None):
+        print 'Argv:', len(argv)
+        stim_range = None
+
+        # optional: plot the training data
+        if plot_training_folder != None:
+            training_params = utils.load_params(plot_training_folder)
+
+        if len(argv) == 1:
+            print '\nPlotting only stim 1!\n\n'
+            network_params = simulation_parameters.parameter_storage()  
+            params = network_params.params
+            print '\nPlotting the default parameters give in simulation_parameters.py\n'
+            self.run_single_folder_analysis(params, stim_range)
+        elif len(argv) == 2:
+            folder_name = argv[1]
+            params = utils.load_params(folder_name)
+            self.run_single_folder_analysis(params, stim_range)
+        elif len(argv) == 3:
+            if argv[1].isdigit() and argv[2].isdigit():
+                stim_range = (int(argv[1]), int(argv[2]))
+                network_params = simulation_parameters.parameter_storage()  
+                params = network_params.params
+                print '\nPlotting the default parameters give in simulation_parameters.py\n'
+                self.run_single_folder_analysis(params, stim_range)
+            else:
+                self.run_analysis_for_folders(argv[1:], training_params=training_params)
+        elif len(argv) == 4:
+            folder_name = argv[1]
+            if argv[2].isdigit() and argv[3].isdigit():
+                stim_range = (int(argv[2]), int(argv[3]))
+                params = utils.load_params(folder_name)
+                self.run_single_folder_analysis(params, stim_range)
+            else:
+                self.run_analysis_for_folders(argv[1:], training_params=training_params)
+        elif len(argv) > 4:
+            # do the same operation for many folders
+            self.run_analysis_for_folders(argv[1:], training_params=training_params)
+
+
+    def run_single_folder_analysis(self, params, stim_range):
+        Plotter = ActivityPlotter(params)#, it_max=1)
+#        fig = Plotter.plot_training_sequence()
+#        output_fn = params['figures_folder'] + 'training_sequence.png'
+#        print 'Saving to', output_fn
+#        fig.savefig(output_fn)
+
+    #    Plotter.plot_input()
+    #    Plotter.plot_output()
+    #    if params['training']:
+        (t_axis, x_displacement) = Plotter.plot_retinal_displacement(stim_range=stim_range)
+        return (t_axis, x_displacement)
+
+#        del Plotter
+        # plot x - pos sorting
+    #    fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
+    #    if params['debug_mpn']:
+    #        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
+    #    output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
+    #    print 'Saving to', output_fn
+    #    fig.savefig(output_fn)
+
+        # plot vx - sorting
+    #    fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
+    #    if params['debug_mpn']:
+    #        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+    #    output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
+    #    print 'Saving to', output_fn
+    #    fig.savefig(output_fn)
+
+
+    def run_analysis_for_folders(self, folders, training_params=None):
+        """
+        folders -- list of folders with same time/data parameters (wrt to data size to be analysed)
+
+
+        """
+        stim_range = (0, 10) # to be changed
+
+        n_stim = stim_range[1] - stim_range[0]
+        # load the first parameter set to determine data size
+        params = utils.load_params(folders[0])
+        n_idx_per_stim = params['n_iterations_per_stim'] * n_stim
+        n_folders = len(folders)
+        all_data = np.zeros((n_folders, n_idx_per_stim))
+
+        for i_, folder in enumerate(folders):
+            params = utils.load_params(folder)
+            (x_data, y_data) = self.run_single_folder_analysis(params, stim_range)
+            all_data[i_, :] = y_data
+
+        no_plot_idx = [(i + 1) * params['n_iterations_per_stim'] - 2 for i in xrange(params['n_stim'])]
+        no_plot_idx += [(i + 1) * params['n_iterations_per_stim'] - 1 for i in xrange(params['n_stim'])]
+        ax = self.plot_collected_data(all_data, x_data, no_plot_idx=no_plot_idx)
+
+        if training_params != None:
+            Plotter = ActivityPlotter(training_params)#, it_max=1)
+            (t_axis, x_displacement) = Plotter.plot_retinal_displacement(stim_range=stim_range, ax=ax, lw=3, c='k')
+
+
+
+
+    def plot_collected_data(self, d, x_data, no_plot_idx=False):
+        """
+        d :
+                    2-dimensional array for collected data, 
+                    first dimension  -> index of curve
+                    2nd dim          -> index within the curve
+        x_data :
+                    1-dimensional array (e.g. time axis) which is common to all curves
+        no_plot_idx :
+                    list of indices which shall not be plotted
+        """
+
+        n_curves = d[:, 0].size
+        n_idx_per_curve = d[0, :].size
+        average_curve = np.zeros((n_idx_per_curve, 2))
+
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        for idx in xrange(n_idx_per_curve):
+            average_curve[idx, 0] = d[:, idx].mean()
+            average_curve[idx, 1] = d[:, idx].std()
+
+
+        norm = matplotlib.mpl.colors.Normalize(vmin=0, vmax=n_curves)
+        m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cm.jet)
+
+        if no_plot_idx == False:
+            ax.errorbar(x_data, average_curve[:, 0], yerr=average_curve[:, 1], lw=3, c='r')
+            for i_ in xrange(n_curves):
+                ax.plot(x_data, d[i_, :])
+        else:
+            for i_ in xrange(n_curves):
+                for idx in xrange(n_idx_per_curve-2):
+                    if idx not in no_plot_idx:
+                        c = m.to_rgba(i_)
+                        ax.plot(x_data[idx:idx+2], d[i_, idx:idx+2], ls='-', c=c, alpha=0.5)
+#            for idx in xrange(n_idx_per_curve-1):
+#                if idx not in no_plot_idx:
+#                    ax.errorbar(x_data[idx:idx+1], average_curve[idx:idx+1, 0], yerr=average_curve[idx:idx+1], lw=3, c='r')
+        ax.set_xlabel('Time [ms]')
+        ax.set_ylabel('Retinal displacement')
+
+        wtf = 0.5
+        ax.set_title('Test performance averaged over %d trials, WTF=%.1f' % (n_curves, wtf))
+
+        output_fn = 'average_xdisplacement_WTF_%.1f.png'  % (wtf)
+        print 'Saving to:', output_fn
+        pylab.savefig(output_fn, dpi=200)
+        return ax
+
+
+
 if __name__ == '__main__':
 
+    """
+    Usage:
+        python scriptname.py [FOLDER_NAME or .json parameter file] [ITERATION_0] [ITERATION_1]
+        [ ] -- optional arguments
+        
+
+    """
+
     if len(sys.argv) > 1:
-        param_fn = sys.argv[1]
-        if os.path.isdir(param_fn):
-            param_fn += '/Parameters/simulation_parameters.json'
-        import json
-        f = file(param_fn, 'r')
-        print 'Loading parameters from', param_fn
-        params = json.load(f)
+        params = utils.load_params(sys.argv[1])
     else:
-        import simulation_parameters
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    print 'DEBUG PlotMPNActivity param_fn', param_fn
-    print 'DEBUG PlotMPNActivity params[folder_name]', params['folder_name']
-
     utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
-    Plotter = ActivityPlotter(params)#, it_max=1)
-    print 'DEBUG asdkfja', Plotter.params['tuning_prop_exc_fn']
-    fig = Plotter.plot_training_sequence()
-    output_fn = params['figures_folder'] + 'training_sequence.png'
-    print 'Saving to', output_fn
-    fig.savefig(output_fn)
 
-#    Plotter.plot_input()
-#    Plotter.plot_output()
-#    if params['training']:
-    Plotter.plot_retinal_displacement()
-    fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
-#    if params['debug_mpn']:
-#        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
-    output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
-    print 'Saving to', output_fn
-    fig.savefig(output_fn)
-
-    fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
-#    if params['debug_mpn']:
-#        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
-    output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
-    print 'Saving to', output_fn
-    fig.savefig(output_fn)
-
-#    Plotter.plot_raster_sorted(title='Exc cells sorted by $v_x$', sort_idx=2)
+    training_folder = 'Training_Cluster_taup90000_nStim400_nExcMpn2400_nStates20_nActions21_it15-90000_wMPN-BG1.50_bias10.00/'
+    MAC = MetaAnalysisClass(sys.argv, plot_training_folder=training_folder)
 #    pylab.show()

@@ -41,8 +41,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['n_stim_training'] = 1# number of different stimuli presented during training
-        self.params['testing_stimuli'] = range(0, 10)
-        self.params['n_stim_testing'] = len(self.params['testing_stimuli'])
+        self.params['test_stim_range'] = range(0, 10)
+        self.params['n_stim_testing'] = self.params['test_stim_range'][1] - self.params['test_stim_range'][0]
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
@@ -478,7 +478,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             if self.params['training']:
                 folder_name = 'Training_%s_taup%d' % (self.params['sim_id'], self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
-                folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['testing_stimuli'][0], self.params['testing_stimuli'][-1])
+                folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
 
             folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
                     (self.params['n_stim_training'], self.params['n_exc_mpn'], self.params['n_states'], \
