@@ -101,12 +101,12 @@ class ParameterContainer(object):
 
     def set_filenames(self):
 
-        return
+        raise NotImplementedError
 
 
 
 
-    def write_parameters_to_file(self, fn=None, params=None):
+    def write_parameters_to_file(self, fn=None, params_to_write=None):
         """
         This function must be called from 'outside' the class.
         Keyword arguments:
@@ -116,14 +116,17 @@ class ParameterContainer(object):
 
         if fn == None:
             fn = self.params['params_fn_json']
-        if params == None:
+            print 'ParameterContainer.DEBUG Writing to the default params_fn_json:', fn
+        if params_to_write == None:
             params_to_write = self.params
+            print '\nDEBUG params_to_write is None\nParameterContainer.DEBUG params_to_write folder:', self.params['folder_name']
         if not (os.path.isdir(params_to_write['folder_name'])):
             print 'Creating folder:\n\t%s' % params_to_write['folder_name']
             self.create_folders()
         print 'Writing parameters to: %s' % (fn)
         output_file = file(fn, 'w')
-        d = json.dump(self.params, output_file, indent=0)
+        d = json.dump(params_to_write, output_file, indent=0)
+        output_file.close()
 
 
 

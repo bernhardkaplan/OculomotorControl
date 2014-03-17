@@ -25,7 +25,7 @@ class Plotter(object):
     def set_training_params(self, training_params):
         self.training_params = training_params
 
-    def plot_xdisplacement(self, params, color='k', ls='-', ax=None, legend_label=''):
+    def plot_xdisplacement(self, params, color='k', ls='-', ax=None, legend_label='', plot_vertical_lines=True, it_range=None):
 
         if ax == None:
             fig = pylab.figure()
@@ -41,20 +41,25 @@ class Plotter(object):
         t_axis = d[:, 4]
         t_axis += .5 * params['t_iteration']
         n_iterations = d[:, 0].size
-        for stim in xrange(params['n_stim']):
+        if it_range == None:
+            it_range = (0, params['n_stim'])
+        for stim in xrange(it_range[0], it_range[1]):
             for it_ in xrange(params['n_iterations_per_stim'] - 2):
                 it_1 = it_ + stim*params['n_iterations_per_stim']
                 it_2 = it_ + stim*params['n_iterations_per_stim'] + 2
                 p1, = ax.plot(t_axis[it_1:it_2], xdispl[it_1:it_2], c=color, lw=3, ls=ls)
-                print 'debug', t_axis[it_1:it_2], xdispl[it_1:it_2]
 
 #        p1, = ax.plot(t_axis, xdispl, c=color, lw=3, ls=ls)
         self.plots.append(p1)
         self.legend_labels.append(legend_label)
 
-        self.AP = ActivityPlotter(params)
-        self.AP.plot_vertical_lines(ax)
+        if plot_vertical_lines:
+            AP = ActivityPlotter(params)
+            AP.plot_vertical_lines(ax)
 
+        t_stim = params['t_iteration'] * params['n_iterations_per_stim']
+        time_range = (it_range[0] * t_stim, it_range[1] * t_stim)
+        ax.set_xlim(time_range)
         return ax
 
 
@@ -80,23 +85,27 @@ if __name__ == '__main__':
     print 'Loading training parameters from', training_param_fn
     training_params = json.load(f)
     
-    Plotter = Plotter()
-    Plotter.set_training_params(training_params)
-    ax = Plotter.plot_xdisplacement(training_params, color=colorlist[0], legend_label='Training')
-
+    ax = None
+    
+    P = Plotter()
     for i_, test_folder in enumerate(test_folders):
         test_param_fn = os.path.abspath(test_folder) + '/Parameters/simulation_parameters.json'
         f = file(test_param_fn, 'r')
         print 'Loading test parameters from', test_param_fn
         test_params = json.load(f)
+        print 'Debug comp', test_params['data_folder']
 
         c = colorlist[(i_ + 1) % len(colorlist)]
         ls = linestyles[(i_ + 1) % len(linestyles)]
         legend_txt = 'Test w_mpn_bg=%.1f' % (test_params['mpn_bg_weight_amplification'])
-        ax = Plotter.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt)
+        it_range = (0, test_params['n_stim'])
+        ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=False, it_range=it_range)
 
-    ax.legend(Plotter.plots, Plotter.legend_labels, loc='upper right')
+    P.set_training_params(training_params)
+    ax = P.plot_xdisplacement(training_params, color=colorlist[0], ax=ax, legend_label='Training', plot_vertical_lines=False, it_range=it_range)
+
+    ax.legend(P.plots, P.legend_labels, loc='upper right')
     output_fn = training_params['figures_folder'] + 'comparison_training_test_xdisplacement.png'
     print 'Saving figure to:', output_fn
     pylab.savefig(output_fn, dpi=300)
-    pylab.show()
+#    pylab.show()

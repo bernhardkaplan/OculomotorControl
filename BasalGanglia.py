@@ -112,9 +112,9 @@ class BasalGanglia(object):
                          nest.DivergentConnect(self.supervisor[nactions], self.strD2[i], weight=self.params['weight_supervisor_strd2'], delay=self.params['delay_supervisor_strd2'])
                      else:
                          nest.DivergentConnect(self.supervisor[nactions], self.strD1[i], weight=self.params['weight_supervisor_strd1'], delay=self.params['delay_supervisor_strd1'])
-                self.recorder_supervisor[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_supervisor'])
-                nest.SetStatus(self.recorder_supervisor[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['supervisor_spikes_fn']+ str(nactions)}])
-                nest.ConvergentConnect(self.supervisor[nactions], self.recorder_supervisor[nactions])
+#                self.recorder_supervisor[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_supervisor'])
+#                nest.SetStatus(self.recorder_supervisor[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['supervisor_spikes_fn']+ str(nactions)}])
+#                nest.ConvergentConnect(self.supervisor[nactions], self.recorder_supervisor[nactions])
 
         # Creates and connects the EFFERENCE COPY population. This actives the D1 population coding for the selected action and the D2 populations of non-selected actions, in STR
         for nactions in xrange(self.params['n_actions']):

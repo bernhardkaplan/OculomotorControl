@@ -11,7 +11,6 @@ import pylab
 import numpy as np 
 import utils
 import json
-import simulation_parameters
 #from matplotlib import cm
 
 def load_params_from_folder(folder_name):
@@ -52,13 +51,7 @@ def check_is_it_d1(fn):
 
 
 
-def plot_conn_list(conn_list_fn=None, params=None, clim=None):
-    if params == None:
-        folder = conn_list_fn.rsplit('/')[0]
-        params = load_params_from_folder(folder)
-    else:
-        pass
-
+def plot_conn_list(conn_list_fn, params, clim=None):
     if not os.path.exists(conn_list_fn):
         print 'Merging default connection files...'
         merge_pattern = params['mpn_bgd1_conn_fn_base']
@@ -128,14 +121,23 @@ if __name__ == '__main__':
     fns = sys.argv[1:] # 
     if len(sys.argv) > 2:
         for fn in fns:
-            plot_conn_list(conn_list_fn=conn_fn)
+            params = utils.load_params(fn)
+            tgt_type = 'd1'
+            conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+            plot_conn_list(conn_list_fn=conn_list_fn, params=params)
+            tgt_type = 'd2'
+            conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+            plot_conn_list(conn_list_fn=conn_list_fn, params=params)
     elif len(sys.argv) == 2:
-        conn_list = sys.argv[1]
-        plot_conn_list(conn_list_fn=conn_list)
+#        conn_list = sys.argv[1]
+        params = utils.load_params(sys.argv[1])
+        tgt_type = 'd1'
+        conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+        plot_conn_list(conn_list_fn=conn_list_fn, params=params)
 #         params = load_params_from_folder(fn)
 #         plot_conn_list(params=params)
           
 
     
     
-#    pylab.show()
+    pylab.show()

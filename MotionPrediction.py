@@ -61,7 +61,8 @@ class MotionPrediction(object):
 #        for i_ in xrange(self.params['n_exc_mpn']):
 #            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
         for i_, gid in enumerate(self.local_idx_exc):
-            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
+            nest.SetStatus([self.stimulus[gid - 1]], {'spike_times' : stim[i_]})
+#            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
 #            print 't_current: %d udpating input stimulus spiketrains:' % self.t_current, i_, stim[i_]
 
 
@@ -81,8 +82,9 @@ class MotionPrediction(object):
         # connect stimuli containers to the local cells
 
         # old:
-        for i_, gid in enumerate(self.local_idx_exc):
-            nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
+#        for i_, gid in enumerate(self.local_idx_exc):
+#            nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
+        nest.Connect(self.stimulus, self.exc_pop, model='input_exc_0')
         # new
 #        for gid in xrange(self.params['n_exc_mpn']):
 #            nest.Connect([self.stimulus[gid]], [self.exc_pop[gid]], model='input_exc_0')
@@ -98,7 +100,7 @@ class MotionPrediction(object):
 
         self.inh_pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_inh_mpn'], params=cell_params)
         self.list_of_populations.append(self.inh_pop)
-        self.local_idx_inh += self.get_local_indices(self.inh_pop) # get the GIDS of the neurons that are local to the process
+#        self.local_idx_inh += self.get_local_indices(self.inh_pop) # get the GIDS of the neurons that are local to the process
 
         self.inh_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':self.params['mpn_inh_spikes_fn']})
         nest.ConvergentConnect(self.inh_pop, self.inh_spike_recorder)

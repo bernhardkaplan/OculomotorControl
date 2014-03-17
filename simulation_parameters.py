@@ -28,6 +28,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params = self.load_params_from_file(params_fn)
 
+        # will set the filenames
         super(global_parameters, self).__init__() # call the constructor of the super/mother class
 
 
@@ -41,7 +42,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['n_stim_training'] = 1# number of different stimuli presented during training
-        self.params['n_stim_testing'] = 1# number of different stimuli presented during training
+        self.params['test_stim_range'] = range(0, 2)
+        self.params['n_stim_testing'] = self.params['test_stim_range'][1] - self.params['test_stim_range'][0]
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
@@ -62,7 +64,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.9, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.8, .5, 0.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
         self.params['sim_id'] = 'test'
 
@@ -80,7 +82,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['visual_stim_seed'] = 4321
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
-        self.params['debug_mpn'] = True
+        self.params['debug_mpn'] = False
         self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 
@@ -223,16 +225,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.05
 
         #Connections Actions and States to RP
-        self.epsilon = 0.01
-        self.tau_i = 10.
-        self.tau_j = 10.
-        self.tau_e = 100.
+        self.tau_i = 5.
+        self.tau_j = 5.
+        self.tau_e = 10.
 #        self.tau_p = max(1000., self.params['t_sim'])
         self.tau_p = self.params['t_sim']
+        self.epsilon = self.params['dt'] / self.tau_p
         self.gain = 0.
         self.params['gain_after_training'] = 50.0
         self.K = 1.
-        self.params['fmax'] = 50.
+        self.params['kappa'] = self.K
+        self.params['fmax'] = 150.
 
 
         # #####################################
@@ -240,7 +243,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 1.5
+        self.params['mpn_bg_weight_amplification'] = 2.0
         self.params['mpn_bg_bias_amplification'] = 1.0
 
         ## STR
@@ -322,18 +325,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # --> TODO: check which params are (not) used?
         #Spike detectors params, copied from BG branch
-        self.params['spike_detector_action'] = {"withgid":True, "withtime":True}
-        self.params['spike_detector_d1'] = {"withgid":True, "withtime":True}
-        self.params['spike_detector_d2'] = {"withgid":True, "withtime":True}
-        self.params['spike_detector_states'] = {"withgid":True, "withtime":True}
-        self.params['spike_detector_efference'] = {"withgid":True, "withtime":True}
-        self.params['spike_detector_rew'] = {"withgid":True, "withtime":True}
-        self.params['spike_detector_rp'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_action'] = {'withgid':True, 'withtime':True}
+        self.params['spike_detector_d1'] = {'withgid':True, 'withtime':True}
+        self.params['spike_detector_d2'] = {'withgid':True, 'withtime':True}
+        self.params['spike_detector_states'] = {'withgid':True, 'withtime':True}
+        self.params['spike_detector_efference'] = {'withgid':True, 'withtime':True}
+        self.params['spike_detector_rew'] = {'withgid':True, 'withtime':True}
+        self.params['spike_detector_rp'] = {'withgid':True, 'withtime':True}
 
         #Spike detectors params, old from my branch 
-        self.params['spike_detector_output_action'] = {"withgid":True, "withtime":True} 
-        self.params['spike_detector_test_rp'] = {"withgid":True, "withtime":True}
-        self.params['spike_detector_supervisor'] = {"withgid":True, "withtime":True}
+        self.params['spike_detector_output_action'] = {'withgid':True, 'withtime':True} 
+        self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
+        self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
         #Supervised Learning
         self.params['supervised_on'] = True
@@ -379,7 +382,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         This funcion is called if no params_fn is passed 
         """
 
-        self.set_folder_names()
+        print 'DEBUG SIMPARAM.set_filenames', folder_name
+        self.set_folder_names(folder_name)
+
         self.params['mpn_exc_volt_fn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_exc_spikes_fn'] = 'mpn_exc_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_exc_spikes_fn_merged'] = 'mpn_exc_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
@@ -467,28 +472,31 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['bias_d1_merged_fn'] = self.params['connections_folder'] + 'bias_d1_merged.json'
         self.params['bias_d2_merged_fn'] = self.params['connections_folder'] + 'bias_d2_merged.json'
 
-    def set_folder_names(self):
+    def set_folder_names(self, folder_name=None):
 #        super(global_parameters, self).set_default_foldernames(folder_name)
 #        folder_name = 'Results_GoodTracking_titeration%d/' % self.params['t_iteration']
 
-        if self.params['training']:
-            folder_name = 'Training_%s_taup%d' % (self.params['sim_id'], self.params['params_synapse_d1_MT_BG']['tau_p'])
-        else:
-            folder_name = 'Test_%s_' % (self.params['sim_id'])
+        if folder_name == None:
+            if self.params['training']:
+                folder_name = 'Training_%s_taup%d' % (self.params['sim_id'], self.params['params_synapse_d1_MT_BG']['tau_p'])
+            else:
+                folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
 
-        folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
-                (self.params['n_stim_training'], self.params['n_exc_mpn'], self.params['n_states'], \
-                self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'], \
-                self.params['mpn_bg_weight_amplification'], self.params['mpn_bg_bias_amplification'])
+            folder_name += '_nStim%d_it%d-%d_wMPN-BG%.2f_bias%.2f_K%.2f/' % \
+                    (self.params['n_stim_training'], self.params['t_iteration'], self.params['t_sim'], \
+                    self.params['mpn_bg_weight_amplification'], self.params['mpn_bg_bias_amplification'], self.params['kappa'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
-        self.set_folder_name(folder_name)
+        print 'DEBUG SIMPARM folder_name', folder_name
+        self.params['folder_name'] = folder_name
+        print 'DEBUG SIMPARM self.foldername', self.params['folder_name']
+#        exit(1)
 
-        self.params['parameters_folder'] = "%sParameters/" % self.params['folder_name']
-        self.params['figures_folder'] = "%sFigures/" % self.params['folder_name']
-        self.params['connections_folder'] = "%sConnections/" % self.params['folder_name']
-        self.params['tmp_folder'] = "%stmp/" % self.params['folder_name']
+        self.params['parameters_folder'] = '%sParameters/' % self.params['folder_name']
+        self.params['figures_folder'] = '%sFigures/' % self.params['folder_name']
+        self.params['connections_folder'] = '%sConnections/' % self.params['folder_name']
+        self.params['tmp_folder'] = '%stmp/' % self.params['folder_name']
         self.params['data_folder'] = '%sData/' % (self.params['folder_name']) # for storage of analysis results etc
         self.params['folder_names'] = [self.params['folder_name'], \
                             self.params['parameters_folder'], \
@@ -504,7 +512,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spiketimes_folder'] = '%sSpikes/' % self.params['folder_name']
         self.params['folder_names'].append(self.params['spiketimes_folder'])
         self.params['folder_names'].append(self.params['input_folder_mpn'])
-        self.create_folders()
+#        self.create_folders()
 
 
     def load_params_from_file(self, fn):

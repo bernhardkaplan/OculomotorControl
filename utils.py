@@ -6,6 +6,17 @@ import numpy as np
 import os
 import re
 import json
+import simulation_parameters
+
+
+def load_params(param_fn):
+    if os.path.isdir(param_fn):
+        param_fn = os.path.abspath(param_fn) + '/Parameters/simulation_parameters.json'
+    params = json.load(file(param_fn, 'r')) 
+    return params
+#    ps = simulation_parameters.global_parameters(param_fn)
+#    folder_name = ps.params['folder_name']
+#    ps.set_filenames(folder_name)
 
 
 def compare_actions_taken(training_params, test_params):
@@ -15,7 +26,7 @@ def compare_actions_taken(training_params, test_params):
     print 'utils.compare_actions_taken checking files:', fn_training, '\n', fn_test
     actions_training = np.loadtxt(fn_training)
     actions_test = np.loadtxt(fn_test)
-    n_actions = actions_training[:, 0].size
+    n_actions = actions_test[:, 0].size
     incorrect_iterations = []
     for i_ in xrange(n_actions):
         if actions_training[i_, 2] != actions_test[i_, 2]:
