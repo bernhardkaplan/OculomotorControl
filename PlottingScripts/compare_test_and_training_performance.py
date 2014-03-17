@@ -99,7 +99,7 @@ if __name__ == '__main__':
         ls = linestyles[(i_ + 1) % len(linestyles)]
         legend_txt = 'Test w_mpn_bg=%.1f' % (test_params['mpn_bg_weight_amplification'])
         it_range = (0, test_params['n_stim'])
-        ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=False, it_range=it_range)
+        ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=True, it_range=it_range)
 
     P.set_training_params(training_params)
     ax = P.plot_xdisplacement(training_params, color=colorlist[0], ax=ax, legend_label='Training', plot_vertical_lines=False, it_range=it_range)

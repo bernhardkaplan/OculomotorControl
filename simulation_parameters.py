@@ -41,15 +41,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['Cluster'] = False
-        self.params['n_stim_training'] = 1# number of different stimuli presented during training
-        self.params['test_stim_range'] = range(0, 2)
-        self.params['n_stim_testing'] = self.params['test_stim_range'][1] - self.params['test_stim_range'][0]
+        self.params['n_stim_training'] = 5# number of different stimuli presented during training
+        self.params['test_stim_range'] = range(0, 5)
+        if len(self.params['test_stim_range']) > 1:
+            self.params['n_stim_testing'] = len(self.params['test_stim_range'])
+        else:
+            self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 15
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -382,7 +385,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         This funcion is called if no params_fn is passed 
         """
 
-        print 'DEBUG SIMPARAM.set_filenames', folder_name
         self.set_folder_names(folder_name)
 
         self.params['mpn_exc_volt_fn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
@@ -488,9 +490,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
-        print 'DEBUG SIMPARM folder_name', folder_name
         self.params['folder_name'] = folder_name
-        print 'DEBUG SIMPARM self.foldername', self.params['folder_name']
 #        exit(1)
 
         self.params['parameters_folder'] = '%sParameters/' % self.params['folder_name']
