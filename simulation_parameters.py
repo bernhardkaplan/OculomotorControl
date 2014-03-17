@@ -28,6 +28,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params = self.load_params_from_file(params_fn)
 
+        # will set the filenames
         super(global_parameters, self).__init__() # call the constructor of the super/mother class
 
 
@@ -41,7 +42,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['n_stim_training'] = 1# number of different stimuli presented during training
-        self.params['test_stim_range'] = range(0, 10)
+        self.params['test_stim_range'] = range(0, 2)
         self.params['n_stim_testing'] = self.params['test_stim_range'][1] - self.params['test_stim_range'][0]
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
@@ -65,7 +66,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
         self.params['initial_state'] = (.8, .5, 0.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'longTraining'
+        self.params['sim_id'] = 'test'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -224,16 +225,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.05
 
         #Connections Actions and States to RP
-        self.epsilon = 0.01
-        self.tau_i = 10.
-        self.tau_j = 10.
-        self.tau_e = 100.
+        self.tau_i = 5.
+        self.tau_j = 5.
+        self.tau_e = 10.
 #        self.tau_p = max(1000., self.params['t_sim'])
         self.tau_p = self.params['t_sim']
+        self.epsilon = self.params['dt'] / self.tau_p
         self.gain = 0.
         self.params['gain_after_training'] = 50.0
         self.K = 1.
-        self.params['fmax'] = 50.
+        self.params['kappa'] = self.K
+        self.params['fmax'] = 150.
 
 
         # #####################################
@@ -480,10 +482,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
 
-            folder_name += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
-                    (self.params['n_stim_training'], self.params['n_exc_mpn'], self.params['n_states'], \
-                    self.params['n_actions'], self.params['t_iteration'], self.params['t_sim'], \
-                    self.params['mpn_bg_weight_amplification'], self.params['mpn_bg_bias_amplification'])
+            folder_name += '_nStim%d_it%d-%d_wMPN-BG%.2f_bias%.2f_K%.2f/' % \
+                    (self.params['n_stim_training'], self.params['t_iteration'], self.params['t_sim'], \
+                    self.params['mpn_bg_weight_amplification'], self.params['mpn_bg_bias_amplification'], self.params['kappa'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

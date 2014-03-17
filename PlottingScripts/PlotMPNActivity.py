@@ -359,7 +359,7 @@ class MetaAnalysisClass(object):
 
         if len(argv) == 1:
             print '\nPlotting only stim 1!\n\n'
-            network_params = simulation_parameters.parameter_storage()  
+            network_params = simulation_parameters.global_parameters()  
             params = network_params.params
             print '\nPlotting the default parameters give in simulation_parameters.py\n'
             self.run_single_folder_analysis(params, stim_range)
@@ -370,7 +370,7 @@ class MetaAnalysisClass(object):
         elif len(argv) == 3:
             if argv[1].isdigit() and argv[2].isdigit():
                 stim_range = (int(argv[1]), int(argv[2]))
-                network_params = simulation_parameters.parameter_storage()  
+                network_params = simulation_parameters.global_parameters()  
                 params = network_params.params
                 print '\nPlotting the default parameters give in simulation_parameters.py\n'
                 self.run_single_folder_analysis(params, stim_range)
