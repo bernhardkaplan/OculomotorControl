@@ -25,7 +25,7 @@ class Plotter(object):
     def set_training_params(self, training_params):
         self.training_params = training_params
 
-    def plot_xdisplacement(self, params, color='k', ls='-', ax=None, legend_label='', plot_vertical_lines=True, it_range=None):
+    def plot_xdisplacement(self, params, color='k', ls='-', ax=None, legend_label='', plot_vertical_lines=True, stim_range=None):
 
         if ax == None:
             fig = pylab.figure()
@@ -37,17 +37,29 @@ class Plotter(object):
         print 'Loading data:', fn
         d = np.loadtxt(fn)
 
+        t_stim = params['t_iteration'] * params['n_iterations_per_stim']
         xdispl = np.abs(d[:, 0] - .5)
         t_axis = d[:, 4]
         t_axis += .5 * params['t_iteration']
         n_iterations = d[:, 0].size
-        if it_range == None:
-            it_range = (0, params['n_stim'])
-        for stim in xrange(it_range[0], it_range[1]):
-            for it_ in xrange(params['n_iterations_per_stim'] - 2):
-                it_1 = it_ + stim*params['n_iterations_per_stim']
-                it_2 = it_ + stim*params['n_iterations_per_stim'] + 2
-                p1, = ax.plot(t_axis[it_1:it_2], xdispl[it_1:it_2], c=color, lw=3, ls=ls)
+        if stim_range == None:
+            stim_range = (0, params['n_stim'])
+        if params['training']:
+            t_offset = (-1.) * t_stim * stim_range[0]
+            # you have a large arrary of xdispl 
+            for stim in xrange(stim_range[0], stim_range[-1] + 1):
+                for it_ in xrange(params['n_iterations_per_stim'] - 2):
+                    it_1 = it_ + stim * params['n_iterations_per_stim']
+                    it_2 = it_ + stim * params['n_iterations_per_stim'] + 2
+                    p1, = ax.plot(t_axis[it_1:it_2] + t_offset, xdispl[it_1:it_2], c=color, lw=3, ls=ls)
+        else:
+            # different indexing of training stimuli
+            t_offset = 0
+            for stim, stim_idx in enumerate(stim_range): # stim_idx is not used
+                for it_ in xrange(params['n_iterations_per_stim'] - 2):
+                    it_1 = it_ + stim * params['n_iterations_per_stim']
+                    it_2 = it_ + stim * params['n_iterations_per_stim'] + 2
+                    p1, = ax.plot(t_axis[it_1:it_2], xdispl[it_1:it_2], c=color, lw=3, ls=ls)
 
 #        p1, = ax.plot(t_axis, xdispl, c=color, lw=3, ls=ls)
         self.plots.append(p1)
@@ -57,8 +69,7 @@ class Plotter(object):
             AP = ActivityPlotter(params)
             AP.plot_vertical_lines(ax)
 
-        t_stim = params['t_iteration'] * params['n_iterations_per_stim']
-        time_range = (it_range[0] * t_stim, it_range[1] * t_stim)
+        time_range = (stim_range[0] * t_stim + t_offset, (stim_range[-1] + 1) * t_stim + t_offset)
         ax.set_xlim(time_range)
         return ax
 
@@ -93,19 +104,21 @@ if __name__ == '__main__':
         f = file(test_param_fn, 'r')
         print 'Loading test parameters from', test_param_fn
         test_params = json.load(f)
-        print 'Debug comp', test_params['data_folder']
 
         c = colorlist[(i_ + 1) % len(colorlist)]
         ls = linestyles[(i_ + 1) % len(linestyles)]
         legend_txt = 'Test w_mpn_bg=%.1f' % (test_params['mpn_bg_weight_amplification'])
-        it_range = (0, test_params['n_stim'])
-        ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=True, it_range=it_range)
+        stim_range = test_params['test_stim_range']
+        ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=False, stim_range=stim_range)
 
     P.set_training_params(training_params)
-    ax = P.plot_xdisplacement(training_params, color=colorlist[0], ax=ax, legend_label='Training', plot_vertical_lines=False, it_range=it_range)
+    ax = P.plot_xdisplacement(training_params, color=colorlist[0], ls='--', ax=ax, legend_label='Training', plot_vertical_lines=False, stim_range=stim_range)
 
     ax.legend(P.plots, P.legend_labels, loc='upper right')
-    output_fn = training_params['figures_folder'] + 'comparison_training_test_xdisplacement.png'
+    if len(test_folders) == 1:
+        output_fn = test_params['figures_folder'] + 'comparison_training_test_xdisplacement.png'
+    else:
+        output_fn = training_params['figures_folder'] + 'comparison_training_test_xdisplacement.png'
     print 'Saving figure to:', output_fn
     pylab.savefig(output_fn, dpi=300)
-#    pylab.show()
+    pylab.show()

@@ -42,7 +42,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['n_stim_training'] = 5# number of different stimuli presented during training
-        self.params['test_stim_range'] = range(0, 5)
+        self.params['test_stim_range'] = range(15, 25)
+#        self.params['test_stim_range'] = range(390, 400)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -69,7 +70,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
         self.params['initial_state'] = (.8, .5, 0.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'test'
+        self.params['sim_id'] = 'clusterRun'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -236,7 +237,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.epsilon = self.params['dt'] / self.tau_p
         self.gain = 0.
         self.params['gain_after_training'] = 50.0
-        self.K = 2.
+        self.K = 5.
         self.params['kappa'] = self.K
         self.params['fmax'] = 150.
 
@@ -246,7 +247,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 3.0
+        self.params['mpn_bg_weight_amplification'] = 1.5
         self.params['mpn_bg_bias_amplification'] = 1.0
 
         ## STR

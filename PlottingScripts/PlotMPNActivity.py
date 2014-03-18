@@ -169,11 +169,14 @@ class ActivityPlotter(object):
 
     def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
         if stim_range == None:
-            stim_range = self.params['test_stim_range']
+            if self.params['training']:
+                stim_range = range(self.params['n_stim'])
+            else:
+                stim_range = self.params['test_stim_range']
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         it_min = stim_range[0] * self.params['n_iterations_per_stim']
-        it_max = stim_range[1] * self.params['n_iterations_per_stim']
+        it_max = stim_range[-1] * self.params['n_iterations_per_stim']
         t_axis = d[it_min:it_max, 4]
         t_axis += .5 * self.params['t_iteration']
         x_displacement = np.abs(d[it_min:it_max, 0] - .5)
@@ -186,7 +189,7 @@ class ActivityPlotter(object):
             fig = pylab.figure()
             ax = fig.add_subplot(111)
 
-        for stim in xrange(stim_range[0], stim_range[1]):
+        for stim in xrange(stim_range[0], stim_range[-1] + 1):
             it_start_stim = stim * self.params['n_iterations_per_stim']
             it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - 1
             x_displacement_stim = np.abs(d[it_start_stim:it_stop_stim, 0] - .5)
@@ -521,6 +524,7 @@ if __name__ == '__main__':
 
     utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
 
-    training_folder = 'Training_Cluster_taup90000_nStim400_nExcMpn2400_nStates20_nActions21_it15-90000_wMPN-BG1.50_bias10.00/'
+#    training_folder = 'Training_Cluster_taup90000_nStim400_it15-90000_wMPN-BG3.00_bias1.00_K1.00/'
+    training_folder = None
     MAC = MetaAnalysisClass(sys.argv, plot_training_folder=training_folder)
-#    pylab.show()
+    pylab.show()
