@@ -131,7 +131,7 @@ if __name__ == '__main__':
     elif len(sys.argv) == 2:
 #        conn_list = sys.argv[1]
         params = utils.load_params(sys.argv[1])
-        tgt_type = 'd2'
+        tgt_type = 'd1'
         conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
         plot_conn_list(conn_list_fn=conn_list_fn, params=params)
 #         params = load_params_from_folder(fn)

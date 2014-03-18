@@ -41,8 +41,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['Cluster'] = False
-        self.params['n_stim_training'] = 5# number of different stimuli presented during training
-        self.params['test_stim_range'] = range(15, 25)
+        self.params['n_stim_training'] = 1# number of different stimuli presented during training
+        self.params['test_stim_range'] = range(1)
+#        self.params['test_stim_range'] = range(15, 25)
 #        self.params['test_stim_range'] = range(390, 400)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
@@ -68,9 +69,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.8, .5, 0.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'clusterRun'
+        self.params['sim_id'] = 'prezi'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -86,7 +87,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['visual_stim_seed'] = 4321
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
-        self.params['debug_mpn'] = False
+        self.params['debug_mpn'] = True
         self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 

@@ -170,7 +170,10 @@ class ActivityPlotter(object):
     def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
         if stim_range == None:
             if self.params['training']:
-                stim_range = range(self.params['n_stim'])
+                if self.params['n_stim'] == 1:
+                    stim_range = [0, 1]
+                else:
+                    stim_range = range(self.params['n_stim'])
             else:
                 stim_range = self.params['test_stim_range']
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
@@ -207,7 +210,7 @@ class ActivityPlotter(object):
             ax.set_title('Training')
         else:
             ax.set_title('Testing')
-        self.plot_vertical_lines(ax, show_iterations=False)
+        self.plot_vertical_lines(ax, show_iterations=True)
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal displacement (x-dim)')
         t0 = it_min * self.params['t_iteration']
@@ -292,6 +295,7 @@ class ActivityPlotter(object):
             ax = fig.add_subplot(111)
             ax.set_title(title)
 
+            print ' DEBUG None '
         tp = self.tuning_prop_exc
         tp_idx_sorted = tp[:, sort_idx].argsort() # + 1 because nest indexing
 
@@ -366,6 +370,7 @@ class MetaAnalysisClass(object):
             params = network_params.params
             print '\nPlotting the default parameters give in simulation_parameters.py\n'
             self.run_single_folder_analysis(params, stim_range)
+            (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
         elif len(argv) == 2:
             folder_name = argv[1]
             params = utils.load_params(folder_name)
@@ -384,7 +389,9 @@ class MetaAnalysisClass(object):
             if argv[2].isdigit() and argv[3].isdigit():
                 stim_range = (int(argv[2]), int(argv[3]))
                 params = utils.load_params(folder_name)
+                (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
                 self.run_single_folder_analysis(params, stim_range)
+                self.run_xdisplacement_analysis(params, stim_range)
             else:
                 self.run_analysis_for_folders(argv[1:], training_params=training_params)
         elif len(argv) > 4:
@@ -392,35 +399,38 @@ class MetaAnalysisClass(object):
             self.run_analysis_for_folders(argv[1:], training_params=training_params)
 
 
-    def run_single_folder_analysis(self, params, stim_range):
+    def run_xdisplacement_analysis(self, params, stim_range):
         Plotter = ActivityPlotter(params)#, it_max=1)
-#        fig = Plotter.plot_training_sequence()
-#        output_fn = params['figures_folder'] + 'training_sequence.png'
-#        print 'Saving to', output_fn
-#        fig.savefig(output_fn)
-
-    #    Plotter.plot_input()
-    #    Plotter.plot_output()
-    #    if params['training']:
         (t_axis, x_displacement) = Plotter.plot_retinal_displacement(stim_range=stim_range)
         return (t_axis, x_displacement)
 
+    def run_single_folder_analysis(self, params, stim_range):
+        Plotter = ActivityPlotter(params)#, it_max=1)
+        fig = Plotter.plot_training_sequence()
+        output_fn = params['figures_folder'] + 'training_sequence.png'
+        print 'Saving to', output_fn
+        fig.savefig(output_fn)
+
+        Plotter.plot_input()
+        Plotter.plot_output()
+    #    if params['training']:
+
 #        del Plotter
         # plot x - pos sorting
-    #    fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
-    #    if params['debug_mpn']:
-    #        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
-    #    output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
-    #    print 'Saving to', output_fn
-    #    fig.savefig(output_fn)
+        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
+#        if params['debug_mpn']:
+        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
+        output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
+        print 'Saving to', output_fn
+        fig.savefig(output_fn)
 
         # plot vx - sorting
-    #    fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
-    #    if params['debug_mpn']:
-    #        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
-    #    output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
-    #    print 'Saving to', output_fn
-    #    fig.savefig(output_fn)
+        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
+#        if params['debug_mpn']:
+        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+        output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
+        print 'Saving to', output_fn
+        fig.savefig(output_fn)
 
 
     def run_analysis_for_folders(self, folders, training_params=None):
@@ -440,7 +450,8 @@ class MetaAnalysisClass(object):
 
         for i_, folder in enumerate(folders):
             params = utils.load_params(folder)
-            (x_data, y_data) = self.run_single_folder_analysis(params, stim_range)
+            (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
+#            self.run_single_folder_analysis(params, stim_range)
             all_data[i_, :] = y_data
 
         no_plot_idx = [(i + 1) * params['n_iterations_per_stim'] - 2 for i in xrange(params['n_stim'])]

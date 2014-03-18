@@ -100,10 +100,11 @@ class ActivityPlotter(object):
         ypos_label = .5 * (mx - mn) + mn
         xa = - (self.params['t_sim'] / 6.)
         ax.text(xa, ypos_label, cell_type, color=color, fontsize=16)
+        ax.set_xlabel('Time [ms]')
         if self.params['training']:
-            ax.set_title('Spikes during training, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
+            ax.set_title('Spikes in BG during training')
         else:
-            ax.set_title('Spikes during testing, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
+            ax.set_title('Spikes in BG during testing, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
         return ax
 
 
