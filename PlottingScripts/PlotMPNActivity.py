@@ -375,6 +375,7 @@ class MetaAnalysisClass(object):
             folder_name = argv[1]
             params = utils.load_params(folder_name)
             self.run_single_folder_analysis(params, stim_range)
+            (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
         elif len(argv) == 3:
             if argv[1].isdigit() and argv[2].isdigit():
                 stim_range = (int(argv[1]), int(argv[2]))
@@ -411,8 +412,9 @@ class MetaAnalysisClass(object):
         print 'Saving to', output_fn
         fig.savefig(output_fn)
 
-        Plotter.plot_input()
-        Plotter.plot_output()
+#        Plotter.plot_input()
+#        Plotter.plot_output()
+
     #    if params['training']:
 
 #        del Plotter

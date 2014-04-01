@@ -57,7 +57,10 @@ if __name__ == '__main__':
         params = utils.convert_to_NEST_conform_dict(json_params)
     else: # run a simulation with parameters as set in simulation_parameters
         GP = simulation_parameters.global_parameters()
-        GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
+        if pc_id == 0:
+            GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
+        if comm != None:
+            comm.barrier()
         params = GP.params
 
     if not params['training']:
@@ -128,8 +131,8 @@ if __name__ == '__main__':
 
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
-            v_eye[0] += next_action[0]
-            v_eye[1] += next_action[1]
+            v_eye[0] = next_action[0]
+            v_eye[1] = next_action[1]
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
 

@@ -41,8 +41,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['Cluster'] = False
-        self.params['n_stim_training'] = 1# number of different stimuli presented during training
-        self.params['test_stim_range'] = range(1)
+        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 2 # number of different stimuli within one training cycle
+        self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
+        self.params['test_stim_range'] = range(2)
 #        self.params['test_stim_range'] = range(15, 25)
 #        self.params['test_stim_range'] = range(390, 400)
         if len(self.params['test_stim_range']) > 1:
@@ -71,7 +73,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
         self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'prezi'
+        self.params['sim_id'] = ''
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -107,7 +109,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_rf_y'] = 1
             self.params['n_theta'] = 1 # 2 because it's rightwards or leftwards 
 
-
+        
 
     def set_mpn_params(self):
 
@@ -144,13 +146,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         self.params['gids_to_record_mpn'] = None
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
-        self.params['sigma_rf_pos'] = .05 # some variability in the position of RFs
+        self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 20
-        self.params['v_max_tp'] = 6.0   # [Hz] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
+        self.params['v_max_tp'] = 6.0   # [a.u.] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
+        self.params['v_max_out'] = 20.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
+        self.params['v_min_out'] = 0.01  # min velocity for eye movements
         self.params['blur_X'], self.params['blur_V'] = .1, .1
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
@@ -234,7 +238,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_j = 5.
         self.tau_e = 10.
 #        self.tau_p = max(1000., self.params['t_sim'])
-        self.tau_p = self.params['t_sim']
+        self.tau_p = .5 * self.params['t_sim']
         self.epsilon = self.params['dt'] / self.tau_p
         self.gain = 0.
         self.params['gain_after_training'] = 50.0

@@ -220,17 +220,17 @@ class BasalGanglia(object):
     def set_action_speed_mapping_bins(self):
         self.action_bins_x = []
         n_bins_x = np.int(np.round((self.params['n_actions'] - 1) / 2.))
-        
-        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
-                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_x,
+
+        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         v_scale_half.reverse()
 
         self.action_bins_x += v_scale_half
         self.action_bins_x += [0.]
 
-        v_scale_half = (np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
-                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_x,
+        v_scale_half = (np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_x += v_scale_half
         print 'BG: action_bins_x', self.action_bins_x
@@ -240,16 +240,16 @@ class BasalGanglia(object):
         self.action_bins_y = []
         n_bins_y = np.int(np.round((self.params['n_actions'] - 1) / 2.))
         
-        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
-                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_y,
+        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out'])/np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out'])/np.log(self.params['log_scale']), num=n_bins_y,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         v_scale_half.reverse()
 
         self.action_bins_y += v_scale_half
         self.action_bins_y += [0.]
 
-        v_scale_half = (np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
-                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_y,
+        v_scale_half = (np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_y,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_y += v_scale_half
         print 'BG: action_bins_y', self.action_bins_y
@@ -263,16 +263,17 @@ class BasalGanglia(object):
 
     def map_speed_to_action(self, speed, binning, xy='x'):
         # select an action based on the supervisor state information
-        if speed > self.params['v_max_tp']:
+        if speed > np.max(binning):
             action_index = self.params['n_actions'] - 1
-        elif (speed < (-1.) * self.params['v_max_tp']):
+        elif (speed < np.min(binning)):
             action_index = 0
         else:
-            cnt_u, bins = np.histogram(speed, binning)
-            action_index = cnt_u.nonzero()[0][0]
+            action_index = np.argmin(np.abs(speed - np.array(binning)))
+#            cnt_u, bins = np.histogram(speed, binning)
+#            action_index = cnt_u.nonzero()[0][0]
 
         if xy == 'x':
-            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : speed=%.3f --> action: %d ' % (self.pc_id, self.iteration, speed, action_index)
+            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : supervisor_speed=%.3f --> action: %d output_speed= %.3f' % (self.pc_id, self.iteration, speed, action_index, binning[action_index])
         return action_index
 
 

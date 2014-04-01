@@ -42,6 +42,7 @@ class VisualInput(object):
         the new stimulus
         """
         mp_training = np.zeros((self.params['n_stim_training'], 4))
+        stim_params = np.zeros((self.params['n_training_stim_per_cycle'], 4))
 
         if self.params['n_stim_training'] == 1:
             x0 = self.params['initial_state'][0]
@@ -50,26 +51,30 @@ class VisualInput(object):
             mp_training[0, 1] = .5
             mp_training[0, 2] = v0
         else:
-            for i_stim in xrange(self.params['n_stim_training']):
-    #            plus_minus = utils.get_plus_minus(self.RNG)
-                plus_minus = (-1.)**i_stim
-    #            x0 = .2 #np.random.rand()
-                x0 = np.random.rand()
-    #            x0 *= plus_minus
-    #            x0 += .5
-    #            x0 = .6 * np.random.rand() + .2
-                # choose a random cell index and add some noise to the v value 
+            i_stim = 0
+            for i_stim_in_cycle in xrange(self.params['n_training_stim_per_cycle']):
+                plus_minus = utils.get_plus_minus(self.RNG)
+                x0 = .5 + plus_minus * .5 * np.random.rand()
+#                plus_minus = (-1.)**i_stim
                 v0 = self.params['v_max_tp']
-                while v0 > .7 * self.params['v_max_tp']:
+                while v0 > .8 * self.params['v_max_tp']: # choose a random cell index and add some noise to the v value 
                     rnd_idx = np.random.randint(0, self.params['n_exc_mpn'])
                     v0 = self.tuning_prop_exc[rnd_idx, 2]
-                    v0 *= .4 * np.random.rand() + .8
+                    v0 *= (.4 * np.random.rand() + .8)
                 plus_minus = utils.get_plus_minus(self.RNG)
                 v0 *= plus_minus
+                stim_params[i_stim_in_cycle, 0] = x0
+                stim_params[i_stim_in_cycle, 1] = .5
+                stim_params[i_stim_in_cycle, 2] = v0
 
-                mp_training[i_stim, 0] = x0
-                mp_training[i_stim, 1] = .5
-                mp_training[i_stim, 2] = v0
+            # randomize the order for each cycle
+            for i_cycle in xrange(self.params['n_training_cycles']):
+                offset = i_cycle * self.params['n_training_stim_per_cycle']
+                idx_ = xrange(self.params['n_training_stim_per_cycle'])
+                idx_rnd = np.random.permutation(xrange(self.params['n_training_stim_per_cycle'])) + offset
+                mp_training[idx_rnd, 0] = stim_params[idx_, 0]
+                mp_training[idx_rnd, 1] = stim_params[idx_, 1]
+                mp_training[idx_rnd, 2] = stim_params[idx_, 2]
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
 
@@ -344,16 +349,17 @@ class VisualInput(object):
         v_rho = np.zeros(n_v)
         v_rho[:n_v/2] = -v_rho_half
         v_rho[n_v/2:] = v_rho_half
-        RF = np.linspace(0, self.params['visual_field_width'], n_rf_x, endpoint=False)
+#        RF = np.linspace(0, self.params['visual_field_width'], n_rf_x, endpoint=False)
+        RF = np.random.normal(0.5, self.params['sigma_rf_pos'], n_cells)
+        RF = RF % self.params['visual_field_width']
         index = 0
-        random_rotation_for_orientation = np.pi*np.random.rand(self.params['n_exc_per_mc'] * n_rf_x * n_v) * self.params['sigma_rf_orientation']
-
         tuning_prop = np.zeros((n_cells, 4))
 
         for i_RF in xrange(n_rf_x):
             for i_v_rho, rho in enumerate(v_rho):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
-                    tuning_prop[index, 0] = (RF[i_RF] + self.params['sigma_rf_pos'] * np.random.randn()) % self.params['visual_field_width']
+#                    tuning_prop[index, 0] = (RF[i_RF] + self.params['sigma_rf_pos'] * np.random.randn()) % self.params['visual_field_width']
+                    tuning_prop[index, 0] = RF[index]
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
                     tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
