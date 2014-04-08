@@ -25,6 +25,12 @@ class Plotter(object):
     def set_training_params(self, training_params):
         self.training_params = training_params
 
+    def get_xdisplacement(self, params, stim_range):
+
+        Plotter = ActivityPlotter(params)#, it_max=1)
+        (t_axis, x_displacement) = Plotter.plot_retinal_displacement(stim_range=stim_range)
+        return (t_axis, x_displacement)
+    
     def plot_xdisplacement(self, params, color='k', ls='-', ax=None, legend_label='', plot_vertical_lines=True, stim_range=None):
 
         if ax == None:
@@ -34,6 +40,9 @@ class Plotter(object):
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal displacement')
         fn = params['data_folder'] + 'mpn_xdisplacement.dat'
+        if not os.path.exists(fn):
+            self.get_xdisplacement(params, stim_range)
+
         print 'Loading data:', fn
         d = np.loadtxt(fn)
 

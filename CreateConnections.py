@@ -97,7 +97,7 @@ class CreateConnections(object):
         for line in xrange(n_lines):
             src, tgt, w = mpn_d1_conn_list[line, :]
             if w != 0.:
-                w *= self.params['mpn_bg_weight_amplification']
+                w *= self.params['mpn_d1_weight_amplification']
                 mpn_d1_conns_debug += '%d\t%d\t%.4e\n' % (src, tgt, w)
 #                print 'debug %d\t%d\t%.4e\n' % (src, tgt, w)
                 nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
@@ -109,7 +109,7 @@ class CreateConnections(object):
         for line in xrange(n_lines):
             src, tgt, w = mpn_d2_conn_list[line, :]
             if w != 0.:
-                w *= self.params['mpn_bg_weight_amplification']
+                w *= self.params['mpn_d2_weight_amplification']
                 mpn_d2_conns_debug += '%d\t%d\t%.4e\n' % (src, tgt, w)
                 nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
 

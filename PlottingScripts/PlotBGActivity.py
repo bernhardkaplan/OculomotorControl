@@ -74,7 +74,7 @@ class ActivityPlotter(object):
 
 
 
-    def plot_spikes_for_cell_type(self, cell_type, color='k', gid_offset=0, marker='o', ylim=None, ax=None):
+    def plot_spikes_for_cell_type(self, cell_type, color='k', gid_offset=0, marker='o', ylim=None, ax=None, xlim=None):
         recorder_type = 'spikes'
 
         pylab.subplots_adjust(left=0.15)
@@ -85,17 +85,22 @@ class ActivityPlotter(object):
         else:
             print 'no fig created'
 
-        for naction in range(self.params['n_actions']):
-#            data = np.loadtxt(self.params['spiketimes_folder'] + cell_type + str(naction) + '_merged_' + recorder_type + '.dat')
+        for naction in xrange(self.params['n_actions']):
+            print 'Plotting %s action %d' % (cell_type, naction)
             data = np.loadtxt(self.params['spiketimes_folder'] + self.params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat')
             if len(data)<2:
                 print 'no data in', cell_type, naction
+            elif data.size == 2:
+                data[0] += gid_offset
+                ax.plot(data[1], data[0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
             else:
                 data[:, 0] += gid_offset
                 ax.plot(data[:,1], data[:,0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
 
         if ylim != None:
             ax.set_ylim(ylim)
+        if xlim != None:
+            ax.set_xlim(xlim)
         mn, mx = utils.get_min_max_gids_for_bg(self.params, cell_type)
         ypos_label = .5 * (mx - mn) + mn
         xa = - (self.params['t_sim'] / 6.)
@@ -136,7 +141,23 @@ if __name__ == '__main__':
         for naction in range(params['n_actions']):
             merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
             output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
-            MS.merge_spiketimes_files(merge_pattern, output_fn)
+            if not os.path.exists(output_fn):
+                MS.merge_spiketimes_files(merge_pattern, output_fn)
+
+#    stim_range = None
+    stim_range = [0, 5]
+    if stim_range == None:
+        if params['training']:
+            if params['n_stim'] == 1:
+                stim_range = [0, 1]
+            else:
+                stim_range = range(params['n_stim'])
+        else:
+            stim_range = params['test_stim_range']
+        xlim = None
+    else:
+        t_stim = params['n_iterations_per_stim'] * params['t_iteration']
+        xlim = (stim_range[0] * t_stim, stim_range[1] * t_stim)
 
     Plotter = ActivityPlotter(params)#, it_max=1)
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -151,7 +172,7 @@ if __name__ == '__main__':
         gid_min, gid_max = min(mn, gid_min), max(mx, gid_max)
         cl = colors[z % len(colors)]
         marker = markers[z % len(markers)]
-        ax = Plotter.plot_spikes_for_cell_type(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax)
+        ax = Plotter.plot_spikes_for_cell_type(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax, xlim=xlim)
 
     PMPN = PlotMPNActivity.ActivityPlotter(params)
     PMPN.plot_vertical_lines(ax, params)

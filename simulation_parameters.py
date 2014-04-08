@@ -41,10 +41,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['Cluster'] = False
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 2 # number of different stimuli within one training cycle
+        self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 3 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(2)
+#        self.params['test_stim_range'] = range(1)
+        self.params['test_stim_range'] = range(1)
 #        self.params['test_stim_range'] = range(15, 25)
 #        self.params['test_stim_range'] = range(390, 400)
         if len(self.params['test_stim_range']) > 1:
@@ -53,7 +54,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
-        self.params['n_iterations_per_stim'] = 15
+        self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
 #        self.params['training'] = True
         self.params['training'] = False
@@ -234,17 +235,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.05
 
         #Connections Actions and States to RP
-        self.tau_i = 5.
-        self.tau_j = 5.
-        self.tau_e = 10.
+        self.tau_i = 2.
+        self.tau_j = 2.
+        self.tau_e = 5.
 #        self.tau_p = max(1000., self.params['t_sim'])
         self.tau_p = .5 * self.params['t_sim']
-        self.epsilon = self.params['dt'] / self.tau_p
+        self.params['fmax'] = 150.
+        self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
         self.gain = 0.
         self.params['gain_after_training'] = 50.0
         self.K = 5.
         self.params['kappa'] = self.K
-        self.params['fmax'] = 150.
 
 
         # #####################################
@@ -252,7 +253,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_bg_weight_amplification'] = 1.5
+        self.params['mpn_d1_weight_amplification'] = 4.0
+        self.params['mpn_d2_weight_amplification'] = 10.0
         self.params['mpn_bg_bias_amplification'] = 1.0
 
         ## STR
@@ -490,9 +492,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
 
-            folder_name += '_nStim%d_it%d-%d_wMPN-BG%.2f_bias%.2f_K%.2f/' % \
+            folder_name += '_nStim%d_it%d-%d_wD1%.1f_wD2%.1f_bias%.2f_K%.2f/' % \
                     (self.params['n_stim_training'], self.params['t_iteration'], self.params['t_sim'], \
-                    self.params['mpn_bg_weight_amplification'], self.params['mpn_bg_bias_amplification'], self.params['kappa'])
+                    self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], \
+                    self.params['mpn_bg_bias_amplification'], self.params['kappa'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
