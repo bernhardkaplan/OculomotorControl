@@ -30,8 +30,8 @@ class MotionPrediction(object):
         self.record_voltages(self.params['gids_to_record_mpn'])
 
         nest.SetKernelStatus({'data_path':self.params['spiketimes_folder'], 'overwrite_files': True})
-#        print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
-#        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
+        print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
+        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
 
         self.t_current = 0
         self.write_cell_gids_to_file()
@@ -45,9 +45,10 @@ class MotionPrediction(object):
         nest.CopyModel('static_synapse', 'input_exc_1', \
                 {'weight': self.params['w_input_exc_mpn'], 'receptor_type': 1})
         if (not 'bcpnn_synapse' in nest.Models('synapses')):
-            if self.params['Cluster']:
-                nest.sr('(/cfs/klemming/nobackup/b/bkaplan/Phils_code/share/nest/sli) addpath')
-                nest.Install('/cfs/klemming/nobackup/b/bkaplan/Phils_code/lib/nest/pt_module')
+            if self.params['Cluster_Milner']:
+		print 'DEBUG installing pt_module'
+		nest.sr('(/cfs/milner/scratch/b/bkaplan/BCPNN-Module/share/nest/sli) addpath')
+		nest.Install('/cfs/milner/scratch/b/bkaplan/BCPNN-Module/lib/nest/pt_module')
             else:
                 nest.Install('pt_module')
 
@@ -131,7 +132,7 @@ class MotionPrediction(object):
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
-            gids_spiked = new_event_gids.unique() - 1
+            gids_spiked = np.unique(new_event_gids) - 1
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size

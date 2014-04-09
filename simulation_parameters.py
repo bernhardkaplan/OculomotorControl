@@ -40,9 +40,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 3 # number of different stimuli within one training cycle
+        self.params['n_training_stim_per_cycle'] = 10 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 #        self.params['test_stim_range'] = range(1)
         self.params['test_stim_range'] = range(1)
@@ -56,8 +57,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -90,7 +90,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['visual_stim_seed'] = 4321
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
-        self.params['debug_mpn'] = True
+        self.params['debug_mpn'] = not self.params['Cluster']
         self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 
@@ -120,10 +120,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['neuron_model_mpn'] = 'iaf_cond_exp'
         self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
-                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 1.0, 'tau_syn_in': 5.0}
+                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
         self.params['cell_params_inh_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
-                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 1.0, 'tau_syn_in': 5.0}
+                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
         # input parameters
         self.params['w_input_exc_mpn'] = 100. # [nS]
         self.params['f_max_stim'] = 2000.       # [Hz] Max rate of the inhomogenous Poisson process
@@ -260,8 +260,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
         self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
-        self.params['num_msn_d1'] = 30
-        self.params['num_msn_d2'] = 30
+        self.params['num_msn_d1'] = 20
+        self.params['num_msn_d2'] = 20
         self.params['n_cells_d1'] = self.params['num_msn_d1'] * self.params['n_actions']
         self.params['n_cells_d2'] = self.params['num_msn_d2'] * self.params['n_actions']
 
