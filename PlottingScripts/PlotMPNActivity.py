@@ -11,11 +11,10 @@ import utils
 import re
 import numpy as np
 import pylab
+import simulation_parameters
 import matplotlib
 from FigureCreator import plot_params
 pylab.rcParams.update(plot_params)
-import simulation_parameters
-import matplotlib
 from matplotlib import cm
 
 class ActivityPlotter(object):
@@ -247,7 +246,7 @@ class ActivityPlotter(object):
                     it_cnt += 1
 
 
-    def plot_raster_sorted(self, title='', cell_type='exc', sort_idx=0):
+    def plot_raster_sorted(self, title='', cell_type='exc', sort_idx=0, t_range=None):
         """
         sort_idx : the index in tuning properties after which the cell gids are to be sorted for  the rasterplot
         """
@@ -259,7 +258,10 @@ class ActivityPlotter(object):
         tp_idx_sorted = tp[:, sort_idx].argsort() # + 1 because nest indexing
 
         merged_spike_fn = self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn_merged']
+        print 'Plotter.plot_raster_sorted loads:', merged_spike_fn
         spikes_unsrtd = np.loadtxt(merged_spike_fn)
+        if t_range != None:
+            spikes_unsrtd = utils.get_spiketimes_within_interval(spikes_unsrtd, t_range[0], t_range[1])
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
@@ -394,10 +396,10 @@ class MetaAnalysisClass(object):
                 self.run_single_folder_analysis(params, stim_range)
                 self.run_xdisplacement_analysis(params, stim_range)
             else:
-                self.run_analysis_for_folders(argv[1:], training_params=training_params)
+                self.run_analysis_for_folders(argv[1:], training_params=training_params, stim_range=stim_range)
         elif len(argv) > 4:
             # do the same operation for many folders
-            self.run_analysis_for_folders(argv[1:], training_params=training_params)
+            self.run_analysis_for_folders(argv[1:], training_params=training_params, stim_range=stim_range)
 
 
     def run_xdisplacement_analysis(self, params, stim_range):
@@ -407,41 +409,45 @@ class MetaAnalysisClass(object):
 
     def run_single_folder_analysis(self, params, stim_range):
         Plotter = ActivityPlotter(params)#, it_max=1)
-        fig = Plotter.plot_training_sequence()
-        output_fn = params['figures_folder'] + 'training_sequence.png'
-        print 'Saving to', output_fn
-        fig.savefig(output_fn)
+#        fig = Plotter.plot_training_sequence()
+#        output_fn = params['figures_folder'] + 'training_sequence.png'
+#        print 'Saving to', output_fn
+#        fig.savefig(output_fn)
 
 #        Plotter.plot_input()
 #        Plotter.plot_output()
 
-    #    if params['training']:
+        t_range = [0, 0]
+        t_range[0] = stim_range[0] * params['t_iteration'] * params['n_iterations_per_stim']
+        t_range[1] = stim_range[1] * params['t_iteration'] * params['n_iterations_per_stim']
 
 #        del Plotter
         # plot x - pos sorting
-        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0)
-#        if params['debug_mpn']:
-        Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
+        print 'Plotting raster plots'
+        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0, t_range=t_range)
+        if params['debug_mpn']:
+            Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
         output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
         print 'Saving to', output_fn
         fig.savefig(output_fn)
 
         # plot vx - sorting
-        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2)
+#        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
 #        if params['debug_mpn']:
-        Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
-        output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
-        print 'Saving to', output_fn
-        fig.savefig(output_fn)
+#            Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+#        output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
+#        print 'Saving to', output_fn
+#        fig.savefig(output_fn)
 
 
-    def run_analysis_for_folders(self, folders, training_params=None):
+    def run_analysis_for_folders(self, folders, training_params=None, stim_range=None):
         """
         folders -- list of folders with same time/data parameters (wrt to data size to be analysed)
 
 
         """
-        stim_range = (0, 10) # to be changed
+        if stim_range == None:
+            stim_range = (0, 5) # to be changed
 
         n_stim = stim_range[1] - stim_range[0]
         # load the first parameter set to determine data size

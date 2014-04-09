@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
         c = colorlist[(i_ + 1) % len(colorlist)]
         ls = linestyles[(i_ + 1) % len(linestyles)]
-        legend_txt = 'Test w_mpn_bg=%.1f' % (test_params['mpn_bg_weight_amplification'])
+        legend_txt = 'Test w_mpn_D1(D2)=%.1f (%.1f)' % (test_params['mpn_d1_weight_amplification'], test_params['mpn_d2_weight_amplification'])
         stim_range = test_params['test_stim_range']
         ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=False, stim_range=stim_range)
 

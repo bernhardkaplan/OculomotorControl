@@ -109,7 +109,7 @@ class ActivityPlotter(object):
         if self.params['training']:
             ax.set_title('Spikes in BG during training')
         else:
-            ax.set_title('Spikes in BG during testing, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
+            ax.set_title('Spikes in BG during testing, w_mpn_D1(D2)=%.1f (%.1f)' % (self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification']))
         return ax
 
 
