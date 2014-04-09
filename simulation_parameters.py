@@ -40,21 +40,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
-        self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 10 # number of different stimuli within one training cycle
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
+        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-#        self.params['test_stim_range'] = range(1)
         self.params['test_stim_range'] = range(1)
-#        self.params['test_stim_range'] = range(15, 25)
-#        self.params['test_stim_range'] = range(390, 400)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        # t_iteration should not be < 15 ms because otherwise the perceived speed exceeds any plausible range ( > 10) 
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
         self.params['training'] = True
@@ -74,7 +70,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
         self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = ''
+        self.params['sim_id'] = 'Show'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -227,7 +223,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         Parameters for Basal Ganglia        
         """
 
-        self.params['record_bg_volt'] = False
+        if self.params['Cluster'] or self.params['Cluster_Milner']:
+            self.params['record_bg_volt'] = False
+        else:
+            self.params['record_bg_volt'] = True
         self.params['bg_cell_types'] = ['d1', 'd2', 'actions', 'recorder']
         self.params['n_actions'] = 21
         self.params['n_states'] = 20
@@ -242,9 +241,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_p = .5 * self.params['t_sim']
         self.params['fmax'] = 150.
         self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
-        self.gain = 0.
-        self.params['gain_after_training'] = 50.0
-        self.K = 5.
+        if self.params['training']:
+            self.params['gain'] = 0.
+        else:
+            self.params['gain'] = 50.
+        self.K = 2.
         self.params['kappa'] = self.K
 
 
@@ -260,29 +261,23 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
         self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
-        self.params['num_msn_d1'] = 20
-        self.params['num_msn_d2'] = 20
+        self.params['num_msn_d1'] = 30
+        self.params['num_msn_d2'] = 30
         self.params['n_cells_d1'] = self.params['num_msn_d1'] * self.params['n_actions']
         self.params['n_cells_d2'] = self.params['num_msn_d2'] * self.params['n_actions']
-
-
-        if self.params['training']:
-            self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
-                    'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': 0.0}
-            self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e, \
-                    'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': 0.0}
-        else:
-            self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
-                    'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain_after_training']}
-            self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e, \
-                    'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain_after_training']}
+        self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
+                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
+                'V_reset':-70., 'tau_syn_ex': .5, 'tau_syn_in' : 5.}
+        self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e, \
+                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
+                'V_reset':-70., 'tau_syn_ex': .5, 'tau_syn_in' : 5.}
         
         ## Output GPi/SNr
         self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
         self.params['num_actions_output'] = 10
         self.params['param_bg_output'] = {'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
         
-        self.params['str_to_output_exc_w'] = 20.
+        self.params['str_to_output_exc_w'] = 40.
         self.params['str_to_output_inh_w'] = -10.
         self.params['str_to_output_exc_delay'] = 1. 
         self.params['str_to_output_inh_delay'] = 1.
@@ -306,22 +301,22 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
 
         self.params['actions_rp'] = 'bcpnn_synapse'
-        self.params['param_actions_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_actions_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         self.params['states_rp'] = 'bcpnn_synapse'
-        self.params['param_states_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_states_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         self.params['bcpnn'] = 'bcpnn_synapse'
-        self.params['param_bcpnn'] =  {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_bcpnn'] =  {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         # during learning gain == 0. K = 1.0 : --> 'offline' learning
         # after learning: gain == 1. K = .0
 
         #Connections States Actions
         self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K, \
+        self.params['params_synapse_d1_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
         self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d2_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.gain, 'K': self.K, \
+        self.params['params_synapse_d2_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
@@ -351,18 +346,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         #Supervised Learning
         self.params['supervised_on'] = True
-        self.params['num_neuron_poisson_supervisor'] = 30
+        self.params['num_neuron_poisson_supervisor'] = 1
         self.params['num_neuron_poisson_input_BG'] = 50
-        self.params['active_supervisor_rate'] = 500.
+        self.params['active_supervisor_rate'] = 3000.
         self.params['inactive_supervisor_rate'] = 0.
         self.params['active_poisson_input_rate'] = 20.
         self.params['inactive_poisson_input_rate'] = 2.
         self.params['param_poisson_pop_input_BG'] = {}
         self.params['param_poisson_supervisor'] = {}
-        self.params['weight_supervisor_strd1'] = 70.
-        self.params['weight_supervisor_strd2'] = 70.
-        self.params['delay_supervisor_strd1'] = 1.
-        self.params['delay_supervisor_strd2'] = 1.
+        self.params['weight_supervisor_strd1'] = 6.
+        self.params['weight_supervisor_strd2'] = 6.
+        self.params['delay_supervisor_strd1'] = .1
+        self.params['delay_supervisor_strd2'] = .1
         self.params['weight_poisson_input'] = 10.
         self.params['delay_poisson_input'] = 1.
         self.params['are_MT_BG_connected'] = True

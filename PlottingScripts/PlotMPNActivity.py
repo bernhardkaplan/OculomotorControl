@@ -417,9 +417,12 @@ class MetaAnalysisClass(object):
 #        Plotter.plot_input()
 #        Plotter.plot_output()
 
-        t_range = [0, 0]
-        t_range[0] = stim_range[0] * params['t_iteration'] * params['n_iterations_per_stim']
-        t_range[1] = stim_range[1] * params['t_iteration'] * params['n_iterations_per_stim']
+        if stim_range != None:
+            t_range = [0, 0]
+            t_range[0] = stim_range[0] * params['t_iteration'] * params['n_iterations_per_stim']
+            t_range[1] = stim_range[1] * params['t_iteration'] * params['n_iterations_per_stim']
+        else:
+            t_range = None
 
 #        del Plotter
         # plot x - pos sorting
@@ -546,4 +549,4 @@ if __name__ == '__main__':
 #    training_folder = 'Training_Cluster_taup90000_nStim400_it15-90000_wMPN-BG3.00_bias1.00_K1.00/'
     training_folder = None
     MAC = MetaAnalysisClass(sys.argv, plot_training_folder=training_folder)
-    pylab.show()
+#    pylab.show()

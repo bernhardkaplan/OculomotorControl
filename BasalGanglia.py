@@ -55,13 +55,13 @@ class BasalGanglia(object):
 
         #Creates D1 and D2 populations in STRIATUM, connections are created later
         for nactions in range(self.params['n_actions']):
-            self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params= self.params['param_msn_d1'])
+            self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params=self.params['param_msn_d1'])
             for gid in self.strD1[nactions]:
                 self.gid_to_action[gid] = nactions
                 self.bg_offset['d1'] = min(gid, self.bg_offset['d1'])
 
         for nactions in range(self.params['n_actions']):
-            self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params= self.params['param_msn_d2'])
+            self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params=self.params['param_msn_d2'])
             for gid in self.strD2[nactions]:
                 self.gid_to_action[gid] = nactions
                 self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
@@ -108,27 +108,27 @@ class BasalGanglia(object):
             for nactions in xrange(self.params['n_actions']):
                 self.supervisor[nactions] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_supervisor'], params = self.params['param_poisson_supervisor']  )
                 for i in xrange(self.params['n_actions']):
-                     if i != nactions:
-                         nest.DivergentConnect(self.supervisor[nactions], self.strD2[i], weight=self.params['weight_supervisor_strd2'], delay=self.params['delay_supervisor_strd2'])
-                     else:
+                     if i == nactions:
                          nest.DivergentConnect(self.supervisor[nactions], self.strD1[i], weight=self.params['weight_supervisor_strd1'], delay=self.params['delay_supervisor_strd1'])
+                     else:
+                         nest.DivergentConnect(self.supervisor[nactions], self.strD2[i], weight=self.params['weight_supervisor_strd2'], delay=self.params['delay_supervisor_strd2'])
 #                self.recorder_supervisor[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_supervisor'])
 #                nest.SetStatus(self.recorder_supervisor[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['supervisor_spikes_fn']+ str(nactions)}])
 #                nest.ConvergentConnect(self.supervisor[nactions], self.recorder_supervisor[nactions])
 
         # Creates and connects the EFFERENCE COPY population. This actives the D1 population coding for the selected action and the D2 populations of non-selected actions, in STR
-        for nactions in xrange(self.params['n_actions']):
-            self.efference_copy[nactions] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_efference'], params = self.params['param_poisson_efference']  )
-            for i in xrange(self.params['n_actions']):
-                 if i != nactions:
-                     nest.RandomDivergentConnect(self.efference_copy[nactions], self.strD2[i],int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_efference']), weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
-                 else:
-                     nest.RandomDivergentConnect(self.efference_copy[nactions], self.strD1[i], int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_efference']), weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
-            
-            
-            self.recorder_efference[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_efference'])
-            nest.SetStatus(self.recorder_efference[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['efference_spikes_fn']+ str(nactions)}])
-            nest.ConvergentConnect(self.efference_copy[nactions], self.recorder_efference[nactions])
+#        for nactions in xrange(self.params['n_actions']):
+#            self.efference_copy[nactions] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_efference'], params = self.params['param_poisson_efference']  )
+#            for i in xrange(self.params['n_actions']):
+#                 if i != nactions:
+#                     nest.RandomDivergentConnect(self.efference_copy[nactions], self.strD2[i],int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_efference']), weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
+#                 else:
+#                     nest.RandomDivergentConnect(self.efference_copy[nactions], self.strD1[i], int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_efference']), weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
+#            
+#            
+#            self.recorder_efference[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_efference'])
+#            nest.SetStatus(self.recorder_efference[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['efference_spikes_fn']+ str(nactions)}])
+#            nest.ConvergentConnect(self.efference_copy[nactions], self.recorder_efference[nactions])
 
 
          

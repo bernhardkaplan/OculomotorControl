@@ -9,6 +9,28 @@ import json
 import simulation_parameters
 
 
+def get_sources(conn_list, target_gid):
+    idx = conn_list[:, 1] == target_gid
+    sources = conn_list[idx, :]
+    return sources
+
+
+def get_targets(conn_list, source_gid):
+    idx = conn_list[:, 0] == source_gid
+    targets = conn_list[idx, :]
+    return targets
+
+
+def get_most_active_neurons(spike_data, n_cells):
+    gids = np.unique(spike_data[:, 0])
+    n_spikes = np.zeros(gids.size)
+    for i_, gid in enumerate(gids):
+        n_spikes[i_] = (spike_data[:, 0] == gid).nonzero()[0].size
+    idx = n_spikes.argsort()
+    most_active_neuron_gids = idx[-n_cells:]
+    return most_active_neuron_gids
+
+
 def convert_to_NEST_conform_dict(json_dict):
     testing_params = {}
     for k in json_dict.keys():
@@ -260,4 +282,16 @@ def filter_connection_list(d):
     """
     valid_idx = (d[:, 2] != 0).nonzero()[0]
     return d[valid_idx, :]
+
+
+#def get_neurons_active(params, d, stim, it='all'):
+#    """
+#    Returns gids active during a certain stimulus (stim).
+
+#    params  -- param dict
+#    d       -- two dimensional spike data, [gid, t]
+#    stim    -- integer
+#    it      -- 'all' or an integer
+#    """
+
 
