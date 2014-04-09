@@ -337,7 +337,7 @@ class BasalGanglia(object):
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
-            gids_spiked = new_event_gids.unique() - 1 # maybe here should be a - 1 (if there is one in communicate_local_spikes)
+            gids_spiked = np.unique(new_event_gids) - 1 # maybe here should be a - 1 (if there is one in communicate_local_spikes)
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
