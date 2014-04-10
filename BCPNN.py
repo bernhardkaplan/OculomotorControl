@@ -1,18 +1,20 @@
+import numpy as np
 
-def convert_spiketrain_to_trace(st, t_max, dt=0.1, spike_width=1):
+def convert_spiketrain_to_trace(st, t_max, dt=0.1, spike_width=1, spike_height=10.):
     """Converts a single spike train into a binary trace
     Keyword arguments: 
     st --  spike train in the format [time, id]
-    n  --  size of the trace to be returned
     spike_width -- number of time steps (in dt) for which the trace is set to 1
     Returns a np.array with st[i] = 1 if i in st[:, 0], st[i] = 0 else.
     """
-    n = np.int(t_max / dt)
+    n = np.int(t_max / dt) + spike_width
     trace = np.zeros(n)
-    for t in st:
-        idx_0 = np.int(t / dt)
-        idx_1 = np.int(t / dt) + spike_width
-        trace[idx_0:idx_1] = 1
+    spike_idx = st / dt
+    idx = spike_idx.astype(np.int)
+    trace[idx] = 1
+    for i in xrange(spike_width):
+        trace[idx + i] = 1
+    trace *= spike_height
     return trace
 
 
@@ -23,6 +25,7 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
         bcpnn_params: dictionary containing all bcpnn parameters, initial value, fmax, time constants, etc
     """
     assert (len(pre_trace) == len(post_trace)), "Bcpnn.get_spiking_weight_and_bias: pre and post activity have different lengths!"
+
 
     initial_value = bcpnn_params['p_i']
     n = len(pre_trace)
@@ -40,6 +43,7 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
     bias = np.ones(n) * np.log(initial_value)
     spike_height = 1000. / bcpnn_params['fmax']
     eps = bcpnn_params['epsilon']
+    K = bcpnn_params['K']
 
     for i in xrange(1, n):
         # pre-synaptic trace zi follows si
@@ -63,20 +67,17 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
         eij[i] = eij[i-1] + deij
 
         # pre-synaptic probability pi follows zi
-        dpi = dt * (ei[i] - pi[i-1]) / bcpnn_params['tau_p']
+        dpi = dt * K * (ei[i] - pi[i-1]) / bcpnn_params['tau_p']
         pi[i] = pi[i-1] + dpi
 
         # post-synaptic probability pj follows ej
-        dpj = dt * (ej[i] - pj[i-1]) / bcpnn_params['tau_p']
+        dpj = dt * K * (ej[i] - pj[i-1]) / bcpnn_params['tau_p']
         pj[i] = pj[i-1] + dpj
 
         # joint probability pij follows e_ij
-        dpij = dt * (eij[i] - pij[i-1]) / bcpnn_params['tau_p']
+        dpij = dt * K * (eij[i] - pij[i-1]) / bcpnn_params['tau_p']
         pij[i] = pij[i-1] + dpij
 
-        # weights and  bias
-#        wij[i] = np.log(pij[i] / (pi[i] * pj[i]))
-#        bias[i] = np.log(pj[i])
     # weights
     wij = np.log(pij / (pi * pj))
 

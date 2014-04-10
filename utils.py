@@ -7,7 +7,7 @@ import os
 import re
 import json
 import simulation_parameters
-
+import MergeSpikefiles
 
 def get_sources(conn_list, target_gid):
     idx = conn_list[:, 1] == target_gid
@@ -21,13 +21,17 @@ def get_targets(conn_list, source_gid):
     return targets
 
 
-def get_most_active_neurons(spike_data, n_cells):
+def get_most_active_neurons(spike_data, n_cells=None):
     gids = np.unique(spike_data[:, 0])
+    if n_cells == None:
+        n_cells = gids.size
     n_spikes = np.zeros(gids.size)
     for i_, gid in enumerate(gids):
         n_spikes[i_] = (spike_data[:, 0] == gid).nonzero()[0].size
     idx = n_spikes.argsort()
-    most_active_neuron_gids = idx[-n_cells:]
+    most_active_neuron_gids = gids[idx[-n_cells:]]
+    print 'most_active_neuron_gids', most_active_neuron_gids
+    print 'nspikes:', n_spikes[idx[-n_cells:]]
     return most_active_neuron_gids
 
 
@@ -125,6 +129,26 @@ def extract_trace(d, gid):
     indices = (d[:, 0] == gid).nonzero()[0]
     time_axis, volt = d[indices, 1], d[indices, 2]
     return time_axis, volt
+
+
+def merge_spikes(params):
+    cell_types = ['d1', 'd2', 'actions']
+    MS = MergeSpikefiles.MergeSpikefiles(params)
+    for cell_type in cell_types:
+        for naction in range(params['n_actions']):
+            output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
+            if not os.path.exists(output_fn):
+                merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
+                MS.merge_spiketimes_files(merge_pattern, output_fn)
+        # merge all action files
+
+    for cell_type in cell_types:
+        output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type]
+        if not os.path.exists(output_fn):
+            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type]
+            MS.merge_spiketimes_files(merge_pattern, output_fn)
+
+
 
 
 def merge_and_sort_files(merge_pattern, fn_out, sort=True):

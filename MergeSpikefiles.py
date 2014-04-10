@@ -29,7 +29,9 @@ class MergeSpikefiles(object):
         print 'MergeSpikeFiles spiketimes:', fn_out#, merge_pattern
         # merge files from different processors
         tmp_file = "tmp_%d" % (rnd_nr2)
-        os.system("cat %s* > %s" % (merge_pattern,  tmp_file))
+        cmd = "cat %s* > %s" % (merge_pattern,  tmp_file)
+#        print 'debug', cmd
+        os.system(cmd)
         # sort according to cell id
         os.system("sort -gk %d %s > %s" % (sort_idx, tmp_file, fn_out))
         os.system("rm %s" % (tmp_file))
