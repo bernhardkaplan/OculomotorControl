@@ -35,40 +35,23 @@ if __name__ == '__main__':
     GP = simulation_parameters.global_parameters()
     if comm != None:
         comm.barrier()
+
     if len(sys.argv) < 3:
         testing_params = GP.params
     else:
-        testing_folder = os.path.abspath(sys.argv[2]) 
-        testing_params_fn = os.path.abspath(testing_folder) + '/Parameters/simulation_parameters.json'
-        testing_param_tool = simulation_parameters.global_parameters(params_fn=testing_params_fn)
-
-        testing_params_json = testing_param_tool.params
-        testing_params = {}
-        for k in testing_params_json.keys():
-            if type(testing_params_json[k]) == type({}):
-                d = testing_params_json[k]
-                d_new = {}
-                for key in d.keys():
-                    d_new[str(key)] = d[key]
-                testing_params[k] = d_new
-            elif type(testing_params_json[k]) == unicode:
-                testing_params[str(k)] = str(testing_params_json[k])
-            else:
-                testing_params[str(k)] = testing_params_json[k]
+        testing_params_json = utils.load_params(os.path.abspath(sys.argv[2]))
+        testing_params = utils.convert_to_NEST_conform_dict(testing_params_json)
 
     if testing_params['training']:
         print 'Set training = False!'
         exit(1)
+    GP.write_parameters_to_file(testing_params['params_fn_json'], testing_params) # write_parameters_to_file MUST be called before every simulation
 
     if comm != None:
         comm.barrier()
 
-#    GP.write_parameters_to_file(fn=testing_params['params_fn_json'], params_to_write=testing_params) # write_parameters_to_file MUST be called before every simulation
-    GP.write_parameters_to_file(testing_params['params_fn_json'], testing_params) # write_parameters_to_file MUST be called before every simulation
-    training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
-    print 'Loading training parameters from', training_params_fn
-    training_param_tool = simulation_parameters.global_parameters(params_fn=training_params_fn)
-    training_params = training_param_tool.params
+#    training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
+    training_params = utils.load_params(training_folder)
     actions = np.zeros((testing_params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net= np.zeros((testing_params['n_iterations'], 4))
     training_stimuli = np.zeros((training_params['n_stim_training'], 4))
@@ -108,7 +91,7 @@ if __name__ == '__main__':
 
     iteration_cnt = 0
     v_eye = [0., 0.]
-    for i_, i_stim in enumerate(testing_params['testing_stimuli']):
+    for i_, i_stim in enumerate(testing_params['test_stim_range']):
         if len(training_stimuli.shape) == 1:
             VI.current_motion_params = training_stimuli
         else:
@@ -152,10 +135,13 @@ if __name__ == '__main__':
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
+        utils.remove_empty_files(params['connections_folder'])
+        utils.remove_empty_files(params['spiketimes_folder'])
         utils.compare_actions_taken(training_params, testing_params)
-        os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])
-        os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
-        os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
+        if not testing_params['Cluster']:
+            os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])
+            os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
+            os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
     if comm != None:
         comm.barrier()
 

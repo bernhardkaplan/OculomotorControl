@@ -55,13 +55,13 @@ class BasalGanglia(object):
 
         #Creates D1 and D2 populations in STRIATUM, connections are created later
         for nactions in range(self.params['n_actions']):
-            self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params= self.params['param_msn_d1'])
+            self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params=self.params['param_msn_d1'])
             for gid in self.strD1[nactions]:
                 self.gid_to_action[gid] = nactions
                 self.bg_offset['d1'] = min(gid, self.bg_offset['d1'])
 
         for nactions in range(self.params['n_actions']):
-            self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params= self.params['param_msn_d2'])
+            self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params=self.params['param_msn_d2'])
             for gid in self.strD2[nactions]:
                 self.gid_to_action[gid] = nactions
                 self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
@@ -108,27 +108,27 @@ class BasalGanglia(object):
             for nactions in xrange(self.params['n_actions']):
                 self.supervisor[nactions] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_supervisor'], params = self.params['param_poisson_supervisor']  )
                 for i in xrange(self.params['n_actions']):
-                     if i != nactions:
-                         nest.DivergentConnect(self.supervisor[nactions], self.strD2[i], weight=self.params['weight_supervisor_strd2'], delay=self.params['delay_supervisor_strd2'])
-                     else:
+                     if i == nactions:
                          nest.DivergentConnect(self.supervisor[nactions], self.strD1[i], weight=self.params['weight_supervisor_strd1'], delay=self.params['delay_supervisor_strd1'])
+                     else:
+                         nest.DivergentConnect(self.supervisor[nactions], self.strD2[i], weight=self.params['weight_supervisor_strd2'], delay=self.params['delay_supervisor_strd2'])
 #                self.recorder_supervisor[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_supervisor'])
 #                nest.SetStatus(self.recorder_supervisor[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['supervisor_spikes_fn']+ str(nactions)}])
 #                nest.ConvergentConnect(self.supervisor[nactions], self.recorder_supervisor[nactions])
 
         # Creates and connects the EFFERENCE COPY population. This actives the D1 population coding for the selected action and the D2 populations of non-selected actions, in STR
-        for nactions in xrange(self.params['n_actions']):
-            self.efference_copy[nactions] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_efference'], params = self.params['param_poisson_efference']  )
-            for i in xrange(self.params['n_actions']):
-                 if i != nactions:
-                     nest.RandomDivergentConnect(self.efference_copy[nactions], self.strD2[i],int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_efference']), weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
-                 else:
-                     nest.RandomDivergentConnect(self.efference_copy[nactions], self.strD1[i], int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_efference']), weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
-            
-            
-            self.recorder_efference[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_efference'])
-            nest.SetStatus(self.recorder_efference[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['efference_spikes_fn']+ str(nactions)}])
-            nest.ConvergentConnect(self.efference_copy[nactions], self.recorder_efference[nactions])
+#        for nactions in xrange(self.params['n_actions']):
+#            self.efference_copy[nactions] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_efference'], params = self.params['param_poisson_efference']  )
+#            for i in xrange(self.params['n_actions']):
+#                 if i != nactions:
+#                     nest.RandomDivergentConnect(self.efference_copy[nactions], self.strD2[i],int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_efference']), weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
+#                 else:
+#                     nest.RandomDivergentConnect(self.efference_copy[nactions], self.strD1[i], int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_efference']), weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
+#            
+#            
+#            self.recorder_efference[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_efference'])
+#            nest.SetStatus(self.recorder_efference[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['efference_spikes_fn']+ str(nactions)}])
+#            nest.ConvergentConnect(self.efference_copy[nactions], self.recorder_efference[nactions])
 
 
          
@@ -220,17 +220,17 @@ class BasalGanglia(object):
     def set_action_speed_mapping_bins(self):
         self.action_bins_x = []
         n_bins_x = np.int(np.round((self.params['n_actions'] - 1) / 2.))
-        
-        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
-                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_x,
+
+        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         v_scale_half.reverse()
 
         self.action_bins_x += v_scale_half
         self.action_bins_x += [0.]
 
-        v_scale_half = (np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
-                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_x,
+        v_scale_half = (np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_x += v_scale_half
         print 'BG: action_bins_x', self.action_bins_x
@@ -240,16 +240,16 @@ class BasalGanglia(object):
         self.action_bins_y = []
         n_bins_y = np.int(np.round((self.params['n_actions'] - 1) / 2.))
         
-        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
-                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_y,
+        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out'])/np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out'])/np.log(self.params['log_scale']), num=n_bins_y,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         v_scale_half.reverse()
 
         self.action_bins_y += v_scale_half
         self.action_bins_y += [0.]
 
-        v_scale_half = (np.logspace(np.log(self.params['v_min_tp'])/np.log(self.params['log_scale']),
-                            np.log(self.params['v_max_tp'])/np.log(self.params['log_scale']), num=n_bins_y,
+        v_scale_half = (np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_y,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_y += v_scale_half
         print 'BG: action_bins_y', self.action_bins_y
@@ -263,16 +263,17 @@ class BasalGanglia(object):
 
     def map_speed_to_action(self, speed, binning, xy='x'):
         # select an action based on the supervisor state information
-        if speed > self.params['v_max_tp']:
+        if speed > np.max(binning):
             action_index = self.params['n_actions'] - 1
-        elif (speed < (-1.) * self.params['v_max_tp']):
+        elif (speed < np.min(binning)):
             action_index = 0
         else:
-            cnt_u, bins = np.histogram(speed, binning)
-            action_index = cnt_u.nonzero()[0][0]
+            action_index = np.argmin(np.abs(speed - np.array(binning)))
+#            cnt_u, bins = np.histogram(speed, binning)
+#            action_index = cnt_u.nonzero()[0][0]
 
         if xy == 'x':
-            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : speed=%.3f --> action: %d ' % (self.pc_id, self.iteration, speed, action_index)
+            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : supervisor_speed=%.3f --> action: %d output_speed= %.3f' % (self.pc_id, self.iteration, speed, action_index, binning[action_index])
         return action_index
 
 
@@ -336,7 +337,7 @@ class BasalGanglia(object):
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
-            gids_spiked = new_event_gids.unique() - 1 # maybe here should be a - 1 (if there is one in communicate_local_spikes)
+            gids_spiked = np.unique(new_event_gids) - 1 # maybe here should be a - 1 (if there is one in communicate_local_spikes)
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size

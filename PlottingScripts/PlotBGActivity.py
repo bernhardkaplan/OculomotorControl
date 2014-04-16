@@ -30,7 +30,7 @@ class ActivityPlotter(object):
 
     def plot_raster_simple(self):
         # first find files in Spikes folder 
-        fn = self.params['spiketimes_folder_mpn'] + self.params['bg_spikes_fn_merged']
+        fn = self.params['spiketimes_folder'] + self.params['bg_spikes_fn_merged']
         print 'Loading spikes from:', fn
         d = np.loadtxt(fn)
         spikes = d[:, 1]
@@ -53,16 +53,26 @@ class ActivityPlotter(object):
         return nspikes
 
 
-    def plot_action_voltages(self):
+    def plot_voltages(self, cell_type, action_idx=None, output_fn=None):
 
-        volt_fns = utils.find_files(self.params['spiketimes_folder_mpn'], 'bg_action_volt_')
+        if action_idx != None:
+            add = str(action_idx)
+        else:
+            add = ''
+        if cell_type == 'actions':
+            volt_fns = utils.find_files(self.params['spiketimes_folder'], 'bg_action_volt_' + add)
+        elif cell_type == 'd1':
+            volt_fns = utils.find_files(self.params['spiketimes_folder'], 'd1_volt_' + add)
+        elif cell_type == 'd2':
+            volt_fns = utils.find_files(self.params['spiketimes_folder'], 'd2_volt_' + add)
+
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        print volt_fns
+        print 'PlotBGActivity.plot_voltages found:', volt_fns
         for fn in volt_fns:
-            path = self.params['spiketimes_folder_mpn'] + fn
-            print 'path', path
+            path = self.params['spiketimes_folder'] + fn
+            print 'plot_voltages loads', path
             try:
                 d = np.loadtxt(path)
                 gids = np.unique(d[:, 0])
@@ -72,9 +82,11 @@ class ActivityPlotter(object):
             except:
                 pass
 
+        if output_fn != None:
+            pylab.savefig(output_fn)
 
 
-    def plot_spikes_for_cell_type(self, cell_type, color='k', gid_offset=0, marker='o', ylim=None, ax=None):
+    def plot_spikes_for_cell_type(self, cell_type, color='k', gid_offset=0, marker='o', ylim=None, ax=None, xlim=None):
         recorder_type = 'spikes'
 
         if ax == None:
@@ -85,25 +97,34 @@ class ActivityPlotter(object):
         else:
             print 'no fig created'
 
-        for naction in range(self.params['n_actions']):
-#            data = np.loadtxt(self.params['spiketimes_folder'] + cell_type + str(naction) + '_merged_' + recorder_type + '.dat')
+        for naction in xrange(self.params['n_actions']):
+            print 'Plotting %s action %d' % (cell_type, naction)
             data = np.loadtxt(self.params['spiketimes_folder'] + self.params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat')
+            if xlim != None and data.size > 2:
+                data = utils.get_spiketimes_within_interval(data, xlim[0], xlim[1])
             if len(data)<2:
                 print 'no data in', cell_type, naction
+            elif data.size == 2:
+                data[0] += gid_offset
+                ax.plot(data[1], data[0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
             else:
                 data[:, 0] += gid_offset
                 ax.plot(data[:,1], data[:,0], linestyle='None', marker=marker, c=color, markeredgewidth=0, markersize=self.rp_markersize)
 
         if ylim != None:
             ax.set_ylim(ylim)
+        if xlim != None:
+            ax.set_xlim(xlim)
         mn, mx = utils.get_min_max_gids_for_bg(self.params, cell_type)
         ypos_label = .5 * (mx - mn) + mn
-        xa = - (self.params['t_sim'] / 6.)
+        xa = - 20 #(self.params['t_sim'] / 6.)
+        print 'DEBUG', ypos_label, cell_type, mn, mx, xa
         ax.text(xa, ypos_label, cell_type, color=color, fontsize=16)
+        ax.set_xlabel('Time [ms]')
         if self.params['training']:
-            ax.set_title('Spikes during training, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
+            ax.set_title('Spikes in BG during training')
         else:
-            ax.set_title('Spikes during testing, w_mpn_bg factor=%.2f' % self.params['mpn_bg_weight_amplification'])
+            ax.set_title('Spikes in BG during testing, w_mpn_D1(D2)=%.1f (%.1f)' % (self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification']))
         return ax
 
 
@@ -135,7 +156,23 @@ if __name__ == '__main__':
         for naction in range(params['n_actions']):
             merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
             output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
-            MS.merge_spiketimes_files(merge_pattern, output_fn)
+            if not os.path.exists(output_fn):
+                MS.merge_spiketimes_files(merge_pattern, output_fn)
+
+#    stim_range = None
+    stim_range = [0, 1]
+    if stim_range == None:
+        if params['training']:
+            if params['n_stim'] == 1:
+                stim_range = [0, 1]
+            else:
+                stim_range = range(params['n_stim'])
+        else:
+            stim_range = params['test_stim_range']
+        xlim = None
+    else:
+        t_stim = params['n_iterations_per_stim'] * params['t_iteration']
+        xlim = (stim_range[0] * t_stim, stim_range[1] * t_stim)
 
     Plotter = ActivityPlotter(params)#, it_max=1)
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -150,13 +187,15 @@ if __name__ == '__main__':
         gid_min, gid_max = min(mn, gid_min), max(mx, gid_max)
         cl = colors[z % len(colors)]
         marker = markers[z % len(markers)]
-        ax = Plotter.plot_spikes_for_cell_type(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax)
+        ax = Plotter.plot_spikes_for_cell_type(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax, xlim=xlim)
 
     PMPN = PlotMPNActivity.ActivityPlotter(params)
     PMPN.plot_vertical_lines(ax, params)
-    output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + '%.2f.png' % (params['mpn_bg_weight_amplification'])
+    output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f.png' % (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'])
     print 'Saving figure to:', output_fig
     pylab.savefig(output_fig, dpi=300)
+
+    Plotter.plot_voltages('d1', action_idx=18, output_fn=params['figures_folder'] + 'd1_voltages.png')
 #    Plotter.plot_raster_simple()
 #    Plotter.plot_action_voltages()
 #    Plotter.plot_action_spikes()

@@ -58,16 +58,14 @@ if __name__ == '__main__':
             params = ps.params
             params[param_name_1] = p1 
             params[param_name_2] = p2  
-            test_folder = 'Test_%s_%d-%d' % (params['sim_id'], params['testing_stimuli'][0], params['testing_stimuli'][-1])
+            test_folder = 'Test_%s_%d-%d' % (params['sim_id'], params['test_stim_range'][0], params['test_stim_range'][-1])
             test_folder += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
                     (params['n_stim_training'], params['n_exc_mpn'], params['n_states'], \
                     params['n_actions'], params['t_iteration'], params['t_sim'], \
                     params['mpn_bg_weight_amplification'], params['mpn_bg_bias_amplification'])
 
-            print 'DEBUG before prepare_simulation', params['data_folder'], '\n\t', ps.params['data_folder']
             params['folder_name'] = test_folder 
             prepare_simulation(ps, params)
-            print 'DEBUG after prepare_simulation', params['data_folder'], '\n\t', ps.params['data_folder']
             if comm != None:
                 comm.barrier()
 
@@ -76,7 +74,7 @@ if __name__ == '__main__':
 #            params = ps.params
 #            params[param_name_1] = p1 
 #            params[param_name_2] = p2  
-#            test_folder = 'Test_%s_%d-%d' % (params['sim_id'], params['testing_stimuli'][0], params['testing_stimuli'][-1])
+#            test_folder = 'Test_%s_%d-%d' % (params['sim_id'], params['test_stim_range'][0], params['test_stim_range'][-1])
 #            test_folder += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
 #                    (params['n_stim_training'], params['n_exc_mpn'], params['n_states'], \
 #                    params['n_actions'], params['t_iteration'], params['t_sim'], \
