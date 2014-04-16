@@ -415,9 +415,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['rp_volt_fn'] = 'rp_volt_'
 
         # merged filenames: CELLTYPE_merged_VOLT/SPIKES.dat
-        self.params['states_spikes_fn_merged'] = 'states_merged_spikes' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['d1_spikes_fn_merged'] = 'd1_merged_spikes' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['d2_spikes_fn_merged'] = 'd2_merged_spikes' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['states_spikes_fn_merged'] = 'states_merged_spikes' 
+        self.params['d1_spikes_fn_merged'] = 'd1_merged_spikes' # each action population prints in its own file
+        self.params['d2_spikes_fn_merged'] = 'd2_merged_spikes'
+        self.params['actions_spikes_fn_merged_all'] = 'all_action_spikes.dat'
+        self.params['d1_spikes_fn_merged_all'] = 'all_d1_spikes.dat'
+        self.params['d2_spikes_fn_merged_all'] = 'all_d2_spikes.dat'
         self.params['actions_spikes_fn_merged'] = 'actions_merged_spikes'
         self.params['efference_spikes_fn_merged'] = 'efference_merged_spikes'
         self.params['supervisor_spikes_fn_merged'] = 'supervisor_merged_spikes'
