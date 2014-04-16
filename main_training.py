@@ -105,10 +105,10 @@ if __name__ == '__main__':
 #                stim, supervisor_state = VI.compute_input(MT.exc_pop, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
                 stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
 
-            print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+            #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
             print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
             (action_index_x, action_index_y) = BG.supervised_training(supervisor_state)
-            print 'DEBUG action_index_x / y:', action_index_x, action_index_y
+            #print 'DEBUG action_index_x / y:', action_index_x, action_index_y
 
             if params['debug_mpn']:
                 print 'Saving spike trains...'
@@ -126,15 +126,15 @@ if __name__ == '__main__':
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
             if pc_id == 0:
-                print 'Debug state', iteration_cnt, state_
+                print 'DEBUG Iteration %d\tstate %d' % (iteration_cnt, state_)
             network_states_net[iteration_cnt, :] = state_
 
-            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
+            #print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
             v_eye[0] = next_action[0]
             v_eye[1] = next_action[1]
             actions[iteration_cnt + 1, :] = next_action
-            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
+            #print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
 
             if params['weight_tracking']:
                 CC.get_weights(MT, BG, iteration=iteration_cnt)

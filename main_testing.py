@@ -136,6 +136,7 @@ if __name__ == '__main__':
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
         utils.compare_actions_taken(training_params, testing_params)
+    if not testing_params['Cluster'] and not testing_params['Cluster_Milner']:
         os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])
         os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
         os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))

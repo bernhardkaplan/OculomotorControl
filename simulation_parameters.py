@@ -40,12 +40,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
+        self.params['n_training_cycles'] = 10 # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 200 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(1)
+#        self.params['test_stim_range'] = range(1)
+        self.params['test_stim_range'] = range(20)
+#        self.params['test_stim_range'] = range(15, 25)
+#        self.params['test_stim_range'] = range(390, 400)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -53,7 +56,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = True
+        self.params['training'] = False
+        #self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -254,15 +258,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_d1_weight_amplification'] = 4.0
-        self.params['mpn_d2_weight_amplification'] = 10.0
+        self.params['mpn_d1_weight_amplification'] = 3.0
+        self.params['mpn_d2_weight_amplification'] = 30.0
         self.params['mpn_bg_bias_amplification'] = 1.0
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
         self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
-        self.params['num_msn_d1'] = 30
-        self.params['num_msn_d2'] = 30
+        self.params['num_msn_d1'] = 20
+        self.params['num_msn_d2'] = 20
         self.params['n_cells_d1'] = self.params['num_msn_d1'] * self.params['n_actions']
         self.params['n_cells_d2'] = self.params['num_msn_d2'] * self.params['n_actions']
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
