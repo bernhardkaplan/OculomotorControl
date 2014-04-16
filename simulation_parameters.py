@@ -510,18 +510,20 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['connections_folder'] = '%sConnections/' % self.params['folder_name']
         self.params['tmp_folder'] = '%stmp/' % self.params['folder_name']
         self.params['data_folder'] = '%sData/' % (self.params['folder_name']) # for storage of analysis results etc
+        self.params['input_folder_mpn'] = '%sInputSpikes_MPN/' % (self.params['folder_name'])
+        self.params['spiketimes_folder'] = '%sSpikes/' % self.params['folder_name']
         self.params['folder_names'] = [self.params['folder_name'], \
                             self.params['parameters_folder'], \
                             self.params['figures_folder'], \
                             self.params['tmp_folder'], \
                             self.params['connections_folder'], \
-                            self.params['data_folder']]
+                            self.params['data_folder'], \
+                            self.params['spiketimes_folder'], \
+                            self.params['input_folder_mpn'] ]
 
         self.params['params_fn_json'] = '%ssimulation_parameters.json' % (self.params['parameters_folder'])
 
 
-        self.params['input_folder_mpn'] = '%sInputSpikes_MPN/' % (self.params['folder_name'])
-        self.params['spiketimes_folder'] = '%sSpikes/' % self.params['folder_name']
         self.params['folder_names'].append(self.params['spiketimes_folder'])
         self.params['folder_names'].append(self.params['input_folder_mpn'])
 #        self.create_folders()

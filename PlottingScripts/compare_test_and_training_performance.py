@@ -79,6 +79,7 @@ class Plotter(object):
             AP.plot_vertical_lines(ax)
 
         time_range = (stim_range[0] * t_stim + t_offset, (stim_range[-1] + 1) * t_stim + t_offset)
+        print 'debug ', params['training'], time_range
         ax.set_xlim(time_range)
         return ax
 
@@ -87,9 +88,6 @@ class Plotter(object):
 #        p2, = ax.plot(t_axis, test_xdispl, c='b', ls='--', lw=3)
 #        plots = [p1, p2]
 #        ax.legend(plots, ['training', 'test'], loc='upper left')
-
-
-
 
 
 if __name__ == '__main__':

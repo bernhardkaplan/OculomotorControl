@@ -9,6 +9,14 @@ import json
 import simulation_parameters
 import MergeSpikefiles
 
+def remove_empty_files(folder):
+    for fn in os.listdir(folder):
+        path = os.path.abspath(folder) + '/%s' % fn
+        file_size = os.path.getsize(path)
+        if file_size == 0:
+            rm_cmd = 'rm %s' % (path)
+            os.system(rm_cmd)
+
 def get_sources(conn_list, target_gid):
     idx = conn_list[:, 1] == target_gid
     sources = conn_list[idx, :]

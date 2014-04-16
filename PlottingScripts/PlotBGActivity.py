@@ -89,10 +89,10 @@ class ActivityPlotter(object):
     def plot_spikes_for_cell_type(self, cell_type, color='k', gid_offset=0, marker='o', ylim=None, ax=None, xlim=None):
         recorder_type = 'spikes'
 
-        pylab.subplots_adjust(left=0.15)
         if ax == None:
             print 'creating figure'
             fig = pylab.figure()
+            pylab.subplots_adjust(left=0.15)
             ax = fig.add_subplot(111)
         else:
             print 'no fig created'

@@ -119,7 +119,6 @@ if __name__ == '__main__':
     """
 
     fns = sys.argv[1:] # 
-    clim = (-8., 8.)
     if len(sys.argv) > 2:
         for fn in fns:
             params = utils.load_params(fn)
@@ -135,10 +134,12 @@ if __name__ == '__main__':
         tgt_type = 'd1'
         print 'Plotting connections targeting :', tgt_type
         conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+        clim = (-5., 5.)
         plot_conn_list(conn_list_fn=conn_list_fn, params=params, clim=clim)
         tgt_type = 'd2'
         print 'Plotting connections targeting :', tgt_type
         conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+        clim = (-3., 3.)
         plot_conn_list(conn_list_fn=conn_list_fn, params=params, clim=clim)
 #         params = load_params_from_folder(fn)
 #         plot_conn_list(params=params)
