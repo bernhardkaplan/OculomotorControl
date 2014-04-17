@@ -53,8 +53,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = False
-#        self.params['training'] = True
+#        self.params['training'] = False
+        self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -63,8 +63,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_iterations'] = self.params['n_stim_testing'] * self.params['n_iterations_per_stim']
             self.params['n_stim'] = self.params['n_stim_testing']
-        self.params['dt'] = 0.1                      # [ms]
-        self.params['dt_input_mpn'] = 0.1           # [ms] time step for the inhomogenous Poisson process for input spike train generation
+        self.params['dt'] = 0.1             # [ms] simulation time step
+        self.params['dt_input_mpn'] = 0.1   # [ms] time step for the inhomogenous Poisson process for input spike train generation
+        self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
 
 
         # initial 
@@ -143,6 +144,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         self.params['gids_to_record_mpn'] = None
+        self.params['gids_to_record_mpn'] = [2022,  1254, 1280]
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs

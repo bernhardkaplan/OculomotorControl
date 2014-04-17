@@ -17,6 +17,7 @@ def remove_empty_files(folder):
             rm_cmd = 'rm %s' % (path)
             os.system(rm_cmd)
 
+
 def get_sources(conn_list, target_gid):
     idx = conn_list[:, 1] == target_gid
     sources = conn_list[idx, :]
@@ -38,8 +39,6 @@ def get_most_active_neurons(spike_data, n_cells=None):
         n_spikes[i_] = (spike_data[:, 0] == gid).nonzero()[0].size
     idx = n_spikes.argsort()
     most_active_neuron_gids = gids[idx[-n_cells:]]
-    print 'most_active_neuron_gids', most_active_neuron_gids
-    print 'nspikes:', n_spikes[idx[-n_cells:]]
     return most_active_neuron_gids
 
 

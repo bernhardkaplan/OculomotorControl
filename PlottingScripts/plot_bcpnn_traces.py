@@ -38,22 +38,21 @@ class TracePlotter(object):
         print 'TracePlotter loads:', fn_post
         self.post_spikes = np.loadtxt(fn_post)
 
-    def select_cells(self, pre_gids=None, post_gids=None):
-        n_pre = 1
-        n_post = 1
 
+    def select_cells(self, pre_gids=None, post_gids=None, n_pre=1, n_post=1):
+
+        self.d_pre = utils.get_spiketimes_within_interval(self.pre_spikes, self.t_range[0], self.t_range[1])
         if pre_gids == None:
-            self.d_pre = utils.get_spiketimes_within_interval(self.pre_spikes, self.t_range[0], self.t_range[1])
             mpn_gids = np.unique(self.d_pre[:, 0])
-            pre_gids = utils.get_most_active_neurons(self.d_pre, n_pre)
-#        print 'Pre_gids', pre_gids
+            pre_gids = utils.get_most_active_neurons(self.d_pre, n_pre).astype(np.int)
+        print 'Pre_gids (%d most active pre-synaptic neurons)' % (n_pre), list(pre_gids)
 
+        self.d_post = utils.get_spiketimes_within_interval(self.post_spikes, self.t_range[0], self.t_range[1])
         if post_gids == None:
-            self.d_post = utils.get_spiketimes_within_interval(self.post_spikes, self.t_range[0], self.t_range[1])
 #            print 'DEBUG', self.d_post
             mpn_gids = np.unique(self.d_post[:, 0])
-            post_gids = utils.get_most_active_neurons(self.d_post, n_post)
-#        print 'post_gids', post_gids
+            post_gids = utils.get_most_active_neurons(self.d_post, n_post).astype(np.int)
+        print 'Post (%d most active post-synaptic neurons)' % (n_post), list(post_gids)
         return pre_gids, post_gids
 
     def compute_traces(self, pre_gids, post_gids):
@@ -78,11 +77,11 @@ class TracePlotter(object):
 
 
 
-    def plot_trace(self, bcpnn_traces, output_fn):
+    def plot_trace(self, bcpnn_traces, output_fn, info_txt=None):
         wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
         t_axis = self.dt * np.arange(zi.size)
         plots = []
-        pylab.rcParams.update({'figure.subplot.hspace': 0.30})
+        pylab.rcParams.update({'figure.subplot.hspace': 0.50})
         fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
         ax1 = fig.add_subplot(321)
         ax2 = fig.add_subplot(322)
@@ -90,7 +89,7 @@ class TracePlotter(object):
         ax4 = fig.add_subplot(324)
         ax5 = fig.add_subplot(325)
         ax6 = fig.add_subplot(326)
-        self.title_fontsize = 18
+        self.title_fontsize = 24
         ax1.set_title('$\\tau_{z_i} = %d$ ms, $\\tau_{z_j} = %d$ ms' % \
                 (self.bcpnn_params['tau_i'], self.bcpnn_params['tau_j']), fontsize=self.title_fontsize)
         ax1.plot(t_axis, pre_trace, c='b', lw=2, ls=':')
@@ -143,10 +142,16 @@ class TracePlotter(object):
         ax6.set_xlabel('Time [ms]')
         ax6.set_ylabel('Bias')
 
-#        ax5.set_yticks([])
-#        ax5.set_xticks([])
+        ax5.set_yticks([])
+        ax5.set_xticks([])
+
+        w_max, w_end, w_avg = np.max(wij), wij[-1], np.mean(wij)
+        info_txt_ = 'Weight max: %.2e\nWeight end: %.2e\nWeight avg: %.2e\n' % \
+                (w_max, w_end, w_avg)
+        info_txt_ += info_txt
+        ax5.annotate(info_txt_, (.1, .1), fontsize=20)
+
 #        ax5.annotate('$v_{stim} = %.2f, v_{0}=%.2f, v_{1}=%.2f$\ndx: %.2f\
-#                \nWeight max: %.3e\nWeight end: %.3e\nWeight avg: %.3e\nt(w_max): %.1f [ms]' % \
 #                (self.v_stim, self.tp_s[0][2], self.tp_s[1][2], self.dx, self.w_max, self.w_end, self.w_avg, \
 #                self.t_max * dt), (.1, .1), fontsize=20)
 
@@ -155,8 +160,9 @@ class TracePlotter(object):
 #                (self.bcpnn_params['tau_i'], self.bcpnn_params['tau_j'], self.bcpnn_params['tau_e'], self.bcpnn_params['tau_p'], self.dx, self.dv, self.v_stim)
 #        output_fn = self.params['figures_folder'] + 'traces_dx%.2e_dv%.2e_vstim%.1e_tauzi_%04d_tauzj%04d_taue%d_taup%d.png' % \
 #                (self.dx, self.dv, self.v_stim, self.bcpnn_params['tau_i'], self.bcpnn_params['tau_j'], self.bcpnn_params['tau_e'], self.bcpnn_params['tau_p'])
-        print 'Saving traces to:', output_fn
-        pylab.savefig(output_fn)
+
+#        print 'Saving traces to:', output_fn
+#        pylab.savefig(output_fn)
 
 
 if __name__ == '__main__':
@@ -172,17 +178,20 @@ if __name__ == '__main__':
     if (not os.path.exists(fn_pre)) or (not os.path.exists(fn_post)):
         utils.merge_spikes(params)
     
-    it_range = (0, 10)
-
+    it_range = (0, 1)
     TP = TracePlotter(params, it_range)
     TP.load_spikes(fn_pre, fn_post)
-#    pre_gids, post_gids = TP.select_cells()
-    pre_gids, post_gids = [813], [5555]
+    n_pre = 3
+    n_post = 1
+    pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post)
+#    pre_gids, post_gids = [813], [5555]
 
     all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids)
+    print 'debug', len(all_traces)
     output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
     for i_, traces in enumerate(all_traces):
         output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
-        TP.plot_trace(traces, output_fn)
+        info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
+        TP.plot_trace(traces, output_fn, info_txt=info_txt)
 
     pylab.show()

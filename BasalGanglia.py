@@ -43,7 +43,7 @@ class BasalGanglia(object):
         self.voltmeter_d2 = {}
         self.voltmeter_rp = {}
         self.voltmeter_action = {}
-        self.voltmeter_rew = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
+        self.voltmeter_rew = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval':self.params['dt_volt']})
         nest.SetStatus(self.voltmeter_rew, [{"to_file": True, "withtime": True, 'label' : self.params['rew_volt_fn']}])
 
         self.t_current = 0 
@@ -68,9 +68,9 @@ class BasalGanglia(object):
 
         for nactions in range(self.params['n_actions']):
             if self.params['record_bg_volt']:
-                self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
+                self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
                 nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_volt_fn']+ str(nactions)}])
-                self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
+                self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
                 nest.SetStatus(self.voltmeter_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d2_volt_fn']+ str(nactions)}])
 
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
@@ -79,7 +79,7 @@ class BasalGanglia(object):
 
         for nactions in range(self.params['n_actions']):
             if self.params['record_bg_volt']:
-                self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
+                self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
                 nest.SetStatus(self.voltmeter_action[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_volt_fn']+ str(nactions)}])
             self.recorder_output[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_action'])
             self.recorder_d1[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_d1'])
@@ -143,7 +143,7 @@ class BasalGanglia(object):
                 self.recorder_rp[index_rp] = nest.Create("spike_detector", params= self.params['spike_detector_rp'])
                 nest.SetStatus(self.recorder_rp[index_rp],[{"to_file": True, "withtime": True, 'label' : self.params['rp_spikes_fn']+ str(index_rp)}])
                 nest.ConvergentConnect(self.rp[index_rp],self.recorder_rp[index_rp])
-                self.voltmeter_rp[index_rp] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.1})
+                self.voltmeter_rp[index_rp] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
                 nest.SetStatus(self.voltmeter_rp[index_rp], [{"to_file": True, "withtime": True, 'label' : self.params['rp_volt_fn']+ str(index_rp)}])
                 nest.ConvergentConnect(self.voltmeter_rp[index_rp], self.rp[index_rp])
 

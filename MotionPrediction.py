@@ -95,6 +95,7 @@ class MotionPrediction(object):
 
 
 
+
     def create_inh_network(self):
 
         cell_params = self.params['cell_params_inh_mpn'].copy()
@@ -183,7 +184,7 @@ class MotionPrediction(object):
 
         if self.pc_id == 0:
             np.savetxt(self.params['gids_to_record_fn_mp'], gids_to_record)
-        self.voltmeter = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :0.2})
+        self.voltmeter = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval': self.params['dt_volt']})
         nest.SetStatus(self.voltmeter,[{"to_file": True, "withtime": True, 'label' : self.params['mpn_exc_volt_fn']}])
             
         nest.ConvergentConnect(self.voltmeter, gids_to_record)

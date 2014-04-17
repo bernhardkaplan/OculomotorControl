@@ -35,15 +35,15 @@ plot_params = {'backend': 'png',
 #              'figure.figsize': get_fig_size(800)}
 
 plot_params_portrait = {'backend': 'png',
-              'axes.labelsize': 20,
-              'axes.titlesize': 20,
+              'axes.labelsize': 32,
+              'axes.titlesize': 32,
               'text.fontsize': 20,
-              'xtick.labelsize': 16,
-              'ytick.labelsize': 16,
+              'xtick.labelsize': 24,
+              'ytick.labelsize': 24,
               'legend.pad': 0.2,     # empty space around the legend box
-              'legend.fontsize': 14,
-               'lines.markersize': 0,
-               'lines.linewidth': 1,
+              'legend.fontsize': 16,
+               'lines.markersize': 1,
+               'lines.linewidth': 3,
               'font.size': 12,
               'path.simplify': False,
               'figure.figsize': get_fig_size(800, portrait=True)}
