@@ -20,7 +20,7 @@ def run_simulation(training_folder, test_folder, USE_MPI):
     # specify your run command (mpirun -np X, python, ...)
 #    parameter_filename = params['params_fn_json']
     if USE_MPI:
-        run_command = 'mpirun -np 8 python main_testing.py %s %s' % (training_folder, test_folder)
+        run_command = 'mpirun -np 4 python main_testing.py %s %s' % (training_folder, test_folder)
     else:
         run_command = 'python main_testing.py %s %s' % (training_folder, test_folder)
     print 'Running:\n\t%s' % (run_command)
@@ -42,30 +42,32 @@ if __name__ == '__main__':
 
 #    USE_MPI = False
 #    training_folder = 'Training_Cluster_taup45000_nStim200_nExcMpn2400_nStates20_nActions21_it15-45000_wMPN-BG1.50_bias10.00/'
-#    training_folder = 'Training_Cluster_taup90000_nStim400_nExcMpn2400_nStates20_nActions21_it15-90000_wMPN-BG1.50_bias10.00/'
-    training_folder = 'Training_Show_taup100_nStim1_it20-200_wD12.5_wD210.0_bias0.10_K1.00/'
+    training_folder = 'Training__taup150000_nStim2000_it15-300000_wD14.0_wD210.0_bias1.00_K1.00/'
+#    training_folder = 'Training_Show_taup100_nStim1_it20-200_wD12.5_wD210.0_bias0.10_K1.00/'
 
     print 'DEBUG PS INIT'
     ps = simulation_parameters.global_parameters()
 #    param_range_1 = [0.5]
 #    param_range_2 = [0.5]
-    param_range_1 = np.arange(0.5, 5.5, 0.5)
-    param_range_2 = [0.5, 1., 2., 5., 10.]
+    param_range_1 = np.arange(1, 10, 1)
+    param_range_2 = np.arange(1, 10, 3)
+#    param_range_2 = [0.5, 1., 2., 5., 10.]
 
-    param_name_1 = 'mpn_bg_weight_amplification'
-    param_name_2 = 'mpn_bg_bias_amplification'
+    param_name_1 = 'mpn_d1_weight_amplification'
+    param_name_2 = 'mpn_d2_weight_amplification'
     for j_, p2 in enumerate(param_range_2):
         for i_, p1 in enumerate(param_range_1):
             params = ps.params
             params[param_name_1] = p1 
             params[param_name_2] = p2  
-            test_folder = 'Test_%s_%d-%d' % (params['sim_id'], params['test_stim_range'][0], params['test_stim_range'][-1])
-            test_folder += '_nStim%d_nExcMpn%d_nStates%d_nActions%d_it%d-%d_wMPN-BG%.2f_bias%.2f/' % \
-                    (params['n_stim_training'], params['n_exc_mpn'], params['n_states'], \
-                    params['n_actions'], params['t_iteration'], params['t_sim'], \
-                    params['mpn_bg_weight_amplification'], params['mpn_bg_bias_amplification'])
 
-            params['folder_name'] = test_folder 
+            folder_name = 'Test_%s_%d-%d' % (params['sim_id'], params['test_stim_range'][0], params['test_stim_range'][-1])
+            folder_name += '_nStim%d_it%d-%d_wD1%.1f_wD2%.1f_bias%.2f_K%.2f/' % \
+                    (params['n_stim_training'], params['t_iteration'], params['t_sim'], \
+                    params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'], \
+                    params['mpn_bg_bias_amplification'], params['kappa'])
+
+            params['folder_name'] = folder_name
             prepare_simulation(ps, params)
             if comm != None:
                 comm.barrier()
@@ -82,7 +84,7 @@ if __name__ == '__main__':
 #                    params['mpn_bg_weight_amplification'], params['mpn_bg_bias_amplification'])
 #            params['folder_name'] = test_folder 
 #            prepare_simulation(ps, params)
-            run_simulation(training_folder, test_folder, USE_MPI)
+            run_simulation(training_folder, folder_name, USE_MPI)
             if comm != None:
                 comm.barrier()
 

@@ -138,7 +138,7 @@ if __name__ == '__main__':
         utils.remove_empty_files(testing_params['connections_folder'])
         utils.remove_empty_files(testing_params['spiketimes_folder'])
         utils.compare_actions_taken(training_params, testing_params)
-        if not testing_params['Cluster']:
+        if not testing_params['Cluster'] and not testing_params['Cluster_Milner']:
             os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])
             os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
             os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
