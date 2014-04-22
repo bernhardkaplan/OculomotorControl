@@ -139,8 +139,8 @@ class CreateConnections(object):
         D2_conns = ''
         bias_d1 = {}
         bias_d2 = {}
-        for nactions in range(self.params['n_actions']):
-            print 'action %d' % nactions, 'iteration:', iteration
+        for nactions in xrange(self.params['n_actions']):
+            print 'CreateConnections.get_weights action %d' % nactions, 'iteration:', iteration
 
             conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
             if conns != None:

@@ -135,8 +135,8 @@ if __name__ == '__main__':
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
-        utils.remove_empty_files(params['connections_folder'])
-        utils.remove_empty_files(params['spiketimes_folder'])
+        utils.remove_empty_files(testing_params['connections_folder'])
+        utils.remove_empty_files(testing_params['spiketimes_folder'])
         utils.compare_actions_taken(training_params, testing_params)
         if not testing_params['Cluster']:
             os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])

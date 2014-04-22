@@ -42,19 +42,19 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
+        self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 5 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['test_stim_range'] = range(1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 20.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-#        self.params['training'] = False
-        self.params['training'] = True
+        self.params['training'] = False
+#        self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -70,7 +70,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+#        self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        self.params['initial_state'] = (.631059, .5, -0.1996527, .0)
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
         self.params['sim_id'] = 'Show'
 
@@ -143,8 +144,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_per_mc'] = self.params['n_exc_per_state']
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
-        self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_mpn'] = [2022,  1254, 1280]
+        # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
+        self.params['gids_to_record_mpn'] = [1350, 1134, 2142, 654, 1494, \
+                                            1110, 1662, 1687, 1158, 2238] 
+        self.params['gids_to_record_bg'] = [5497, 5513, 5504, 5524, 5496, \
+                                            5036, 5044, 5027, 5018, 5023]
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
@@ -257,8 +261,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_d1_weight_amplification'] = 2.0
-        self.params['mpn_d2_weight_amplification'] = 10.0
+        self.params['mpn_d1_weight_amplification'] = 1.0
+        self.params['mpn_d2_weight_amplification'] = 1.0
         self.params['mpn_bg_bias_amplification'] = 1.0
 
         ## STR
@@ -357,8 +361,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['inactive_poisson_input_rate'] = 2.
         self.params['param_poisson_pop_input_BG'] = {}
         self.params['param_poisson_supervisor'] = {}
-        self.params['weight_supervisor_strd1'] = 6.
-        self.params['weight_supervisor_strd2'] = 6.
+        self.params['weight_supervisor_strd1'] = 7.
+        self.params['weight_supervisor_strd2'] = 7.
         self.params['delay_supervisor_strd1'] = .1
         self.params['delay_supervisor_strd2'] = .1
         self.params['weight_poisson_input'] = 10.
@@ -407,6 +411,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['d1_volt_fn'] = 'd1_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['d2_spikes_fn'] = 'd2_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['d2_volt_fn'] = 'd2_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['bg_volt_fn'] = 'bg_volt_'
         self.params['actions_spikes_fn'] = 'actions_spikes_'
         self.params['actions_volt_fn'] = 'actions_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['efference_spikes_fn'] = 'efference_spikes_'
@@ -458,7 +463,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['tuning_prop_exc_fn'] = self.params['parameters_folder'] + 'tuning_prop_exc.txt'
         self.params['tuning_prop_inh_fn'] = self.params['parameters_folder'] + 'tuning_prop_inh.txt'
         self.params['receptive_fields_exc_fn'] = self.params['parameters_folder'] + 'receptive_field_sizes_exc.txt'
-        self.params['gids_to_record_fn_mp'] = self.params['parameters_folder'] + 'gids_to_record_mpn.txt'
         # storage for actions (BG), network states (MPN) and motion parameters (on Retina)
         self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt' # contains (vx, vy, action_index)
         self.params['bg_action_bins_fn'] = self.params['data_folder'] + 'bg_actions_bins.txt'

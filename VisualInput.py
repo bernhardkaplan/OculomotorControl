@@ -15,7 +15,9 @@ class VisualInput(object):
         self.t_axis = np.arange(0, self.params['t_iteration'], self.params['dt'])
         self.iteration = 0
         self.t_current = 0 # stores the 'current' time
-        np.random.seed(self.params['visual_stim_seed'])
+        if visual_stim_seed == None:
+            visual_stim_seed = self.params['visual_stim_seed']
+        np.random.seed(visual_stim_seed)
         self.RNG = np.random
 
         self.supervisor_state = [0., 0.]

@@ -199,4 +199,4 @@ if __name__ == '__main__':
 #    Plotter.plot_raster_simple()
 #    Plotter.plot_action_voltages()
 #    Plotter.plot_action_spikes()
-    pylab.show()
+#    pylab.show()

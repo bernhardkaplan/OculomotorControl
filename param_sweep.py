@@ -42,7 +42,8 @@ if __name__ == '__main__':
 
 #    USE_MPI = False
 #    training_folder = 'Training_Cluster_taup45000_nStim200_nExcMpn2400_nStates20_nActions21_it15-45000_wMPN-BG1.50_bias10.00/'
-    training_folder = 'Training_Cluster_taup90000_nStim400_nExcMpn2400_nStates20_nActions21_it15-90000_wMPN-BG1.50_bias10.00/'
+#    training_folder = 'Training_Cluster_taup90000_nStim400_nExcMpn2400_nStates20_nActions21_it15-90000_wMPN-BG1.50_bias10.00/'
+    training_folder = 'Training_Show_taup100_nStim1_it20-200_wD12.5_wD210.0_bias0.10_K1.00/'
 
     print 'DEBUG PS INIT'
     ps = simulation_parameters.global_parameters()

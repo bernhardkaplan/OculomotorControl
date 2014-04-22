@@ -20,15 +20,20 @@ import FigureCreator
 
 class TracePlotter(object):
 
-    def __init__(self, params, it_range=None):
+    def __init__(self, params, it_range=None, cell_type_post=None):
         self.params = params
         if it_range == None:
             self.it_range = (0, 1)
         else:
             self.it_range = it_range
+        if cell_type_post == None:
+            self.cell_type_post = 'd1'
+        else:
+            self.cell_type_post = cell_type_post 
+
         self.t_range = (self.it_range[0] * self.params['t_iteration'], self.it_range[1] * self.params['t_iteration'])
         self.dt = params['dt']
-        self.bcpnn_params = self.params['params_synapse_d1_MT_BG']
+        self.bcpnn_params = self.params['params_synapse_%s_MT_BG' % self.cell_type_post]
 
 
         
@@ -38,22 +43,28 @@ class TracePlotter(object):
         print 'TracePlotter loads:', fn_post
         self.post_spikes = np.loadtxt(fn_post)
 
+        self.d_pre = utils.get_spiketimes_within_interval(self.pre_spikes, self.t_range[0], self.t_range[1])
+        self.d_post = utils.get_spiketimes_within_interval(self.post_spikes, self.t_range[0], self.t_range[1])
 
     def select_cells(self, pre_gids=None, post_gids=None, n_pre=1, n_post=1):
 
-        self.d_pre = utils.get_spiketimes_within_interval(self.pre_spikes, self.t_range[0], self.t_range[1])
+        print 'Most active neurons during t_range', self.t_range
         if pre_gids == None:
             mpn_gids = np.unique(self.d_pre[:, 0])
-            pre_gids = utils.get_most_active_neurons(self.d_pre, n_pre).astype(np.int)
+            (pre_gids, nspikes) = utils.get_most_active_neurons(self.d_pre, n_pre)
+            pre_gids = pre_gids.astype(np.int)
         print 'Pre_gids (%d most active pre-synaptic neurons)' % (n_pre), list(pre_gids)
+        print 'nspikes:', nspikes
 
-        self.d_post = utils.get_spiketimes_within_interval(self.post_spikes, self.t_range[0], self.t_range[1])
         if post_gids == None:
 #            print 'DEBUG', self.d_post
             mpn_gids = np.unique(self.d_post[:, 0])
-            post_gids = utils.get_most_active_neurons(self.d_post, n_post).astype(np.int)
+            (post_gids, nspikes) = utils.get_most_active_neurons(self.d_post, n_post)
+            post_gids = post_gids.astype(np.int)
         print 'Post (%d most active post-synaptic neurons)' % (n_post), list(post_gids)
+        print 'nspikes:', nspikes
         return pre_gids, post_gids
+
 
     def compute_traces(self, pre_gids, post_gids):
         bcpnn_traces = []
@@ -69,7 +80,7 @@ class TracePlotter(object):
                 s_pre = BCPNN.convert_spiketrain_to_trace(st_pre, self.t_range[1])
                 s_post = BCPNN.convert_spiketrain_to_trace(st_post, self.t_range[1])
 
-                wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, self.params['params_synapse_d1_MT_BG'])
+                wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, self.params['params_synapse_%s_MT_BG' % self.cell_type_post])
                 bcpnn_traces.append([wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, s_pre, s_post])
                 gid_pairs.append((pre_gid, post_gid))
 
@@ -165,6 +176,16 @@ class TracePlotter(object):
 #        pylab.savefig(output_fn)
 
 
+    def get_weights(self, pre_gids, post_gids):
+
+
+        if self.params['training']:
+            # 
+            fn = self.params['mpn_bgd1_merged_conn_fn']
+        else:
+            # load the realized connections -- with weights in [nS] !!!
+            fn = self.params['connections_folder'] + 'merged_mpn_bg_%s_connections_debug.txt' % self.cell_type_post
+        
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
@@ -173,25 +194,28 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
+    cell_type_post = 'd1'
     fn_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
-    fn_post = params['spiketimes_folder'] + params['d1_spikes_fn_merged_all']
+    fn_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
     if (not os.path.exists(fn_pre)) or (not os.path.exists(fn_post)):
         utils.merge_spikes(params)
     
-    it_range = (0, 1)
-    TP = TracePlotter(params, it_range)
+    it_range = (1, 2)
+#    it_range = (0, 3)
+    TP = TracePlotter(params, it_range, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
-    n_pre = 3
-    n_post = 1
+    n_pre = 5
+    n_post = 5
     pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post)
-#    pre_gids, post_gids = [813], [5555]
+#    pre_gids = [2238]
+#    pre_gids = [1158]
+#    post_gids = [5023]
 
-    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids)
-    print 'debug', len(all_traces)
-    output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
-    for i_, traces in enumerate(all_traces):
-        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
-        info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
-        TP.plot_trace(traces, output_fn, info_txt=info_txt)
-
-    pylab.show()
+#    w = TP.get_weights(pre_gids, post_gids)
+#    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids)
+#    output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
+#    for i_, traces in enumerate(all_traces):
+#        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
+#        info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
+#        TP.plot_trace(traces, output_fn, info_txt=info_txt)
+#    pylab.show()

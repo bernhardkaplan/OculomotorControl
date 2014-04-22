@@ -15,6 +15,7 @@ def remove_empty_files(folder):
         file_size = os.path.getsize(path)
         if file_size == 0:
             rm_cmd = 'rm %s' % (path)
+#            print 'utils.remove_empty_files: ', rm_cmd
             os.system(rm_cmd)
 
 
@@ -39,7 +40,8 @@ def get_most_active_neurons(spike_data, n_cells=None):
         n_spikes[i_] = (spike_data[:, 0] == gid).nonzero()[0].size
     idx = n_spikes.argsort()
     most_active_neuron_gids = gids[idx[-n_cells:]]
-    return most_active_neuron_gids
+    sorted_nspikes = n_spikes[idx[-n_cells:]]
+    return (most_active_neuron_gids, sorted_nspikes)
 
 
 def convert_to_NEST_conform_dict(json_dict):
@@ -113,8 +115,24 @@ def get_min_max_gids_for_bg(params, cell_type):
 
 
 def get_colorlist():
-    colorlist = ['k', 'b', 'r', 'g', 'm', 'c', 'y', '#FF6600', '#CCFF00', \
-            '#808000', '#D35F8D']
+    colorlist = ['k', 'b', 'r', 'g', 'm', 'c', 'y', \
+            '#00FF99', \
+            #light green
+            '#FF6600', \
+                    #orange
+            '#CCFFFF', \
+                    #light turquoise
+            '#FF00FF', \
+                    #light pink
+            '#0099FF', \
+                    #light blue
+            '#CCFF00', \
+                    #yellow-green
+            '#D35F8D', \
+                    #mauve
+            '#808000', \
+                    #brown-green
+                    ]
     return colorlist
 
 def get_linestyles():
@@ -167,9 +185,13 @@ def merge_and_sort_files(merge_pattern, fn_out, sort=True):
     os.system(cmd)
     # sort according to cell id
     if sort:
-        os.system("sort -gk 1 %s > %s" % (tmp_file, fn_out))
+        sort_cmd = "sort -gk 1 %s > %s" % (tmp_file, fn_out)
+#        print 'DEBUG utils.merge_and_sort_files:', sort_cmd
+        os.system(sort_cmd)
     else:
-        os.system('mv %s %s' % (tmp_file, fn_out))
+        mv_cmd = 'mv %s %s' % (tmp_file, fn_out)
+#        print 'DEBUG utils.merge_and_sort_files:', mv_cmd
+        os.system(mv_cmd)
     os.system("rm %s" % (tmp_file))
     print 'utils.merge_and_sort_files output: ', fn_out
 

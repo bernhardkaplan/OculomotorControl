@@ -52,7 +52,20 @@ class BasalGanglia(object):
         self.bg_offset['d1'] = np.infty
         self.bg_offset['d2'] = np.infty
         self.bg_offset['actions'] = np.infty
+        self.create_populations()
+        if self.params['gids_to_record_bg']:
+            self.record_extra_cells()
 
+
+    def record_extra_cells(self):
+
+        self.params['gids_to_record_bg']
+        self.voltmeter_extra = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
+        nest.SetStatus(self.voltmeter_extra,[{"to_file": True, "withtime": True, 'label' : self.params['bg_volt_fn']}])
+        nest.ConvergentConnect(self.voltmeter_extra, self.params['gids_to_record_bg']) # gids_to_record)
+
+
+    def create_populations(self):
         #Creates D1 and D2 populations in STRIATUM, connections are created later
         for nactions in range(self.params['n_actions']):
             self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params=self.params['param_msn_d1'])
@@ -386,7 +399,9 @@ class BasalGanglia(object):
             bias_value = bias_values[gid] * self.params['mpn_bg_bias_amplification']
             action_idx = self.gid_to_action[int(gid)]
             within_subpop_idx = int(gid) - self.bg_offset[cell_type] - action_idx * self.params['num_msn_%s' % cell_type]
-            nest.SetStatus([pop[action_idx][within_subpop_idx]], {'I_e' : bias_value})
+#            nest.SetStatus([pop[action_idx][within_subpop_idx]], {'I_e' : bias_value})
+#            print 'debug', gid, type(gid)
+            nest.SetStatus([int(gid)], {'I_e' : bias_value})
 
 
     def set_gain(self, gain):
