@@ -42,10 +42,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
+        self.params['n_training_cycles'] = 3            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 4 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(10)
+        self.params['test_stim_range'] = range(5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -54,7 +54,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
         self.params['training'] = False
-        #self.params['training'] = True
+#        self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -73,7 +73,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
         self.params['initial_state'] = (.631059, .5, -0.1996527, .0)
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'Show'
+        self.params['sim_id'] = 'Debug'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -145,10 +145,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-        self.params['gids_to_record_mpn'] = [1350, 1134, 2142, 654, 1494, \
-                                            1110, 1662, 1687, 1158, 2238] 
-        self.params['gids_to_record_bg'] = [5497, 5513, 5504, 5524, 5496, \
-                                            5036, 5044, 5027, 5018, 5023]
+        self.params['gids_to_record_mpn'] = [608, 561, 1664, 2360, 2265, 1832, 1544, 344, 1352, 2000, 1472, 8, 1808, 320, 920]
+        self.params['gids_to_record_bg'] = [4934, 4937, 4939, 4929, 4942, 4966, 4985, 4976, 4969, 4974, 5007, 5024, 5025, 5011, 5006]
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
@@ -261,8 +259,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_d1_weight_amplification'] = 3.0
-        self.params['mpn_d2_weight_amplification'] = 30.0
+        self.params['mpn_d1_weight_amplification'] = 1.0
+        self.params['mpn_d2_weight_amplification'] = 50.0
         self.params['mpn_bg_bias_amplification'] = 1.0
 
         ## STR

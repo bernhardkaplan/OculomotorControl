@@ -51,7 +51,7 @@ def check_is_it_d1(fn):
 
 
 
-def plot_conn_list(conn_list_fn, params, clim=None):
+def plot_conn_list(params, conn_list_fn, clim=None):
     if not os.path.exists(conn_list_fn):
         print 'Merging default connection files...'
         merge_pattern = params['mpn_bgd1_conn_fn_base']

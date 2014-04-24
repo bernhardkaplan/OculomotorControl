@@ -157,6 +157,10 @@ def extract_trace(d, gid):
 
 
 def merge_spikes(params):
+
+    merged_spike_fn = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
+    merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], merged_spike_fn)
+
     cell_types = ['d1', 'd2', 'actions']
     MS = MergeSpikefiles.MergeSpikefiles(params)
     for cell_type in cell_types:
@@ -293,12 +297,12 @@ def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
     spiketimes = all_spikes[idx_, time_idx]
     return spiketimes
 
+
 def get_spiketimes_within_interval(spike_data, t0, t1):
     """
     all_spikes: 2-dim array containing all spiketimes
     return those spike times which are between > t0 and <= t1
     """
-
     t0_idx = set((spike_data[:, 1] > t0).nonzero()[0])
     t1_idx = set((spike_data[:, 1] <= t1).nonzero()[0])
     valid_idx = list(t0_idx.intersection(t1_idx))

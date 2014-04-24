@@ -1,7 +1,6 @@
 import os, sys, inspect
 # use this if you want to include modules from a subforder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../")))
-print 'cmd_subfolder', cmd_subfolder
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
@@ -20,21 +19,15 @@ import FigureCreator
 
 class TracePlotter(object):
 
-    def __init__(self, params, it_range=None, cell_type_post=None):
+    def __init__(self, params, cell_type_post=None):
         self.params = params
-        if it_range == None:
-            self.it_range = (0, 1)
-        else:
-            self.it_range = it_range
         if cell_type_post == None:
             self.cell_type_post = 'd1'
         else:
             self.cell_type_post = cell_type_post 
 
-        self.t_range = (self.it_range[0] * self.params['t_iteration'], self.it_range[1] * self.params['t_iteration'])
         self.dt = params['dt']
         self.bcpnn_params = self.params['params_synapse_%s_MT_BG' % self.cell_type_post]
-
 
         
     def load_spikes(self, fn_pre, fn_post):
@@ -43,26 +36,30 @@ class TracePlotter(object):
         print 'TracePlotter loads:', fn_post
         self.post_spikes = np.loadtxt(fn_post)
 
+
+    def select_cells(self, pre_gids=None, post_gids=None, n_pre=1, n_post=1, it_range=None):
+
+        if it_range == None:
+            self.it_range = (0, 1)
+            print 'No it_range given to select_cells, using:', self.it_range
+        else:
+            self.it_range = it_range
+        self.t_range = (self.it_range[0] * self.params['t_iteration'], self.it_range[1] * self.params['t_iteration'])
         self.d_pre = utils.get_spiketimes_within_interval(self.pre_spikes, self.t_range[0], self.t_range[1])
         self.d_post = utils.get_spiketimes_within_interval(self.post_spikes, self.t_range[0], self.t_range[1])
-
-    def select_cells(self, pre_gids=None, post_gids=None, n_pre=1, n_post=1):
-
         print 'Most active neurons during t_range', self.t_range
         if pre_gids == None:
             mpn_gids = np.unique(self.d_pre[:, 0])
             (pre_gids, nspikes) = utils.get_most_active_neurons(self.d_pre, n_pre)
             pre_gids = pre_gids.astype(np.int)
-        print 'Pre_gids (%d most active pre-synaptic neurons)' % (n_pre), list(pre_gids)
-        print 'nspikes:', nspikes
+        print 'Pre_gids (%d most active pre-synaptic neurons)' % (n_pre), list(pre_gids), 'nspikes:', nspikes
 
         if post_gids == None:
 #            print 'DEBUG', self.d_post
             mpn_gids = np.unique(self.d_post[:, 0])
             (post_gids, nspikes) = utils.get_most_active_neurons(self.d_post, n_post)
             post_gids = post_gids.astype(np.int)
-        print 'Post (%d most active post-synaptic neurons)' % (n_post), list(post_gids)
-        print 'nspikes:', nspikes
+        print 'Post (%d most active post-synaptic neurons)' % (n_post), list(post_gids), 'nspikes:', nspikes
         return pre_gids, post_gids
 
 
@@ -72,11 +69,9 @@ class TracePlotter(object):
         for pre_gid in pre_gids:
             idx_pre = (self.d_pre[:, 0] == pre_gid).nonzero()[0]
             st_pre = self.d_pre[idx_pre, 1]
-            print 'pre_gid spiketrain', pre_gid, st_pre
             for post_gid in post_gids:
                 idx_post = (self.d_post[:, 0] == post_gid).nonzero()[0]
                 st_post = self.d_post[idx_post, 1]
-                print 'post_gid spiketrain', post_gid, st_post
                 s_pre = BCPNN.convert_spiketrain_to_trace(st_pre, self.t_range[1])
                 s_post = BCPNN.convert_spiketrain_to_trace(st_post, self.t_range[1])
 
@@ -88,7 +83,7 @@ class TracePlotter(object):
 
 
 
-    def plot_trace(self, bcpnn_traces, output_fn, info_txt=None):
+    def plot_trace(self, bcpnn_traces, output_fn=None, info_txt=None):
         wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
         t_axis = self.dt * np.arange(zi.size)
         plots = []
@@ -172,8 +167,10 @@ class TracePlotter(object):
 #        output_fn = self.params['figures_folder'] + 'traces_dx%.2e_dv%.2e_vstim%.1e_tauzi_%04d_tauzj%04d_taue%d_taup%d.png' % \
 #                (self.dx, self.dv, self.v_stim, self.bcpnn_params['tau_i'], self.bcpnn_params['tau_j'], self.bcpnn_params['tau_e'], self.bcpnn_params['tau_p'])
 
-#        print 'Saving traces to:', output_fn
-#        pylab.savefig(output_fn)
+
+        if output_fn != None:
+            print 'Saving traces to:', output_fn
+            pylab.savefig(output_fn)
 
 
     def get_weights(self, pre_gids, post_gids):
@@ -204,18 +201,18 @@ if __name__ == '__main__':
 #    it_range = (0, 3)
     TP = TracePlotter(params, it_range, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
-    n_pre = 5
-    n_post = 5
+    n_pre = 2
+    n_post = 2
     pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post)
 #    pre_gids = [2238]
 #    pre_gids = [1158]
 #    post_gids = [5023]
 
-#    w = TP.get_weights(pre_gids, post_gids)
-#    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids)
-#    output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
-#    for i_, traces in enumerate(all_traces):
-#        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
-#        info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
-#        TP.plot_trace(traces, output_fn, info_txt=info_txt)
-#    pylab.show()
+    w = TP.get_weights(pre_gids, post_gids)
+    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids)
+    output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
+    for i_, traces in enumerate(all_traces):
+        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
+        info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
+        TP.plot_trace(traces, output_fn, info_txt=info_txt)
+    pylab.show()

@@ -100,7 +100,7 @@ class PlotWeights(object):
 
     def plot_final_weights(self, cell_type, clim=None):
         conn_fn = self.params['mpn_bg%s_merged_conn_fn' % cell_type]
-        conn_mat = PlotCmap.plot_conn_list(conn_list_fn=conn_fn, clim=clim)
+        conn_mat = PlotCmap.plot_conn_list(self.params, conn_list_fn=conn_fn, clim=clim)
         self.conn_mat[cell_type] = conn_mat
         print 'min max weights', conn_mat.min(), conn_mat.max()
 
@@ -174,13 +174,13 @@ def compare_training_and_test(sysargv):
 
 
 
-def plot_final_weights(params):
+def plot_final_weights(params, action_idx):
 
     P = PlotWeights(params)
-    cell_type = 'd2'
-    clim = (-3, 3)
+    cell_type = 'd1'
+    clim = (-5, 5)
     P.plot_final_weights(cell_type, clim=clim)
-    P.get_weights_to_action(14, cell_type)
+    P.get_weights_to_action(action_idx, cell_type)
 
 
 if __name__ == '__main__':
@@ -201,9 +201,10 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    plot_final_weights(params)
-
+    action_idx = 2
+    plot_final_weights(params, action_idx)
     pylab.show()
+
 #    iterations = (0, 2)
 #    for it in xrange(iterations):
 

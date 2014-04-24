@@ -127,5 +127,5 @@ if __name__ == '__main__':
     else:
         output_fn = training_params['figures_folder'] + 'comparison_training_test_xdisplacement.png'
     print 'Saving figure to:', output_fn
-    pylab.savefig(output_fn, dpi=300)
-    pylab.show()
+    pylab.savefig(output_fn, dpi=200)
+#    pylab.show()

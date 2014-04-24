@@ -126,7 +126,7 @@ if __name__ == '__main__':
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
             if pc_id == 0:
-                print 'DEBUG Iteration %d\tstate %d' % (iteration_cnt, state_)
+                print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
             network_states_net[iteration_cnt, :] = state_
 
             #print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
