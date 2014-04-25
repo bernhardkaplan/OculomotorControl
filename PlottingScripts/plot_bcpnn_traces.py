@@ -28,6 +28,8 @@ class TracePlotter(object):
 
         self.dt = params['dt']
         self.bcpnn_params = self.params['params_synapse_%s_MT_BG' % self.cell_type_post]
+        self.d_pre = None   # spike times within a certain interval
+        self.d_post = None
 
         
     def load_spikes(self, fn_pre, fn_post):
@@ -63,7 +65,10 @@ class TracePlotter(object):
         return pre_gids, post_gids
 
 
-    def compute_traces(self, pre_gids, post_gids):
+    def compute_traces(self, pre_gids, post_gids, it_range):
+        self.t_range = (it_range[0] * self.params['t_iteration'], it_range[1] * self.params['t_iteration'])
+        self.d_pre = utils.get_spiketimes_within_interval(self.pre_spikes, self.t_range[0], self.t_range[1])
+        self.d_post = utils.get_spiketimes_within_interval(self.post_spikes, self.t_range[0], self.t_range[1])
         bcpnn_traces = []
         gid_pairs = []
         for pre_gid in pre_gids:
@@ -209,7 +214,7 @@ if __name__ == '__main__':
 #    post_gids = [5023]
 
     w = TP.get_weights(pre_gids, post_gids)
-    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids)
+    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, it_range)
     output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
     for i_, traces in enumerate(all_traces):
         output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])

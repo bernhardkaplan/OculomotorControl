@@ -41,15 +41,14 @@ if __name__ == '__main__':
         print "MPI not used"
 
 #    USE_MPI = False
-#    training_folder = 'Training_Cluster_taup45000_nStim200_nExcMpn2400_nStates20_nActions21_it15-45000_wMPN-BG1.50_bias10.00/'
-#    training_folder = 'Training__taup150000_nStim2000_it15-300000_wD14.0_wD210.0_bias1.00_K1.00/'
-    training_folder = 'Training_DebugM_taup2500_nStim25_it20-5000_wD13.0_wD230.0_bias1.00_K1.00/'
+    training_folder = 'Training_Debug_taup5000_nStim5x10_it20-10000_wD13.0_wD230.0_bias1.00_K1.00'
 
     ps = simulation_parameters.global_parameters()
 #    param_range_1 = [0.5]
 #    param_range_2 = [0.5]
-    param_range_1 = np.arange(0.2, 1.0, 0.2)
-    param_range_2 = np.arange(60, 100, 10)
+    param_range_1 = np.arange(.75, 2.0, 0.25)
+#    param_range_2 = np.arange(50, 100, 10)
+    param_range_2 = np.arange(50)
 #    param_range_2 = [0.5, 1., 2., 5., 10.]
 
     param_name_1 = 'mpn_d1_weight_amplification'

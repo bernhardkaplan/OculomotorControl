@@ -17,8 +17,7 @@ import simulation_parameters
 import FigureCreator
 pylab.rcParams.update(FigureCreator.plot_params_portrait)
 
-
-class Plotter(object):
+class VoltPlotter(object):
 
     def __init__(self, params, it_range=None):
         self.params = params
@@ -33,7 +32,7 @@ class Plotter(object):
         self.n_fig_y = 1
         self.color_cnt = 0
         self.colorlist = utils.get_colorlist()
-        self.create_fig()
+#        self.create_fig()
 
     def get_filename_base(self, gid):
         # get the population from the gid
@@ -74,6 +73,7 @@ class Plotter(object):
             print 'plot_voltages loads', path
             self.loaded_files[fn] = np.loadtxt(path)
         return self.loaded_files[fn]
+
 
     def get_trace(self, gid, fn_base=None):
         if fn_base == None:
@@ -130,9 +130,10 @@ if __name__ == '__main__':
         params = param_tool.params
 
     it_range = (0, 3)
-    P = Plotter(params, it_range)
+    P = VoltPlotter(params, it_range)
     P.n_fig_x = 1
     P.n_fig_y = 2
+    P.create_fig()
 
     bg_gids = params['gids_to_record_bg']
     mpn_gids = params['gids_to_record_mpn']

@@ -42,8 +42,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['n_training_cycles'] = 3            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 4 # number of different stimuli within one training cycle
+        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['test_stim_range'] = range(5)
         if len(self.params['test_stim_range']) > 1:
@@ -53,8 +53,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['t_iteration'] = 20.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = False
-#        self.params['training'] = True
+#        self.params['training'] = False
+        self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -73,7 +73,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
         self.params['initial_state'] = (.631059, .5, -0.1996527, .0)
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'Debug'
+        self.params['sim_id'] = 'HigherRes'
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -98,7 +98,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ###################
         self.params['n_grid_dimensions'] = 1     # decide on the spatial layout of the network
 
-        self.params['n_rf'] = 100
+        self.params['n_rf'] = 300
         if self.params['n_grid_dimensions'] == 2:
             self.params['n_rf_x'] = np.int(np.sqrt(self.params['n_rf'] * np.sqrt(3)))
             self.params['n_rf_y'] = np.int(np.sqrt(self.params['n_rf'])) 
@@ -145,8 +145,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-        self.params['gids_to_record_mpn'] = [608, 561, 1664, 2360, 2265, 1832, 1544, 344, 1352, 2000, 1472, 8, 1808, 320, 920]
-        self.params['gids_to_record_bg'] = [4934, 4937, 4939, 4929, 4942, 4966, 4985, 4976, 4969, 4974, 5007, 5024, 5025, 5011, 5006]
+        self.params['gids_to_record_mpn'] = [1433, 1409, 2153, 857, 1793, 1337, 1529, 2802, 1817, 2777, 2609, 1337, 1409, 1697, 1769, 1817, 2969, 2801, 1433, 3497, 569, 2033, 65, 1049, 786, 833, 1289, 2945, 1913, 3473, 1625, 1913, 1577, 1049, 689, 2129, 3473, 2033, 833, 569, 2129, 3473, 1073, 833, 1913, 1049, 689, 569, 2033, 1577, 1625, 1577, 1049, 689, 3473, 2033, 1913, 833, 569, 2129, 1625, 3473, 1577, 1049, 833, 2129, 569, 689, 1913, 2033, 1625, 1913, 1049, 3041, 2033, 2129, 833, 689, 569, 1577, 3041, 833, 689, 1049, 1913, 2033, 2129, 569, 1577, 1625, 2945, 3041, 3256, 689, 833, 1049, 1073, 1913, 2033, 3473]
+        self.params['gids_to_record_bg'] = [7380, 7379, 7378, 7377, 7376, 7375, 7382, 7393, 7387, 7390, 7732, 7721, 7720, 7718, 7714, 7723, 7727, 7728, 7719, 7724, 7682, 7681, 7677, 7685, 7687, 7680, 7678, 7693, 7675, 7684, 7640, 7639, 7637, 7635, 7646, 7649, 7650, 7636, 7644, 7634, 7672, 7659, 7657, 7656, 7654, 7663, 7673, 7660, 7658, 7655, 7657, 7656, 7655, 7662, 7672, 7666, 7669, 7670, 7660, 7654, 7667, 7663, 7661, 7659, 7658, 7656, 7655, 7662, 7673, 7657, 7641, 7640, 7639, 7638, 7637, 7635, 7648, 7647, 7651, 7636, 7672, 7659, 7657, 7656, 7655, 7654, 7673, 7658, 7667, 7662, 7580, 7579, 7578, 7576, 7575, 7584, 7593, 7577, 7585, 7574]
+#        self.params['gids_to_record_mpn'] = [1351, 1591, 1806, 343, 1615, 223, 582, 2047, 1302, 2286, 630, 55, 151, 1902, 1519, 1182, 534, 1854, 151, 822]
+#        self.params['gids_to_record_bg'] = [4953, 4956, 4960, 4963, 4946, 4988, 4987, 4986, 5004, 4994, 5065, 5057, 5050, 5062, 5047, 5028, 5027, 5036, 5037, 5044]
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
@@ -157,7 +159,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['v_max_out'] = 20.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = .1, .1
+        self.params['blur_X'], self.params['blur_V'] = .05, .05
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -165,14 +167,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # receptive field sizes are determined by their relative position (for x/y relative to .5, for u/v relative to 0.)
         # rf_size = rf_size_gradient * |relative_rf_pos| + min_rf_size
         # check for reference: Dow 1981 "Magnification Factor and Receptive Field Size in Foveal Striate Cortex of the Monkey"
-        self.params['rf_size_x_gradient'] = .2  # receptive field size for x-pos increases with distance to .5
-        self.params['rf_size_y_gradient'] = .2  # receptive field size for y-pos increases with distance to .5
-        self.params['rf_size_x_min'] = .02      # cells situated at .5 have this receptive field size
-        self.params['rf_size_y_min'] = .02      # cells situated at .5 have this receptive field size
-        self.params['rf_size_vx_gradient'] = .2 # receptive field size for vx-pos increases with distance to 0.0
-        self.params['rf_size_vy_gradient'] = .2 #
-        self.params['rf_size_vx_min'] = .02 # cells situated at .5 have this receptive field size
-        self.params['rf_size_vy_min'] = .02 # cells situated at .5 have this receptive field size
+        self.params['rf_size_x_gradient'] = .1  # receptive field size for x-pos increases with distance to .5
+        self.params['rf_size_y_gradient'] = .1  # receptive field size for y-pos increases with distance to .5
+        self.params['rf_size_x_min'] = .01      # cells situated at .5 have this receptive field size
+        self.params['rf_size_y_min'] = .01      # cells situated at .5 have this receptive field size
+        self.params['rf_size_vx_gradient'] = .1 # receptive field size for vx-pos increases with distance to 0.0
+        self.params['rf_size_vy_gradient'] = .1 #
+        self.params['rf_size_vx_min'] = .01 # cells situated at .5 have this receptive field size
+        self.params['rf_size_vy_min'] = .01 # cells situated at .5 have this receptive field size
 
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
         self.params['supervisor_amp_param'] = 1.
@@ -496,8 +498,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
 
-            folder_name += '_nStim%d_it%d-%d_wD1%.1f_wD2%.1f_bias%.2f_K%.2f/' % \
-                    (self.params['n_stim_training'], self.params['t_iteration'], self.params['t_sim'], \
+            folder_name += '_nStim%dx%d_it%d-%d_wD1%.1f_wD2%.1f_bias%.2f_K%.2f/' % \
+                    (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], self.params['t_sim'], \
                     self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], \
                     self.params['mpn_bg_bias_amplification'], self.params['kappa'])
 

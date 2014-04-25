@@ -208,6 +208,7 @@ def find_files(folder, to_match):
     to_match -- a string (regular expression) to match all files in folder
 
     """
+    assert (to_match != None), 'utils.find_files got invalid argument'
     list_of_files = []
     for fn in os.listdir(folder):
         m = re.match(to_match, fn)

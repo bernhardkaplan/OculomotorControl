@@ -55,15 +55,16 @@ class FigureCreator(object):
         """
         Here, the standard parameters for a figure are set.
         """
-
         fig_width_pt = 800.0  
         pylab.rcParams.update(plot_params)
+
 
     def create_fig(self):
 #        print "plotting ...."
 #        self.n_fig_x = 1
 #        self.n_fig_y = 1
         self.fig = pylab.figure(figsize=self.fig_size)
+        return self.fig
 
 
     
