@@ -65,7 +65,7 @@ class DebugTraces(object):
         self.VP[key_string] = VoltPlotter(params, it_range)
 
 
-    def plot_spikes(self, params, gids, it_range, ax, color='k'):
+    def plot_spikes_raster(self, params, gids, it_range, ax, color='k'):
 
         # plot the pre-synaptic spike train
         fn_pre_spikes = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
@@ -223,9 +223,9 @@ if __name__ == '__main__':
     ax1_training = fig_test.add_subplot(111)
     for it in xrange(it_range_global[0], it_range_global[1]):
         pre_gids = most_active_pre_gids[it]
-        DB.plot_spikes(training_params, pre_gids, it_range_global, ax1_training, color=colorlist[it])
+        DB.plot_spikes_raster(training_params, pre_gids, it_range_global, ax1_training, color=colorlist[it])
         post_gids = most_active_post_gids[it]
-        DB.plot_spikes(training_params, post_gids, it_range_global, ax1_training, color=colorlist[it])
+        DB.plot_spikes_raster(training_params, post_gids, it_range_global, ax1_training, color=colorlist[it])
     DB.plot_iteration_borders(training_params, ax1_training, it_range_global)
     ylim = ax1_training.get_ylim()
     for it in xrange(it_range_global[0], it_range_global[1]):
@@ -253,7 +253,7 @@ if __name__ == '__main__':
     post_gids = [most_active_post_gids[plot_bcpnn_iteration][:n_post]]
     all_bcpnn_traces, gid_pairs = TP_training.compute_traces(pre_gids, post_gids, it_range_bcpnn)
 
-#    DB.plot_spikes(training_params, pre_gids, it_range_bcpnn, ax_spikes, color=colorlist[it])
+#    DB.plot_spikes_raster(training_params, pre_gids, it_range_bcpnn, ax_spikes, color=colorlist[it])
 #    DB.plot_wij_for_iteration
 
     for i_ in xrange(len(all_bcpnn_traces)):
@@ -271,9 +271,9 @@ if __name__ == '__main__':
 #    ax1_testing = fig_test.add_subplot(211)
 #    for it in xrange(it_range_global[0], it_range_global[1]):
 #        pre_gids = most_active_pre_gids[it]
-#        DB.plot_spikes(testing_params, pre_gids, it_range_global, ax1_testing, color=colorlist[it])
+#        DB.plot_spikes_raster(testing_params, pre_gids, it_range_global, ax1_testing, color=colorlist[it])
 #        post_gids = most_active_post_gids[it]
-#        DB.plot_spikes(testing_params, post_gids, it_range_global, ax1_testing, color=colorlist[it])
+#        DB.plot_spikes_raster(testing_params, post_gids, it_range_global, ax1_testing, color=colorlist[it])
 #    DB.plot_iteration_borders(testing_params, ax1_testing, it_range_global)
 #    ylim = ax1_testing.get_ylim()
 #    for it in xrange(it_range_global[0], it_range_global[1]):

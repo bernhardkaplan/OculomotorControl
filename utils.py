@@ -146,6 +146,7 @@ def get_plus_minus(rnd):
     """
     return (rnd.randint(-1, 1) + .5) * 2
 
+
 def extract_trace(d, gid):
     """
     d : voltage trace from a saved with compatible_output=False
@@ -154,6 +155,50 @@ def extract_trace(d, gid):
     indices = (d[:, 0] == gid).nonzero()[0]
     time_axis, volt = d[indices, 1], d[indices, 2]
     return time_axis, volt
+
+
+def get_spikes(spiketimes_fn_merged, n_cells=0, get_spiketrains=False, gid_idx=0, NEST=True):
+    """
+    Returns an array with the number of spikes fired by each cell and optionally the spike train.
+    nspikes[gid] 
+    -- The return values (nspikes, spiketrains) are both 0 aligned
+    if NEST:
+        gids are +1 
+
+    if n_cells is not given, the length of the array will be the highest gid (not advised!)
+    gid_idx = 0 for NEST
+    gid_idx = 1 for PyNN
+    """
+    time_idx = int(not(gid_idx))
+    d = np.loadtxt(spiketimes_fn_merged)
+    if (n_cells == 0):
+        n_cells = 1 + int(np.max(d[:, gid_idx]))# highest gid
+    nspikes = np.zeros(n_cells)
+    spiketrains = [[] for i in xrange(n_cells)]
+    if (d.size == 0):
+        if get_spiketrains:
+            return nspikes, spiketrains
+        else:
+            return spiketrains
+    # seperate spike trains for all the cells
+    if d.shape == (2,):
+        gid = d[gid_idx]
+        nspikes[int(gid)] = 1
+        spiketrains[int(gid)] = [d[time_idx]]
+    else:
+        if NEST:
+            gid_mod = 1
+        else:
+            gid_mod = 0
+        for gid in xrange(n_cells):
+            idx = d[:, gid_idx] == gid + gid_mod
+            spiketrains[gid] = d[idx, time_idx]
+            nspikes[gid] = d[idx, time_idx].size
+
+    if get_spiketrains:
+        return nspikes, spiketrains
+    else:
+        return nspikes
 
 
 def merge_spikes(params):

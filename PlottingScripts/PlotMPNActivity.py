@@ -26,23 +26,32 @@ class ActivityPlotter(object):
         else:
             self.it_max = it_max
 
-        self.n_bins_x = 30
-        self.n_x_ticks = 10
-        self.x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
+        self.n_bins_y = 200
+        self.n_y_ticks = 10
+        self.y_ticks = np.linspace(0, self.n_bins_y, self.n_y_ticks)
         self.load_tuning_prop()
+        self.n_cells = self.params['n_exc_mpn']
+        self.spiketrains = [[] for i in xrange(self.n_cells)]
+
 
     def load_tuning_prop(self):
         print 'ActivityPlotter.load_tuning_prop ...'
         self.tuning_prop_exc = np.loadtxt(self.params['tuning_prop_exc_fn'])
         self.tuning_prop_inh = np.loadtxt(self.params['tuning_prop_inh_fn'])
+        vmin, vmax = np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])
+        self.y_grid_x = np.linspace(0, 1, self.n_bins_y, endpoint=False)
+        self.y_grid_vx = np.linspace(vmin, vmax, self.n_bins_y, endpoint=False)
+        self.gid_to_posgrid_mapping_x = utils.get_grid_index_mapping(self.tuning_prop_exc[:, 0], self.y_grid_x)
+        self.gid_to_posgrid_mapping_vx = utils.get_grid_index_mapping(self.tuning_prop_exc[:, 2], self.y_grid_vx)
 
-        self.x_grid = np.linspace(0, 1, self.n_bins_x, endpoint=False)
-        self.gid_to_posgrid_mapping = utils.get_grid_index_mapping(self.tuning_prop_exc[:, 0], self.x_grid)
 
 
-
-    def plot_input(self):
-        d = np.zeros((self.it_max, self.x_grid.size)) #self.x_grid.size, self.it_max))
+    def plot_input(self, v_or_x='x'):
+        if v_or_x == 'x':
+            y_grid = self.y_grid_x
+        else:
+            y_grid = self.y_grid_vx
+        d = np.zeros((y_grid.size, self.it_max)) 
 
         for iteration in xrange(self.it_max):
             print 'Plot input iteration', iteration
@@ -57,8 +66,9 @@ class ActivityPlotter(object):
                 for i_gid in xrange(d_it[:, 0].size):
                     gid = d_it[i_gid, 0]
                     # map the gids to their position in the xgrid
-                    xpos = self.gid_to_posgrid_mapping[gid, 1]
-                    d[iteration, xpos] += d_it[i_gid, 1]
+#                    ypos = self.gid_to_posgrid_mapping_vx[gid, 1]
+                    ypos = self.gid_to_posgrid_mapping_x[gid, 1]
+                    d[xpos, iteration] += d_it[i_gid, 1]
 #                    if d_it[i_gid, 1] > 0:
 #                        print 'gid %d xpos %d nspikes_input %d' % (gid, xpos, d_it[i_gid, 1])
                     
@@ -73,17 +83,19 @@ class ActivityPlotter(object):
         else:
             testtraining = 'testing'
 
-        ax.set_title('Input spikes during %s' % testtraining)
+
+        ax.set_title('Input spikes during %s clustered by x-pos' % testtraining)
         ax.set_ylim((0, d.shape[0]))
         ax.set_xlim((0, d.shape[1]))
-        ax.set_ylabel('Iteration')
-        ax.set_xlabel('x-pos')
+        ax.set_xlabel('Iteration')
+        ax.set_ylabel('x-pos')
         cbar = pylab.colorbar(cax)
-        cbar.set_label('Input rate [Hz]')
+        cbar.set_label('Output rate [Hz]')
 
-        xlabels = ['%.1f' % (float(xtick) / self.n_bins_x) for xtick in self.x_ticks]
-        ax.set_xticks(self.x_ticks)
-        ax.set_xticklabels(xlabels)
+        ylabels = ['%.1f' % (float(xtick) / self.n_bins_y) for xtick in self.x_ticks]
+        ax.set_yticks(self.y_ticks)
+        ax.set_yticklabels(ylabels)
+
         output_fn = self.params['data_folder'] + 'mpn_input_activity.dat'
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
@@ -91,15 +103,6 @@ class ActivityPlotter(object):
         output_fig = self.params['figures_folder'] + 'mpn_input_activity.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
-
-    
-#    def get_nspikes(self, merged_spike_fn):
-#        d = np.loadtxt(merged_spike_fn)
-#        nspikes = np.zeros(self.params['n_exc_mpn'])
-#        for gid in xrange(1, self.params['n_exc_mpn'] + 1):
-#            idx = (d[:, 0] == gid).nonzero()[0]
-#            nspikes[gid - 1] = idx.size
-#        return nspikes
 
 
     def get_nspikes_interval(self, d, t0, t1):
@@ -116,47 +119,89 @@ class ActivityPlotter(object):
         return nspikes
 
 
-    def plot_output(self):
+    def bin_spiketimes(self):
         merged_spike_fn = self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn_merged']
-        utils.merge_and_sort_files(self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn'], merged_spike_fn)
-        spike_data = np.loadtxt(merged_spike_fn)
-        d = np.zeros((self.it_max, self.x_grid.size)) #self.x_grid.size, self.it_max))
-        nspikes_thresh = 1
-        for iteration in xrange(self.it_max):
+        if not os.path.exists(merged_spike_fn):
+            utils.merge_and_sort_files(self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn'], merged_spike_fn)
+        self.nspikes, self.spiketrains = utils.get_spikes(merged_spike_fn, n_cells=self.n_cells, get_spiketrains=True, gid_idx=0)
+
+        n_bins_time = self.params['n_iterations']
+        print 'debug n_bins_time', n_bins_time
+        self.nspikes_binned = np.zeros((self.n_cells, n_bins_time)) # binned activity over time
+        for gid in xrange(self.n_cells):
+            nspikes = len(self.spiketrains[gid])
+            if (nspikes > 0):
+                count, bins = np.histogram(self.spiketrains[gid], bins=n_bins_time, range=(0, self.params['t_sim']))
+                self.nspikes_binned[gid, :] = count
+
+
+    def plot_output(self, stim_range=(0, 1), v_or_x='x'):
+        
+        # adjust for VX  /  X - plotting and training, testing
+        if self.params['training']:
+            testtraining = 'training'
+        else:
+            testtraining = 'testing'
+        if v_or_x == 'x':
+            y_grid = self.y_grid_x
+            gid_to_posgrid_mapping = self.gid_to_posgrid_mapping_x
+            title = 'Output spikes during %s binned & sorted by x-pos' % testtraining
+            ylabel = '$x_{preferred}$'
+        elif v_or_x == 'v':
+            y_grid = self.y_grid_vx
+            gid_to_posgrid_mapping = self.gid_to_posgrid_mapping_vx
+            title = 'Output spikes during %s binned & sorted by $v_x$' % testtraining
+            ylabel = '$v_x$'
+        else: # use the gid as index
+            y_grid = np.arange(self.n_cells, dtype=np.int)
+            gid_to_posgrid_mapping = np.zeros((self.n_cells, 2))
+            gid_to_posgrid_mapping[:, 0] = np.arange(self.n_cells, dtype=np.int)
+            gid_to_posgrid_mapping[:, 1] = gid_to_posgrid_mapping[:, 0]
+            title = 'Output spikes during %s' % testtraining
+            ylabel = 'GID'
+
+        n_iter = self.params['n_iterations_per_stim'] * stim_range[1] - stim_range[0]
+        iter_range = (self.params['n_iterations_per_stim'] * stim_range[0], self.params['n_iterations_per_stim'] * stim_range[1])
+
+        d = np.zeros((y_grid.size, n_iter))
+        nspikes_thresh = 0
+        for iteration in xrange(iter_range[0], iter_range[1]):
             print 'Plot output iteration', iteration
-            cells_per_grid_cell = np.zeros(self.x_grid.size) # how many cells have been above a threshold activity during this iteration
-            t0, t1 = iteration * self.params['t_iteration'], (iteration + 1) * self.params['t_iteration']
-            nspikes = self.get_nspikes_interval(spike_data, t0, t1) 
+            cells_per_grid_cell = np.zeros(y_grid.size) # how many cells have been above a threshold activity during this iteration
             for gid in xrange(self.params['n_exc_mpn']):
-                xpos = self.gid_to_posgrid_mapping[gid, 1]
-                d[iteration, xpos] += nspikes[gid]
-                if nspikes[gid] > nspikes_thresh:
-                    cells_per_grid_cell[xpos] += 1
-            for grid_idx in xrange(self.x_grid.size):
+                ypos = gid_to_posgrid_mapping[gid, 1]
+                d[ypos, iteration] += self.nspikes_binned[gid, iteration]
+
+                if self.nspikes[gid] > nspikes_thresh:
+                    cells_per_grid_cell[ypos] += 1
+            for grid_idx in xrange(y_grid.size):
                 if cells_per_grid_cell[grid_idx] > 0:
-                    d[iteration, grid_idx] /= cells_per_grid_cell[grid_idx]
+                    d[grid_idx, iteration] /= cells_per_grid_cell[grid_idx]
 
         d /= self.params['t_iteration'] / 1000.
         fig = pylab.figure()
         ax = fig.add_subplot(111)
         cax = ax.pcolormesh(d)#, cmap='binary')
 
-        if self.params['training']:
-            testtraining = 'training'
-        else:
-            testtraining = 'testing'
-
-        ax.set_title('Output spikes during %s clustered by x-pos' % testtraining)
+        ax.set_title(title)
         ax.set_ylim((0, d.shape[0]))
         ax.set_xlim((0, d.shape[1]))
-        ax.set_ylabel('Iteration')
-        ax.set_xlabel('x-pos')
+        ax.set_xlabel('Iteration')
+        ax.set_ylabel(ylabel)
         cbar = pylab.colorbar(cax)
         cbar.set_label('Output rate [Hz]')
 
-        xlabels = ['%.1f' % (float(xtick) / self.n_bins_x) for xtick in self.x_ticks]
-        ax.set_xticks(self.x_ticks)
-        ax.set_xticklabels(xlabels)
+        if v_or_x == 'x':
+            ylabels = ['%.1f' % (float(xtick) / self.n_bins_y) for xtick in self.y_ticks]
+            ax.set_yticks(self.y_ticks)
+            ax.set_yticklabels(ylabels)
+
+        if v_or_x == 'v':
+            vmin, vmax = np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])
+            ylabels = ['%.1f' % (float(xtick) * (vmax - vmin) / self.n_bins_y + vmin) for xtick in self.y_ticks]
+            ax.set_yticks(self.y_ticks)
+            ax.set_yticklabels(ylabels)
+
         output_fn = self.params['data_folder'] + 'mpn_output_activity.dat'
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
@@ -298,7 +343,6 @@ class ActivityPlotter(object):
             fig = pylab.figure()
             ax = fig.add_subplot(111)
             ax.set_title(title)
-
             print ' DEBUG None '
         tp = self.tuning_prop_exc
         tp_idx_sorted = tp[:, sort_idx].argsort() # + 1 because nest indexing
@@ -417,7 +461,7 @@ class MetaAnalysisClass(object):
 #        fig.savefig(output_fn)
 
 #        Plotter.plot_input()
-#        Plotter.plot_output()
+        Plotter.plot_output()
 
         if stim_range != None:
             t_range = [0, 0]
@@ -464,7 +508,7 @@ class MetaAnalysisClass(object):
         for i_, folder in enumerate(folders):
             params = utils.load_params(folder)
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
-#            self.run_single_folder_analysis(params, stim_range)
+            self.run_single_folder_analysis(params, stim_range)
             all_data[i_, :] = y_data
 
         no_plot_idx = [(i + 1) * params['n_iterations_per_stim'] - 2 for i in xrange(params['n_stim'])]
