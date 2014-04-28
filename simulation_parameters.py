@@ -73,7 +73,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
         self.params['initial_state'] = (.631059, .5, -0.1996527, .0)
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'HigherRes'
+        self.params['n_rf'] = 400
+        self.params['sim_id'] = 'nRF%d' % (self.params['n_rf'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -98,7 +99,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ###################
         self.params['n_grid_dimensions'] = 1     # decide on the spatial layout of the network
 
-        self.params['n_rf'] = 300
         if self.params['n_grid_dimensions'] == 2:
             self.params['n_rf_x'] = np.int(np.sqrt(self.params['n_rf'] * np.sqrt(3)))
             self.params['n_rf_y'] = np.int(np.sqrt(self.params['n_rf'])) 
@@ -145,8 +145,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-        self.params['gids_to_record_mpn'] = [1433, 1409, 2153, 857, 1793, 1337, 1529, 2802, 1817, 2777, 2609, 1337, 1409, 1697, 1769, 1817, 2969, 2801, 1433, 3497, 569, 2033, 65, 1049, 786, 833, 1289, 2945, 1913, 3473, 1625, 1913, 1577, 1049, 689, 2129, 3473, 2033, 833, 569, 2129, 3473, 1073, 833, 1913, 1049, 689, 569, 2033, 1577, 1625, 1577, 1049, 689, 3473, 2033, 1913, 833, 569, 2129, 1625, 3473, 1577, 1049, 833, 2129, 569, 689, 1913, 2033, 1625, 1913, 1049, 3041, 2033, 2129, 833, 689, 569, 1577, 3041, 833, 689, 1049, 1913, 2033, 2129, 569, 1577, 1625, 2945, 3041, 3256, 689, 833, 1049, 1073, 1913, 2033, 3473]
-        self.params['gids_to_record_bg'] = [7380, 7379, 7378, 7377, 7376, 7375, 7382, 7393, 7387, 7390, 7732, 7721, 7720, 7718, 7714, 7723, 7727, 7728, 7719, 7724, 7682, 7681, 7677, 7685, 7687, 7680, 7678, 7693, 7675, 7684, 7640, 7639, 7637, 7635, 7646, 7649, 7650, 7636, 7644, 7634, 7672, 7659, 7657, 7656, 7654, 7663, 7673, 7660, 7658, 7655, 7657, 7656, 7655, 7662, 7672, 7666, 7669, 7670, 7660, 7654, 7667, 7663, 7661, 7659, 7658, 7656, 7655, 7662, 7673, 7657, 7641, 7640, 7639, 7638, 7637, 7635, 7648, 7647, 7651, 7636, 7672, 7659, 7657, 7656, 7655, 7654, 7673, 7658, 7667, 7662, 7580, 7579, 7578, 7576, 7575, 7584, 7593, 7577, 7585, 7574]
+        self.params['gids_to_record_mpn'] = list(np.unique([1433, 1409, 2153, 857, 1793, 1337, 1529, 2802, 1817, 2777, 2609, 1337, 1409, 1697, 1769, 1817, 2969, 2801, 1433, 3497, 569, 2033, 65, 1049, 786, 833, 1289, 2945, 1913, 3473, 1625, 1913, 1577, 1049, 689, 2129, 3473, 2033, 833, 569, 2129, 3473, 1073, 833, 1913, 1049, 689, 569, 2033, 1577, 1625, 1577, 1049, 689, 3473, 2033, 1913, 833, 569, 2129, 1625, 3473, 1577, 1049, 833, 2129, 569, 689, 1913, 2033, 1625, 1913, 1049, 3041, 2033, 2129, 833, 689, 569, 1577, 3041, 833, 689, 1049, 1913, 2033, 2129, 569, 1577, 1625, 2945, 3041, 3256, 689, 833, 1049, 1073, 1913, 2033, 3473]))
+        self.params['gids_to_record_bg'] = list(np.unique([7380, 7379, 7378, 7377, 7376, 7375, 7382, 7393, 7387, 7390, 7732, 7721, 7720, 7718, 7714, 7723, 7727, 7728, 7719, 7724, 7682, 7681, 7677, 7685, 7687, 7680, 7678, 7693, 7675, 7684, 7640, 7639, 7637, 7635, 7646, 7649, 7650, 7636, 7644, 7634, 7672, 7659, 7657, 7656, 7654, 7663, 7673, 7660, 7658, 7655, 7657, 7656, 7655, 7662, 7672, 7666, 7669, 7670, 7660, 7654, 7667, 7663, 7661, 7659, 7658, 7656, 7655, 7662, 7673, 7657, 7641, 7640, 7639, 7638, 7637, 7635, 7648, 7647, 7651, 7636, 7672, 7659, 7657, 7656, 7655, 7654, 7673, 7658, 7667, 7662, 7580, 7579, 7578, 7576, 7575, 7584, 7593, 7577, 7585, 7574]))
 #        self.params['gids_to_record_mpn'] = [1351, 1591, 1806, 343, 1615, 223, 582, 2047, 1302, 2286, 630, 55, 151, 1902, 1519, 1182, 534, 1854, 151, 822]
 #        self.params['gids_to_record_bg'] = [4953, 4956, 4960, 4963, 4946, 4988, 4987, 4986, 5004, 4994, 5065, 5057, 5050, 5062, 5047, 5028, 5027, 5036, 5037, 5044]
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
