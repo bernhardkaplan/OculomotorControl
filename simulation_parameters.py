@@ -53,8 +53,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['t_iteration'] = 20.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-#        self.params['training'] = False
-        self.params['training'] = True
+        self.params['training'] = False
+#        self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -74,6 +74,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['initial_state'] = (.631059, .5, -0.1996527, .0)
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
         self.params['sim_id'] = 'Toy'
+        self.params['n_rf'] = 100
+#        self.params['sim_id'] = 'nRF%d' % (self.params['n_rf'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -98,7 +100,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ###################
         self.params['n_grid_dimensions'] = 1     # decide on the spatial layout of the network
 
-        self.params['n_rf'] = 100
         if self.params['n_grid_dimensions'] == 2:
             self.params['n_rf_x'] = np.int(np.sqrt(self.params['n_rf'] * np.sqrt(3)))
             self.params['n_rf_y'] = np.int(np.sqrt(self.params['n_rf'])) 
