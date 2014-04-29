@@ -40,15 +40,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 8
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
+        self.params['total_num_virtual_procs'] = 480
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 480
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
+        self.params['n_training_cycles'] = 10            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 10 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(1)
+        self.params['test_stim_range'] = range(10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -57,7 +57,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
         self.params['training'] = False
-#        self.params['training'] = True
+        #self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
 
         if self.params['training']:
@@ -72,11 +72,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # the first stimulus parameters
         self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-
-        self.params['weight_threshold'] = 1.0
-        self.params['sim_id'] = 'ToyWT%.2f' % (self.params['weight_threshold'])
-        self.params['n_rf'] = 100
-#        self.params['sim_id'] = 'nRF%d' % (self.params['n_rf'])
+        self.params['n_rf'] = 500
+        self.params['sim_id'] = 'nRF%d' % (self.params['n_rf'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -242,8 +239,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['record_bg_volt'] = True
         self.params['bg_cell_types'] = ['d1', 'd2', 'actions', 'recorder']
-        self.params['n_actions'] = 5
-        self.params['n_states'] = 4
+        self.params['n_actions'] = 21
+        self.params['n_states'] = 20
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.05
 
@@ -268,6 +265,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
+        self.params['weight_threshold'] = 0.05
         self.params['mpn_d1_weight_amplification'] = 5.0
         self.params['mpn_d2_weight_amplification'] = 5.0
         self.params['mpn_bg_bias_amplification'] = 5.00
