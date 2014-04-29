@@ -4,13 +4,12 @@ import utils
 
 class VisualInput(object):
 
-    def __init__(self, params, pc_id=0, visual_stim_seed=None):
+    def __init__(self, params, comm=None, visual_stim_seed=None):
         """
         Keyword arguments
         params -- dictionary that contains 
         """
         self.params = params
-        self.pc_id = pc_id
         self.trajectories = []
         self.t_axis = np.arange(0, self.params['t_iteration'], self.params['dt'])
         self.iteration = 0
@@ -24,11 +23,23 @@ class VisualInput(object):
         self.tuning_prop_exc = self.set_tuning_prop('exc')
         self.tuning_prop_inh = self.set_tuning_prop('inh')
         self.rf_sizes = self.set_receptive_fields('exc')
-        print 'Saving tuning properties exc to:', self.params['tuning_prop_exc_fn']
-        print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
-        np.savetxt(self.params['tuning_prop_exc_fn'], self.tuning_prop_exc)
-        np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
-        np.savetxt(self.params['receptive_fields_exc_fn'], self.rf_sizes)
+        self.comm = comm
+        if self.comm != None:
+            self.pc_id = comm.rank
+            self.n_proc = comm.size
+        else:
+            self.pc_id = 0
+            self.n_proc = 1
+
+        if self.pc_id == 0:
+            print 'Saving tuning properties exc to:', self.params['tuning_prop_exc_fn']
+            print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
+            np.savetxt(self.params['tuning_prop_exc_fn'], self.tuning_prop_exc)
+            np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
+            np.savetxt(self.params['receptive_fields_exc_fn'], self.rf_sizes)
+        if self.comm != None:
+            self.comm.Barrier()
+
 
         self.current_motion_params = list(self.params['initial_state'])
         # store the motion parameters seen on the retina

@@ -73,7 +73,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # the first stimulus parameters
         self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
 
-        self.params['weight_threshold'] = 1.0
+        self.params['weight_threshold'] = .05
         self.params['sim_id'] = 'ToyWT%.2f' % (self.params['weight_threshold'])
         self.params['n_rf'] = 100
 #        self.params['sim_id'] = 'nRF%d' % (self.params['n_rf'])

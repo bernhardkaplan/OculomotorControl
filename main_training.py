@@ -60,7 +60,7 @@ if __name__ == '__main__':
         if pc_id == 0:
             GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
         if comm != None:
-            comm.barrier()
+            comm.Barrier()
         params = GP.params
 
     if not params['training']:
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
 
-    VI = VisualInput.VisualInput(params, pc_id=pc_id)
+    VI = VisualInput.VisualInput(params, comm=comm)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
     if pc_id == 0:
@@ -118,10 +118,10 @@ if __name__ == '__main__':
 #            print 'debug iteration %d stim' % (iteration_cnt), stim
             MT.update_input(stim) # run the network for some time 
             if comm != None:
-                comm.barrier()
+                comm.Barrier()
             nest.Simulate(params['t_iteration'])
             if comm != None:
-                comm.barrier()
+                comm.Barrier()
 
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
@@ -141,11 +141,11 @@ if __name__ == '__main__':
 
             iteration_cnt += 1
             if comm != None:
-                comm.barrier()
+                comm.Barrier()
 
     CC.get_weights(MT, BG)
     if comm != None:
-        comm.barrier()
+        comm.Barrier()
     CC.merge_connection_files(params)
 
     t1 = time.time() - t0

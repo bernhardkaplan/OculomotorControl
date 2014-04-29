@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     GP = simulation_parameters.global_parameters()
     if comm != None:
-        comm.barrier()
+        comm.Barrier()
 
     if len(sys.argv) < 3:
         testing_params = GP.params
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     GP.write_parameters_to_file(testing_params['params_fn_json'], testing_params) # write_parameters_to_file MUST be called before every simulation
 
     if comm != None:
-        comm.barrier()
+        comm.Barrier()
 
 #    training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
     training_params = utils.load_params(training_folder)
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         remove_files_from_folder(testing_params['spiketimes_folder'])
         remove_files_from_folder(testing_params['input_folder_mpn'])
     
-    VI = VisualInput.VisualInput(testing_params)
+    VI = VisualInput.VisualInput(testing_params, comm=comm)
     MT = MotionPrediction.MotionPrediction(testing_params, VI, comm)
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(testing_params, comm)
@@ -76,18 +76,18 @@ if __name__ == '__main__':
     CC.set_pc_id(pc_id)
 
     if comm != None:
-        comm.barrier()
+        comm.Barrier()
 
 
     CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params)
     if comm != None:
-        comm.barrier()
+        comm.Barrier()
     BG.set_bias('d1')
     if comm != None:
-        comm.barrier()
+        comm.Barrier()
     BG.set_bias('d2')
     if comm != None:
-        comm.barrier()
+        comm.Barrier()
 
     iteration_cnt = 0
     v_eye = [0., 0.]
@@ -112,10 +112,10 @@ if __name__ == '__main__':
                 save_spike_trains(testing_params, iteration_cnt, stim, MT.local_idx_exc)
             MT.update_input(stim) # run the network for some time 
             if comm != None:
-                comm.barrier()
+                comm.Barrier()
             nest.Simulate(testing_params['t_iteration'])
             if comm != None:
-                comm.barrier()
+                comm.Barrier()
 
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
@@ -129,7 +129,7 @@ if __name__ == '__main__':
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             iteration_cnt += 1
             if comm != None:
-                comm.barrier()
+                comm.Barrier()
 
     if pc_id == 0:
         np.savetxt(testing_params['actions_taken_fn'], actions)
@@ -143,7 +143,7 @@ if __name__ == '__main__':
             os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
             os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
     if comm != None:
-        comm.barrier()
+        comm.Barrier()
 
     t1 = time.time() - t0
     print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
