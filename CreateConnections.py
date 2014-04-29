@@ -129,6 +129,23 @@ class CreateConnections(object):
         np.savetxt(mpn_d2_debug_fn, output_array_d2)
 
 
+    def clip_weight(self, w):
+        if not self.params['clip_weights']:
+            return w
+        else:
+            if self.params['weight_threshold_abstract'][1]:
+                if abs(w) > self.params['weight_threshold_abstract'][0]:
+                    return w
+                else:
+                    return None
+            else:
+                if w > self.params['weight_threshold_abstract'][0]:
+                    return w
+                else:
+                    return None
+
+
+
     def get_weights(self, src_pop, tgt_pop, iteration=None):
         """
         After training get the weights between the MPN state layer and the BG action layer
@@ -141,21 +158,19 @@ class CreateConnections(object):
         bias_d2 = {}
         for nactions in xrange(self.params['n_actions']):
             print 'CreateConnections.get_weights action %d' % nactions, 'iteration:', iteration
-
             conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
             if conns != None:
-                for c in conns:
+                for i_, c in enumerate(conns):
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
                     if (cp[0]['synapse_model'] == 'bcpnn_synapse'):
                         pi = cp[0]['p_i']
                         pj = cp[0]['p_j']
                         pij = cp[0]['p_ij']
                         w = np.log(pij / (pi * pj))
-                        if w != 0.:
-                            D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
+                        w_ = self.clip_weight(w)
+                        if w_:
+                            D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
                             bias_d1[cp[0]['target']] = cp[0]['bias']
-#                            bias_d1[cp[0]['target']] = np.log(cp[0]['bias'])
-
 
             conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
             if conns != None:
@@ -166,10 +181,10 @@ class CreateConnections(object):
                         pj = cp[0]['p_j']
                         pij = cp[0]['p_ij']
                         w = np.log(pij / (pi * pj))
-                        if w != 0.:
-                            D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w)
+                        w_ = self.clip_weight(w)
+                        if w_:
+                            D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
                             bias_d2[cp[0]['target']] = cp[0]['bias']
-#                        bias_d2[cp[0]['target']] = np.log(cp[0]['bias'])
 
         if iteration == None:
             fn_out = self.params['mpn_bgd1_conn_fn_base'] + '%d.txt' % (self.pc_id)

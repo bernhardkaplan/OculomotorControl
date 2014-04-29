@@ -54,11 +54,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 20.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 10
+        self.params['n_iterations_per_stim'] = 3
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = False
         #self.params['training'] = True
+        self.params['training'] = True
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
+        # if != 0. then weights with abs(w) < 
+        self.params['clip_weights'] = True
+        self.params['weight_threshold_abstract'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
+        # if (THRESH, True) --> after thresholding abstract weights can contain also negative weights abs(w) > THRESH
+        # if (THRESH, False) --> after thresholding abstract weights are > THRESH
 
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_stim_training'] * self.params['n_iterations_per_stim']
@@ -186,11 +191,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ##############################
         # INHIBITOTY NETWORK PARAMETERS
         # ##############################
-        self.params['fraction_inh_cells_mpn'] = 0.20 # fraction of inhibitory cells in the network, only approximately!
+        self.params['fraction_inh_cells_mpn'] = 0.25 # fraction of inhibitory cells in the network, only approximately!
         self.params['n_theta_inh'] = self.params['n_theta']
         self.params['n_v_inh'] = self.params['n_v']
         self.params['n_rf_inh'] = int(round(self.params['fraction_inh_cells_mpn'] * self.params['n_rf']))
-        self.params['n_rf_x_inh'] = np.int(np.sqrt(self.params['n_rf_inh'] * np.sqrt(3)))
+        self.params['n_rf_x_inh'] = self.params['n_rf_inh']
         # np.sqrt(np.sqrt(3)) comes from resolving the problem "how to quantize the square with a hex grid of a total of n_rf dots?"
         self.params['n_rf_y_inh'] = 1 # np.int(np.sqrt(self.params['n_rf_inh'])) 
         self.params['n_inh_mpn' ] = self.params['n_rf_x_inh'] * self.params['n_rf_y_inh'] * self.params['n_theta_inh'] * self.params['n_v_inh'] * self.params['n_exc_per_mc']
@@ -242,7 +247,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_actions'] = 21
         self.params['n_states'] = 20
         self.params['random_divconnect_poisson'] = 0.75
-        self.params['random_connect_voltmeter'] = 0.05
+        self.params['random_connect_voltmeter'] = 0.10
 
         #Connections Actions and States to RP
         self.tau_i = 3.
@@ -265,7 +270,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['weight_threshold'] = 0.01
+        self.params['weight_threshold'] = 0.05
         self.params['mpn_d1_weight_amplification'] = 0.5
         self.params['mpn_d2_weight_amplification'] = 0.5
         self.params['mpn_bg_bias_amplification'] = 5.00
@@ -273,8 +278,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
         self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
-        self.params['num_msn_d1'] = 20
-        self.params['num_msn_d2'] = 20
+        self.params['num_msn_d1'] = 5
+        self.params['num_msn_d2'] = 5
         self.params['n_cells_d1'] = self.params['num_msn_d1'] * self.params['n_actions']
         self.params['n_cells_d2'] = self.params['num_msn_d2'] * self.params['n_actions']
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
