@@ -177,7 +177,6 @@ class DebugTraces(object):
 if __name__ == '__main__':
 
     training_params = utils.load_params( os.path.abspath(sys.argv[1]) )
-    testing_params = utils.load_params(os.path.abspath(sys.argv[2]))
 
     colorlist = utils.get_colorlist()
     it_range_global = (0, 10)
@@ -185,7 +184,6 @@ if __name__ == '__main__':
 
     DB = DebugTraces()
     DB.check_spike_files(training_params)
-    DB.check_spike_files(testing_params)
 
     TP_training = TracePlotter(training_params)
     fn_pre = training_params['spiketimes_folder'] + training_params['mpn_exc_spikes_fn_merged']
@@ -246,11 +244,13 @@ if __name__ == '__main__':
     ax_bcpnn = fig_bcpnn.add_subplot(111)
     plot_bcpnn_iteration = 1
 
-    it_range_bcpnn = (0, 20)
+    it_range_bcpnn = (0, 3)
     n_pre = 1
     n_post = 1
     pre_gids = [most_active_pre_gids[plot_bcpnn_iteration][:n_pre]]
     post_gids = [most_active_post_gids[plot_bcpnn_iteration][:n_post]]
+#    post_gids = [4966]
+
     all_bcpnn_traces, gid_pairs = TP_training.compute_traces(pre_gids, post_gids, it_range_bcpnn)
 
 #    DB.plot_spikes_raster(training_params, pre_gids, it_range_bcpnn, ax_spikes, color=colorlist[it])
@@ -266,6 +266,8 @@ if __name__ == '__main__':
 
 
     # ---------- TESTING -----------------
+#    testing_params = utils.load_params(os.path.abspath(sys.argv[2]))
+#    DB.check_spike_files(testing_params)
     # Plot MPN spike activity and BG voltages for selected cells 
 #    fig_test = pylab.figure()
 #    ax1_testing = fig_test.add_subplot(211)

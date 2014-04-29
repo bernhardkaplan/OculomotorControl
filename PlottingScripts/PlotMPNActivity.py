@@ -234,11 +234,14 @@ class ActivityPlotter(object):
         pylab.savefig(output_fig)
 
 
-        fig = pylab.figure()
-        ax_vec_dist = fig.add_subplot(111)
-        ax_vec_dist.set_xlabel('Iteration diff index')
-        ax_vec_dist.set_ylabel('State vector distance differece')
-        ax_vec_dist.plot(range(n_iter - 1), vector_distance_difference_seq, marker='o', markersize=4)
+        if compute_state_differences:
+            fig = pylab.figure()
+            ax_vec_dist = fig.add_subplot(111)
+            ax_vec_dist.set_xlabel('Iteration diff index')
+            ax_vec_dist.set_ylabel('State vector distance differece')
+            ax_vec_dist.plot(range(n_iter - 1), vector_distance_difference_seq, marker='o', markersize=4)
+
+
 
     def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
         if stim_range == None:
@@ -490,6 +493,7 @@ class MetaAnalysisClass(object):
 #        fig.savefig(output_fn)
 
 #        Plotter.plot_input()
+        Plotter.bin_spiketimes()
         Plotter.plot_output()
 
         if stim_range != None:

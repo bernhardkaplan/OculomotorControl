@@ -42,10 +42,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
+        self.params['total_num_virtual_procs'] = 480
+        if self.params['Cluster'] or self.params['Cluster_Milner']:
+            self.params['total_num_virtual_procs'] = 480
         self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(10)
+        self.params['test_stim_range'] = range(1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -71,9 +74,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # initial 
 #        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 #        self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-        self.params['initial_state'] = (.631059, .5, -0.1996527, .0)
+        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
+#        self.params['initial_state'] = (.631059, .5, -0.1996527, .0)
 #        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'Toy'
+        self.params['sim_id'] = 'ToyGain50'
         self.params['n_rf'] = 100
 #        self.params['sim_id'] = 'nRF%d' % (self.params['n_rf'])
 
@@ -88,7 +92,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['visual_stim_seed'] = 4321
+        self.params['master_seed'] = 12345  # 
+        # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
+        self.params['visual_stim_seed'] = 4321  
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
         self.params['debug_mpn'] = not self.params['Cluster']
@@ -148,8 +154,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
 #        self.params['gids_to_record_mpn'] = [1433, 1409, 2153, 857, 1793, 1337, 1529, 2802, 1817, 2777, 2609, 1337, 1409, 1697, 1769, 1817, 2969, 2801, 1433, 3497, 569, 2033, 65, 1049, 786, 833, 1289, 2945, 1913, 3473, 1625, 1913, 1577, 1049, 689, 2129, 3473, 2033, 833, 569, 2129, 3473, 1073, 833, 1913, 1049, 689, 569, 2033, 1577, 1625, 1577, 1049, 689, 3473, 2033, 1913, 833, 569, 2129, 1625, 3473, 1577, 1049, 833, 2129, 569, 689, 1913, 2033, 1625, 1913, 1049, 3041, 2033, 2129, 833, 689, 569, 1577, 3041, 833, 689, 1049, 1913, 2033, 2129, 569, 1577, 1625, 2945, 3041, 3256, 689, 833, 1049, 1073, 1913, 2033, 3473]
 #        self.params['gids_to_record_bg'] = [7380, 7379, 7378, 7377, 7376, 7375, 7382, 7393, 7387, 7390, 7732, 7721, 7720, 7718, 7714, 7723, 7727, 7728, 7719, 7724, 7682, 7681, 7677, 7685, 7687, 7680, 7678, 7693, 7675, 7684, 7640, 7639, 7637, 7635, 7646, 7649, 7650, 7636, 7644, 7634, 7672, 7659, 7657, 7656, 7654, 7663, 7673, 7660, 7658, 7655, 7657, 7656, 7655, 7662, 7672, 7666, 7669, 7670, 7660, 7654, 7667, 7663, 7661, 7659, 7658, 7656, 7655, 7662, 7673, 7657, 7641, 7640, 7639, 7638, 7637, 7635, 7648, 7647, 7651, 7636, 7672, 7659, 7657, 7656, 7655, 7654, 7673, 7658, 7667, 7662, 7580, 7579, 7578, 7576, 7575, 7584, 7593, 7577, 7585, 7574]
-        self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_bg'] = None
+#        self.params['gids_to_record_mpn'] = None
+#        self.params['gids_to_record_bg'] = None
+        self.params['gids_to_record_mpn'] = [570, 763, 1218, 1506, 1554, 1674, 1890, 2226, 2275, 2346]
+        self.params['gids_to_record_bg'] = [4966, 4969, 4970, 4982, 4985, 4986, 4987, 4988, 4989, 4990, 4991, 4992, 4993, 4994, 4995, 4996, 4997, 4998, 4999, 5000, 5001, 5002, 5003, 5004, 5005]
+
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
@@ -262,9 +271,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_d1_weight_amplification'] = 1.0
+        self.params['mpn_d1_weight_amplification'] = 50.0
         self.params['mpn_d2_weight_amplification'] = 50.0
-        self.params['mpn_bg_bias_amplification'] = 1.0
+        self.params['mpn_bg_bias_amplification'] = 50.00
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
