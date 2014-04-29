@@ -69,6 +69,8 @@ class Plotter(object):
                     it_1 = it_ + stim * params['n_iterations_per_stim']
                     it_2 = it_ + stim * params['n_iterations_per_stim'] + 2
                     p1, = ax.plot(t_axis[it_1:it_2], xdispl[it_1:it_2], c=color, lw=3, ls=ls)
+        print 't_axis[it_1:it_2], xdispl[it_1:it_2]', t_axis[it_1:it_2], xdispl[it_1:it_2]
+        print 'debug', params['n_stim'], stim_range
 
 #        p1, = ax.plot(t_axis, xdispl, c=color, lw=3, ls=ls)
         self.plots.append(p1)
@@ -79,7 +81,6 @@ class Plotter(object):
             AP.plot_vertical_lines(ax)
 
         time_range = (stim_range[0] * t_stim + t_offset, (stim_range[-1] + 1) * t_stim + t_offset)
-        print 'debug ', params['training'], time_range
         ax.set_xlim(time_range)
         return ax
 

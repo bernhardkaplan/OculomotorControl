@@ -46,12 +46,12 @@ def plot_matrix(d, title=None, clim=None):
 def check_is_it_d1(fn):
     if fn.find('d1') != -1:
         return 'd1'
-    else:
+    elif fn.find('d2') != -1:
         return 'd2'
 
 
 
-def plot_conn_list(params, conn_list_fn, clim=None):
+def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
     if not os.path.exists(conn_list_fn):
         print 'Merging default connection files...'
         merge_pattern = params['mpn_bgd1_conn_fn_base']
@@ -63,14 +63,17 @@ def plot_conn_list(params, conn_list_fn, clim=None):
     print 'Loading ', conn_list_fn
     data = np.loadtxt(conn_list_fn)
 
-    tgt_cell_type = check_is_it_d1(conn_list_fn)
-    src_cell_type = 'mpn'
+    if params != None:
+        tgt_cell_type = check_is_it_d1(conn_list_fn)
+    else:
+        tgt_cell_type = None
 
     if src_cell_type == 'mpn':
         n_src = params['n_exc_mpn']
         src_offset = 1
     else:
         src_offset = data[:, 0].min()
+        n_src = np.unique(data[:, 0]).size
 
     if tgt_cell_type == 'd1' or tgt_cell_type == 'd2':
         n_tgt = params['n_cells_%s' % tgt_cell_type]
@@ -80,6 +83,7 @@ def plot_conn_list(params, conn_list_fn, clim=None):
         tgt_offset = p['%s' % tgt_cell_type][0][0]
     else:
         tgt_offset = data[:, 1].min()
+        n_tgt = np.unique(data[:, 1]).size
 
 #    print 'debug', tgt_cell_type
 
@@ -99,7 +103,6 @@ def plot_conn_list(params, conn_list_fn, clim=None):
         conn_mat[src, tgt] = data[c, 2]
 
 #    output_fn = conn_list_fn.rsplit(".txt")[0] + "_cmap.png"
-    output_fn = params['figures_folder'] + conn_list_fn.rsplit("/")[-1].rsplit(".txt")[0] + "_cmap.png"
 #    if clim != None:
 #        clim = (-5., 5)
     title = output_fn.rsplit('/')[-1]
@@ -107,8 +110,10 @@ def plot_conn_list(params, conn_list_fn, clim=None):
     print 'connmat min max', np.min(conn_mat), np.max(conn_mat)
     ax.set_xlabel('Target: %s' % tgt_cell_type)
     ax.set_ylabel('Sources: %s' % src_cell_type)
-    print "Saving fig to:", output_fn
-    pylab.savefig(output_fn)
+    if params != None:
+        output_fn = params['figures_folder'] + conn_list_fn.rsplit("/")[-1].rsplit(".txt")[0] + "_cmap.png"
+        print "Saving fig to:", output_fn
+        pylab.savefig(output_fn)
     return conn_mat
 
 
@@ -124,27 +129,28 @@ if __name__ == '__main__':
             params = utils.load_params(fn)
             tgt_type = 'd1'
             conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-            plot_conn_list(conn_list_fn=conn_list_fn, params=params, clim=clim)
+            plot_conn_list(conn_list_fn, params=params, clim=clim)
             tgt_type = 'd2'
             conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-            plot_conn_list(conn_list_fn=conn_list_fn, params=params, clim=clim)
+            plot_conn_list(conn_list_fn, params=params, clim=clim)
     elif len(sys.argv) == 2:
-#        conn_list = sys.argv[1]
-        params = utils.load_params(sys.argv[1])
-        tgt_type = 'd1'
-        print 'Plotting connections targeting :', tgt_type
-        conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-        clim = (-5., 5.)
-        plot_conn_list(conn_list_fn=conn_list_fn, params=params, clim=clim)
-        tgt_type = 'd2'
-        print 'Plotting connections targeting :', tgt_type
-        conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-        clim = (-3., 3.)
-        plot_conn_list(conn_list_fn=conn_list_fn, params=params, clim=clim)
-#         params = load_params_from_folder(fn)
-#         plot_conn_list(params=params)
-          
+        if sys.argv[1].endswith('.json') or os.path.isdir(sys.argv[1]):
+            params = utils.load_params(sys.argv[1])
+            tgt_type = 'd1'
+            print 'Plotting connections targeting :', tgt_type
+            conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+            clim = (-5., 5.)
+            plot_conn_list(conn_list_fn, params=params, clim=clim)
+            tgt_type = 'd2'
+            print 'Plotting connections targeting :', tgt_type
+            conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+            clim = (-3., 3.)
+            plot_conn_list(conn_list_fn, params=params, clim=clim)
+    #         params = load_params_from_folder(fn)
+    #         plot_conn_list(params=params)
+        else:          
+            conn_list_fn = sys.argv[1]
+            plot_conn_list(conn_list_fn, params=None)#, clim=clim)
 
-    
     
     pylab.show()

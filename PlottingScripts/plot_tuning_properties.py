@@ -15,6 +15,7 @@ import sys
 import os
 import utils
 import matplotlib.patches as mpatches
+from matplotlib.collections import PatchCollection
 from FigureCreator import plot_params
 pylab.rcParams.update(plot_params)
 
@@ -60,15 +61,21 @@ class Plotter(object):
         ax = fig.add_subplot(111)
         ax.set_xlabel('Receptive field center $x$', fontsize=18)
         ax.set_ylabel('Preferred speed', fontsize=18)
-        for i in xrange(self.tp[:, 0].size):
-            ax.plot(self.tp[i, 0], self.tp[i, 2], 'o', markersize=5, c='k')
+        patches = []
+        for gid in xrange(self.tp[:, 0].size):
+            ax.plot(self.tp[gid, 0], self.tp[gid, 2], 'o', c='k', markersize=3)
+            ellipse = mpatches.Ellipse((self.tp[gid, 0], self.tp[gid, 2]), self.rfs[gid, 0], self.rfs[gid, 2])
+            patches.append(ellipse)
 
+        collection = PatchCollection(patches, alpha=0.1)
+        ax.add_collection(collection)
         ylim = ax.get_ylim()
         ax.set_ylim((1.1 * ylim[0], 1.1 * ylim[1]))
 #        ax.set_ylim((-3, 3))
         output_fn = self.params['figures_folder'] + 'tuning_space.png'
         print 'Saving to:', output_fn
         pylab.savefig(output_fn)
+
 
 
     def plot_tuning_curves(self, idx):
@@ -136,6 +143,7 @@ class Plotter(object):
 
         # alternatively use 
         # for all gid: mpatches.Ellipse(self, xy, width, height, angle=0.0, **kwargs)
+
 
 
 if __name__ == '__main__':

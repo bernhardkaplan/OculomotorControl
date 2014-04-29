@@ -139,9 +139,31 @@ def get_colorlist():
                     ]
     return colorlist
 
+
+def threshold_array(d, thresh, absolute_val=True):
+    """
+    returns the (valid_indices, d[valid_indices) of the data array, i.e. those values that 
+    if No value is above threshold, return ([], None)
+    are above the threshold
+    if absolute_val is True, the absolute value of d is thresholded (return d[valid_idx] can contain negative numbers)
+    if absolute_val is False, only positive values are returned
+
+    """
+    if absolute_val:
+        valid_idx = np.nonzero(np.abs(d) > thresh)[0]
+    else:
+        valid_idx = np.nonzero(d > thresh)[0]
+    if valid_idx.size > 0:
+        return (valid_idx, d[valid_idx])
+    else:
+        return ([], None)
+
+
+
 def get_linestyles():
     linestyles = ['-', ':', '--', '-.']
     return linestyles
+
 
 def get_plus_minus(rnd):
     """

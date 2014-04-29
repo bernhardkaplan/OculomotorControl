@@ -485,6 +485,7 @@ class MetaAnalysisClass(object):
         (t_axis, x_displacement) = Plotter.plot_retinal_displacement(stim_range=stim_range)
         return (t_axis, x_displacement)
 
+
     def run_single_folder_analysis(self, params, stim_range):
         Plotter = ActivityPlotter(params)#, it_max=1)
 #        fig = Plotter.plot_training_sequence()
