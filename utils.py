@@ -9,6 +9,10 @@ import json
 import simulation_parameters
 import MergeSpikefiles
 
+def distance(x,y):   
+    # alternative: np.linalg.norm(a-b)
+    return np.sqrt(np.sum((x - y)**2))
+
 def remove_empty_files(folder):
     for fn in os.listdir(folder):
         path = os.path.abspath(folder) + '/%s' % fn

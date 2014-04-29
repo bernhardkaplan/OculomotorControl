@@ -32,6 +32,7 @@ class ActivityPlotter(object):
         self.load_tuning_prop()
         self.n_cells = self.params['n_exc_mpn']
         self.spiketrains = [[] for i in xrange(self.n_cells)]
+        self.d = {}
 
 
     def load_tuning_prop(self):
@@ -135,7 +136,7 @@ class ActivityPlotter(object):
                 self.nspikes_binned[gid, :] = count
 
 
-    def plot_output(self, stim_range=(0, 1), v_or_x='x'):
+    def plot_output(self, stim_range=(0, 1), v_or_x='x', compute_state_differences=None):
         
         # adjust for VX  /  X - plotting and training, testing
         if self.params['training']:
@@ -163,29 +164,51 @@ class ActivityPlotter(object):
         n_iter = self.params['n_iterations_per_stim'] * stim_range[1] - stim_range[0]
         iter_range = (self.params['n_iterations_per_stim'] * stim_range[0], self.params['n_iterations_per_stim'] * stim_range[1])
 
-        d = np.zeros((y_grid.size, n_iter))
+        self.d[v_or_x] = np.zeros((y_grid.size, n_iter))
         nspikes_thresh = 0
         for iteration in xrange(iter_range[0], iter_range[1]):
             print 'Plot output iteration', iteration
             cells_per_grid_cell = np.zeros(y_grid.size) # how many cells have been above a threshold activity during this iteration
             for gid in xrange(self.params['n_exc_mpn']):
                 ypos = gid_to_posgrid_mapping[gid, 1]
-                d[ypos, iteration] += self.nspikes_binned[gid, iteration]
+                self.d[v_or_x][ypos, iteration] += self.nspikes_binned[gid, iteration]
 
                 if self.nspikes[gid] > nspikes_thresh:
                     cells_per_grid_cell[ypos] += 1
             for grid_idx in xrange(y_grid.size):
                 if cells_per_grid_cell[grid_idx] > 0:
-                    d[grid_idx, iteration] /= cells_per_grid_cell[grid_idx]
+                    self.d[v_or_x][grid_idx, iteration] /= cells_per_grid_cell[grid_idx]
+        self.d[v_or_x] /= self.params['t_iteration'] / 1000.
 
-        d /= self.params['t_iteration'] / 1000.
+        if compute_state_differences:
+            # compute the state vector distance differences for two consecutive / sequent iterations
+            # and the matrix for distance differences between all iterations
+            vector_distance_difference_seq = np.zeros(n_iter - 1)       
+            vector_distance_difference_matrix = np.zeros((n_iter, n_iter))
+            for i_ in xrange(iter_range[0], iter_range[1]):
+                for j_ in xrange(iter_range[0], iter_range[1]):
+                    vector_distance_difference_matrix[i_, j_] = utils.distance(self.d[v_or_x][:, i_], self.d[v_or_x][:, j_])
+                if i_ != iter_range[1] - 1:
+                    vector_distance_difference_seq[i_] = vector_distance_difference_matrix[i_, i_ + 1]
+            fig = pylab.figure()
+            ax = fig.add_subplot(111)
+            cax = ax.pcolormesh(vector_distance_difference_matrix)#, cmap='binary')
+            ax.set_title('State vector difference matrix for %s vectors' % v_or_x)
+            ax.set_ylim((0, vector_distance_difference_matrix.shape[0]))
+            ax.set_xlim((0, vector_distance_difference_matrix.shape[1]))
+            ax.set_xlabel('Iteration')
+            ax.set_ylabel('Iteration')
+            cbar = pylab.colorbar(cax)
+            cbar.set_label('State vector difference')
+
+
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        cax = ax.pcolormesh(d)#, cmap='binary')
+        cax = ax.pcolormesh(self.d[v_or_x])#, cmap='binary')
 
         ax.set_title(title)
-        ax.set_ylim((0, d.shape[0]))
-        ax.set_xlim((0, d.shape[1]))
+        ax.set_ylim((0, self.d[v_or_x].shape[0]))
+        ax.set_xlim((0, self.d[v_or_x].shape[1]))
         ax.set_xlabel('Iteration')
         ax.set_ylabel(ylabel)
         cbar = pylab.colorbar(cax)
@@ -204,11 +227,20 @@ class ActivityPlotter(object):
 
         output_fn = self.params['data_folder'] + 'mpn_output_activity.dat'
         print 'Saving data to:', output_fn
-        np.savetxt(output_fn, d)
+        np.savetxt(output_fn, self.d[v_or_x])
 
         output_fig = self.params['figures_folder'] + 'mpn_output_activity.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
+
+
+        if compute_state_differences:
+            fig = pylab.figure()
+            ax_vec_dist = fig.add_subplot(111)
+            ax_vec_dist.set_xlabel('Iteration diff index')
+            ax_vec_dist.set_ylabel('State vector distance differece')
+            ax_vec_dist.plot(range(n_iter - 1), vector_distance_difference_seq, marker='o', markersize=4)
+
 
 
     def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
@@ -461,6 +493,7 @@ class MetaAnalysisClass(object):
 #        fig.savefig(output_fn)
 
 #        Plotter.plot_input()
+        Plotter.bin_spiketimes()
         Plotter.plot_output()
 
         if stim_range != None:

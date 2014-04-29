@@ -8,14 +8,21 @@ class MotionPrediction(object):
     def __init__(self, params, VI, comm=None):
         
         self.VI = VI
+        self.params = params
 
+        nest.SetKernelStatus({'data_path': self.params['spiketimes_folder'], 'overwrite_files': True, \
+                'total_num_virtual_procs': self.params['total_num_virtual_procs']})
+        N_vp = nest.GetKernelStatus(['total_num_virtual_procs'])[0]
+        msd = self.params['master_seed']
+        pyrngs = [np.random.RandomState(s) for s in range(msd, msd+N_vp)]
+        nest.SetKernelStatus({'grng_seed' : msd+N_vp})
+        nest.SetKernelStatus({'rng_seeds' : range(msd+N_vp+1, msd+2*N_vp+1)})
         self.pc_id, self.n_proc = nest.Rank(), nest.NumProcesses()
         self.comm = comm # mpi communicator needed to broadcast nspikes between processes
         if comm != None:
             assert (comm.rank == self.pc_id), 'mpi4py and NEST tell me different PIDs!'
             assert (comm.size == self.n_proc), 'mpi4py and NEST tell me different PIDs!'
 
-        self.params = params
         self.current_state = None
 
         self.list_of_populations = []
@@ -29,7 +36,6 @@ class MotionPrediction(object):
 #        self.connect_exc_inh()
         self.record_voltages(self.params['gids_to_record_mpn'])
 
-        nest.SetKernelStatus({'data_path':self.params['spiketimes_folder'], 'overwrite_files': True})
         print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
         print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
 

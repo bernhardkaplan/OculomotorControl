@@ -180,7 +180,6 @@ class TracePlotter(object):
 
     def get_weights(self, pre_gids, post_gids):
 
-
         if self.params['training']:
             # 
             fn = self.params['mpn_bgd1_merged_conn_fn']
@@ -188,6 +187,7 @@ class TracePlotter(object):
             # load the realized connections -- with weights in [nS] !!!
             fn = self.params['connections_folder'] + 'merged_mpn_bg_%s_connections_debug.txt' % self.cell_type_post
         
+
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
@@ -202,9 +202,9 @@ if __name__ == '__main__':
     if (not os.path.exists(fn_pre)) or (not os.path.exists(fn_post)):
         utils.merge_spikes(params)
     
-    it_range = (1, 2)
+    it_range = (0, 1)
 #    it_range = (0, 3)
-    TP = TracePlotter(params, it_range, cell_type_post)
+    TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
     n_pre = 2
     n_post = 2
