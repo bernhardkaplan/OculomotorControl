@@ -265,7 +265,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['weight_threshold'] = 0.05
+        self.params['weight_threshold'] = 0.01
         self.params['mpn_d1_weight_amplification'] = 5.0
         self.params['mpn_d2_weight_amplification'] = 5.0
         self.params['mpn_bg_bias_amplification'] = 5.00
