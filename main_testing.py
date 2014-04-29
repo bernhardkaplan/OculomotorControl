@@ -66,10 +66,18 @@ if __name__ == '__main__':
         remove_files_from_folder(testing_params['spiketimes_folder'])
         remove_files_from_folder(testing_params['input_folder_mpn'])
     
+    t1 = time.time() - t0
+    print 'Time1: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     VI = VisualInput.VisualInput(testing_params, comm=comm)
+    t1 = time.time() - t0
+    print 'Time2: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     MT = MotionPrediction.MotionPrediction(testing_params, VI, comm)
+    t1 = time.time() - t0
+    print 'Time3: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(testing_params, comm)
+    t1 = time.time() - t0
+    print 'Time4: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     BG.write_cell_gids_to_file()
 
     CC = CreateConnections.CreateConnections(testing_params)
@@ -78,8 +86,12 @@ if __name__ == '__main__':
     if comm != None:
         comm.Barrier()
 
+    t1 = time.time() - t0
+    print 'Time5: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
     CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params)
+    t1 = time.time() - t0
+    print 'Time6: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     if comm != None:
         comm.Barrier()
     BG.set_bias('d1')
@@ -88,6 +100,8 @@ if __name__ == '__main__':
     BG.set_bias('d2')
     if comm != None:
         comm.Barrier()
+    t1 = time.time() - t0
+    print 'Time7: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
     iteration_cnt = 0
     v_eye = [0., 0.]
@@ -131,6 +145,8 @@ if __name__ == '__main__':
             if comm != None:
                 comm.Barrier()
 
+    t1 = time.time() - t0
+    print 'Time8: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     if pc_id == 0:
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
@@ -144,7 +160,9 @@ if __name__ == '__main__':
             os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
     if comm != None:
         comm.Barrier()
+    t1 = time.time() - t0
+    print 'Time9: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
     t1 = time.time() - t0
-    print 'Time: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
+    print 'TimeEND: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
