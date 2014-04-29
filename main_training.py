@@ -161,7 +161,7 @@ if __name__ == '__main__':
         if not params['Cluster']:
             os.system('python PlottingScripts/PlotMPNActivity.py')
             os.system('python PlottingScripts/PlotBGActivity.py')
-    else:
-        exit(1)
 
+    if comm != None:
+        comm.barrier()
 
