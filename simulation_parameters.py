@@ -42,7 +42,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 480
+        self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 480
         self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
@@ -70,14 +70,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['dt_input_mpn'] = 0.1   # [ms] time step for the inhomogenous Poisson process for input spike train generation
         self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
 
-
-        # initial 
-#        self.params['initial_state'] = (.5, .5, 0.0, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
-#        self.params['initial_state'] = (.8, .5, 1.5, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
+        # the first stimulus parameters
         self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-#        self.params['initial_state'] = (.631059, .5, -0.1996527, .0)
-#        self.params['sim_id'] = '%.1f%.1f' % (self.params['initial_state'][0], self.params['initial_state'][2])
-        self.params['sim_id'] = 'ToyGain50'
+
+        self.params['weight_threshold'] = 1.0
+        self.params['sim_id'] = 'ToyWT%.2f' % (self.params['weight_threshold'])
         self.params['n_rf'] = 100
 #        self.params['sim_id'] = 'nRF%d' % (self.params['n_rf'])
 
@@ -271,9 +268,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['mpn_d1_weight_amplification'] = 50.0
-        self.params['mpn_d2_weight_amplification'] = 50.0
-        self.params['mpn_bg_bias_amplification'] = 50.00
+        self.params['mpn_d1_weight_amplification'] = 5.0
+        self.params['mpn_d2_weight_amplification'] = 5.0
+        self.params['mpn_bg_bias_amplification'] = 5.00
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
