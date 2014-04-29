@@ -92,41 +92,41 @@ class CreateConnections(object):
         self.merge_connection_files(training_params, test_params)
         print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
         mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
-        mpn_d1_conns_debug = ''
         n_lines = mpn_d1_conn_list[:, 0].size 
-        for line in xrange(n_lines):
-            src, tgt, w = mpn_d1_conn_list[line, :]
-            if w != 0.:
-                w *= self.params['mpn_d1_weight_amplification']
-                mpn_d1_conns_debug += '%d\t%d\t%.4e\n' % (src, tgt, w)
-#                print 'debug %d\t%d\t%.4e\n' % (src, tgt, w)
-                nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
+
+        w = mpn_d1_conn_list[:, 2]
+        w *= self.params['mpn_d1_weight_amplification']
+        valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
+        srcs = list(mpn_d1_conn_list[valid_idx, 0].astype(np.int))
+        tgts = list(mpn_d1_conn_list[valid_idx, 1].astype(np.int))
+        weights = list(w[valid_idx])
+        delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
+        nest.Connect(srcs, tgts, weights, delays)
+        output_array_d1 = np.zeros((len(weights), 3))
+        output_array_d1[:, 0] = srcs
+        output_array_d1[:, 1] = tgts
+        output_array_d1[:, 2] = weights
+        mpn_d1_debug_fn = test_params['mpn_bgd1_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
+        print 'Saving the realized connections to %s' % mpn_d1_debug_fn
+        np.savetxt(mpn_d1_debug_fn, output_array_d1)
 
         print 'Loading MPN - BG D2 connections from:', training_params['mpn_bgd2_merged_conn_fn']
         mpn_d2_conn_list = np.loadtxt(training_params['mpn_bgd2_merged_conn_fn'])
-        mpn_d2_conns_debug = ''
-        n_lines = mpn_d2_conn_list[:, 0].size 
-        for line in xrange(n_lines):
-            src, tgt, w = mpn_d2_conn_list[line, :]
-            if w != 0.:
-                w *= self.params['mpn_d2_weight_amplification']
-                mpn_d2_conns_debug += '%d\t%d\t%.4e\n' % (src, tgt, w)
-                nest.Connect([int(src)], [int(tgt)], params={'weight': w, 'delay': self.params['mpn_bg_delay']})
-
-        mpn_d1_debug_fn = test_params['mpn_bgd1_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
-        print 'Saving the realized connections to %s' % mpn_d1_debug_fn
-        f = file(mpn_d1_debug_fn, 'w')
-        f.write(mpn_d1_conns_debug)
-        f.close()
-
+        w = mpn_d2_conn_list[:, 2]
+        w *= self.params['mpn_d2_weight_amplification']
+        valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
+        srcs = list(mpn_d2_conn_list[valid_idx, 0].astype(np.int))
+        tgts = list(mpn_d2_conn_list[valid_idx, 1].astype(np.int))
+        weights = list(w[valid_idx])
+        delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
+        nest.Connect(srcs, tgts, weights, delays)
+        output_array_d2 = np.zeros((len(weights), 3))
+        output_array_d2[:, 0] = srcs
+        output_array_d2[:, 1] = tgts
+        output_array_d2[:, 2] = weights
         mpn_d2_debug_fn = test_params['mpn_bgd2_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
         print 'Saving the realized connections to %s' % mpn_d2_debug_fn
-        f = file(mpn_d2_debug_fn, 'w')
-        f.write(mpn_d2_conns_debug)
-        f.close()
-#            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
-#            nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
-
+        np.savetxt(mpn_d2_debug_fn, output_array_d2)
 
 
     def get_weights(self, src_pop, tgt_pop, iteration=None):
