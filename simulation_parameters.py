@@ -40,24 +40,24 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
-        self.params['total_num_virtual_procs'] = 480
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
+        self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 480
-        self.params['n_training_cycles'] = 10            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 10 # number of different stimuli within one training cycle
+        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(10)
+        self.params['test_stim_range'] = range(1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 20.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 3
+        self.params['n_iterations_per_stim'] = 10
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        #self.params['training'] = True
         self.params['training'] = True
+#        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['clip_weights'] = True
@@ -77,8 +77,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # the first stimulus parameters
         self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-        self.params['n_rf'] = 500
-        self.params['sim_id'] = 'nRF%d' % (self.params['n_rf'])
+        self.params['n_rf'] = 200
+        self.params['sim_id'] = 'nRF%d_clipWeights%s' % (self.params['n_rf'], str(self.params['clip_weights']))
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -124,11 +124,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         self.params['neuron_model_mpn'] = 'iaf_cond_exp'
         self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
-                'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
+                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
         self.params['cell_params_inh_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
-                'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
+                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
+
+#        self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
+#                'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
+#                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
+#        self.params['cell_params_inh_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
+#                'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
+#                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
         # input parameters
         self.params['w_input_exc_mpn'] = 100. # [nS]
         self.params['f_max_stim'] = 2000.       # [Hz] Max rate of the inhomogenous Poisson process
@@ -136,6 +143,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # for blur_x, v = 0.1, 0.1      4000    50
         #                  .05  .05     5000    100
 
+        self.params['f_noise_exc'] = 1000.
+        self.params['f_noise_inh'] = 1000.
+        self.params['w_noise_exc'] = 1.
+        self.params['w_noise_inh'] = -1.
 
         # ##############################
         # EXCITATORY NETWORK PARAMETERS
@@ -153,10 +164,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
 #        self.params['gids_to_record_mpn'] = [1433, 1409, 2153, 857, 1793, 1337, 1529, 2802, 1817, 2777, 2609, 1337, 1409, 1697, 1769, 1817, 2969, 2801, 1433, 3497, 569, 2033, 65, 1049, 786, 833, 1289, 2945, 1913, 3473, 1625, 1913, 1577, 1049, 689, 2129, 3473, 2033, 833, 569, 2129, 3473, 1073, 833, 1913, 1049, 689, 569, 2033, 1577, 1625, 1577, 1049, 689, 3473, 2033, 1913, 833, 569, 2129, 1625, 3473, 1577, 1049, 833, 2129, 569, 689, 1913, 2033, 1625, 1913, 1049, 3041, 2033, 2129, 833, 689, 569, 1577, 3041, 833, 689, 1049, 1913, 2033, 2129, 569, 1577, 1625, 2945, 3041, 3256, 689, 833, 1049, 1073, 1913, 2033, 3473]
 #        self.params['gids_to_record_bg'] = [7380, 7379, 7378, 7377, 7376, 7375, 7382, 7393, 7387, 7390, 7732, 7721, 7720, 7718, 7714, 7723, 7727, 7728, 7719, 7724, 7682, 7681, 7677, 7685, 7687, 7680, 7678, 7693, 7675, 7684, 7640, 7639, 7637, 7635, 7646, 7649, 7650, 7636, 7644, 7634, 7672, 7659, 7657, 7656, 7654, 7663, 7673, 7660, 7658, 7655, 7657, 7656, 7655, 7662, 7672, 7666, 7669, 7670, 7660, 7654, 7667, 7663, 7661, 7659, 7658, 7656, 7655, 7662, 7673, 7657, 7641, 7640, 7639, 7638, 7637, 7635, 7648, 7647, 7651, 7636, 7672, 7659, 7657, 7656, 7655, 7654, 7673, 7658, 7667, 7662, 7580, 7579, 7578, 7576, 7575, 7584, 7593, 7577, 7585, 7574]
-#        self.params['gids_to_record_mpn'] = None
-#        self.params['gids_to_record_bg'] = None
-        self.params['gids_to_record_mpn'] = [570, 763, 1218, 1506, 1554, 1674, 1890, 2226, 2275, 2346]
-        self.params['gids_to_record_bg'] = [4966, 4969, 4970, 4982, 4985, 4986, 4987, 4988, 4989, 4990, 4991, 4992, 4993, 4994, 4995, 4996, 4997, 4998, 4999, 5000, 5001, 5002, 5003, 5004, 5005]
+        self.params['gids_to_record_mpn'] = None
+        self.params['gids_to_record_bg'] = None
+        self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
+#        self.params['gids_to_record_mpn'] =  [210, 426, 570, 618, 667, 834, 1098, 1218, 1794, 1842, 2346, 2803, 3018, 3522, 3858, 3954, 4218, 4290, 4698, 4722]
+#        self.params['gids_to_record_bg'] = [10821, 10822, 10823, 10824, 10825, 10856, 10857, 10858, 10859, 10860, 10876, 10877, 10878, 10879, 10880, 10881, 10882, 10883, 10884, 10885, 10901, 10902, 10903, 10904, 10905]
 
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
@@ -243,6 +255,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['record_bg_volt'] = False
         else:
             self.params['record_bg_volt'] = True
+        self.params['record_bg_volt'] = False
         self.params['bg_cell_types'] = ['d1', 'd2', 'actions', 'recorder']
         self.params['n_actions'] = 21
         self.params['n_states'] = 20
@@ -271,8 +284,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.5
-        self.params['mpn_d2_weight_amplification'] = 0.5
+        self.params['mpn_d1_weight_amplification'] = 1.0
+        self.params['mpn_d2_weight_amplification'] = 1.0
         self.params['mpn_bg_bias_amplification'] = 5.00
 
         ## STR
@@ -291,7 +304,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         
         ## Output GPi/SNr
         self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
-        self.params['num_actions_output'] = 10
+        self.params['num_actions_output'] = 5
         self.params['param_bg_output'] = {'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
         
         self.params['str_to_output_exc_w'] = 40.
@@ -316,6 +329,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['weight_rp_rew'] = -5. #inhibition of the dopaminergic neurons in rew by the current reward prediction from rp[current state, selected action]
         self.params['delay_rp_rew'] = 1.
 
+
+        ## D1 - D1 connections
+        # if bcpnn_synapse is used
+        self.params['synapse_d1_d1'] = 'bcpnn_synapse'
+        self.params['delay_d1_d1'] = 1.
+        self.params['params_synapse_d1_d1'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K, \
+                'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
+                'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
+        # if static synapse is used
+        self.params['w_d1_d1'] = -5.
 
         self.params['actions_rp'] = 'bcpnn_synapse'
         self.params['param_actions_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
@@ -484,6 +507,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_bgd2_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d2_connections'
         self.params['mpn_bgd1_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d1_connections.txt'
         self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connections.txt'
+        self.params['d1_d1_conn_fn_base'] = self.params['connections_folder'] + 'd1_d1_connections'
+        self.params['d1_d1_merged_conn_fn'] = self.params['connections_folder'] + 'merged_d1_d1_connections.txt'
 
         # connection development / tracking 
         self.params['mpn_bgd1_conntracking_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connection_dev_'

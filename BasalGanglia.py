@@ -56,6 +56,10 @@ class BasalGanglia(object):
         if self.params['gids_to_record_bg']:
             self.record_extra_cells()
 
+        self.connect_d1_population()
+        self.connect_noise()
+
+
 
     def record_extra_cells(self):
 
@@ -194,9 +198,38 @@ class BasalGanglia(object):
                     nest.SetDefaults( self.params['bcpnn'], params= self.params['param_states_rp'])
                     for neuron_s in self.states[istate]:
                         nest.DivergentConnect([neuron_s], self.rp[iaction + istate*self.params['n_actions']], model=self.params['states_rp'] )
-
         self.write_cell_gids_to_file()
         print "BG model completed"
+
+
+    def connect_d1_population(self):
+
+        for i_ in xrange(self.params['n_actions']):
+            src_pop = self.strD1[i_]
+            for j_ in xrange(self.params['n_actions']):
+                if i_ != j_:
+                    tgt_pop = self.strD1[j_]
+                    if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
+                        nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1'])
+                        nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
+                    else:
+                        nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1'], self.params['delay_d1_d1'])
+
+
+
+    def connect_noise(self):
+
+        self.noise_exc_d1 = {}
+        self.noise_inh_d1 = {}
+        self.noise_exc_d2 = {}
+        self.noise_inh_d2 = {}
+        for naction in xrange(self.params['n_actions']):
+            self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1']) 
+            self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1'])
+            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc']})
+            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh']})
+            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc'], self.params['dt'])
+            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh'], self.params['dt'])
 
 
 

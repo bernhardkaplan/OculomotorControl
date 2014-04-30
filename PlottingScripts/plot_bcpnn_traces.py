@@ -202,12 +202,12 @@ if __name__ == '__main__':
     if (not os.path.exists(fn_pre)) or (not os.path.exists(fn_post)):
         utils.merge_spikes(params)
     
-    it_range = (0, 1)
+    it_range = (0, 4)
 #    it_range = (0, 3)
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
-    n_pre = 2
-    n_post = 2
+    n_pre = 1
+    n_post = 1
     pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post)
 #    pre_gids = [2238]
 #    pre_gids = [1158]

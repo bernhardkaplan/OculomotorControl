@@ -143,7 +143,9 @@ if __name__ == '__main__':
             if comm != None:
                 comm.Barrier()
 
+    CC.get_d1_d1_weights(BG)
     CC.get_weights(MT, BG)
+
     if comm != None:
         comm.Barrier()
 

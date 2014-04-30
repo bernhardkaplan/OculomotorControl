@@ -11,6 +11,7 @@ class MotionPrediction(object):
         self.params = params
 
         nest.SetKernelStatus({'data_path': self.params['spiketimes_folder'], 'overwrite_files': True, \
+                'resolution' : self.params['dt'], \
                 'total_num_virtual_procs': self.params['total_num_virtual_procs']})
         N_vp = nest.GetKernelStatus(['total_num_virtual_procs'])[0]
         msd = self.params['master_seed']
@@ -33,7 +34,8 @@ class MotionPrediction(object):
         self.setup_synapse_types()
         self.create_exc_network()
         self.create_inh_network()
-#        self.connect_exc_inh()
+#        self.connect_exc_inh() # not to be done at the moment
+        self.connect_noise()
         self.record_voltages(self.params['gids_to_record_mpn'])
 
         print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
@@ -117,11 +119,29 @@ class MotionPrediction(object):
 
     def connect_exc_inh(self):
 
-#        nest.RandomConvergentConnect(self.exc_pop, self.inh_pop, self.params['n_ee_mpn'], weeght=self.params['w_ee_mpn'], delay=self.params['delay_ee_mpn'], model='static_synapse')
+        nest.RandomConvergentConnect(self.exc_pop, self.inh_pop, self.params['n_ee_mpn'], weeght=self.params['w_ee_mpn'], delay=self.params['delay_ee_mpn'], model='static_synapse')
         nest.RandomConvergentConnect(self.exc_pop, self.inh_pop, self.params['n_ei_mpn'], weight=self.params['w_ei_mpn'], delay=self.params['delay_ei_mpn'], model='static_synapse')
         nest.RandomConvergentConnect(self.inh_pop, self.exc_pop, self.params['n_ie_mpn'], weight=self.params['w_ie_mpn'], delay=self.params['delay_ie_mpn'], model='static_synapse')
         nest.RandomConvergentConnect(self.inh_pop, self.inh_pop, self.params['n_ii_mpn'], weight=self.params['w_ii_mpn'], delay=self.params['delay_ii_mpn'], model='static_synapse')
 
+
+
+    def connect_noise(self):
+
+        self.noise_exc_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # exc noise targeting exc
+        self.noise_inh_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # inh -> exc
+        self.noise_exc_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # exc -> inh
+        self.noise_inh_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # inh -> inh
+
+        nest.SetStatus(self.noise_exc_exc, {'rate': self.params['f_noise_exc']})
+        nest.SetStatus(self.noise_inh_exc, {'rate': self.params['f_noise_inh']})
+        nest.SetStatus(self.noise_exc_inh, {'rate': self.params['f_noise_exc']})
+        nest.SetStatus(self.noise_inh_inh, {'rate': self.params['f_noise_inh']})
+
+        nest.Connect(self.noise_exc_exc, self.exc_pop, self.params['w_noise_exc'], self.params['dt'])
+        nest.Connect(self.noise_inh_exc, self.exc_pop, self.params['w_noise_inh'], self.params['dt'])
+        nest.Connect(self.noise_exc_inh, self.inh_pop, self.params['w_noise_exc'], self.params['dt'])
+        nest.Connect(self.noise_inh_inh, self.inh_pop, self.params['w_noise_inh'], self.params['dt'])
 
 
 

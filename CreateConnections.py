@@ -62,6 +62,11 @@ class CreateConnections(object):
                     f_out = file(test_params['bias_%s_merged_fn' % cell_type], 'w')
                     json.dump(all_bias, f_out, indent=0)
 
+            merge_pattern = training_params['d1_d1_conn_fn_base']
+            fn_out = training_params['d1_d1_merged_conn_fn']
+            utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
+
+
         if self.comm != None:
             self.comm.barrier()
 
@@ -210,6 +215,33 @@ class CreateConnections(object):
         D2_f = file(fn_out, 'w')
         D2_f.write(D2_conns)
         D2_f.close()
+
+
+    def get_d1_d1_weights(self, BG):
+
+        D1_conns = ''
+        for i_ in xrange(self.params['n_actions']):
+            for j_ in xrange(self.params['n_actions']):
+                print 'CreateConnections.get_d1_d1_weights action %d - %d '% (i_, j_)
+                conns = nest.GetConnections(BG.strD1[i_], BG.strD1[j_], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
+#                print 'DEBUG conns:', conns
+                for c in conns:
+                    cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                    if (cp[0]['synapse_model'] == 'bcpnn_synapse'):
+                        pi = cp[0]['p_i']
+                        pj = cp[0]['p_j']
+                        pij = cp[0]['p_ij']
+                        w_ = np.log(pij / (pi * pj))
+#                        w_ = self.clip_weight(w)
+                        if w_:
+                            D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
+
+        fn_out = self.params['d1_d1_conn_fn_base'] + '%d.txt' % (self.pc_id)
+        D1_f = file(fn_out, 'w')
+        D1_f.write(D1_conns)
+        D1_f.close()
+
+
 
 
     def set_pc_id(self, pc_id):

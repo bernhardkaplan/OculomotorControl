@@ -14,7 +14,8 @@ if __name__ == '__main__':
     print 'Usage: \nplot_voltages_simple.py [FOLDER_NAME] [GID_1] [GID_2]'
     params = utils.load_params(sys.argv[1])
 
-    bg_or_mpn = 'bg'
+    bg_or_mpn = 'mpn'
+#    bg_or_mpn = 'bg'
     if bg_or_mpn == 'bg':
         volt_fn_base = params['bg_volt_fn']
     else:
@@ -23,7 +24,7 @@ if __name__ == '__main__':
     fig = pylab.figure()
     ax = fig.add_subplot(111)
 
-    gids = params['gids_to_record_%s' % bg_or_mpn][:10]
+    gids = params['gids_to_record_%s' % bg_or_mpn]
 #    gids = [4966]
     v_mean = {}
 
@@ -47,6 +48,11 @@ if __name__ == '__main__':
         print 'GID v_mean:', gid, v_mean[gid]
 
 
+    if params['training']:
+        title = 'Training'
+    else:
+        title = 'Testing'
+    ax.set_title(title)
     ax.set_xlabel('Time [ms]')
     ax.set_ylabel('Volt [mV]')
     pylab.legend()

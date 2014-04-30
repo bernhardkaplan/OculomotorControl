@@ -314,6 +314,8 @@ class ActivityPlotter(object):
             t_scale = params['t_iteration']
         else:
             t_scale = 1
+        
+        actions_taken = np.loadtxt(params['actions_taken_fn'])
         for i_stim in xrange(params['n_stim']):
             t0 = i_stim * params['n_iterations_per_stim'] * t_scale
             ax.plot((t0, t0), (ymin, ymax), ls='-', lw=2, c='k')
@@ -322,6 +324,9 @@ class ActivityPlotter(object):
                     t0 = it_ * t_scale + i_stim * params['n_iterations_per_stim'] * t_scale
                     ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
                     ax.annotate(str(it_cnt), xy=(t0 + .5 * t_scale, ymin + (ymax - ymin) * .05))
+
+                    action = actions_taken[it_, 2]
+                    ax.annotate(str(int(action)), xy=(t0 + .5 * t_scale, ymin + (ymax - ymin) * .15), color='r')
                     it_cnt += 1
 
 
