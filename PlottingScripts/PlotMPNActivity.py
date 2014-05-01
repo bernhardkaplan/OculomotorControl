@@ -225,11 +225,11 @@ class ActivityPlotter(object):
             ax.set_yticks(self.y_ticks)
             ax.set_yticklabels(ylabels)
 
-        output_fn = self.params['data_folder'] + 'mpn_output_activity.dat'
+        output_fn = self.params['data_folder'] + 'mpn_output_activity_%s-sorting.dat' % (v_or_x)
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, self.d[v_or_x])
 
-        output_fig = self.params['figures_folder'] + 'mpn_output_activity.png'
+        output_fig = self.params['figures_folder'] + 'mpn_output_activity_%s-sorting.png' % (v_or_x)
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
 
@@ -323,10 +323,12 @@ class ActivityPlotter(object):
                 for it_ in xrange(params['n_iterations_per_stim']):
                     t0 = it_ * t_scale + i_stim * params['n_iterations_per_stim'] * t_scale
                     ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
-                    ax.annotate(str(it_cnt), xy=(t0 + .5 * t_scale, ymin + (ymax - ymin) * .05))
+                    ax.annotate(str(it_cnt), xy=(t0 + .45 * t_scale, ymin + (ymax - ymin) * .05))
 
-                    action = actions_taken[it_, 2]
-                    ax.annotate(str(int(action)), xy=(t0 + .5 * t_scale, ymin + (ymax - ymin) * .15), color='r')
+                    it_idx = it_ + i_stim * params['n_iterations_per_stim']
+                    action = actions_taken[it_idx, 2]
+                    if not np.isnan(action) != 0.:
+                        ax.annotate(str(int(action)), xy=(t0 + .45 * t_scale, ymin + (ymax - ymin) * .15), color='r')
                     it_cnt += 1
 
 

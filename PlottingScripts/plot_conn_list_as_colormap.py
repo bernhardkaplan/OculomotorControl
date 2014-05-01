@@ -57,61 +57,38 @@ def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
         merge_pattern = params['mpn_bgd1_conn_fn_base']
         fn_out = params['mpn_bgd1_merged_conn_fn']
         utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
-        merge_pattern = params['mpn_bgd2_conn_fn_base']
-        fn_out = params['mpn_bgd2_merged_conn_fn']
-        utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+        if params['with_d2']:
+            merge_pattern = params['mpn_bgd2_conn_fn_base']
+            fn_out = params['mpn_bgd2_merged_conn_fn']
+            utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+
     print 'Loading ', conn_list_fn
     data = np.loadtxt(conn_list_fn)
 
-    if params != None:
-        tgt_cell_type = check_is_it_d1(conn_list_fn)
-    else:
-        tgt_cell_type = None
-
-    if src_cell_type == 'mpn':
-        n_src = params['n_exc_mpn']
-        src_offset = 1
-    else:
-        src_offset = data[:, 0].min()
-        n_src = np.unique(data[:, 0]).size
-
-    if tgt_cell_type == 'd1' or tgt_cell_type == 'd2':
-        n_tgt = params['n_cells_%s' % tgt_cell_type]
-        cell_gid_fn = params['parameters_folder'] + 'bg_cell_gids.json'
-        f = file(cell_gid_fn, 'r')
-        p = json.load(f)
-        tgt_offset = p['%s' % tgt_cell_type][0][0]
-    else:
-        tgt_offset = data[:, 1].min()
-        n_tgt = np.unique(data[:, 1]).size
-
-#    print 'debug', tgt_cell_type
-
-#    print 'n_src', n_src
-#    print 'n_tgt', n_tgt
-#    print "src offset", src_offset
-#    print "tgt offset", tgt_offset
-
+    src_min, src_max= np.min(data[:, 0]), np.max(data[:, 0])
+    n_src = src_max - src_min + 1
+    tgt_min, tgt_max= np.min(data[:, 1]), np.max(data[:, 1])
+    n_tgt = tgt_max - tgt_min + 1
 
     conn_mat = np.zeros((n_src, n_tgt))
 
-    print 'debug', data.shape
+    print 'src_min, src_max', src_min, src_max
+    print 'tgt_min, tgt_max', tgt_min, tgt_max
+    print 'debug conn_mat shape', conn_mat.shape
     for c in xrange(data[:,0].size):
-        src = data[c, 0] - src_offset
-        tgt = data[c, 1] - tgt_offset
-#        print 'debug', src, tgt, c
+        src = data[c, 0] - src_min
+        tgt = data[c, 1] - tgt_min
+        print 'src, tgt', src, tgt, data[c, 1]
         conn_mat[src, tgt] = data[c, 2]
 
-#    output_fn = conn_list_fn.rsplit(".txt")[0] + "_cmap.png"
-#    if clim != None:
-#        clim = (-5., 5)
-    title = output_fn.rsplit('/')[-1]
-    ax = plot_matrix(conn_mat, title=title, clim=clim)
+    ax = plot_matrix(conn_mat, clim=clim)
     print 'connmat min max', np.min(conn_mat), np.max(conn_mat)
-    ax.set_xlabel('Target: %s' % tgt_cell_type)
-    ax.set_ylabel('Sources: %s' % src_cell_type)
+#    ax.set_xlabel('Target: %s' % tgt_cell_type)
+#    ax.set_ylabel('Sources: %s' % src_cell_type)
     if params != None:
         output_fn = params['figures_folder'] + conn_list_fn.rsplit("/")[-1].rsplit(".txt")[0] + "_cmap.png"
+        title = output_fn.rsplit('/')[-1]
+        ax.set_title(title)
         print "Saving fig to:", output_fn
         pylab.savefig(output_fn)
     return conn_mat
@@ -130,22 +107,25 @@ if __name__ == '__main__':
             tgt_type = 'd1'
             conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
             plot_conn_list(conn_list_fn, params=params, clim=clim)
-            tgt_type = 'd2'
-            conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-            plot_conn_list(conn_list_fn, params=params, clim=clim)
+            if params['with_d2']:
+                tgt_type = 'd2'
+                conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+                plot_conn_list(conn_list_fn, params=params, clim=clim)
     elif len(sys.argv) == 2:
         if sys.argv[1].endswith('.json') or os.path.isdir(sys.argv[1]):
             params = utils.load_params(sys.argv[1])
             tgt_type = 'd1'
             print 'Plotting connections targeting :', tgt_type
             conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-            clim = (-5., 5.)
+#            clim = (-5., 5.)
+            clim = None
             plot_conn_list(conn_list_fn, params=params, clim=clim)
-            tgt_type = 'd2'
-            print 'Plotting connections targeting :', tgt_type
-            conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-            clim = (-3., 3.)
-            plot_conn_list(conn_list_fn, params=params, clim=clim)
+            if params['with_d2']:
+                tgt_type = 'd2'
+                print 'Plotting connections targeting :', tgt_type
+                conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+                clim = (-3., 3.)
+                plot_conn_list(conn_list_fn, params=params, clim=clim)
     #         params = load_params_from_folder(fn)
     #         plot_conn_list(params=params)
         else:          

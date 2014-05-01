@@ -45,7 +45,9 @@ if __name__ == '__main__':
     if testing_params['training']:
         print 'Set training = False!'
         exit(1)
-    GP.write_parameters_to_file(testing_params['params_fn_json'], testing_params) # write_parameters_to_file MUST be called before every simulation
+
+    if pc_id == 0:
+        GP.write_parameters_to_file(testing_params['params_fn_json'], testing_params) # write_parameters_to_file MUST be called before every simulation
 
     if comm != None:
         comm.Barrier()
@@ -90,6 +92,7 @@ if __name__ == '__main__':
     print 'Time5: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
     CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params)
+#    CC.connect_d1_after_training(BG, training_params, testing_params)
     t1 = time.time() - t0
     print 'Time6: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     if comm != None:
@@ -97,7 +100,8 @@ if __name__ == '__main__':
     BG.set_bias('d1')
     if comm != None:
         comm.Barrier()
-    BG.set_bias('d2')
+    if testing_params['with_d2']:
+        BG.set_bias('d2')
     if comm != None:
         comm.Barrier()
     t1 = time.time() - t0

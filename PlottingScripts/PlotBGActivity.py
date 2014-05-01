@@ -144,11 +144,20 @@ if __name__ == '__main__':
         params = param_tool.params
 
     print 'Merging spikes ...'
-    if params['training']:
-        cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
+    if params['with_d2']:
+        if params['training']:
+            cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
+        else:
+            cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
+        cell_types_volt = ['d1', 'd2', 'actions']
     else:
-        cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
-    cell_types_volt = ['d1', 'd2', 'actions']
+        if params['training']:
+            cell_types = ['d1', 'actions']#, 'supervisor']
+        else:
+            cell_types = ['d1', 'actions']#, 'supervisor']
+        cell_types_volt = ['d1','actions']
+
+
 
     MS = MergeSpikefiles.MergeSpikefiles(params)
     for cell_type in cell_types:
@@ -159,7 +168,7 @@ if __name__ == '__main__':
                 MS.merge_spiketimes_files(merge_pattern, output_fn)
 
 #    stim_range = None
-    stim_range = [0, 2]
+    stim_range = [0, 3]
     if stim_range == None:
         if params['training']:
             if params['n_stim'] == 1:
@@ -192,7 +201,7 @@ if __name__ == '__main__':
     PMPN.plot_vertical_lines(ax, params)
     output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f.png' % (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'])
     print 'Saving figure to:', output_fig
-    pylab.savefig(output_fig, dpi=300)
+    pylab.savefig(output_fig, dpi=200)
 
     Plotter.plot_voltages('d1', action_idx=18, output_fn=params['figures_folder'] + 'd1_voltages.png')
 #    Plotter.plot_raster_simple()

@@ -97,7 +97,7 @@ def compare_actions_taken(training_params, test_params):
         print 'Incorrect iteration %d: training acion index' % (it), actions_training[it, 2], ' test', actions_test[it, 2]
         gids_to_check[it] = {}
         gids_to_check[it]['d1'] = bg_gids['d1'][actions_training[it, 2].astype(np.int)]
-        gids_to_check[it]['d2'] = bg_gids['d2'][actions_training[it, 2].astype(np.int)]
+#        gids_to_check[it]['d2'] = bg_gids['d2'][actions_training[it, 2].astype(np.int)]
     return gids_to_check, incorrect_iterations
         
 

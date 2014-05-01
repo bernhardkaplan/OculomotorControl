@@ -9,12 +9,13 @@ import subprocess
 
 def test_noise(params, t_sim=None):
     if t_sim == None:
-        t_sim = 10000. + params['dt']
+        t_sim = 1000. + params['dt']
     n_nrns = 20
 
-    
-    nest.SetKernelStatus({'data_path': 'TestNoise/', 'overwrite_files': True, 'resolution' : params['dt']})
+    folder_name = 'NoiseTest/' 
+    nest.SetKernelStatus({'data_path': folder_name, 'overwrite_files': True, 'resolution' : params['dt']})
 
+    nest.Install('pt_module')
     cell_params = params['cell_params_exc_mpn'].copy()
     nrns = nest.Create(params['neuron_model_mpn'], n_nrns, params=cell_params)
 
@@ -35,14 +36,14 @@ def test_noise(params, t_sim=None):
 
     nest.Simulate(t_sim) 
 
-    fns = utils.find_files('TestNoise/', 'test_noise')
+    fns = utils.find_files(folder_name, 'test_noise')
     print 'fns', fns
 
     volt_mean_std = np.zeros((n_nrns, 2))
     all_traces = np.zeros((t_sim / params['dt_volt'] - 1, n_nrns))
     mean_trace = np.zeros((t_sim / params['dt_volt'] - 1, 2))
     for fn in fns:
-        path = 'TestNoise/' + fn
+        path = folder_name + fn
         reply = subprocess.check_output(['wc', '-l', '%s' % path])
         print 'reply', reply
         d = np.loadtxt(path)

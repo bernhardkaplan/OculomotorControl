@@ -25,6 +25,8 @@ if __name__ == '__main__':
     ax = fig.add_subplot(111)
 
     gids = params['gids_to_record_%s' % bg_or_mpn]
+
+    print 'GIDS:', gids
 #    gids = [4966]
     v_mean = {}
 
@@ -43,7 +45,6 @@ if __name__ == '__main__':
             if volt.size > 0:
                 ax.plot(time_axis, volt, label='%d' % gid, lw=2)
                 v_mean[gid] = volt.mean()
-
     for gid in gids:
         print 'GID v_mean:', gid, v_mean[gid]
 

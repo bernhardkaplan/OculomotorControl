@@ -259,7 +259,7 @@ if __name__ == '__main__':
     for i_ in xrange(len(all_bcpnn_traces)):
         print 'Plotting gid_pair', gid_pairs[i_]
         traces = all_bcpnn_traces[i_]
-        info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
+        info_txt = 'Most active nrns during it %d\nPre: %d  Post: %d' % (plot_bcpnn_iteration, gid_pairs[i_][0], gid_pairs[i_][1])
         TP_training.plot_trace(traces, output_fn=None, info_txt=info_txt)
 #        wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
 

@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import json
 import ParameterContainer
@@ -46,18 +45,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 480
         self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
+        self.params['n_training_stim_per_cycle'] = 4 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(1)
+        self.params['test_stim_range'] = range(4)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 20.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 10
+        self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['n_iterations_per_stim'] = 7 
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['clip_weights'] = True
@@ -78,7 +77,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # the first stimulus parameters
         self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         self.params['n_rf'] = 200
-        self.params['sim_id'] = 'nRF%d_clipWeights%s' % (self.params['n_rf'], str(self.params['clip_weights']))
+        self.params['sim_id'] = 'nRF%d_expSyn_clipWeights%s' % (self.params['n_rf'], str(self.params['clip_weights']))
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -92,6 +91,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['master_seed'] = 12345  # 
+        np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
         self.params['visual_stim_seed'] = 4321  
         self.params['tuning_prop_seed'] = 0
@@ -122,22 +122,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         # MOTION PREDICTION NETWORK PARAMETERS 
         # #####################################
-        self.params['neuron_model_mpn'] = 'iaf_cond_exp'
+        self.params['neuron_model_mpn'] = 'iaf_cond_exp_bias'
         self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
-                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
-                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
-        self.params['cell_params_inh_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
-                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
-                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
+                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -80.0, 'V_th': -50.0, \
+                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
+        self.params['cell_params_inh_mpn'] = self.params['cell_params_exc_mpn'].copy()
 
-#        self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
-#                'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
-#                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
 #        self.params['cell_params_inh_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
-#                'E_in': -85.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
+#                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
 #                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
         # input parameters
-        self.params['w_input_exc_mpn'] = 100. # [nS]
+        self.params['w_input_exc_mpn'] = 30. # [nS]
         self.params['f_max_stim'] = 2000.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
@@ -145,8 +140,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['f_noise_exc'] = 1000.
         self.params['f_noise_inh'] = 1000.
-        self.params['w_noise_exc'] = 1.
-        self.params['w_noise_inh'] = -1.
+        self.params['w_noise_exc'] = .2
+        self.params['w_noise_inh'] = -.2
 
         # ##############################
         # EXCITATORY NETWORK PARAMETERS
@@ -162,13 +157,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-#        self.params['gids_to_record_mpn'] = [1433, 1409, 2153, 857, 1793, 1337, 1529, 2802, 1817, 2777, 2609, 1337, 1409, 1697, 1769, 1817, 2969, 2801, 1433, 3497, 569, 2033, 65, 1049, 786, 833, 1289, 2945, 1913, 3473, 1625, 1913, 1577, 1049, 689, 2129, 3473, 2033, 833, 569, 2129, 3473, 1073, 833, 1913, 1049, 689, 569, 2033, 1577, 1625, 1577, 1049, 689, 3473, 2033, 1913, 833, 569, 2129, 1625, 3473, 1577, 1049, 833, 2129, 569, 689, 1913, 2033, 1625, 1913, 1049, 3041, 2033, 2129, 833, 689, 569, 1577, 3041, 833, 689, 1049, 1913, 2033, 2129, 569, 1577, 1625, 2945, 3041, 3256, 689, 833, 1049, 1073, 1913, 2033, 3473]
-#        self.params['gids_to_record_bg'] = [7380, 7379, 7378, 7377, 7376, 7375, 7382, 7393, 7387, 7390, 7732, 7721, 7720, 7718, 7714, 7723, 7727, 7728, 7719, 7724, 7682, 7681, 7677, 7685, 7687, 7680, 7678, 7693, 7675, 7684, 7640, 7639, 7637, 7635, 7646, 7649, 7650, 7636, 7644, 7634, 7672, 7659, 7657, 7656, 7654, 7663, 7673, 7660, 7658, 7655, 7657, 7656, 7655, 7662, 7672, 7666, 7669, 7670, 7660, 7654, 7667, 7663, 7661, 7659, 7658, 7656, 7655, 7662, 7673, 7657, 7641, 7640, 7639, 7638, 7637, 7635, 7648, 7647, 7651, 7636, 7672, 7659, 7657, 7656, 7655, 7654, 7673, 7658, 7667, 7662, 7580, 7579, 7578, 7576, 7575, 7584, 7593, 7577, 7585, 7574]
-        self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_bg'] = None
+#        self.params['gids_to_record_mpn'] = None
+#        self.params['gids_to_record_bg'] = None
         self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
-#        self.params['gids_to_record_mpn'] =  [210, 426, 570, 618, 667, 834, 1098, 1218, 1794, 1842, 2346, 2803, 3018, 3522, 3858, 3954, 4218, 4290, 4698, 4722]
-#        self.params['gids_to_record_bg'] = [10821, 10822, 10823, 10824, 10825, 10856, 10857, 10858, 10859, 10860, 10876, 10877, 10878, 10879, 10880, 10881, 10882, 10883, 10884, 10885, 10901, 10902, 10903, 10904, 10905]
+        self.params['gids_to_record_mpn'] = [210, 426, 570, 618, 667, 834, 1098, 1218, 1266, 1794, 2346, 2803, 3018, 3522, 3858, 3954, 4218, 4290, 4698, 4722]
+        self.params['gids_to_record_bg'] =  [22821, 22822, 22823, 22824, 22825, 22856, 22857, 22858, 22859, 22860, 22876, 22877, 22878, 22879, 22880, 22881, 22882, 22883, 22884, 22885, 22901, 22902, 22903, 22904, 22905]
 
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
@@ -180,7 +173,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['v_max_out'] = 20.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = .05, .05
+        self.params['blur_X'], self.params['blur_V'] = .03, .03
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -284,33 +277,38 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 1.0
-        self.params['mpn_d2_weight_amplification'] = 1.0
+        self.params['mpn_d1_weight_amplification'] = 0.55
+        self.params['mpn_d2_weight_amplification'] = 0.55
         self.params['mpn_bg_bias_amplification'] = 5.00
 
         ## STR
-        self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
-        self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
+        self.params['model_exc_neuron'] = 'iaf_cond_exp_bias'
+        self.params['model_inh_neuron'] = 'iaf_cond_exp_bias'
+#        self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
+#        self.params['model_inh_neuron'] = 'iaf_cond_alpha_bias'
         self.params['num_msn_d1'] = 5
         self.params['num_msn_d2'] = 5
         self.params['n_cells_d1'] = self.params['num_msn_d1'] * self.params['n_actions']
         self.params['n_cells_d2'] = self.params['num_msn_d2'] * self.params['n_actions']
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
                 'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
-                'V_reset':-70., 'tau_syn_ex': .5, 'tau_syn_in' : 5.}
-        self.params['param_msn_d2'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e, \
-                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
-                'V_reset':-70., 'tau_syn_ex': .5, 'tau_syn_in' : 5.}
+                'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., 'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70.}
+        self.params['param_msn_d2'] = self.params['param_msn_d1'].copy()
+        # old params for alpha shaped synapses
+#        self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
+#                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
+#                'V_reset':-70., 'tau_syn_ex': .5, 'tau_syn_in' : 5.}
+        # iaf_cond_exp_bias default parameters: 
+        # {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, 'E_in': -85.0, 'K': 1.0, 'V_m': -70.0, 'V_reset': -60.0, 'V_th': -55.0, 'epsilon': 0.001, 'fmax': 20.0, 'g_L': 16.6667, 'gain': 1.0, 't_ref': 2.0, 'tau_e': 100.0, 'tau_j': 10.0, 'tau_p': 1000.0, 'tau_syn_ex': 0.2, 'tau_syn_in': 2.0 }
         
         ## Output GPi/SNr
-        self.params['model_bg_output_neuron'] = 'iaf_cond_alpha'
+        self.params['model_bg_output_neuron'] = 'iaf_cond_exp'
         self.params['num_actions_output'] = 5
-        self.params['param_bg_output'] = {'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
-        
-        self.params['str_to_output_exc_w'] = 40.
-        self.params['str_to_output_inh_w'] = -10.
-        self.params['str_to_output_exc_delay'] = 1. 
-        self.params['str_to_output_inh_delay'] = 1.
+        self.params['param_bg_output'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
+                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -80.0, 'V_th': -50.0, \
+                'g_L': 25.0, 't_ref': 1.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
+        #{'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
+
         
         ## RP and REWARD
         self.params['model_rp_neuron'] = 'iaf_cond_alpha_bias'
@@ -339,6 +337,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
         # if static synapse is used
         self.params['w_d1_d1'] = -5.
+
 
         self.params['actions_rp'] = 'bcpnn_synapse'
         self.params['param_actions_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
@@ -384,10 +383,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
+        self.params['str_to_output_exc_w'] = 5.
+        self.params['str_to_output_inh_w'] = -4.
+        self.params['str_to_output_exc_delay'] = 1.
+        self.params['str_to_output_inh_delay'] = 1.
+
         #Supervised Learning
         self.params['supervised_on'] = True
+        self.params['with_d2'] = not(self.params['supervised_on']) # the D2 population in the striatum is not needed if supervised learning is used
         self.params['num_neuron_poisson_supervisor'] = 1
-        self.params['num_neuron_poisson_input_BG'] = 50
+        self.params['num_neuron_poisson_input_BG'] = 10
         self.params['active_supervisor_rate'] = 3000.
         self.params['inactive_supervisor_rate'] = 0.
         self.params['active_poisson_input_rate'] = 20.
@@ -406,7 +411,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # Reinforcement Learning
         self.params['num_neuron_poisson_efference'] = 40
-        self.params['num_neuron_poisson_input_BG'] = 100
         self.params['active_full_efference_rate'] = 40.
         self.params['inactive_efference_rate'] = 0.
         self.params['active_poisson_input_rate'] = 50.
@@ -533,7 +537,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
 
-            folder_name += '_nStim%dx%d_it%d-%d_wD1%.1f_wD2%.1f_bias%.2f_K%.2f/' % \
+            folder_name += '_nStim%dx%d_it%d-%d_wD1%.2f_wD2%.2f_bias%.2f_K%.2f/' % \
                     (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], self.params['t_sim'], \
                     self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], \
                     self.params['mpn_bg_bias_amplification'], self.params['kappa'])
