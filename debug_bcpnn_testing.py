@@ -243,9 +243,10 @@ if __name__ == '__main__':
     fig_bcpnn = pylab.figure()
 #    ax_spikes = fig_bcpnn.add_subplot(211)
     ax_bcpnn = fig_bcpnn.add_subplot(111)
-    plot_bcpnn_iteration = 1
 
-    it_range_bcpnn = (0, 3)
+    it_range_bcpnn_in_stim = [0, 3] # within one stimulus
+    it_range_bcpnn = (training_params['n_iterations_per_stim'] * stim_range_global[0] + it_range_bcpnn_in_stim[0], training_params['n_iterations_per_stim'] * stim_range_global[1] + it_range_bcpnn_in_stim[1])
+    plot_bcpnn_iteration = stim_range_global[0] * training_params['n_iterations_per_stim']
     n_pre = 1
     n_post = 1
     pre_gids = [most_active_pre_gids[plot_bcpnn_iteration][:n_pre]]

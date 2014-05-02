@@ -95,7 +95,8 @@ if __name__ == '__main__':
         VI.current_motion_params = training_stimuli[i_stim, :]
         for it in xrange(params['n_iterations_per_stim']):
 
-            if it == params['n_iterations_per_stim'] - 1:
+#            if it == params['n_iterations_per_stim'] - 1:
+            if it > (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
 #                stim, supervisor_state = VI.set_empty_input(MT.exc_pop)
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
@@ -162,8 +163,8 @@ if __name__ == '__main__':
         utils.remove_empty_files(params['connections_folder'])
         utils.remove_empty_files(params['spiketimes_folder'])
         if not params['Cluster']:
-            os.system('python PlottingScripts/PlotMPNActivity.py')
             os.system('python PlottingScripts/PlotBGActivity.py')
+            os.system('python PlottingScripts/PlotMPNActivity.py')
 
     if comm != None:
         comm.barrier()

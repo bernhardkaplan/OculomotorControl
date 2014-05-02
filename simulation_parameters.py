@@ -53,7 +53,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 7 
+        self.params['n_iterations_per_stim'] = 8 
+        self.params['n_silent_iterations'] = 1      
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
 #        self.params['training'] = True
         self.params['training'] = False
@@ -77,7 +78,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # the first stimulus parameters
         self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-        self.params['n_rf'] = 500
+        self.params['n_rf'] = 200
         self.params['sim_id'] = 'nRF%d_expSyn_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
@@ -160,11 +161,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-#        self.params['gids_to_record_mpn'] = None
-#        self.params['gids_to_record_bg'] = None
+        self.params['gids_to_record_mpn'] = None
+        self.params['gids_to_record_bg'] = None
 #        self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
-        self.params['gids_to_record_mpn'] = [502, 918, 990, 1102, 1870, 2926, 3047, 3223, 3814, 4390, 4446, 5134, 5854, 5903, 6286, 7630, 7870, 8574, 8758, 9894, 10582, 11038, 11374, 11478, 11982]
-        self.params['gids_to_record_bg'] =  [57013, 57014, 57015, 57018, 57019, 57020, 57028, 57029, 57030, 57047, 57048, 57050, 57058, 57059, 57060, 57091, 57092, 57093, 57094, 57095, 57097, 57098, 57099, 57100]
+#        self.params['gids_to_record_mpn'] = [502, 918, 990, 1102, 1870, 2926, 3047, 3223, 3814, 4390, 4446, 5134, 5854, 5903, 6286, 7630, 7870, 8574, 8758, 9894, 10582, 11038, 11374, 11478, 11982]
+#        self.params['gids_to_record_bg'] =  [57013, 57014, 57015, 57018, 57019, 57020, 57028, 57029, 57030, 57047, 57048, 57050, 57058, 57059, 57060, 57091, 57092, 57093, 57094, 57095, 57097, 57098, 57099, 57100]
+#        self.params['gids_to_record_mpn'] = [220, 772, 820, 1636, 1877, 2620, 3388, 4396, 4492, 7588, 8308, 8812, 9317, 9460, 9604, 9988, 10804, 11116, 11284, 11884]
+#        self.params['gids_to_record_bg'] =  [57016, 57017, 57019, 57032, 57034, 57035, 57037, 57039, 57040, 57041, 57043, 57044, 57045, 57057, 57058, 57060, 57097, 57099, 57100]
 
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
@@ -251,7 +254,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['record_bg_volt'] = False
         else:
             self.params['record_bg_volt'] = True
-        self.params['record_bg_volt'] = False
+#        self.params['record_bg_volt'] = False
         self.params['bg_cell_types'] = ['d1', 'd2', 'actions', 'recorder']
         self.params['n_actions'] = 21
         self.params['n_states'] = 20
@@ -280,7 +283,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.1
+        self.params['mpn_d1_weight_amplification'] = 0.05
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.000001
         self.params['d1_d1_weight_amplification_neg'] = 0.00001

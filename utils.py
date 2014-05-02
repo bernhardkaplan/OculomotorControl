@@ -399,7 +399,7 @@ def communicate_local_spikes(gids, comm):
             all_nspikes[gid_] = all_spikes[pid][gid]
     gids_spiked = np.array(all_nspikes.keys(), dtype=np.int)
     nspikes =  np.array(all_nspikes.values(), dtype=np.int)
-    comm.barrier()
+    comm.Barrier()
     return gids_spiked, nspikes
 
 
