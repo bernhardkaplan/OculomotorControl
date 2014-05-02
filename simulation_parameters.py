@@ -45,9 +45,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 480
         self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 4 # number of different stimuli within one training cycle
+        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(4)
+        self.params['test_stim_range'] = range(1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -59,6 +59,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
+        self.params['connect_d1_after_training'] = False
         self.params['clip_weights'] = True
         self.params['weight_threshold_abstract'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
         # if (THRESH, True) --> after thresholding abstract weights can contain also negative weights abs(w) > THRESH
@@ -76,8 +77,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # the first stimulus parameters
         self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-        self.params['n_rf'] = 200
-        self.params['sim_id'] = 'nRF%d_expSyn_clipWeights%s' % (self.params['n_rf'], str(self.params['clip_weights']))
+        self.params['n_rf'] = 500
+        self.params['sim_id'] = 'nRF%d_expSyn_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -96,7 +97,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['visual_stim_seed'] = 4321  
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
-        self.params['debug_mpn'] = not self.params['Cluster']
+        self.params['debug_mpn'] = False
+#        self.params['debug_mpn'] = not self.params['Cluster']
         self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 
@@ -122,7 +124,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         # MOTION PREDICTION NETWORK PARAMETERS 
         # #####################################
-        self.params['neuron_model_mpn'] = 'iaf_cond_exp_bias'
+#        self.params['neuron_model_mpn'] = 'iaf_cond_exp_bias'
+        self.params['neuron_model_mpn'] = 'iaf_cond_exp'
         self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -80.0, 'V_th': -50.0, \
                 'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
@@ -159,9 +162,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
 #        self.params['gids_to_record_mpn'] = None
 #        self.params['gids_to_record_bg'] = None
-        self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
-        self.params['gids_to_record_mpn'] = [210, 426, 570, 618, 667, 834, 1098, 1218, 1266, 1794, 2346, 2803, 3018, 3522, 3858, 3954, 4218, 4290, 4698, 4722]
-        self.params['gids_to_record_bg'] =  [22821, 22822, 22823, 22824, 22825, 22856, 22857, 22858, 22859, 22860, 22876, 22877, 22878, 22879, 22880, 22881, 22882, 22883, 22884, 22885, 22901, 22902, 22903, 22904, 22905]
+#        self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
+        self.params['gids_to_record_mpn'] = [502, 918, 990, 1102, 1870, 2926, 3047, 3223, 3814, 4390, 4446, 5134, 5854, 5903, 6286, 7630, 7870, 8574, 8758, 9894, 10582, 11038, 11374, 11478, 11982]
+        self.params['gids_to_record_bg'] =  [57013, 57014, 57015, 57018, 57019, 57020, 57028, 57029, 57030, 57047, 57048, 57050, 57058, 57059, 57060, 57091, 57092, 57093, 57094, 57095, 57097, 57098, 57099, 57100]
 
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
@@ -277,9 +280,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.55
-        self.params['mpn_d2_weight_amplification'] = 0.55
-        self.params['mpn_bg_bias_amplification'] = 5.00
+        self.params['mpn_d1_weight_amplification'] = 0.1
+        self.params['mpn_d2_weight_amplification'] = 0.00001
+        self.params['mpn_bg_bias_amplification'] = 0.000001
+        self.params['d1_d1_weight_amplification_neg'] = 0.00001
+        self.params['d1_d1_weight_amplification_pos'] = 0.00001
 
         ## STR
         self.params['model_exc_neuron'] = 'iaf_cond_exp_bias'
@@ -292,7 +297,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_cells_d2'] = self.params['num_msn_d2'] * self.params['n_actions']
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
                 'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
-                'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., 'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70.}
+                'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., 
+                'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70., \
+                'K': 1., 'gain': self.params['gain']}
         self.params['param_msn_d2'] = self.params['param_msn_d1'].copy()
         # old params for alpha shaped synapses
 #        self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
@@ -534,13 +541,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if folder_name == None:
             if self.params['training']:
                 folder_name = 'Training_%s_taup%d' % (self.params['sim_id'], self.params['params_synapse_d1_MT_BG']['tau_p'])
+                folder_name += '_nStim%dx%d_it%d_tsim%d/' % (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
+                        self.params['t_iteration'], self.params['t_sim'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
 
-            folder_name += '_nStim%dx%d_it%d-%d_wD1%.2f_wD2%.2f_bias%.2f_K%.2f/' % \
-                    (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], self.params['t_sim'], \
-                    self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], \
-                    self.params['mpn_bg_bias_amplification'], self.params['kappa'])
+                folder_name += '_nStim%dx%d_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_bias%.2e/' % \
+                        (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], \
+                                self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
+                                self.params['mpn_d1_weight_amplification'], self.params['mpn_bg_bias_amplification'])
+#                    self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], \
+#                    self.params['mpn_bg_bias_amplification'], self.params['kappa'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

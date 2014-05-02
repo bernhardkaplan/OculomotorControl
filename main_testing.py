@@ -82,7 +82,7 @@ if __name__ == '__main__':
     print 'Time4: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     BG.write_cell_gids_to_file()
 
-    CC = CreateConnections.CreateConnections(testing_params)
+    CC = CreateConnections.CreateConnections(testing_params, comm)
     CC.set_pc_id(pc_id)
 
     if comm != None:
@@ -92,7 +92,8 @@ if __name__ == '__main__':
     print 'Time5: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
     CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params)
-#    CC.connect_d1_after_training(BG, training_params, testing_params)
+    if testing_params['connect_d1_after_training']:
+        CC.connect_d1_after_training(BG, training_params, testing_params)
     t1 = time.time() - t0
     print 'Time6: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     if comm != None:

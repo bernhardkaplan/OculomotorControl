@@ -78,7 +78,7 @@ def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
     for c in xrange(data[:,0].size):
         src = data[c, 0] - src_min
         tgt = data[c, 1] - tgt_min
-        print 'src, tgt', src, tgt, data[c, 1]
+#        print 'src, tgt', src, tgt, data[c, 1]
         conn_mat[src, tgt] = data[c, 2]
 
     ax = plot_matrix(conn_mat, clim=clim)

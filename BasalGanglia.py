@@ -32,9 +32,12 @@ class BasalGanglia(object):
         self.recorder_states = {}
         self.recorder_efference = {}
         self.recorder_supervisor = {}
-        self.recorder_rp = {}
-        self.recorder_rew = nest.Create("spike_detector", params= self.params['spike_detector_rew'])
-        nest.SetStatus(self.recorder_rew,[{"to_file": True, "withtime": True, 'label' : self.params['rew_spikes_fn']}])
+        if not self.params['supervised_on']:
+            self.recorder_rp = {}
+            self.recorder_rew = nest.Create("spike_detector", params= self.params['spike_detector_rew'])
+            nest.SetStatus(self.recorder_rew,[{"to_file": True, "withtime": True, 'label' : self.params['rew_spikes_fn']}])
+            self.voltmeter_rew = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval':self.params['dt_volt']})
+            nest.SetStatus(self.voltmeter_rew, [{"to_file": True, "withtime": True, 'label' : self.params['rew_volt_fn']}])
 
         #self.recorder_test_rp = nest.Create("spike_detector", params= self.params['spike_detector_test_rp'])
         #nest.SetStatus(self.recorder_test_rp, [{"to_file": True, "withtime": True, 'label' : self.params['test_rp_spikes_fn']}])
@@ -43,8 +46,6 @@ class BasalGanglia(object):
         self.voltmeter_d2 = {}
         self.voltmeter_rp = {}
         self.voltmeter_action = {}
-        self.voltmeter_rew = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval':self.params['dt_volt']})
-        nest.SetStatus(self.voltmeter_rew, [{"to_file": True, "withtime": True, 'label' : self.params['rew_volt_fn']}])
 
         self.t_current = 0 
 

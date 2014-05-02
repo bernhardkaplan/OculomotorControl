@@ -14,8 +14,11 @@ if __name__ == '__main__':
     print 'Usage: \nplot_voltages_simple.py [FOLDER_NAME] [GID_1] [GID_2]'
     params = utils.load_params(sys.argv[1])
 
-    bg_or_mpn = 'mpn'
-#    bg_or_mpn = 'bg'
+    if len(sys.argv) > 2:
+        bg_or_mpn = sys.argv[2]
+    else:
+#        bg_or_mpn = 'mpn'
+        bg_or_mpn = 'bg'
     if bg_or_mpn == 'bg':
         volt_fn_base = params['bg_volt_fn']
     else:
