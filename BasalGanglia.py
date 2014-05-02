@@ -32,9 +32,12 @@ class BasalGanglia(object):
         self.recorder_states = {}
         self.recorder_efference = {}
         self.recorder_supervisor = {}
-        self.recorder_rp = {}
-        self.recorder_rew = nest.Create("spike_detector", params= self.params['spike_detector_rew'])
-        nest.SetStatus(self.recorder_rew,[{"to_file": True, "withtime": True, 'label' : self.params['rew_spikes_fn']}])
+        if not self.params['supervised_on']:
+            self.recorder_rp = {}
+            self.recorder_rew = nest.Create("spike_detector", params= self.params['spike_detector_rew'])
+            nest.SetStatus(self.recorder_rew,[{"to_file": True, "withtime": True, 'label' : self.params['rew_spikes_fn']}])
+            self.voltmeter_rew = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval':self.params['dt_volt']})
+            nest.SetStatus(self.voltmeter_rew, [{"to_file": True, "withtime": True, 'label' : self.params['rew_volt_fn']}])
 
         #self.recorder_test_rp = nest.Create("spike_detector", params= self.params['spike_detector_test_rp'])
         #nest.SetStatus(self.recorder_test_rp, [{"to_file": True, "withtime": True, 'label' : self.params['test_rp_spikes_fn']}])
@@ -43,8 +46,6 @@ class BasalGanglia(object):
         self.voltmeter_d2 = {}
         self.voltmeter_rp = {}
         self.voltmeter_action = {}
-        self.voltmeter_rew = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval':self.params['dt_volt']})
-        nest.SetStatus(self.voltmeter_rew, [{"to_file": True, "withtime": True, 'label' : self.params['rew_volt_fn']}])
 
         self.t_current = 0 
 
@@ -85,8 +86,8 @@ class BasalGanglia(object):
                     self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
 
         for nactions in range(self.params['n_actions']):
+            self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
             if self.params['record_bg_volt']:
-                self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
                 nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_volt_fn']+ str(nactions)}])
                 if self.params['with_d2']:
                     self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
@@ -97,8 +98,8 @@ class BasalGanglia(object):
             self.actions[nactions] = nest.Create(self.params['model_bg_output_neuron'], self.params['num_actions_output'], params= self.params['param_bg_output'])
 
         for nactions in range(self.params['n_actions']):
+            self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
             if self.params['record_bg_volt']:
-                self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
                 nest.SetStatus(self.voltmeter_action[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_volt_fn']+ str(nactions)}])
             self.recorder_output[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_action'])
             self.recorder_d1[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_d1'])
@@ -391,12 +392,13 @@ class BasalGanglia(object):
         for i_, recorder in enumerate(self.recorder_output.values()):
             all_events = nest.GetStatus(recorder)[0]['events']
             recent_event_idx = all_events['times'] > self.t_current
-#            print 'debug recorder %d size:' % (i_), all_events['times'], all_events['senders']
+#            print 'DEBUG pc_id %d recorder %d size:' % (self.pc_id, i_), all_events['times'], all_events['senders']
             if recent_event_idx.size > 0:
                 new_event_times = np.r_[new_event_times, all_events['times'][recent_event_idx]]
                 new_event_gids = np.r_[new_event_gids, all_events['senders'][recent_event_idx]]
             nest.SetStatus(recorder, [{'start': t_new}])
 
+#        print 'DEBUG pc_id %d' % self.pc_id, new_event_gids 
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
@@ -405,7 +407,9 @@ class BasalGanglia(object):
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
         if len(nspikes) == 0:
+            print 'No spikes found in iteration', self.t_current/self.params['t_iteration']
             self.t_current += self.params['t_iteration']
+            self.iteration += 1
             return (0, 0, np.nan) # maye use 0 instead of np.nan
         winning_nspikes = np.argmax(nspikes)
         winning_gid = gids_spiked[winning_nspikes]

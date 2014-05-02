@@ -10,25 +10,28 @@ import subprocess
 def test_noise(params, t_sim=None):
     if t_sim == None:
         t_sim = 1000. + params['dt']
-    n_nrns = 20
+    n_nrns = 10
 
     folder_name = 'NoiseTest/' 
     nest.SetKernelStatus({'data_path': folder_name, 'overwrite_files': True, 'resolution' : params['dt']})
 
-    nest.Install('pt_module')
-    cell_params = params['cell_params_exc_mpn'].copy()
-    nrns = nest.Create(params['neuron_model_mpn'], n_nrns, params=cell_params)
-
 #    nest.Install('pt_module')
-#    cell_params = params['param_msn_d1'].copy()
-#    nrns = nest.Create(params['model_exc_neuron'], n_nrns, params=cell_params)
+#    cell_params = params['cell_params_exc_mpn'].copy()
+#    nrns = nest.Create(params['neuron_model_mpn'], n_nrns, params=cell_params)
+
+    nest.Install('pt_module')
+    cell_params = params['param_msn_d1'].copy()
+    nrns = nest.Create(params['model_exc_neuron'], n_nrns, params=cell_params)
 
     noise_exc = nest.Create('poisson_generator', n_nrns)
     noise_inh = nest.Create('poisson_generator', n_nrns)
+#    nest.SetStatus(noise_exc, {'rate' : 1000.}
     nest.SetStatus(noise_exc, {'rate' : params['f_noise_exc']})
+
     nest.SetStatus(noise_inh, {'rate' : params['f_noise_inh']})
 
-    nest.Connect(noise_exc, nrns, params['w_noise_exc'], params['dt'])
+    nest.Connect(noise_exc, nrns, 10.0, params['dt'])
+#    nest.Connect(noise_exc, nrns, params['w_noise_exc'], params['dt'])
 
     voltmeter = nest.Create('multimeter', params={'record_from': ['V_m']})
     nest.SetStatus(voltmeter,[{"to_file": True, "withtime": True, 'label' : 'test_noise', 'interval': params['dt_volt']}])

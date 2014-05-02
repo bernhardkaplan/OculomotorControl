@@ -96,7 +96,13 @@ class CreateConnections(object):
         d = np.loadtxt(fn)
         srcs = list(d[:, 0].astype(np.int))
         tgts = list(d[:, 1].astype(np.int))
-        weights = list(d[:, 2])
+        weights = np.zeros(d[:, 2].size)
+        neg_idx = np.nonzero(d[:, 2] < 0)[0]
+        pos_idx = np.nonzero(d[:, 2] > 0)[0]
+        weights[neg_idx] = d[neg_idx, 2] * testing_params['d1_d1_weight_amplification_neg']
+        weights[pos_idx] = d[pos_idx, 2] * testing_params['d1_d1_weight_amplification_pos']
+        weights = list(weights)
+#        print 'Debug weights', weights
         delays = list(np.ones(d[:, 0].size * testing_params['delay_d1_d1']))
         nest.Connect(srcs, tgts, weights, delays)
     
@@ -109,6 +115,8 @@ class CreateConnections(object):
         based on the weights found in conn_folder
         """
         self.merge_connection_files(training_params, test_params)
+        if self.comm != None:
+            self.comm.Barrier()
         print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
         mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
         n_lines = mpn_d1_conn_list[:, 0].size 

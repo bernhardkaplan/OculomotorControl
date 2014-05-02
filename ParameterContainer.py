@@ -125,7 +125,7 @@ class ParameterContainer(object):
             self.create_folders()
         print 'Writing parameters to: %s' % (fn)
         output_file = file(fn, 'w')
-        d = json.dump(params_to_write, output_file, indent=3)
+        d = json.dump(params_to_write, output_file, indent=2)
         output_file.close()
 
 

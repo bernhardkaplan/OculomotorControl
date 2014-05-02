@@ -325,10 +325,13 @@ class ActivityPlotter(object):
                     ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
                     ax.annotate(str(it_cnt), xy=(t0 + .45 * t_scale, ymin + (ymax - ymin) * .05))
 
-                    it_idx = it_ + i_stim * params['n_iterations_per_stim']
+                    if params['training']:
+                        it_idx = it_ + i_stim * params['n_iterations_per_stim'] + 1
+                    else:
+                        it_idx = it_ + i_stim * params['n_iterations_per_stim']
                     action = actions_taken[it_idx, 2]
                     if not np.isnan(action) != 0.:
-                        ax.annotate(str(int(action)), xy=(t0 + .45 * t_scale, ymin + (ymax - ymin) * .15), color='r')
+                        ax.annotate(str(int(action)), xy=(t0 + .2 * t_scale, ymin + (ymax - ymin) * .15), color='r')
                     it_cnt += 1
 
 

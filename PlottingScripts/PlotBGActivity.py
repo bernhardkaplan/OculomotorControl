@@ -168,7 +168,8 @@ if __name__ == '__main__':
                 MS.merge_spiketimes_files(merge_pattern, output_fn)
 
 #    stim_range = None
-    stim_range = [0, 3]
+    stim_range = [0, 1]
+    print 'Plotted the stim_range', stim_range
     if stim_range == None:
         if params['training']:
             if params['n_stim'] == 1:
