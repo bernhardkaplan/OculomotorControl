@@ -39,18 +39,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 960
-        self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 20 # number of different stimuli within one training cycle
-            self.params['total_num_virtual_procs'] = 480
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(1)
+        self.params['test_stim_range'] = range(0, 1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -59,11 +56,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_iterations_per_stim'] = 8 
         self.params['n_silent_iterations'] = 1      
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = True
-        #self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
-        self.params['connect_d1_after_training'] = False
+        self.params['connect_d1_after_training'] = True
         self.params['clip_weights'] = True
         self.params['weight_threshold_abstract'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
         # if (THRESH, True) --> after thresholding abstract weights can contain also negative weights abs(w) > THRESH
@@ -80,9 +77,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
 
         # the first stimulus parameters
-        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
+        self.params['initial_state'] = (.7, .5, 0.6, .0)
+#        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         self.params['n_rf'] = 500
-        self.params['sim_id'] = 'nRF%d_expSyn_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
+        if self.params['training']:
+            self.params['sim_id'] = 'nRF%d_clipWeights%s_2' % (self.params['n_rf'], str(self.params['clip_weights']))
+        else:
+            self.params['sim_id'] = 'nRF%d_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -164,8 +165,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-        self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_bg'] = None
+#        self.params['gids_to_record_mpn'] = None
+#        self.params['gids_to_record_bg'] = None
+        self.params['gids_to_record_mpn'] = [100, 364, 2644, 5068, 6052, 6988, 7780, 9268, 9317, 9988, 11644, 11884]
+        self.params['gids_to_record_bg'] =  [57036, 57037, 57038, 57039, 57040, 57041, 57042, 57043, 57044, 57045, 57046, 57076, 57077, 57078, 57096, 57097, 57098]
+
 #        self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
 #        self.params['gids_to_record_mpn'] = [502, 918, 990, 1102, 1870, 2926, 3047, 3223, 3814, 4390, 4446, 5134, 5854, 5903, 6286, 7630, 7870, 8574, 8758, 9894, 10582, 11038, 11374, 11478, 11982]
 #        self.params['gids_to_record_bg'] =  [57013, 57014, 57015, 57018, 57019, 57020, 57028, 57029, 57030, 57047, 57048, 57050, 57058, 57059, 57060, 57091, 57092, 57093, 57094, 57095, 57097, 57098, 57099, 57100]
@@ -182,7 +186,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['v_max_out'] = 20.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = .03, .03
+        self.params['blur_X'], self.params['blur_V'] = .02, .02
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -192,12 +196,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # check for reference: Dow 1981 "Magnification Factor and Receptive Field Size in Foveal Striate Cortex of the Monkey"
         self.params['rf_size_x_gradient'] = .1  # receptive field size for x-pos increases with distance to .5
         self.params['rf_size_y_gradient'] = .1  # receptive field size for y-pos increases with distance to .5
-        self.params['rf_size_x_min'] = .01      # cells situated at .5 have this receptive field size
-        self.params['rf_size_y_min'] = .01      # cells situated at .5 have this receptive field size
+        self.params['rf_size_x_min'] = .005      # cells situated at .5 have this receptive field size
+        self.params['rf_size_y_min'] = .005      # cells situated at .5 have this receptive field size
         self.params['rf_size_vx_gradient'] = .1 # receptive field size for vx-pos increases with distance to 0.0
         self.params['rf_size_vy_gradient'] = .1 #
-        self.params['rf_size_vx_min'] = .01 # cells situated at .5 have this receptive field size
-        self.params['rf_size_vy_min'] = .01 # cells situated at .5 have this receptive field size
+        self.params['rf_size_vx_min'] = .005 # cells situated at .5 have this receptive field size
+        self.params['rf_size_vy_min'] = .005 # cells situated at .5 have this receptive field size
 
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
         self.params['supervisor_amp_param'] = 1.
@@ -265,9 +269,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.10
 
         #Connections Actions and States to RP
-        self.tau_i = 3.
-        self.tau_j = 3.
-        self.tau_e = 5.
+        self.tau_i = 2.
+        self.tau_j = 2.
+        self.tau_e = 2.
 #        self.tau_p = max(1000., self.params['t_sim'])
         self.tau_p = .5 * self.params['t_sim']
         self.params['fmax'] = 150.
@@ -286,13 +290,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.05
+        self.params['mpn_d1_weight_amplification'] = 0.3
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.000001
-        self.params['d1_d1_weight_amplification_neg'] = 0.00001
-        self.params['d1_d1_weight_amplification_pos'] = 0.00001
+        self.params['d1_d1_weight_amplification_neg'] = 1.0
+        self.params['d1_d1_weight_amplification_pos'] = 1.0
+        # if static synapses are used
+        self.params['w_d1_d1'] = -5.
+        self.params['delay_d1_d1'] = 1.
 
         ## STR
+#        self.params['model_exc_neuron'] = 'iaf_cond_exp'
+#        self.params['model_inh_neuron'] = 'iaf_cond_exp'
         self.params['model_exc_neuron'] = 'iaf_cond_exp_bias'
         self.params['model_inh_neuron'] = 'iaf_cond_exp_bias'
 #        self.params['model_exc_neuron'] = 'iaf_cond_alpha_bias'
@@ -301,6 +310,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['num_msn_d2'] = 5
         self.params['n_cells_d1'] = self.params['num_msn_d1'] * self.params['n_actions']
         self.params['n_cells_d2'] = self.params['num_msn_d2'] * self.params['n_actions']
+#        self.params['param_msn_d1'] = { 't_ref': 2.0, 'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5.,  \
+#                'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70.}
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
                 'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
                 'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., 
@@ -344,12 +355,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## D1 - D1 connections
         # if bcpnn_synapse is used
         self.params['synapse_d1_d1'] = 'bcpnn_synapse'
-        self.params['delay_d1_d1'] = 1.
         self.params['params_synapse_d1_d1'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
-        # if static synapse is used
-        self.params['w_d1_d1'] = -5.
 
 
         self.params['actions_rp'] = 'bcpnn_synapse'
@@ -397,7 +405,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
         self.params['str_to_output_exc_w'] = 5.
-        self.params['str_to_output_inh_w'] = -4.
+        self.params['str_to_output_inh_w'] = -0.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 

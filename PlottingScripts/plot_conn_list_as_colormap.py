@@ -35,6 +35,7 @@ def plot_matrix(d, title=None, clim=None):
         cax = ax.pcolormesh(d, cmap=cmap_name, vmin=clim[0], vmax=clim[1])
     else:
         cax = ax.pcolormesh(d, cmap=cmap_name)
+
     ax.set_ylim((0, d.shape[0]))
     ax.set_xlim((0, d.shape[1]))
     if title != None:
@@ -101,6 +102,8 @@ if __name__ == '__main__':
     """
 
     fns = sys.argv[1:] # 
+#    clim = None
+    clim = (-5., 5.)
     if len(sys.argv) > 2:
         for fn in fns:
             params = utils.load_params(fn)
@@ -117,20 +120,18 @@ if __name__ == '__main__':
             tgt_type = 'd1'
             print 'Plotting connections targeting :', tgt_type
             conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-#            clim = (-5., 5.)
-            clim = None
             plot_conn_list(conn_list_fn, params=params, clim=clim)
             if params['with_d2']:
                 tgt_type = 'd2'
                 print 'Plotting connections targeting :', tgt_type
                 conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-                clim = (-3., 3.)
+#                clim = (-3., 3.)
                 plot_conn_list(conn_list_fn, params=params, clim=clim)
     #         params = load_params_from_folder(fn)
     #         plot_conn_list(params=params)
         else:          
             conn_list_fn = sys.argv[1]
-            plot_conn_list(conn_list_fn, params=None)#, clim=clim)
+            plot_conn_list(conn_list_fn, params=None, clim=clim)
 
     
     pylab.show()

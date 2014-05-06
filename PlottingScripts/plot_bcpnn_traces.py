@@ -57,7 +57,6 @@ class TracePlotter(object):
         print 'Pre_gids (%d most active pre-synaptic neurons)' % (n_pre), list(pre_gids), 'nspikes:', nspikes
 
         if post_gids == None:
-#            print 'DEBUG', self.d_post
             mpn_gids = np.unique(self.d_post[:, 0])
             (post_gids, nspikes) = utils.get_most_active_neurons(self.d_post, n_post)
             post_gids = post_gids.astype(np.int)
@@ -72,10 +71,10 @@ class TracePlotter(object):
         bcpnn_traces = []
         gid_pairs = []
         for pre_gid in pre_gids:
-            idx_pre = (self.d_pre[:, 0] == pre_gid).nonzero()[0]
+            idx_pre = (np.array(self.d_pre[:, 0] == pre_gid)).nonzero()[0]
             st_pre = self.d_pre[idx_pre, 1]
             for post_gid in post_gids:
-                idx_post = (self.d_post[:, 0] == post_gid).nonzero()[0]
+                idx_post = (np.array(self.d_post[:, 0] == post_gid)).nonzero()[0]
                 st_post = self.d_post[idx_post, 1]
                 s_pre = BCPNN.convert_spiketrain_to_trace(st_pre, self.t_range[1])
                 s_post = BCPNN.convert_spiketrain_to_trace(st_post, self.t_range[1])
@@ -88,25 +87,29 @@ class TracePlotter(object):
 
 
 
-    def plot_trace(self, bcpnn_traces, output_fn=None, info_txt=None):
+    def plot_trace(self, bcpnn_traces, output_fn=None, info_txt=None, fig=None):
         wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
         t_axis = self.dt * np.arange(zi.size)
         plots = []
         pylab.rcParams.update({'figure.subplot.hspace': 0.50})
-        fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
-        ax1 = fig.add_subplot(321)
-        ax2 = fig.add_subplot(322)
-        ax3 = fig.add_subplot(323)
-        ax4 = fig.add_subplot(324)
-        ax5 = fig.add_subplot(325)
-        ax6 = fig.add_subplot(326)
+        if fig == None:
+            fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
+            ax1 = fig.add_subplot(321)
+            ax2 = fig.add_subplot(322)
+            ax3 = fig.add_subplot(323)
+            ax4 = fig.add_subplot(324)
+            ax5 = fig.add_subplot(325)
+            ax6 = fig.add_subplot(326)
+        else:
+            ax1, ax2, ax3, ax4, ax5, ax6 = fig.get_axes()
+        linewidth = 1
         self.title_fontsize = 24
         ax1.set_title('$\\tau_{z_i} = %d$ ms, $\\tau_{z_j} = %d$ ms' % \
                 (self.bcpnn_params['tau_i'], self.bcpnn_params['tau_j']), fontsize=self.title_fontsize)
-        ax1.plot(t_axis, pre_trace, c='b', lw=2, ls=':')
-        ax1.plot(t_axis, post_trace, c='g', lw=2, ls=':')
-        p1, = ax1.plot(t_axis, zi, c='b', label='$z_i$', lw=2)
-        p2, = ax1.plot(t_axis, zj, c='g', label='$z_j$', lw=2)
+        ax1.plot(t_axis, pre_trace, c='b', lw=linewidth, ls=':')
+        ax1.plot(t_axis, post_trace, c='g', lw=linewidth, ls=':')
+        p1, = ax1.plot(t_axis, zi, c='b', label='$z_i$', lw=linewidth)
+        p2, = ax1.plot(t_axis, zj, c='g', label='$z_j$', lw=linewidth)
         plots += [p1, p2]
         labels_z = ['$z_i$', '$z_j$']
         ax1.legend(plots, labels_z)
@@ -114,9 +117,9 @@ class TracePlotter(object):
         ax1.set_ylabel('z-traces')
 
         plots = []
-        p1, = ax2.plot(t_axis, pi, c='b', lw=2)
-        p2, = ax2.plot(t_axis, pj, c='g', lw=2)
-        p3, = ax2.plot(t_axis, pij, c='r', lw=2)
+        p1, = ax2.plot(t_axis, pi, c='b', lw=linewidth)
+        p2, = ax2.plot(t_axis, pj, c='g', lw=linewidth)
+        p3, = ax2.plot(t_axis, pij, c='r', lw=linewidth)
         plots += [p1, p2, p3]
         labels_p = ['$p_i$', '$p_j$', '$p_{ij}$']
         ax2.set_title('$\\tau_{p} = %d$ ms' % \
@@ -126,9 +129,9 @@ class TracePlotter(object):
         ax2.set_ylabel('p-traces')
 
         plots = []
-        p1, = ax3.plot(t_axis, ei, c='b', lw=2)
-        p2, = ax3.plot(t_axis, ej, c='g', lw=2)
-        p3, = ax3.plot(t_axis, eij, c='r', lw=2)
+        p1, = ax3.plot(t_axis, ei, c='b', lw=linewidth)
+        p2, = ax3.plot(t_axis, ej, c='g', lw=linewidth)
+        p3, = ax3.plot(t_axis, eij, c='r', lw=linewidth)
         plots += [p1, p2, p3]
         labels_p = ['$e_i$', '$e_j$', '$e_{ij}$']
         ax3.set_title('$\\tau_{e} = %d$ ms' % \
@@ -138,7 +141,7 @@ class TracePlotter(object):
         ax3.set_ylabel('e-traces')
 
         plots = []
-        p1, = ax4.plot(t_axis, wij, c='b', lw=2)
+        p1, = ax4.plot(t_axis, wij, c='b', lw=linewidth)
         plots += [p1]
         labels_w = ['$w_{ij}$']
         ax4.legend(plots, labels_w)
@@ -146,7 +149,7 @@ class TracePlotter(object):
         ax4.set_ylabel('Weight')
 
         plots = []
-        p1, = ax6.plot(t_axis, bias, c='b', lw=2)
+        p1, = ax6.plot(t_axis, bias, c='b', lw=linewidth)
         plots += [p1]
         labels_ = ['bias']
         ax6.legend(plots, labels_)
@@ -157,14 +160,13 @@ class TracePlotter(object):
         ax5.set_xticks([])
 
         w_max, w_end, w_avg = np.max(wij), wij[-1], np.mean(wij)
-        info_txt_ = 'Weight max: %.2e\nWeight end: %.2e\nWeight avg: %.2e\n' % \
-                (w_max, w_end, w_avg)
-        info_txt_ += info_txt
-        ax5.annotate(info_txt_, (.1, .1), fontsize=20)
 
-#        ax5.annotate('$v_{stim} = %.2f, v_{0}=%.2f, v_{1}=%.2f$\ndx: %.2f\
-#                (self.v_stim, self.tp_s[0][2], self.tp_s[1][2], self.dx, self.w_max, self.w_end, self.w_avg, \
-#                self.t_max * dt), (.1, .1), fontsize=20)
+#        info_txt_ = 'Weight max: %.2e\nWeight end: %.2e\nWeight avg: %.2e\n' % \
+#                (w_max, w_end, w_avg)
+#        info_txt_ += info_txt
+        if info_txt != '':
+            ax5.annotate(info_txt, (.02, .05), fontsize=18)
+
 
 #        ax5.set_xticks([])
 #        output_fn = self.params['figures_folder'] + 'traces_tauzi_%04d_tauzj%04d_taue%d_taup%d_dx%.2e_dv%.2e_vstim%.1e.png' % \

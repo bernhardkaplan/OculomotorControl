@@ -23,14 +23,27 @@ def remove_empty_files(folder):
             os.system(rm_cmd)
 
 
+def map_gid_to_action(gid, bg_cell_gids, celltype='d1'):
+    """
+    gid is the int corresponding to a D1/D2 neurons
+    bg_cell_gids is dictionary stored in 'bg_gids_fn'
+    """
+    list_of_gids = bg_cell_gids[celltype]
+    for i_, sublist in enumerate(list_of_gids):
+        if gid in sublist:
+            return i_
+    return 'GID could not be mapped to action\n Check parameters!'
+
+
+
 def get_sources(conn_list, target_gid):
-    idx = conn_list[:, 1] == target_gid
+    idx = (conn_list[:, 1] == target_gid).nonzero()[0]
     sources = conn_list[idx, :]
     return sources
 
 
 def get_targets(conn_list, source_gid):
-    idx = conn_list[:, 0] == source_gid
+    idx = (conn_list[:, 0] == source_gid).nonzero()[0]
     targets = conn_list[idx, :]
     return targets
 
@@ -136,6 +149,10 @@ def get_colorlist():
                     #mauve
             '#808000', \
                     #brown-green
+            '#bb99ff', \
+                    # light violet
+            '#7700ff', \
+                    # dark violet
                     ]
     return colorlist
 

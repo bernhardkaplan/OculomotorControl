@@ -46,6 +46,7 @@ if __name__ == '__main__':
         print 'Set training = False!'
         exit(1)
 
+    testing_params['training_folder'] = training_folder
     if pc_id == 0:
         GP.write_parameters_to_file(testing_params['params_fn_json'], testing_params) # write_parameters_to_file MUST be called before every simulation
 
@@ -161,8 +162,8 @@ if __name__ == '__main__':
         utils.remove_empty_files(testing_params['spiketimes_folder'])
         utils.compare_actions_taken(training_params, testing_params)
         if not testing_params['Cluster'] and not testing_params['Cluster_Milner']:
-            os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])
             os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
+            os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])
             os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
     if comm != None:
         comm.Barrier()

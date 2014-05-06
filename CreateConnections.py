@@ -107,6 +107,8 @@ class CreateConnections(object):
         nest.Connect(srcs, tgts, weights, delays)
     
 
+#    def connect_d1_cross_inhibition(self, BG, training_params):
+
 
 
     def connect_mt_to_bg_after_training(self, mpn_net, bg_net, training_params, test_params, debug=False):

@@ -168,7 +168,12 @@ if __name__ == '__main__':
                 MS.merge_spiketimes_files(merge_pattern, output_fn)
 
 #    stim_range = None
-    stim_range = [0, 1]
+    if params['training']:
+        stim_range = [0, min(5, params['n_stim_training'])]
+    else:
+        stim_range = [0, min(5, params['n_stim_testing'])]
+
+
     print 'Plotted the stim_range', stim_range
     if stim_range == None:
         if params['training']:
@@ -204,8 +209,8 @@ if __name__ == '__main__':
     print 'Saving figure to:', output_fig
     pylab.savefig(output_fig, dpi=200)
 
-    Plotter.plot_voltages('d1', action_idx=18, output_fn=params['figures_folder'] + 'd1_voltages.png')
+#    Plotter.plot_voltages('d1', action_idx=18, output_fn=params['figures_folder'] + 'd1_voltages.png')
 #    Plotter.plot_raster_simple()
 #    Plotter.plot_action_voltages()
 #    Plotter.plot_action_spikes()
-#    pylab.show()
+    pylab.show()

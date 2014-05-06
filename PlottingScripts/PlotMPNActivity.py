@@ -325,10 +325,7 @@ class ActivityPlotter(object):
                     ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
                     ax.annotate(str(it_cnt), xy=(t0 + .45 * t_scale, ymin + (ymax - ymin) * .05))
 
-                    if params['training']:
-                        it_idx = it_ + i_stim * params['n_iterations_per_stim'] + 1
-                    else:
-                        it_idx = it_ + i_stim * params['n_iterations_per_stim']
+                    it_idx = it_ + i_stim * params['n_iterations_per_stim'] + 1 # + 1 because the first row stores the 'initial action'
                     action = actions_taken[it_idx, 2]
                     if not np.isnan(action) != 0.:
                         ax.annotate(str(int(action)), xy=(t0 + .2 * t_scale, ymin + (ymax - ymin) * .15), color='r')
@@ -461,12 +458,12 @@ class MetaAnalysisClass(object):
             print '\nPlotting the default parameters give in simulation_parameters.py\n'
             self.run_single_folder_analysis(params, stim_range)
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
-        elif len(argv) == 2:
+        elif len(argv) == 2: # PlotMPNActivity [FOLDER]
             folder_name = argv[1]
             params = utils.load_params(folder_name)
             self.run_single_folder_analysis(params, stim_range)
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
-        elif len(argv) == 3:
+        elif len(argv) == 3: #  PlotMPNActivity [STIM_1] [STIM_2]
             if argv[1].isdigit() and argv[2].isdigit():
                 stim_range = (int(argv[1]), int(argv[2]))
                 network_params = simulation_parameters.global_parameters()  
@@ -475,7 +472,7 @@ class MetaAnalysisClass(object):
                 self.run_single_folder_analysis(params, stim_range)
             else:
                 self.run_analysis_for_folders(argv[1:], training_params=training_params)
-        elif len(argv) == 4:
+        elif len(argv) == 4: #  PlotMPNActivity [FOLDER] [STIM_1] [STIM_2]
             folder_name = argv[1]
             if argv[2].isdigit() and argv[3].isdigit():
                 stim_range = (int(argv[2]), int(argv[3]))
@@ -485,7 +482,7 @@ class MetaAnalysisClass(object):
                 self.run_xdisplacement_analysis(params, stim_range)
             else:
                 self.run_analysis_for_folders(argv[1:], training_params=training_params, stim_range=stim_range)
-        elif len(argv) > 4:
+        elif len(argv) > 4: #  PlotMPNActivity [FOLDER_1] [FOLDER_2] .... [FOLDER_N]
             # do the same operation for many folders
             self.run_analysis_for_folders(argv[1:], training_params=training_params, stim_range=stim_range)
 

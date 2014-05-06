@@ -174,11 +174,72 @@ class DebugTraces(object):
             self.trace_buffer[it][post_gid]['zj'] = traces[i_][9]
 
 
+def get_weights(pre_gids, post_gids, d):
+    """
+    d -- n x 3 array (src, tgt, weight)
+    """
+
+    for i_, pre_gid in enumerate(pre_gids):
+        targets = utils.get_targets(d, pre_gid)
+        print 'Projecting from %d' % (pre_gid), targets[:, 2].mean()
+
+    for i_, post_gid in enumerate(post_gids):
+        sources = utils.get_sources(d, post_gid)
+        print 'Projecting to %d' % (post_gid), sources[:, 2].mean()
+
+
+
+def get_weight(pre_gid, post_gid, d):
+    pre_idx = (d[:, 0] == pre_gid).nonzero()[0]
+    idx = (d[pre_idx, 1] == post_gid).nonzero()[0]
+    if idx.size > 0:
+        w = d[idx, 2]
+        return w
+    else:
+        return 0. #None
+
+
+def get_target_action(pre_gid, d, bg_cell_gids, actions_taken, iteration):
+    targets = utils.get_targets(d, pre_gid)
+    print 'Pre GID %d' % (pre_gid), 
+    target_actions = []
+    for i_, gid in enumerate(targets[:, 1]):
+        action_idx = utils.map_gid_to_action(gid, bg_cell_gids)
+        target_actions.append(action_idx)
+#        print '\t %s\t' % (action_idx),
+
+    print 'Target actions:', np.unique(target_actions)
+    n_tgt_actions = np.unique(target_actions).size
+    tgt_weight = np.zeros(n_tgt_actions)
+#    tgt_weight = np.zeros(n_tgt_actions)
+    tgt_weights = {}
+    n_tgts = {}
+    for action in np.unique(target_actions):
+        tgt_weights[action] = 0.
+        n_tgts[action] = 0
+
+    for i_ in xrange(targets[:, 2].size):
+        tgt, w = targets[i_, 1], targets[i_, 2]
+        action_idx = utils.map_gid_to_action(gid, bg_cell_gids)
+        tgt_weights[action_idx] += w
+        n_tgts[action] += 1
+
+    for action in np.unique(target_actions):
+        if tgt_weights[action] != 0.:
+            w_mean = tgt_weights[action_idx] / n_tgts[action]
+#            check = action == actions_taken[iteration + 1, 2]
+            print 'Source %d\tTarget Action: %d\tTarget Weight.sum = %.3f\tmean: %.3f\t\tCheck: wiring %d - %d (should be)' % (pre_gid, action, tgt_weights[action], w_mean, action, actions_taken[iteration+1, 2])
+
+
+
+
+
 if __name__ == '__main__':
 
     training_params = utils.load_params( os.path.abspath(sys.argv[1]) )
 
     colorlist = utils.get_colorlist()
+    n_color = len(colorlist)
     cell_type_post = 'd1'
 
     DB = DebugTraces()
@@ -189,8 +250,16 @@ if __name__ == '__main__':
     fn_post = training_params['spiketimes_folder'] + training_params['%s_spikes_fn_merged_all' % cell_type_post]
     TP_training.load_spikes(fn_pre, fn_post)
 
-    stim_range_global = (0, 1)
+#    stim_range_global = (0, 1)
+    stim_range_global = (0, training_params['n_stim_training'])
     it_range_global = (training_params['n_iterations_per_stim'] * stim_range_global[0], training_params['n_iterations_per_stim'] * stim_range_global[1])
+#    it_range_bcpnn_in_stim = [0, 7] # within the first stimulus
+#    it_range_bcpnn = (training_params['n_iterations_per_stim'] * stim_range_global[0] + it_range_bcpnn_in_stim[0], training_params['n_iterations_per_stim'] * stim_range_global[1] + it_range_bcpnn_in_stim[1])
+#    plot_bcpnn_iteration_pre = int(sys.argv[2]) # decides from which iteration the most-active neurons are taken 
+    plot_bcpnn_iteration_pre = 0
+    plot_bcpnn_iteration_post = 0
+    it_range_bcpnn = it_range_global
+    print 'it_range_bcpnn:', it_range_bcpnn
     all_pre_gids = []
     all_post_gids = []
 
@@ -201,8 +270,8 @@ if __name__ == '__main__':
 
     most_active_pre_gids = {}
     most_active_post_gids = {}
-    n_pre = 3
-    n_post = 3
+    n_pre = 5
+    n_post = 5
     for it in xrange(it_range_global[0], it_range_global[1]):
         it_range = (it, it+1)
         pre_gids, post_gids = TP_training.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range)
@@ -210,26 +279,42 @@ if __name__ == '__main__':
         all_post_gids += list(post_gids)
         most_active_pre_gids[it] = pre_gids
         most_active_post_gids[it] = post_gids
-        traces, gid_pairs = TP_training.compute_traces(pre_gids, post_gids, it_range)
-        DB.set_trace_buffer(it, gid_pairs, traces)
-        all_gid_pairs[it] = gid_pairs
+#        traces, gid_pairs = TP_training.compute_traces(pre_gids, post_gids, it_range)
+#        DB.set_trace_buffer(it, gid_pairs, traces)
+#        all_gid_pairs[it] = gid_pairs
+
     actions_taken = np.loadtxt(training_params['actions_taken_fn'])
 
     # ---------- TRAINING -----------------
+    # --- get the weights between all the pre and post cells
+    conn_fn = training_params['mpn_bgd1_merged_conn_fn']
+    f_bg = file(training_params['bg_gids_fn'], 'r')
+    bg_cell_gids = json.load(f_bg)
+    d = np.loadtxt(conn_fn)
+    for iteration in xrange(it_range_global[0], it_range_global[1]):
+        print '------------ Iteration %d   t = [%d - %d] ------------ ' % (iteration, iteration * training_params['t_iteration'], (iteration + 1) * training_params['t_iteration'])
+        get_weights(most_active_pre_gids[iteration], most_active_post_gids[iteration], d)
+        for pre_gid in most_active_pre_gids[iteration]:
+            get_target_action(pre_gid, d, bg_cell_gids, actions_taken, iteration)
+#            for post_gid in most_active_post_gids[iteration]:
+#                w = get_weight(pre_gid, post_gid, d)
+#                print 'w(%d - %d) : %.3f' % (pre_gid, post_gid, w)
+#    exit(1)
+
     # -------- PLOT SPIKES (color coded for actions) ----------------
-    # plot the spikes from the most active cells for the different iterations
+    # --- plot the spikes from the most active cells for the different iterations
     fig_test = pylab.figure()
     ax1_training = fig_test.add_subplot(111)
     for it in xrange(it_range_global[0], it_range_global[1]):
         pre_gids = most_active_pre_gids[it]
-        DB.plot_spikes_raster(training_params, pre_gids, it_range_global, ax1_training, color=colorlist[it])
+        DB.plot_spikes_raster(training_params, pre_gids, it_range_global, ax1_training, color=colorlist[it % n_color])
         post_gids = most_active_post_gids[it]
-        DB.plot_spikes_raster(training_params, post_gids, it_range_global, ax1_training, color=colorlist[it])
+        DB.plot_spikes_raster(training_params, post_gids, it_range_global, ax1_training, color=colorlist[it % n_color])
     DB.plot_iteration_borders(training_params, ax1_training, it_range_global)
     ylim = ax1_training.get_ylim()
     for it in xrange(it_range_global[0], it_range_global[1]):
         t0 = it * training_params['t_iteration']
-        ax1_training.text(t0 + .2 * training_params['t_iteration'], 1.05 * ylim[1], 'action %d' % (actions_taken[it, 2]), fontsize=16, color=colorlist[it])
+        ax1_training.text(t0 + .2 * training_params['t_iteration'], 1.05 * ylim[1], 'action %d' % (actions_taken[it, 2]), fontsize=16, color=colorlist[it % n_color])
     ax1_training.set_xlabel('Time [ms]')
     ax1_training.set_ylabel('Visual layer GID')
     print 'You should (re-)run the training & testing to record V_m from these cells:'
@@ -244,25 +329,34 @@ if __name__ == '__main__':
 #    ax_spikes = fig_bcpnn.add_subplot(211)
     ax_bcpnn = fig_bcpnn.add_subplot(111)
 
-    it_range_bcpnn_in_stim = [0, 3] # within one stimulus
-    it_range_bcpnn = (training_params['n_iterations_per_stim'] * stim_range_global[0] + it_range_bcpnn_in_stim[0], training_params['n_iterations_per_stim'] * stim_range_global[1] + it_range_bcpnn_in_stim[1])
-    plot_bcpnn_iteration = stim_range_global[0] * training_params['n_iterations_per_stim']
-    n_pre = 1
-    n_post = 1
-    pre_gids = [most_active_pre_gids[plot_bcpnn_iteration][:n_pre]]
-    post_gids = [most_active_post_gids[plot_bcpnn_iteration][:n_post]]
-#    post_gids = [4966]
+    pre_gids = most_active_pre_gids[plot_bcpnn_iteration_pre][:n_pre].tolist()
+    post_gids = most_active_post_gids[plot_bcpnn_iteration_post][:n_post].tolist()
 
     all_bcpnn_traces, gid_pairs = TP_training.compute_traces(pre_gids, post_gids, it_range_bcpnn)
 
 #    DB.plot_spikes_raster(training_params, pre_gids, it_range_bcpnn, ax_spikes, color=colorlist[it])
 #    DB.plot_wij_for_iteration
 
+    fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
+    ax1 = fig.add_subplot(321)
+    ax2 = fig.add_subplot(322)
+    ax3 = fig.add_subplot(323)
+    ax4 = fig.add_subplot(324)
+    ax5 = fig.add_subplot(325)
+    ax6 = fig.add_subplot(326)
     for i_ in xrange(len(all_bcpnn_traces)):
         print 'Plotting gid_pair', gid_pairs[i_]
         traces = all_bcpnn_traces[i_]
-        info_txt = 'Most active nrns during it %d\nPre: %d  Post: %d' % (plot_bcpnn_iteration, gid_pairs[i_][0], gid_pairs[i_][1])
-        TP_training.plot_trace(traces, output_fn=None, info_txt=info_txt)
+
+
+        if i_ == (len(all_bcpnn_traces) - 1):
+            output_fn = training_params['figures_folder'] + 'bcpnn_traces_man%d+%d_iteration%d-%d.png' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_post, it_range_bcpnn[0], it_range_bcpnn[1])
+            info_txt = 'Iteration %d (stim %d) action %d' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_pre / training_params['n_iterations_per_stim'], actions_taken[plot_bcpnn_iteration_post+1, 2])
+            info_txt += '\nMost active nrns (pre %d, post %d): \nPre: %s\nPost: %s' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_post, pre_gids, post_gids)
+        else:
+            output_fn = None
+            info_txt = ''
+        TP_training.plot_trace(traces, output_fn=output_fn, info_txt=info_txt, fig=fig)
 #        wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
 
 
@@ -293,9 +387,7 @@ if __name__ == '__main__':
 #    DB.plot_voltages(testing_params, 'testing', plot_volt_gids, ax2_test, (0, plot_volt_iteration+1))
 
 
-
     # =====================
-
 #        DB.plot_pre_post_activity(training_params, 'training', gid_pair[0], gid_pair[1], it_range_global, ax1_train, ax2_train)
 #        gid_pairs = all_gid_pairs[plot_iteration]
 #        print 'Iteration %d gid_pair' % (plot_iteration), gid_pairs
@@ -328,4 +420,3 @@ if __name__ == '__main__':
 
 #    DB.plot_wij_for_iteration(plot_iteration, gid_pairs, ax_wij)
     pylab.show()
-

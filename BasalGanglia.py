@@ -57,7 +57,8 @@ class BasalGanglia(object):
         if self.params['gids_to_record_bg']:
             self.record_extra_cells()
 
-        self.connect_d1_population()
+        if self.params['training']:
+            self.connect_d1_population()
         self.connect_noise()
 
 
@@ -203,7 +204,6 @@ class BasalGanglia(object):
 
 
     def connect_d1_population(self):
-
         for i_ in xrange(self.params['n_actions']):
             src_pop = self.strD1[i_]
             for j_ in xrange(self.params['n_actions']):

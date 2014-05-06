@@ -7,7 +7,8 @@ if cmd_subfolder not in sys.path:
 import pylab
 import numpy as np
 import utils
-
+colorlist = utils.get_colorlist()
+n_colors = len(colorlist)
 
 if __name__ == '__main__':
 
@@ -33,6 +34,7 @@ if __name__ == '__main__':
 #    gids = [4966]
     v_mean = {}
 
+    cnt_ = 0
     files = {}
     for gid in gids:
         gid = int(gid)
@@ -46,8 +48,9 @@ if __name__ == '__main__':
                 d = files[fn]
             time_axis, volt = utils.extract_trace(d, gid)
             if volt.size > 0:
-                ax.plot(time_axis, volt, label='%d' % gid, lw=2)
+                ax.plot(time_axis, volt, label='%d' % gid, lw=2, c=colorlist[cnt_ % n_colors])
                 v_mean[gid] = volt.mean()
+                cnt_ += 1
     for gid in gids:
         print 'GID v_mean:', gid, v_mean[gid]
 
