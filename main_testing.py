@@ -110,7 +110,6 @@ if __name__ == '__main__':
     print 'Time7: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
     iteration_cnt = 0
-    v_eye = [0., 0.]
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
         if len(training_stimuli.shape) == 1:
             VI.current_motion_params = training_stimuli
@@ -126,7 +125,7 @@ if __name__ == '__main__':
                 # and get the state information BEFORE MPN perceives anything
                 # in order to set a supervisor signal
 #                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
-                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
+                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], network_states_net[iteration_cnt, :])
 
             if testing_params['debug_mpn']:
                 print 'Iteration %d: Saving spike trains...' % iteration_cnt
@@ -144,8 +143,6 @@ if __name__ == '__main__':
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
 
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
-            v_eye[0] += next_action[0]
-            v_eye[1] += next_action[1]
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             iteration_cnt += 1

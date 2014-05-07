@@ -92,18 +92,17 @@ class VisualInput(object):
         return mp_training 
 
 
-    def compute_input(self, local_gids, action_code, v_eye, network_state, dummy=False):
+    def compute_input(self, local_gids, action_code, network_state, dummy=False):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
         Arguments:
         local_gids -- the GIDS for which the stimulus needs to be computed
         action_code -- a tuple representing the action (direction of eye movement)
-        v_eye -- list with two elements [vx, vy]
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-        trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code, v_eye, network_state)
+        trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code, network_state)
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
 #        supervisor_state = (trajectory[0][-1], trajectory[1][-1], \
@@ -202,13 +201,12 @@ class VisualInput(object):
         return L
 
 
-    def update_stimulus_trajectory_new(self, action_code, v_eye, network_state):
+    def update_stimulus_trajectory_new(self, action_code, network_state):
         """
         Update the motion parameters based on the action
 
         Keyword arguments:
         action_code -- a tuple representing the action (direction of eye movement)
-        v_eye -- [vx, vy] eye velocity 
         network_state -- [x, y, vx, vy] 'prediction' based on sensory neurons
         network_state[2:4]  = v_object
         """
