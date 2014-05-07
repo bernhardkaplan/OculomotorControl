@@ -127,54 +127,21 @@ class ActivityPlotter(object):
         return ax
 
 
-if __name__ == '__main__':
+def run_plot_bg(params, stim_range):
 
-    if len(sys.argv) > 1:
-        param_fn = sys.argv[1]
-        if os.path.isdir(param_fn):
-            param_fn += '/Parameters/simulation_parameters.json'
-        import json
-        f = file(param_fn, 'r')
-        print 'Loading parameters from', param_fn
-        params = json.load(f)
-
-    else:
-        import simulation_parameters
-        param_tool = simulation_parameters.global_parameters()
-        params = param_tool.params
-
+    print 'Plotted the stim_range', stim_range
     print 'Merging spikes ...'
     if params['with_d2']:
         if params['training']:
             cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
         else:
             cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
-        cell_types_volt = ['d1', 'd2', 'actions']
     else:
         if params['training']:
             cell_types = ['d1', 'actions']#, 'supervisor']
         else:
             cell_types = ['d1', 'actions']#, 'supervisor']
-        cell_types_volt = ['d1','actions']
 
-
-
-    MS = MergeSpikefiles.MergeSpikefiles(params)
-    for cell_type in cell_types:
-        for naction in range(params['n_actions']):
-            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
-            output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
-            if not os.path.exists(output_fn):
-                MS.merge_spiketimes_files(merge_pattern, output_fn)
-
-#    stim_range = None
-    if params['training']:
-        stim_range = [0, min(5, params['n_stim_training'])]
-    else:
-        stim_range = [0, min(5, params['n_stim_testing'])]
-
-
-    print 'Plotted the stim_range', stim_range
     if stim_range == None:
         if params['training']:
             if params['n_stim'] == 1:
@@ -187,6 +154,14 @@ if __name__ == '__main__':
     else:
         t_stim = params['n_iterations_per_stim'] * params['t_iteration']
         xlim = (stim_range[0] * t_stim, stim_range[1] * t_stim)
+
+    MS = MergeSpikefiles.MergeSpikefiles(params)
+    for cell_type in cell_types:
+        for naction in range(params['n_actions']):
+            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
+            output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
+            if not os.path.exists(output_fn):
+                MS.merge_spiketimes_files(merge_pattern, output_fn)
 
     Plotter = ActivityPlotter(params)#, it_max=1)
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -205,7 +180,8 @@ if __name__ == '__main__':
 
     PMPN = PlotMPNActivity.ActivityPlotter(params)
     PMPN.plot_vertical_lines(ax, params)
-    output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f.png' % (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'])
+    output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f_stim%d-%d.png' % \
+            (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'], stim_range[0], stim_range[1])
     print 'Saving figure to:', output_fig
     pylab.savefig(output_fig, dpi=200)
 
@@ -213,4 +189,42 @@ if __name__ == '__main__':
 #    Plotter.plot_raster_simple()
 #    Plotter.plot_action_voltages()
 #    Plotter.plot_action_spikes()
+
+if __name__ == '__main__':
+
+    stim_range = None
+    if len(sys.argv) == 1:
+        network_params = simulation_parameters.global_parameters()  
+        params = network_params.params
+        print '1\nPlotting the default parameters give in simulation_parameters.py\n'
+        run_plot_bg(params, stim_range)
+    elif len(sys.argv) == 2: # plot_ [FOLDER]
+        folder_name = sys.argv[1]
+        params = utils.load_params(folder_name)
+        run_plot_bg(params, stim_range)
+    elif len(sys.argv) == 3: #  plot_ [STIM_1] [STIM_2]
+        if sys.argv[1].isdigit() and sys.argv[2].isdigit():
+            stim_range = (int(sys.argv[1]), int(sys.argv[2]))
+            network_params = simulation_parameters.global_parameters()  
+            params = network_params.params
+            print '\nPlotting the default parameters give in simulation_parameters.py\n'
+        else:
+            for fn in sys.argv[1:]:
+                params = utils.load_params(fn)
+                run_plot_bg(params, stim_range)
+    elif len(sys.argv) == 4: #  PlotMPNActivity [FOLDER] [STIM_1] [STIM_2]
+        folder_name = sys.argv[1]
+        if sys.argv[2].isdigit() and sys.argv[3].isdigit():
+            stim_range = (int(sys.argv[2]), int(sys.argv[3]))
+            params = utils.load_params(folder_name)
+            run_plot_bg(params, stim_range)
+        else:
+            for fn in sys.argv[1:]:
+                params = utils.load_params(fn)
+                run_plot_bg(params, stim_range)
+    elif len(sys.argv) > 4: #  PlotMPNActivity [FOLDER_1] [FOLDER_2] .... [FOLDER_N]
+        for fn in sys.argv[1:]:
+            params = utils.load_params(fn)
+            run_plot_bg(params, stim_range)
+
     pylab.show()

@@ -47,7 +47,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -186,7 +186,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['v_max_out'] = 20.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = .02, .02
+        self.params['blur_X'], self.params['blur_V'] = .01, .01
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -290,11 +290,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.3
+        self.params['mpn_d1_weight_amplification'] = 0.5
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.000001
-        self.params['d1_d1_weight_amplification_neg'] = 1.0
-        self.params['d1_d1_weight_amplification_pos'] = 1.0
+        self.params['d1_d1_weight_amplification_neg'] = 0.5
+        self.params['d1_d1_weight_amplification_pos'] = 1e-6
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
         self.params['delay_d1_d1'] = 1.

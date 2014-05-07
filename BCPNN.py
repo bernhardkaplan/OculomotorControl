@@ -1,6 +1,6 @@
 import numpy as np
 
-def convert_spiketrain_to_trace(st, t_max, dt=0.1, spike_width=1, spike_height=10.):
+def convert_spiketrain_to_trace(st, t_max, dt=0.1, spike_width=1):
     """Converts a single spike train into a binary trace
     Keyword arguments: 
     st --  spike train in the format [time, id]
@@ -14,7 +14,7 @@ def convert_spiketrain_to_trace(st, t_max, dt=0.1, spike_width=1, spike_height=1
     trace[idx] = 1
     for i in xrange(spike_width):
         trace[idx + i] = 1
-    trace *= spike_height
+#    trace *= spike_height
     return trace
 
 
@@ -23,6 +23,7 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
     Arguments:
         pre_trace, post_trace: pre-synaptic activity (0 means no spike, 1 means spike) (not spike trains!)
         bcpnn_params: dictionary containing all bcpnn parameters, initial value, fmax, time constants, etc
+        dt -- should be the simulation time step because it influences spike_height
     """
     assert (len(pre_trace) == len(post_trace)), "Bcpnn.get_spiking_weight_and_bias: pre and post activity have different lengths!"
 
@@ -41,7 +42,7 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
     pij = np.ones(n) * initial_value**2
     wij = np.ones(n)  *  np.log(pij[0] / (pi[0] * pj[0]))
     bias = np.ones(n) * np.log(initial_value)
-    spike_height = 1000. / bcpnn_params['fmax']
+    spike_height = 1000. / (bcpnn_params['fmax'] * dt)
     eps = bcpnn_params['epsilon']
     K = bcpnn_params['K']
 

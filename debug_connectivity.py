@@ -12,11 +12,18 @@ def get_sources(params, conn_data, bg_cell_gids, action_idx):
 
     post_gids = bg_cell_gids['d1'][action_idx]
     all_source_gids = []
-    for gid in post_gids:
+    w_in_sum = 0.
+    w_in_mean = np.zeros(params['num_msn_d1'])
+    w_in_mean_sum = np.zeros(params['num_msn_d1'])
+    for i_, gid in enumerate(post_gids):
         sources = utils.get_sources(conn_data, gid)
         all_source_gids += sources[:, 0].tolist()
-#        print gid, sources
-    print 'All sources to action %d\n' % (action_idx), np.unique(all_source_gids)
+        w_in_mean[i_] = sources[:, 2].mean()
+        w_in_mean_sum[i_] = sources[:, 2].sum()
+        w_in_sum += sources[:, 2].sum()
+        print 'w_in_mean[%d]: %.3f +- %.3f' % (gid, w_in_mean[i_], sources[:, 2].std())
+    print 'w_in_action[%d]: sum %.3f mean_sum %.3f +- %.3f' % (action_idx, w_in_sum, w_in_mean_sum.mean(), w_in_mean_sum.std())
+#    print 'All sources to action %d\n' % (action_idx), np.unique(all_source_gids)
 
 if __name__ == '__main__':
     params = utils.load_params( os.path.abspath(sys.argv[1]) )

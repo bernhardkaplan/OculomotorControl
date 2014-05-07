@@ -206,7 +206,7 @@ def get_target_action(pre_gid, d, bg_cell_gids, actions_taken, iteration):
     for i_, gid in enumerate(targets[:, 1]):
         action_idx = utils.map_gid_to_action(gid, bg_cell_gids)
         target_actions.append(action_idx)
-#        print '\t %s\t' % (action_idx),
+        print 'debug', targets[i_, :]
 
     print 'Target actions:', np.unique(target_actions)
     n_tgt_actions = np.unique(target_actions).size
@@ -250,14 +250,14 @@ if __name__ == '__main__':
     fn_post = training_params['spiketimes_folder'] + training_params['%s_spikes_fn_merged_all' % cell_type_post]
     TP_training.load_spikes(fn_pre, fn_post)
 
-#    stim_range_global = (0, 1)
-    stim_range_global = (0, training_params['n_stim_training'])
+    stim_range_global = (1, 2)
+#    stim_range_global = (0, training_params['n_stim_training'])
     it_range_global = (training_params['n_iterations_per_stim'] * stim_range_global[0], training_params['n_iterations_per_stim'] * stim_range_global[1])
 #    it_range_bcpnn_in_stim = [0, 7] # within the first stimulus
 #    it_range_bcpnn = (training_params['n_iterations_per_stim'] * stim_range_global[0] + it_range_bcpnn_in_stim[0], training_params['n_iterations_per_stim'] * stim_range_global[1] + it_range_bcpnn_in_stim[1])
 #    plot_bcpnn_iteration_pre = int(sys.argv[2]) # decides from which iteration the most-active neurons are taken 
-    plot_bcpnn_iteration_pre = 0
-    plot_bcpnn_iteration_post = 0
+    plot_bcpnn_iteration_pre = 8
+    plot_bcpnn_iteration_post = 8
     it_range_bcpnn = it_range_global
     print 'it_range_bcpnn:', it_range_bcpnn
     all_pre_gids = []
@@ -270,8 +270,8 @@ if __name__ == '__main__':
 
     most_active_pre_gids = {}
     most_active_post_gids = {}
-    n_pre = 5
-    n_post = 5
+    n_pre = 2
+    n_post = 2
     for it in xrange(it_range_global[0], it_range_global[1]):
         it_range = (it, it+1)
         pre_gids, post_gids = TP_training.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range)

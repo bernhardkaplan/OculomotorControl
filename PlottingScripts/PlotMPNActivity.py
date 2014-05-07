@@ -328,7 +328,7 @@ class ActivityPlotter(object):
                     it_idx = it_ + i_stim * params['n_iterations_per_stim'] + 1 # + 1 because the first row stores the 'initial action'
                     action = actions_taken[it_idx, 2]
                     if not np.isnan(action) != 0.:
-                        ax.annotate(str(int(action)), xy=(t0 + .2 * t_scale, ymin + (ymax - ymin) * .15), color='r')
+                        ax.annotate(str(int(action)), xy=(t0 + .2 * t_scale, ymin + (ymax - ymin) * .95), color='r')
                     it_cnt += 1
 
 

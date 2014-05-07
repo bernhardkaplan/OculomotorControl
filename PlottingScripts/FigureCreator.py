@@ -31,12 +31,11 @@ plot_params = {'backend': 'png',
               'figure.subplot.top':.92,
               'figure.subplot.hspace':.30,
               'figure.subplot.wspace':.30}
-
 #              'figure.figsize': get_fig_size(800)}
 
 plot_params_portrait = {'backend': 'png',
-              'axes.labelsize': 32,
-              'axes.titlesize': 32,
+              'axes.labelsize': 24,
+              'axes.titlesize': 24,
               'text.fontsize': 20,
               'xtick.labelsize': 24,
               'ytick.labelsize': 24,
