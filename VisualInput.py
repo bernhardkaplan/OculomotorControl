@@ -125,8 +125,6 @@ class VisualInput(object):
         n_cells = len(local_gids)
         L_input = np.zeros((n_cells, time.shape[0]))
         for i_time, time_ in enumerate(time):
-            if (i_time % 1000 == 0) and (self.pc_id == 0):
-                print "t:", time_
             x_stim = trajectory[0][i_time]
             y_stim = trajectory[1][i_time]
             motion_params = (x_stim, y_stim, self.current_motion_params[2], self.current_motion_params[3])
