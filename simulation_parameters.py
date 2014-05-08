@@ -165,10 +165,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-#        self.params['gids_to_record_mpn'] = None
-#        self.params['gids_to_record_bg'] = None
-        self.params['gids_to_record_mpn'] = [100, 364, 2644, 5068, 6052, 6988, 7780, 9268, 9317, 9988, 11644, 11884]
-        self.params['gids_to_record_bg'] =  [57036, 57037, 57038, 57039, 57040, 57041, 57042, 57043, 57044, 57045, 57046, 57076, 57077, 57078, 57096, 57097, 57098]
+        self.params['gids_to_record_mpn'] = None
+        self.params['gids_to_record_bg'] = None
+#        self.params['gids_to_record_mpn'] = [100, 364, 2644, 5068, 6052, 6988, 7780, 9268, 9317, 9988, 11644, 11884]
+#        self.params['gids_to_record_bg'] =  [57036, 57037, 57038, 57039, 57040, 57041, 57042, 57043, 57044, 57045, 57046, 57076, 57077, 57078, 57096, 57097, 57098]
 
 #        self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
 #        self.params['gids_to_record_mpn'] = [502, 918, 990, 1102, 1870, 2926, 3047, 3223, 3814, 4390, 4446, 5134, 5854, 5903, 6286, 7630, 7870, 8574, 8758, 9894, 10582, 11038, 11374, 11478, 11982]
@@ -184,7 +184,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_to_record_mpn'] = 20
         self.params['v_max_tp'] = 6.0   # [a.u.] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['v_max_out'] = 20.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
+        self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
         self.params['blur_X'], self.params['blur_V'] = .01, .01
         self.params['blur_theta'] = 1.0

@@ -47,7 +47,8 @@ class Plotter(object):
         d = np.loadtxt(fn)
 
         t_stim = params['t_iteration'] * params['n_iterations_per_stim']
-        xdispl = np.abs(d[:, 0] - .5)
+#        xdispl = np.abs(d[:, 0] - .5)
+        xdispl = d[:, 0] - .5
         t_axis = d[:, 4]
         t_axis += .5 * params['t_iteration']
         n_iterations = d[:, 0].size

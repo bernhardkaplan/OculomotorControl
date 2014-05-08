@@ -41,7 +41,7 @@ figsize=FigureCreator.get_fig_size(1200, portrait=True)
 print 'figsize:', figsize
 fig = pylab.figure(figsize=figsize)
 ax1 = fig.add_subplot(411)
-ax1.set_title('Histogram of actions taken during training')
+ax1.set_title('Histogram of actions taken during training\n%d cycles x %d stimuli' % (params['n_training_cycles'], params['n_training_stim_per_cycle']))
 print 'n_actions', params['n_actions']
 print 'd:', d[:, 2]
 cnt, bins = np.histogram(d[:, 2], bins=params['n_actions'], range=(0, params['n_actions']))
