@@ -207,13 +207,12 @@ class BasalGanglia(object):
         for i_ in xrange(self.params['n_actions']):
             src_pop = self.strD1[i_]
             for j_ in xrange(self.params['n_actions']):
-                if i_ != j_:
-                    tgt_pop = self.strD1[j_]
-                    if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
-                        nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1'])
-                        nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
-                    else:
-                        nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1'], self.params['delay_d1_d1'])
+                tgt_pop = self.strD1[j_]
+                if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
+                    nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1'])
+                    nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
+                else:
+                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1'], self.params['delay_d1_d1'])
 
 
     def connect_noise(self):

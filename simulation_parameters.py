@@ -47,7 +47,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(0, 3)
+        self.params['test_stim_range'] = range(0, 1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -56,15 +56,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_iterations_per_stim'] = 8 
         self.params['n_silent_iterations'] = 1      
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
-        self.params['clip_weights'] = True
-        self.params['weight_threshold_abstract'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
-        # if (THRESH, True) --> after thresholding abstract weights can contain also negative weights abs(w) > THRESH
-        # if (THRESH, False) --> after thresholding abstract weights are all positive and > THRESH
+        self.params['clip_weights_mpn_d1'] = True # only for VisualLayer --> D1 weights
+        self.params['weight_threshold_abstract_mpn_d1'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
+        # if (THRESH, True) --> (abs(x)>thresh, -x) after thresholding abstract weights can contain also negative weights abs(w) > THRESH
+        # if (THRESH, False) --> (x > thresh, x) x > 0 after thresholding abstract weights are all positive and > THRESH
+        self.params['clip_weights_d1_d1'] = True # only for VisualLayer --> D1 weights
+        self.params['weight_threshold_abstract_d1_d1'] = (.05, True)  # (value for thresholding, absolute_values considered for thresholding)
 
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_stim_training'] * self.params['n_iterations_per_stim']
@@ -81,7 +83,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         self.params['n_rf'] = 500
         if self.params['training']:
-            self.params['sim_id'] = 'nRF%d_clipWeights%s_2' % (self.params['n_rf'], str(self.params['clip_weights']))
+            self.params['sim_id'] = 'nRF%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
         else:
             self.params['sim_id'] = 'nRF%d_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
 
@@ -165,10 +167,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-#        self.params['gids_to_record_mpn'] = None
-#        self.params['gids_to_record_bg'] = None
-        self.params['gids_to_record_mpn'] = [100, 364, 2644, 5068, 6052, 6988, 7780, 9268, 9317, 9988, 11644, 11884]
-        self.params['gids_to_record_bg'] =  [57036, 57037, 57038, 57039, 57040, 57041, 57042, 57043, 57044, 57045, 57046, 57076, 57077, 57078, 57096, 57097, 57098]
+        self.params['gids_to_record_mpn'] = None
+        self.params['gids_to_record_bg'] = None
+#        self.params['gids_to_record_mpn'] = [100, 364, 2644, 5068, 6052, 6988, 7780, 9268, 9317, 9988, 11644, 11884]
+#        self.params['gids_to_record_bg'] =  [57036, 57037, 57038, 57039, 57040, 57041, 57042, 57043, 57044, 57045, 57046, 57076, 57077, 57078, 57096, 57097, 57098]
 
 #        self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
 #        self.params['gids_to_record_mpn'] = [502, 918, 990, 1102, 1870, 2926, 3047, 3223, 3814, 4390, 4446, 5134, 5854, 5903, 6286, 7630, 7870, 8574, 8758, 9894, 10582, 11038, 11374, 11478, 11982]
@@ -184,7 +186,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_to_record_mpn'] = 20
         self.params['v_max_tp'] = 6.0   # [a.u.] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['v_max_out'] = 20.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
+        self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
         self.params['blur_X'], self.params['blur_V'] = .01, .01
         self.params['blur_theta'] = 1.0

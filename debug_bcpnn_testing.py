@@ -250,7 +250,7 @@ if __name__ == '__main__':
     fn_post = training_params['spiketimes_folder'] + training_params['%s_spikes_fn_merged_all' % cell_type_post]
     TP_training.load_spikes(fn_pre, fn_post)
 
-    stim_range_global = (1, 2)
+    stim_range_global = (0, 10)
 #    stim_range_global = (0, training_params['n_stim_training'])
     it_range_global = (training_params['n_iterations_per_stim'] * stim_range_global[0], training_params['n_iterations_per_stim'] * stim_range_global[1])
 #    it_range_bcpnn_in_stim = [0, 7] # within the first stimulus
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     most_active_pre_gids = {}
     most_active_post_gids = {}
     n_pre = 2
-    n_post = 2
+    n_post = 1
     for it in xrange(it_range_global[0], it_range_global[1]):
         it_range = (it, it+1)
         pre_gids, post_gids = TP_training.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range)

@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
 
-    stim_range = (0, 1)
+    stim_range = (0, 10)
     n_stim = stim_range[1] - stim_range[0]
     it_max = n_stim * params['n_iterations_per_stim']
     AP = ActivityPlotter(params, it_max)

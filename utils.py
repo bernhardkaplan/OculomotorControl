@@ -266,6 +266,37 @@ def merge_spikes(params):
             MS.merge_spiketimes_files(merge_pattern, output_fn)
 
 
+def merge_connection_files(params):
+    def merge_for_tgt_cell_type(cell_type):
+        if not os.path.exists(params['mpn_bg%s_merged_conn_fn' % cell_type]):
+            # merge the connection files
+            merge_pattern = params['mpn_bg%s_conn_fn_base' % cell_type]
+            fn_out = params['mpn_bg%s_merged_conn_fn' % cell_type]
+            merge_and_sort_files(merge_pattern, fn_out, sort=True)
+
+    def merge_for_weight_tracking(cell_type):
+        for it in xrange(params['n_iterations']):
+            fn_merged = params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it)
+            if not os.path.exists(fn_merged):
+                # merge the connection files
+                merge_pattern = params['mpn_bg%s_conntracking_fn_base' % cell_type] + 'it%d_' % it
+                merge_and_sort_files(merge_pattern, fn_merged, sort=True)
+
+    merge_for_tgt_cell_type('d1')
+    if params['with_d2']:
+        merge_for_tgt_cell_type('d2')
+
+    merge_pattern = params['d1_d1_conn_fn_base']
+    fn_out = params['d1_d1_merged_conn_fn']
+    merge_and_sort_files(merge_pattern, fn_out, sort=True)
+
+    if params['weight_tracking']:
+        # Merge the _dev files recorded for tracking the weights
+        if pc_id == 0:
+            merge_for_weight_tracking('d1')
+            if params['with_d2']:
+                merge_for_weight_tracking('d2')
+
 
 
 def merge_and_sort_files(merge_pattern, fn_out, sort=True):
