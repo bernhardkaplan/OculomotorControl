@@ -161,17 +161,17 @@ class CreateConnections(object):
                 np.savetxt(mpn_d2_debug_fn, output_array_d2)
 
 
-    def clip_weight(self, w):
-        if not self.params['clip_weights']:
+    def clip_weight(self, w, clip_weights, thresh_and_abs):
+        if not clip_weights:
             return w
         else:
-            if self.params['weight_threshold_abstract'][1]:
-                if abs(w) > self.params['weight_threshold_abstract'][0]:
+            if thresh_and_abs[1]: # allow negative weights
+                if abs(w) > thresh_and_abs[0]:
                     return w
                 else:
                     return None
-            else:
-                if w > self.params['weight_threshold_abstract'][0]:
+            else: # allow only positive weights
+                if w > thresh_and_abs[0]:
                     return w
                 else:
                     return None
@@ -197,7 +197,7 @@ class CreateConnections(object):
                         pj = cp[0]['p_j']
                         pij = cp[0]['p_ij']
                         w = np.log(pij / (pi * pj))
-                        w_ = self.clip_weight(w)
+                        w_ = self.clip_weight(w, self.params['clip_weights_mpn_d1'], self.params['weight_threshold_abstract_mpn_d1'])
                         if w_:
                             D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
                             bias_d1[cp[0]['target']] = cp[0]['bias']
@@ -227,7 +227,7 @@ class CreateConnections(object):
                             pj = cp[0]['p_j']
                             pij = cp[0]['p_ij']
                             w = np.log(pij / (pi * pj))
-                            w_ = self.clip_weight(w)
+                            w_ = self.clip_weight(w, self.params['clip_weights_mpn_d1'], self.params['weight_threshold_abstract_mpn_d1'])
                             if w_:
                                 D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
                                 bias_d2[cp[0]['target']] = cp[0]['bias']
@@ -258,9 +258,9 @@ class CreateConnections(object):
                         pi = cp[0]['p_i']
                         pj = cp[0]['p_j']
                         pij = cp[0]['p_ij']
-                        w_ = np.log(pij / (pi * pj))
-#                        w_ = self.clip_weight(w)
-                        if w_:
+                        w = np.log(pij / (pi * pj))
+                        w_ = self.clip_weight(w, self.params['clip_weights_d1_d1'], self.params['weight_threshold_abstract_d1_d1'])
+                        if w_: # ignore the positive weights between d1 neurons
                             D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
 
         fn_out = self.params['d1_d1_conn_fn_base'] + '%d.txt' % (self.pc_id)

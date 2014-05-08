@@ -47,7 +47,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(0, 3)
+        self.params['test_stim_range'] = range(0, 1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -56,15 +56,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_iterations_per_stim'] = 8 
         self.params['n_silent_iterations'] = 1      
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
-        self.params['clip_weights'] = True
-        self.params['weight_threshold_abstract'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
-        # if (THRESH, True) --> after thresholding abstract weights can contain also negative weights abs(w) > THRESH
-        # if (THRESH, False) --> after thresholding abstract weights are all positive and > THRESH
+        self.params['clip_weights_mpn_d1'] = True # only for VisualLayer --> D1 weights
+        self.params['weight_threshold_abstract_mpn_d1'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
+        # if (THRESH, True) --> (abs(x)>thresh, -x) after thresholding abstract weights can contain also negative weights abs(w) > THRESH
+        # if (THRESH, False) --> (x > thresh, x) x > 0 after thresholding abstract weights are all positive and > THRESH
+        self.params['clip_weights_d1_d1'] = True # only for VisualLayer --> D1 weights
+        self.params['weight_threshold_abstract_d1_d1'] = (.05, True)  # (value for thresholding, absolute_values considered for thresholding)
 
         if self.params['training']:
             self.params['n_iterations'] = self.params['n_stim_training'] * self.params['n_iterations_per_stim']
@@ -81,7 +83,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         self.params['n_rf'] = 500
         if self.params['training']:
-            self.params['sim_id'] = 'nRF%d_clipWeights%s_2' % (self.params['n_rf'], str(self.params['clip_weights']))
+            self.params['sim_id'] = 'nRF%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
         else:
             self.params['sim_id'] = 'nRF%d_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
 
