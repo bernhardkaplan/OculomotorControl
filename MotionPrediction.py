@@ -54,9 +54,9 @@ class MotionPrediction(object):
                 {'weight': self.params['w_input_exc_mpn'], 'receptor_type': 1})
         if (not 'bcpnn_synapse' in nest.Models('synapses')):
             if self.params['Cluster_Milner']:
-		print 'DEBUG installing pt_module'
-		nest.sr('(/cfs/milner/scratch/b/bkaplan/BCPNN-Module/share/nest/sli) addpath')
-		nest.Install('/cfs/milner/scratch/b/bkaplan/BCPNN-Module/lib/nest/pt_module')
+                print 'DEBUG installing pt_module'
+                nest.sr('(/cfs/milner/scratch/b/bkaplan/BCPNN-Module/share/nest/sli) addpath')
+                nest.Install('/cfs/milner/scratch/b/bkaplan/BCPNN-Module/lib/nest/pt_module')
             else:
                 nest.Install('pt_module')
 
