@@ -330,7 +330,43 @@ class VisualInput(object):
         if self.params['n_grid_dimensions'] == 2:
             return self.set_tuning_prop_2D(mode, cell_type)
         else:
-            return self.set_tuning_prop_1D(cell_type)
+            return self.set_tuning_prop_1D_regular(cell_type)
+#            return self.set_tuning_prop_1D(cell_type)
+
+
+    def set_tuning_prop_1D_regular(self, cell_type='exc'):
+        if cell_type == 'exc':
+            n_cells = self.params['n_exc_mpn']
+            n_v = self.params['n_v']
+            n_rf_x = self.params['n_rf_x']
+            v_max = self.params['v_max_tp']
+            v_min = self.params['v_min_tp']
+        else:
+            n_cells = self.params['n_inh_mpn']
+            n_v = self.params['n_v_inh']
+            n_rf_x = self.params['n_rf_x_inh']
+            v_max = self.params['v_max_tp']
+            v_min = self.params['v_min_tp']
+
+        v_rho_half_1 = np.linspace(v_min, v_max, num=n_v/2, endpoint=True)
+        v_rho_half_2 = np.linspace(v_rho_half_1[1], v_max, num=n_v/2, endpoint=True)
+        v_rho = np.zeros(n_v)
+        v_rho[:n_v/2] = -v_rho_half_1
+        v_rho[n_v/2:] = v_rho_half_2
+        RF = np.linspace(0., 1., n_cells, endpoint=True)
+        index = 0
+        tuning_prop = np.zeros((n_cells, 4))
+
+        for i_RF in xrange(n_rf_x):
+            for i_v_rho, rho in enumerate(v_rho):
+                for i_in_mc in xrange(self.params['n_exc_per_state']):
+                    tuning_prop[index, 0] = RF[index]
+                    tuning_prop[index, 1] = 0.5 
+                    tuning_prop[index, 2] = rho
+                    tuning_prop[index, 3] = 0. 
+                    index += 1
+        assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
+        return tuning_prop
 
 
     def set_tuning_prop_1D(self, cell_type='exc'):
@@ -358,7 +394,6 @@ class VisualInput(object):
         v_rho = np.zeros(n_v)
         v_rho[:n_v/2] = -v_rho_half
         v_rho[n_v/2:] = v_rho_half
-#        RF = np.linspace(0, self.params['visual_field_width'], n_rf_x, endpoint=False)
         RF = np.random.normal(0.5, self.params['sigma_rf_pos'], n_cells)
         RF = RF % self.params['visual_field_width']
         index = 0

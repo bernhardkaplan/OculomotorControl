@@ -260,7 +260,8 @@ class ActivityPlotter(object):
         t_axis += .5 * self.params['t_iteration']
 #        print 'debug', t_axis.shape, d.shape, it_min, it_max
 #        d[:, 4] = t_axis
-        x_displacement = np.abs(d[it_min:it_max, 0] - .5)
+#        x_displacement = np.abs(d[it_min:it_max, 0] - .5)
+        x_displacement = d[it_min:it_max, 0] - .5
 #        x_displacement = np.zeros(it_max - it_min)
         output_fn = self.params['data_folder'] + 'mpn_xdisplacement.dat'
         print 'Saving data to:', output_fn
@@ -273,7 +274,8 @@ class ActivityPlotter(object):
         for stim in xrange(stim_range[0], stim_range[-1] + 1):
             it_start_stim = stim * self.params['n_iterations_per_stim']
             it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - 1
-            x_displacement_stim = np.abs(d[it_start_stim:it_stop_stim, 0] - .5)
+            x_displacement_stim = d[it_start_stim:it_stop_stim, 0] - .5
+#            x_displacement_stim = np.abs(d[it_start_stim:it_stop_stim, 0] - .5)
 #            x_displacement[it_start_stim:it_stop_stim] = x_displacement_stim
             for it_ in xrange(self.params['n_iterations_per_stim'] - 2):
                 it_1 = it_ + stim * self.params['n_iterations_per_stim']

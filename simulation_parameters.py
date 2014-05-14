@@ -47,7 +47,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['test_stim_range'] = range(1, 5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -81,7 +81,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # the first stimulus parameters
         self.params['initial_state'] = (.7, .5, 0.6, .0)
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-        self.params['n_rf'] = 500
+        self.params['n_rf'] = 100
         if self.params['training']:
             self.params['sim_id'] = 'nRF%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
         else:
@@ -169,14 +169,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
         self.params['gids_to_record_mpn'] = None
         self.params['gids_to_record_bg'] = None
-#        self.params['gids_to_record_mpn'] = [100, 364, 2644, 5068, 6052, 6988, 7780, 9268, 9317, 9988, 11644, 11884]
-#        self.params['gids_to_record_bg'] =  [57036, 57037, 57038, 57039, 57040, 57041, 57042, 57043, 57044, 57045, 57046, 57076, 57077, 57078, 57096, 57097, 57098]
 
-#        self.params['gids_to_record_mpn'] = list(np.random.random_integers(1, self.params['n_exc_mpn'] + 1, 20))
-#        self.params['gids_to_record_mpn'] = [502, 918, 990, 1102, 1870, 2926, 3047, 3223, 3814, 4390, 4446, 5134, 5854, 5903, 6286, 7630, 7870, 8574, 8758, 9894, 10582, 11038, 11374, 11478, 11982]
-#        self.params['gids_to_record_bg'] =  [57013, 57014, 57015, 57018, 57019, 57020, 57028, 57029, 57030, 57047, 57048, 57050, 57058, 57059, 57060, 57091, 57092, 57093, 57094, 57095, 57097, 57098, 57099, 57100]
-#        self.params['gids_to_record_mpn'] = [220, 772, 820, 1636, 1877, 2620, 3388, 4396, 4492, 7588, 8308, 8812, 9317, 9460, 9604, 9988, 10804, 11116, 11284, 11884]
-#        self.params['gids_to_record_bg'] =  [57016, 57017, 57019, 57032, 57034, 57035, 57037, 57039, 57040, 57041, 57043, 57044, 57045, 57057, 57058, 57060, 57097, 57099, 57100]
+#        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
+#        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
+
 
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
@@ -184,9 +180,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 20
-        self.params['v_max_tp'] = 6.0   # [a.u.] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
+        self.params['v_max_tp'] = 5.0   # [a.u.] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
+        self.params['v_max_out'] = 5.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
         self.params['blur_X'], self.params['blur_V'] = .01, .01
         self.params['blur_theta'] = 1.0
@@ -196,14 +192,24 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # receptive field sizes are determined by their relative position (for x/y relative to .5, for u/v relative to 0.)
         # rf_size = rf_size_gradient * |relative_rf_pos| + min_rf_size
         # check for reference: Dow 1981 "Magnification Factor and Receptive Field Size in Foveal Striate Cortex of the Monkey"
-        self.params['rf_size_x_gradient'] = .1  # receptive field size for x-pos increases with distance to .5
-        self.params['rf_size_y_gradient'] = .1  # receptive field size for y-pos increases with distance to .5
-        self.params['rf_size_x_min'] = .005      # cells situated at .5 have this receptive field size
-        self.params['rf_size_y_min'] = .005      # cells situated at .5 have this receptive field size
-        self.params['rf_size_vx_gradient'] = .1 # receptive field size for vx-pos increases with distance to 0.0
-        self.params['rf_size_vy_gradient'] = .1 #
-        self.params['rf_size_vx_min'] = .005 # cells situated at .5 have this receptive field size
-        self.params['rf_size_vy_min'] = .005 # cells situated at .5 have this receptive field size
+#        self.params['rf_size_x_gradient'] = .1  # receptive field size for x-pos increases with distance to .5
+#        self.params['rf_size_y_gradient'] = .1  # receptive field size for y-pos increases with distance to .5
+#        self.params['rf_size_x_min'] = .005      # cells situated at .5 have this receptive field size
+#        self.params['rf_size_y_min'] = .005      # cells situated at .5 have this receptive field size
+#        self.params['rf_size_vx_gradient'] = .1 # receptive field size for vx-pos increases with distance to 0.0
+#        self.params['rf_size_vy_gradient'] = .1 #
+#        self.params['rf_size_vx_min'] = .005 # cells situated at .5 have this receptive field size
+#        self.params['rf_size_vy_min'] = .005 # cells situated at .5 have this receptive field size
+        # regular tuning prop
+        self.params['rf_size_x_gradient'] = .0  # receptive field size for x-pos increases with distance to .5
+        self.params['rf_size_y_gradient'] = .0  # receptive field size for y-pos increases with distance to .5
+        self.params['rf_size_x_min'] = 1. / self.params['n_rf_x']
+        self.params['rf_size_y_min'] = 1. / self.params['n_rf_y']
+        self.params['rf_size_vx_gradient'] = .0 # receptive field size for vx-pos increases with distance to 0.0
+        self.params['rf_size_vy_gradient'] = .0 #
+        self.params['rf_size_vx_min'] = 2 * self.params['v_max_tp'] / self.params['n_v']
+        self.params['rf_size_vy_min'] = 2 * self.params['v_max_tp'] / self.params['n_v']
+
 
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
         self.params['supervisor_amp_param'] = 1.
@@ -292,11 +298,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.5
+        self.params['mpn_d1_weight_amplification'] = 0.3
         self.params['mpn_d2_weight_amplification'] = 0.00001
-        self.params['mpn_bg_bias_amplification'] = 0.000001
-        self.params['d1_d1_weight_amplification_neg'] = 0.5
-        self.params['d1_d1_weight_amplification_pos'] = 1e-6
+        self.params['mpn_bg_bias_amplification'] = 10.0
+        self.params['d1_d1_weight_amplification_neg'] = 0.1
+        self.params['d1_d1_weight_amplification_pos'] = 0.1
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
         self.params['delay_d1_d1'] = 1.

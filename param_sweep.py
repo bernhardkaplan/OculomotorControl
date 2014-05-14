@@ -23,8 +23,9 @@ def run_simulation(training_folder, test_folder, USE_MPI):
 
     if USE_MPI:
         reply = subprocess.check_output(['grep', 'processor', '/proc/cpuinfo'])
-        n_proc = reply.find('processor')
-        run_command = 'mpirun -np %d python main_testing.py %s %s' % (training_folder, test_folder, n_proc)
+        n_proc = reply.count('processor')
+        print 'reply', n_proc
+        run_command = 'mpirun -np %d python main_testing.py %s %s' % (n_proc, training_folder, test_folder)
     else:
         run_command = 'python main_testing.py %s %s' % (training_folder, test_folder)
     print 'Running:\n\t%s' % (run_command)
@@ -45,22 +46,22 @@ if __name__ == '__main__':
         print "MPI not used"
 
 #    USE_MPI = False
-    training_folder = 'Training_nRF500_expSyn_clipWeightsTrue_taup4375_nStim5x10_it25-8750_wD10.55_wD20.55_bias5.00_K1.00/'
+    training_folder = 'Training_nRF500_clipWeights1-1_nStim5x50_it25_tsim50000_taup25000/'
 
     ps = simulation_parameters.global_parameters()
-    param_range_1 = [0.01, 1., 2., 10.]
-    param_range_2 = np.arange(.1, .5, .05)
-    param_range_3 = [0.1, 0.5, 1., 1.5, 2., 5., 10.]
-    param_range_4 = [0.1, 0.5, 1., 1.5, 2., 5., 10.]
+    param_range_1 = [0.01, 1., 2., 10., 100.]
+    param_range_2 = np.arange(.2, 1.5, .3)
+    param_range_3 = [0.1, 0.5, 1., 2., 5., 10.]
+    param_range_4 = [0.0001, 0.1, 0.5, 1., 10.]
 
     param_name_4 = 'd1_d1_weight_amplification_pos'
     param_name_3 = 'd1_d1_weight_amplification_neg'
     param_name_2 = 'mpn_d1_weight_amplification'
     param_name_1 = 'mpn_bg_bias_amplification'
-    for i_, p1 in enumerate(param_range_1):
-        for j_, p2 in enumerate(param_range_2):
-            for k_, p3 in enumerate(param_range_3):
-                for l_, p4 in enumerate(param_range_4):
+    for l_, p4 in enumerate(param_range_4):
+        for k_, p3 in enumerate(param_range_3):
+            for j_, p2 in enumerate(param_range_2):
+                for i_, p1 in enumerate(param_range_1):
                     params = ps.params
                     params[param_name_1] = p1 
                     params[param_name_2] = p2  

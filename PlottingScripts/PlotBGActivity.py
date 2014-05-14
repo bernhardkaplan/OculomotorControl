@@ -4,8 +4,7 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import sys
-import os
+import simulation_parameters
 import utils
 import re
 import numpy as np
@@ -180,8 +179,12 @@ def run_plot_bg(params, stim_range):
 
     PMPN = PlotMPNActivity.ActivityPlotter(params)
     PMPN.plot_vertical_lines(ax, params)
-    output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f_stim%d-%d.png' % \
-            (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'], stim_range[0], stim_range[1])
+    if len(stim_range) > 1:
+        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f_stim%d-%d.png' % \
+                (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'], stim_range[0], stim_range[1])
+    else:
+        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f_stim%d.png' % \
+                (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'], stim_range[0])
     print 'Saving figure to:', output_fig
     pylab.savefig(output_fig, dpi=200)
 
@@ -227,4 +230,4 @@ if __name__ == '__main__':
             params = utils.load_params(fn)
             run_plot_bg(params, stim_range)
 
-    pylab.show()
+#    pylab.show()

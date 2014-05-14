@@ -49,6 +49,8 @@ class Plotter(object):
         t_stim = params['t_iteration'] * params['n_iterations_per_stim']
 #        xdispl = np.abs(d[:, 0] - .5)
         xdispl = d[:, 0] - .5
+        xdispl_mean = 0.
+        it_cnt = 0
         t_axis = d[:, 4]
         t_axis += .5 * params['t_iteration']
         n_iterations = d[:, 0].size
@@ -62,6 +64,8 @@ class Plotter(object):
                     it_1 = it_ + stim * params['n_iterations_per_stim']
                     it_2 = it_ + stim * params['n_iterations_per_stim'] + 2
                     p1, = ax.plot(t_axis[it_1:it_2] + t_offset, xdispl[it_1:it_2], c=color, lw=3, ls=ls)
+                    xdispl_mean += np.abs(xdispl[it_1:it_2].sum())
+                    it_cnt += 1
         else:
             # different indexing of training stimuli
             t_offset = 0
@@ -70,9 +74,16 @@ class Plotter(object):
                     it_1 = it_ + stim * params['n_iterations_per_stim']
                     it_2 = it_ + stim * params['n_iterations_per_stim'] + 2
                     p1, = ax.plot(t_axis[it_1:it_2], xdispl[it_1:it_2], c=color, lw=3, ls=ls)
-        print 't_axis[it_1:it_2], xdispl[it_1:it_2]', t_axis[it_1:it_2], xdispl[it_1:it_2]
-        print 'debug', params['n_stim'], stim_range
+                    xdispl_mean += np.abs(xdispl[it_1:it_2].sum())
+                    it_cnt += 1
 
+        xdispl_mean /= it_cnt
+        print 'Comparison of training-testing mean displacement:', xdispl_mean
+        output_fn = params['data_folder'] + 'x_displacement_mean.dat'
+        f = file(output_fn, 'w')
+        d = {'xdisplacement_mean' : xdispl_mean}
+        json.dump(d, f)
+        f.close()
 #        p1, = ax.plot(t_axis, xdispl, c=color, lw=3, ls=ls)
         self.plots.append(p1)
         self.legend_labels.append(legend_label)
@@ -116,12 +127,15 @@ if __name__ == '__main__':
 
         c = colorlist[(i_ + 1) % len(colorlist)]
         ls = linestyles[(i_ + 1) % len(linestyles)]
-        legend_txt = 'Test w_mpn_D1(D2)=%.1f (%.1f)' % (test_params['mpn_d1_weight_amplification'], test_params['mpn_d2_weight_amplification'])
+#        legend_txt = 'Test w_mpn_D1(D2)=%.1f (%.1f)' % (test_params['mpn_d1_weight_amplification'], test_params['mpn_d2_weight_amplification'])
+        legend_txt = 'w %.1f b %.1f D1D1 +%.1e -%.1e' % (test_params['mpn_d1_weight_amplification'], test_params['mpn_bg_bias_amplification'], test_params['d1_d1_weight_amplification_pos'], \
+                test_params['d1_d1_weight_amplification_neg'])
         stim_range = test_params['test_stim_range']
         ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=False, stim_range=stim_range)
 
     P.set_training_params(training_params)
-    ax = P.plot_xdisplacement(training_params, color=colorlist[0], ls='--', ax=ax, legend_label='Training', plot_vertical_lines=False, stim_range=stim_range)
+    training_label_txt = 'Train %d x %d' % (training_params['n_training_cycles'], training_params['n_training_stim_per_cycle'])
+    ax = P.plot_xdisplacement(training_params, color=colorlist[0], ls='--', ax=ax, legend_label=training_label_txt, plot_vertical_lines=False, stim_range=stim_range)
 
     ax.legend(P.plots, P.legend_labels, loc='upper right')
     if len(test_folders) == 1:

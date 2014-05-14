@@ -67,7 +67,6 @@ if __name__ == '__main__':
         print 'Set training = True!'
         exit(1)
     
-
     t0 = time.time()
 
     VI = VisualInput.VisualInput(params, comm=comm)
@@ -84,7 +83,7 @@ if __name__ == '__main__':
     CC.connect_mt_to_bg(MT, BG)
 
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
-    network_states_net= np.zeros((params['n_iterations'], 4))
+    network_states_net = np.zeros((params['n_iterations'], 4))
     iteration_cnt = 0
     training_stimuli = VI.create_training_sequence()
 
