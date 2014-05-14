@@ -47,7 +47,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 20 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(1, 5)
+        self.params['test_stim_range'] = range(0, 1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -298,9 +298,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.3
+        self.params['mpn_d1_weight_amplification'] = 0.5
         self.params['mpn_d2_weight_amplification'] = 0.00001
-        self.params['mpn_bg_bias_amplification'] = 10.0
+        self.params['mpn_bg_bias_amplification'] = 0.1
         self.params['d1_d1_weight_amplification_neg'] = 0.1
         self.params['d1_d1_weight_amplification_pos'] = 0.1
         # if static synapses are used

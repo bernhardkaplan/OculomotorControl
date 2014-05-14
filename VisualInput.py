@@ -353,14 +353,15 @@ class VisualInput(object):
         v_rho = np.zeros(n_v)
         v_rho[:n_v/2] = -v_rho_half_1
         v_rho[n_v/2:] = v_rho_half_2
-        RF = np.linspace(0., 1., n_cells, endpoint=True)
+        RF = np.linspace(0., 1., n_rf_x, endpoint=True)
         index = 0
         tuning_prop = np.zeros((n_cells, 4))
 
         for i_RF in xrange(n_rf_x):
             for i_v_rho, rho in enumerate(v_rho):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
-                    tuning_prop[index, 0] = RF[index]
+#                    tuning_prop[index, 0] = RF[index]
+                    tuning_prop[index, 0] = RF[i_RF]
                     tuning_prop[index, 1] = 0.5 
                     tuning_prop[index, 2] = rho
                     tuning_prop[index, 3] = 0. 
