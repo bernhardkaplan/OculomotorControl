@@ -39,13 +39,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 960
-        self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
+        self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
+        self.params['n_training_stim_per_cycle'] = 20 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['test_stim_range'] = range(1, 5)
         if len(self.params['test_stim_range']) > 1:
@@ -182,9 +182,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_to_record_mpn'] = 20
         self.params['v_max_tp'] = 5.0   # [a.u.] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['v_max_out'] = 5.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
+        self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = .01, .01
+        self.params['blur_X'], self.params['blur_V'] = .02, .02
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -562,15 +562,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_nStim%dx%d_it%d_tsim%d_taup%d/' % (self.params['sim_id'], \
-                        self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                        self.params['t_iteration'], self.params['t_sim'], \
+                folder_name = 'Training_%s_nStim%dx%d_it%d_nactions%d_blur%.2f_tsim%d_taup%d/' % (self.params['sim_id'], \
+                        self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], \
+                        self.params['n_actions'], self.params['blur_X'], self.params['t_sim'], \
 			self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_nStim%dx%d_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_bias%.2e/' % \
+                folder_name += '_nStim%dx%d_it%d_nactions%_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_bias%.2e/' % \
                         (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], \
-                                self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
+                                self.params['n_actions'], self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
                                 self.params['mpn_d1_weight_amplification'], self.params['mpn_bg_bias_amplification'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
