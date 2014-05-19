@@ -82,7 +82,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # the first stimulus parameters
         self.params['initial_state'] = (.7, .5, 0.6, .0)
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-        self.params['n_rf'] = 100
+        self.params['n_rf'] = 50
         if self.params['training']:
             self.params['sim_id'] = 'DISCRETE_nRF%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
         else:
