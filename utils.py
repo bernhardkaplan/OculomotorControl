@@ -77,15 +77,11 @@ def convert_to_NEST_conform_dict(json_dict):
     return testing_params
 
 
-
 def load_params(param_fn):
     if os.path.isdir(param_fn):
         param_fn = os.path.abspath(param_fn) + '/Parameters/simulation_parameters.json'
     params = json.load(file(param_fn, 'r')) 
     return params
-#    ps = simulation_parameters.global_parameters(param_fn)
-#    folder_name = ps.params['folder_name']
-#    ps.set_filenames(folder_name)
 
 
 def compare_actions_taken(training_params, test_params):
@@ -325,7 +321,6 @@ def find_files(folder, to_match):
     Arguments:
     folder -- string to folder
     to_match -- a string (regular expression) to match all files in folder
-
     """
     assert (to_match != None), 'utils.find_files got invalid argument'
     list_of_files = []
@@ -333,7 +328,6 @@ def find_files(folder, to_match):
         m = re.match(to_match, fn)
         if m:
             list_of_files.append(fn)
-
     return list_of_files
 
 
