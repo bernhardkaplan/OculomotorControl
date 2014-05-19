@@ -70,7 +70,7 @@ if __name__ == '__main__':
     t0 = time.time()
 
     VI = VisualInput.VisualInput(params, comm=comm)
-    exit(1)
+#    exit(1)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
     if pc_id == 0:
