@@ -53,11 +53,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 8 
-        self.params['n_silent_iterations'] = 1      
-        self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time
-        self.params['training'] = True
-#        self.params['training'] = False
+        self.params['n_iterations_per_stim'] = 10
+        self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
+        # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
+        self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
+#        self.params['training'] = True
+        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
@@ -83,9 +84,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         self.params['n_rf'] = 100
         if self.params['training']:
-            self.params['sim_id'] = 'nRF%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
+            self.params['sim_id'] = 'DISCRETE_nRF%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
         else:
-            self.params['sim_id'] = 'nRF%d_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
+            self.params['sim_id'] = 'DISCRETE_nRF%d_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -101,11 +102,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['master_seed'] = 12345  # 
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 4321  
+        self.params['visual_stim_seed'] = 666
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
-        self.params['debug_mpn'] = False
-#        self.params['debug_mpn'] = not self.params['Cluster']
+#        self.params['debug_mpn'] = False
+        self.params['debug_mpn'] = not self.params['Cluster']
         self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 
@@ -184,7 +185,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = .02, .02
+        self.params['blur_X'], self.params['blur_V'] = .01, .01
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -298,11 +299,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.5
+        self.params['mpn_d1_weight_amplification'] = 1.3
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.1
         self.params['d1_d1_weight_amplification_neg'] = 0.1
-        self.params['d1_d1_weight_amplification_pos'] = 0.1
+        self.params['d1_d1_weight_amplification_pos'] = 1.0
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
         self.params['delay_d1_d1'] = 1.

@@ -277,7 +277,7 @@ class ActivityPlotter(object):
             x_displacement_stim = d[it_start_stim:it_stop_stim, 0] - .5
 #            x_displacement_stim = np.abs(d[it_start_stim:it_stop_stim, 0] - .5)
 #            x_displacement[it_start_stim:it_stop_stim] = x_displacement_stim
-            for it_ in xrange(self.params['n_iterations_per_stim'] - 2):
+            for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']):
                 it_1 = it_ + stim * self.params['n_iterations_per_stim']
                 it_2 = it_ + stim * self.params['n_iterations_per_stim'] + 2
                 p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
