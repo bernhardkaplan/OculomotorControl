@@ -348,11 +348,12 @@ class VisualInput(object):
             v_max = self.params['v_max_tp']
             v_min = self.params['v_min_tp']
 
-        v_rho_half_1 = np.linspace(v_min, v_max, num=n_v/2, endpoint=True)
-        v_rho_half_2 = np.linspace(v_rho_half_1[1], v_max, num=n_v/2, endpoint=True)
-        v_rho = np.zeros(n_v)
-        v_rho[:n_v/2] = -v_rho_half_1
-        v_rho[n_v/2:] = v_rho_half_2
+#        v_rho_half_1 = np.linspace(v_min, v_max, num=n_v/2, endpoint=True)
+#        v_rho_half_2 = np.linspace(v_rho_half_1[1], v_max, num=n_v/2, endpoint=True)
+#        v_rho = np.zeros(n_v)
+#        v_rho[:n_v/2] = -v_rho_half_1
+#        v_rho[n_v/2:] = v_rho_half_2
+        v_rho = np.linspace(-v_max, v_max, num=n_v, endpoint=True)
         RF = np.linspace(0., 1., n_rf_x, endpoint=True)
         index = 0
         tuning_prop = np.zeros((n_cells, 4))
