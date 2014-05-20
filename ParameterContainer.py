@@ -126,7 +126,6 @@ class ParameterContainer(object):
         print 'Writing parameters to: %s' % (fn)
         output_file = file(fn, 'w')
         d = json.dump(params_to_write, output_file, indent=2)
+        output_file.flush()
         output_file.close()
-
-
 

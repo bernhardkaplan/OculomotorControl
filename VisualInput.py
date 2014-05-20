@@ -130,7 +130,8 @@ class VisualInput(object):
             motion_params = (x_stim, y_stim, self.current_motion_params[2], self.current_motion_params[3])
             # get the envelope of the Poisson process for this timestep
 #            L_input[:, i_time] = self.get_input(self.tuning_prop_exc[local_gids, :], motion_params) 
-            L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params) 
+            L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
+                    self.params['blur_X'], self.params['blur_V']) 
             L_input[:, i_time] *= self.params['f_max_stim']
 
         input_nspikes = np.zeros((len(local_gids), 2))
@@ -175,11 +176,11 @@ class VisualInput(object):
                        -.5 * (tuning_prop[:, 2] - u_stim)**2 / blur_V**2)
         return L
 
-    def get_input_new(self, tuning_prop, blur_X, blur_V, motion_params):
+    def get_input_new(self, tuning_prop, rfs_x, rfs_v, motion_params, blur_x, blur_v):
         """
         Arguments:
         tuning_prop: the 4-dim tuning properties of local cells
-        blur_X: the tuning widths (receptive field sizes) of local cells (corresponding to the tuning prop)
+        rfs_x: the tuning widths (receptive field sizes) of local cells (corresponding to the tuning prop)
         motion_params: 4-element tuple with the current stimulus position and direction
         """
 
@@ -189,13 +190,13 @@ class VisualInput(object):
         x_stim, y_stim, u_stim, v_stim = motion_params[0], motion_params[1], motion_params[2], motion_params[3]
         if self.params['n_grid_dimensions'] == 2:
             d_ij = visual_field_distance2D_vec(tuning_prop[:, 0], x_stim * np.ones(n_cells), tuning_prop[:, 1], y_stim * np.ones(n_cells))
-            L = np.exp(-.5 * (d_ij)**2 / blur_X**2 
-                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / blur_V**2
-                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / blur_V**2)
+            L = np.exp(-.5 * (d_ij)**2 / (rfs_x * blur_x) **2 
+                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v * blur_v)**2
+                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (rfs_v * blur_v)**2)
         else:
             d_ij = np.sqrt((tuning_prop[:, 0] - x_stim * np.ones(n_cells))**2)
-            L = np.exp(-.5 * (d_ij)**2 / blur_X**2 \
-                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / blur_V**2)
+            L = np.exp(-.5 * (d_ij)**2 / (rfs_x * blur_x) **2 \
+                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v * blur_v)**2)
         return L
 
 

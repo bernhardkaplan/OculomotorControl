@@ -105,7 +105,7 @@ class Plotter(object):
 
 if __name__ == '__main__':
 
-    plot_vertical_lines = True
+    plot_vertical_lines = False
     training_folder = sys.argv[1]
     test_folders = sys.argv[2:]
 
@@ -131,13 +131,16 @@ if __name__ == '__main__':
         legend_txt = 'w %.1f b %.1f D1D1 +%.1e -%.1e' % (test_params['mpn_d1_weight_amplification'], test_params['mpn_bg_bias_amplification'], test_params['d1_d1_weight_amplification_pos'], \
                 test_params['d1_d1_weight_amplification_neg'])
         stim_range = test_params['test_stim_range']
-        ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=plot_vertical_lines, stim_range=stim_range)
+        try:
+            ax = P.plot_xdisplacement(test_params, color=c, ls=ls, ax=ax, legend_label=legend_txt, plot_vertical_lines=plot_vertical_lines, stim_range=stim_range)
+        except:
+            pass
 
     P.set_training_params(training_params)
     training_label_txt = 'Train %d x %d' % (training_params['n_training_cycles'], training_params['n_training_stim_per_cycle'])
     ax = P.plot_xdisplacement(training_params, color=colorlist[0], ls='--', ax=ax, legend_label=training_label_txt, plot_vertical_lines=plot_vertical_lines, stim_range=stim_range)
 
-    ax.legend(P.plots, P.legend_labels, loc='upper right')
+#    ax.legend(P.plots, P.legend_labels, loc='upper right')
     if len(test_folders) == 1:
         output_fn = test_params['figures_folder'] + 'comparison_training_test_xdisplacement.png'
     else:

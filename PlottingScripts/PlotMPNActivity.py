@@ -370,6 +370,9 @@ class ActivityPlotter(object):
             ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', lw=3, c='k')
         elif sort_idx == 2:
             ax.plot((xlim[0], xlim[1]), (.0, .0), ls='--', lw=3, c='k')
+        if t_range != None:
+            ax.set_xlim(t_range)
+
         return fig, ax
 
 
@@ -457,12 +460,14 @@ class MetaAnalysisClass(object):
             print '\nPlotting only stim 1!\n\n'
             network_params = simulation_parameters.global_parameters()  
             params = network_params.params
+            utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
             print '\nPlotting the default parameters give in simulation_parameters.py\n'
             self.run_single_folder_analysis(params, stim_range)
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
         elif len(argv) == 2: # PlotMPNActivity [FOLDER]
             folder_name = argv[1]
             params = utils.load_params(folder_name)
+            utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
             self.run_single_folder_analysis(params, stim_range)
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
         elif len(argv) == 3: #  PlotMPNActivity [STIM_1] [STIM_2]
@@ -470,6 +475,7 @@ class MetaAnalysisClass(object):
                 stim_range = (int(argv[1]), int(argv[2]))
                 network_params = simulation_parameters.global_parameters()  
                 params = network_params.params
+                utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
                 print '\nPlotting the default parameters give in simulation_parameters.py\n'
                 self.run_single_folder_analysis(params, stim_range)
             else:
@@ -479,6 +485,7 @@ class MetaAnalysisClass(object):
             if argv[2].isdigit() and argv[3].isdigit():
                 stim_range = (int(argv[2]), int(argv[3]))
                 params = utils.load_params(folder_name)
+                utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
                 (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
                 self.run_single_folder_analysis(params, stim_range)
                 self.run_xdisplacement_analysis(params, stim_range)
@@ -627,13 +634,12 @@ if __name__ == '__main__':
 
     """
 
-    if len(sys.argv) > 1:
-        params = utils.load_params(sys.argv[1])
-    else:
-        param_tool = simulation_parameters.global_parameters()
-        params = param_tool.params
+#    if len(sys.argv) > 1:
+#        params = utils.load_params(sys.argv[1])
+#    else:
+#        param_tool = simulation_parameters.global_parameters()
+#        params = param_tool.params
 
-    utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
 
 #    training_folder = 'Training_Cluster_taup90000_nStim400_it15-90000_wMPN-BG3.00_bias1.00_K1.00/'
     training_folder = None

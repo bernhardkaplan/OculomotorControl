@@ -85,9 +85,9 @@ class Plotter(object):
         fig = pylab.figure()
         ax = fig.add_subplot(111)
 #        n_cells = self.params['n_exc_mpn']
-        n_cells = 100
+        n_cells = min(100, self.params['n_exc_mpn'])
 #        assert (n_cells  == self.rfs[:, 0].size), 'Mismatch in parameters given to plot_tuning_properties and simulation_parameters.py'
-        n_dots = 100 # for one curve
+        n_dots = min(100, n_cells) # for one curve
 #        n_rnd = n_cells
 #        rnd_gids = np.random.randint(0, self.params['n_exc_mpn'], n_rnd)
         rnd_gids = range(0, n_cells)

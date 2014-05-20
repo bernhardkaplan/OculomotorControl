@@ -36,18 +36,21 @@ if __name__ == '__main__':
     if comm != None:
         comm.Barrier()
 
+    write_params = True
     if len(sys.argv) < 3:
         testing_params = GP.params
     else:
         testing_params_json = utils.load_params(os.path.abspath(sys.argv[2]))
         testing_params = utils.convert_to_NEST_conform_dict(testing_params_json)
+        write_params = False
+
 
     if testing_params['training']:
         print 'Set training = False!'
         exit(1)
 
     testing_params['training_folder'] = training_folder
-    if pc_id == 0:
+    if pc_id == 0 and write_params:
         GP.write_parameters_to_file(testing_params['params_fn_json'], testing_params) # write_parameters_to_file MUST be called before every simulation
 
     if comm != None:

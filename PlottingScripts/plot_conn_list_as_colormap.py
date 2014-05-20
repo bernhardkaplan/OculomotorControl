@@ -101,9 +101,11 @@ if __name__ == '__main__':
     python PlottingScripts/plot_conn_list_as_colormap.py Training_taup225_nStim1_nExcMpn800_nStates14_nActions15_it15-225_wMPN-BG3.50/Connections/merged_mpn_bg_d2_connection_dev_it*.txt
     """
 
+    src_type = 'mpn'
+#    src_type = 'd1'
     fns = sys.argv[1:] # 
 #    clim = None
-    clim = (-5., 5.)
+    clim = (0., 5.)
     if len(sys.argv) > 2:
         for fn in fns:
             params = utils.load_params(fn)
@@ -119,8 +121,13 @@ if __name__ == '__main__':
             params = utils.load_params(sys.argv[1])
             tgt_type = 'd1'
             print 'Plotting connections targeting :', tgt_type
-            conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+
+            if src_type == 'mpn':
+                conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+            elif src_type == 'd1':
+                conn_list_fn = params['d1_d1_merged_conn_fn']
             plot_conn_list(conn_list_fn, params=params, clim=clim)
+
             if params['with_d2']:
                 tgt_type = 'd2'
                 print 'Plotting connections targeting :', tgt_type

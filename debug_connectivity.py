@@ -25,6 +25,17 @@ def get_sources(params, conn_data, bg_cell_gids, action_idx):
     print 'w_in_action[%d]: sum %.3f mean_sum %.3f +- %.3f' % (action_idx, w_in_sum, w_in_mean_sum.mean(), w_in_mean_sum.std())
 #    print 'All sources to action %d\n' % (action_idx), np.unique(all_source_gids)
 
+
+def get_target_action(d, gid):
+    idx = (d[:, 0] == gid).nonzero()[0]
+    w = d[idx, 2]
+    w_idx_sorted = w.argsort()
+    nw = 5
+    diff_wmax = w[w_idx_sorted[-1]] - w[w_idx_sorted[-2]]
+    print 'w:', gid, w[w_idx_sorted[-nw:]], w_idx_sorted[-nw:], diff_wmax
+
+
+
 if __name__ == '__main__':
     params = utils.load_params( os.path.abspath(sys.argv[1]) )
 
@@ -32,9 +43,15 @@ if __name__ == '__main__':
     f_bg = file(params['bg_gids_fn'], 'r')
     bg_cell_gids = json.load(f_bg)
     d = np.loadtxt(conn_fn)
+    src_gids = np.unique(d[:, 0])
     
-    for action_idx in xrange(params['n_actions']):
-        get_sources(params, d, bg_cell_gids, action_idx) 
+    for i_src, gid in enumerate(src_gids):
+        get_target_action(d, gid)
+#        if i_src == 5:
+#            exit(1)
+
+#    for action_idx in xrange(params['n_actions']):
+#        get_sources(params, d, bg_cell_gids, action_idx) 
 
 #    DB = DebugTraces()
 #    DB.check_spike_files(params)

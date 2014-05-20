@@ -15,6 +15,7 @@ def prepare_simulation(ps, params):
     print 'Debug.prepare_simulation folder written to file', ps.params['data_folder']
     print 'Ready for simulation:\n\t%s' % (param_fn)
     ps.write_parameters_to_file(fn=param_fn)
+    time.sleep(1.)
 
 
 def run_simulation(training_folder, test_folder, USE_MPI):
@@ -46,11 +47,11 @@ if __name__ == '__main__':
         print "MPI not used"
 
 #    USE_MPI = False
-    training_folder = 'Training_nRF500_clipWeights1-1_nStim5x50_it25_tsim50000_taup25000/'
+    training_folder = 'Training_DISCRETE_nRF40_clipWeights1-1_nStim4x50_it25_nactions21_blur0.01_tsim75000_taup37500'
 
     ps = simulation_parameters.global_parameters()
     param_range_1 = [0.01, 1., 2., 10., 100.]
-    param_range_2 = np.arange(.2, 1.5, .3)
+    param_range_2 = np.arange(.3, 1.7, .2)
     param_range_3 = [0.1, 0.5, 1., 2., 5., 10.]
     param_range_4 = [0.0001, 0.1, 0.5, 1., 10.]
 
@@ -60,8 +61,8 @@ if __name__ == '__main__':
     param_name_1 = 'mpn_bg_bias_amplification'
     for l_, p4 in enumerate(param_range_4):
         for k_, p3 in enumerate(param_range_3):
-            for j_, p2 in enumerate(param_range_2):
-                for i_, p1 in enumerate(param_range_1):
+            for i_, p1 in enumerate(param_range_1):
+                for j_, p2 in enumerate(param_range_2):
                     params = ps.params
                     params[param_name_1] = p1 
                     params[param_name_2] = p2  
