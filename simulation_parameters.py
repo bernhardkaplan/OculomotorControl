@@ -44,7 +44,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 960
-        self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 4            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 20 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['test_stim_range'] = range(0, 1)
@@ -53,12 +53,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_iterations_per_stim'] = 10
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
+        self.params['n_iterations_per_stim'] = 15 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+        #self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
@@ -82,11 +82,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # the first stimulus parameters
         self.params['initial_state'] = (.7, .5, 0.6, .0)
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-        self.params['n_rf'] = 50
+        self.params['n_rf'] = 5
+        self.params['n_v'] = 4
+        assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         if self.params['training']:
-            self.params['sim_id'] = 'DISCRETE_nRF%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
+            self.params['sim_id'] = 'DISCRETE_nRF%d_nV%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['n_v'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
+            #self.params['sim_id'] = 'DISCRETE_longPause_nRF%d_nV%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['n_v'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
         else:
-            self.params['sim_id'] = 'DISCRETE_nRF%d_d1rec%s' % (self.params['n_rf'], str(self.params['connect_d1_after_training']))
+            self.params['sim_id'] = 'DISCRETE_longPause_nRF%d_nV%d_d1rec%s' % (self.params['n_rf'], self.params['n_v'], str(self.params['connect_d1_after_training']))
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -158,8 +161,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # EXCITATORY NETWORK PARAMETERS
         # ##############################
         # network properties, size, number of preferred directions
-        self.params['n_v'] = 24
-        assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['n_hc'] = self.params['n_rf_x'] * self.params['n_rf_y']
         self.params['n_mc_per_hc'] = self.params['n_v'] * self.params['n_theta']
         self.params['n_mc'] = self.params['n_hc'] * self.params['n_mc_per_hc']
