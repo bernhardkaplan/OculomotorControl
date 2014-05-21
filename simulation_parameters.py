@@ -45,9 +45,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 960
         self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 10 # number of different stimuli within one training cycle
+        self.params['n_training_stim_per_cycle'] = 5 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(0, 5)
+        self.params['test_stim_range'] = range(0, 1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -57,8 +57,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_iterations_per_stim'] = 15 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
@@ -194,23 +194,26 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # receptive field sizes are determined by their relative position (for x/y relative to .5, for u/v relative to 0.)
         # rf_size = rf_size_gradient * |relative_rf_pos| + min_rf_size
         # check for reference: Dow 1981 "Magnification Factor and Receptive Field Size in Foveal Striate Cortex of the Monkey"
-#        self.params['rf_size_x_gradient'] = .1  # receptive field size for x-pos increases with distance to .5
-#        self.params['rf_size_y_gradient'] = .1  # receptive field size for y-pos increases with distance to .5
-#        self.params['rf_size_x_min'] = .005      # cells situated at .5 have this receptive field size
-#        self.params['rf_size_y_min'] = .005      # cells situated at .5 have this receptive field size
-#        self.params['rf_size_vx_gradient'] = .1 # receptive field size for vx-pos increases with distance to 0.0
-#        self.params['rf_size_vy_gradient'] = .1 #
-#        self.params['rf_size_vx_min'] = .005 # cells situated at .5 have this receptive field size
-#        self.params['rf_size_vy_min'] = .005 # cells situated at .5 have this receptive field size
-        # regular tuning prop
-        self.params['rf_size_x_gradient'] = .0  # receptive field size for x-pos increases with distance to .5
-        self.params['rf_size_y_gradient'] = .0  # receptive field size for y-pos increases with distance to .5
-        self.params['rf_size_x_min'] = 1. / self.params['n_rf_x']
-        self.params['rf_size_y_min'] = 1. / self.params['n_rf_y']
-        self.params['rf_size_vx_gradient'] = .0 # receptive field size for vx-pos increases with distance to 0.0
-        self.params['rf_size_vy_gradient'] = .0 #
-        self.params['rf_size_vx_min'] = 2 * self.params['v_max_tp'] / self.params['n_v']
-        self.params['rf_size_vy_min'] = 2 * self.params['v_max_tp'] / self.params['n_v']
+        self.params['regular_tuning_prop'] = True
+        if self.params['regular_tuning_prop']:
+            # regular tuning prop
+            self.params['rf_size_x_gradient'] = .0  # receptive field size for x-pos increases with distance to .5
+            self.params['rf_size_y_gradient'] = .0  # receptive field size for y-pos increases with distance to .5
+            self.params['rf_size_x_min'] = 1. / self.params['n_rf_x']
+            self.params['rf_size_y_min'] = 1. / self.params['n_rf_y']
+            self.params['rf_size_vx_gradient'] = .0 # receptive field size for vx-pos increases with distance to 0.0
+            self.params['rf_size_vy_gradient'] = .0 #
+            self.params['rf_size_vx_min'] = 2 * self.params['v_max_tp'] / self.params['n_v']
+            self.params['rf_size_vy_min'] = 2 * self.params['v_max_tp'] / self.params['n_v']
+        else:
+            self.params['rf_size_x_gradient'] = .1  # receptive field size for x-pos increases with distance to .5
+            self.params['rf_size_y_gradient'] = .1  # receptive field size for y-pos increases with distance to .5
+            self.params['rf_size_x_min'] = .005      # cells situated at .5 have this receptive field size
+            self.params['rf_size_y_min'] = .005      # cells situated at .5 have this receptive field size
+            self.params['rf_size_vx_gradient'] = .1 # receptive field size for vx-pos increases with distance to 0.0
+            self.params['rf_size_vy_gradient'] = .1 #
+            self.params['rf_size_vx_min'] = .005 # cells situated at .5 have this receptive field size
+            self.params['rf_size_vy_min'] = .005 # cells situated at .5 have this receptive field size
 
 
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
@@ -300,7 +303,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 3.0
+        self.params['mpn_d1_weight_amplification'] = 12.0
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.1
         self.params['d1_d1_weight_amplification_neg'] = 0.5

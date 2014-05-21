@@ -112,8 +112,11 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time7: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
+    if len(testing_params['test_stim_range']) > 1:
+        assert (testing_params['test_stim_range'][1] <= training_params['n_training_cycles'] * training_params['n_training_stim_per_cycle']), 'Corretct test_stim_range in sim params!'
     iteration_cnt = 0
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
+        print 'DEBUG', training_stimuli, training_stimuli.shape, i_stim
         if len(training_stimuli.shape) == 1:
             VI.current_motion_params = training_stimuli
         else:
