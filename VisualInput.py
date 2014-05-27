@@ -85,6 +85,7 @@ class VisualInput(object):
         the new stimulus
         """
         mp_training = np.zeros((self.params['n_stim_training'], 4))
+        stim_params = np.zeros((self.params['n_training_stim_per_cycle'], 4))
 
         if self.params['n_stim_training'] == 1:
             x0 = self.params['initial_state'][0]
