@@ -2,6 +2,7 @@ import numpy as np
 import simulation_parameters
 import os
 import subprocess
+import time
 
 
 def prepare_simulation(ps, params):
@@ -47,11 +48,11 @@ if __name__ == '__main__':
         print "MPI not used"
 
 #    USE_MPI = False
-    training_folder = 'Training_DISCRETE_nRF40_clipWeights1-1_nStim4x50_it25_nactions21_blur0.01_tsim75000_taup37500'
+    training_folder = 'Training_ITERATIVELY_1.00e-01_nRF10_nV6_clipWeights1-1_nStim5x60_it25_nactions21_blur0.20_tsim22500_taup11250/'
 
     ps = simulation_parameters.global_parameters()
     param_range_1 = [0.01, 1., 2., 10., 100.]
-    param_range_2 = np.arange(.3, 1.7, .2)
+    param_range_2 = np.arange(0.5, 5., .5)
     param_range_3 = [0.1, 0.5, 1., 2., 5., 10.]
     param_range_4 = [0.0001, 0.1, 0.5, 1., 10.]
 

@@ -163,7 +163,7 @@ if __name__ == '__main__':
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
         utils.remove_empty_files(testing_params['connections_folder'])
         utils.remove_empty_files(testing_params['spiketimes_folder'])
-        utils.compare_actions_taken(training_params, testing_params)
+#        utils.compare_actions_taken(training_params, testing_params)
         if not testing_params['Cluster'] and not testing_params['Cluster_Milner']:
             os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
             os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])

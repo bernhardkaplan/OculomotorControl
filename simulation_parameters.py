@@ -44,17 +44,26 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 960
-        self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 5 # number of different stimuli within one training cycle
+        self.params['n_rf'] = 8
+        self.params['n_v'] = 6
+
+        self.params['n_training_cycles'] = 6            # how often each stimulus is presented during training
+#        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
+        self.params['n_training_stim_per_cycle'] = self.params['n_v'] * self.params['n_rf']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['train_iteratively'] = True     # if trained iteratively, each stimulus is only 2 iterations long and a pause
+        self.params['test_stim_range'] = range(0, 5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
-        self.params['n_iterations_per_stim'] = 15 + self.params['n_silent_iterations']
+        if self.params['train_iteratively']:
+            self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
+            self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations']
+        else:
+            self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
+            self.params['n_iterations_per_stim'] = 15 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
         self.params['training'] = True
@@ -80,16 +89,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
 
         # the first stimulus parameters
-        self.params['initial_state'] = (.7, .5, 0.6, .0)
+        self.params['initial_state'] = (.5, .5, -2.0, .0)
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
-        self.params['n_rf'] = 10
-        self.params['n_v'] = 6
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
+        bcpnn_init = 0.01
+        self.params['bcpnn_init_pi'] = bcpnn_init
         if self.params['training']:
-            self.params['sim_id'] = 'DISCRETE_nRF%d_nV%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['n_v'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
+            self.params['sim_id'] = 'ITERATIVELY_%.2e_nRF%d_nV%d_clipWeights%d-%d' % (self.params['bcpnn_init_pi'], self.params['n_rf'], self.params['n_v'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
             #self.params['sim_id'] = 'DISCRETE_longPause_nRF%d_nV%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['n_v'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
         else:
-            self.params['sim_id'] = 'DISCRETE_longPause_nRF%d_nV%d_d1rec%s' % (self.params['n_rf'], self.params['n_v'], str(self.params['connect_d1_after_training']))
+            self.params['sim_id'] = 'ITERATIVELY_%.2e_longPause_nRF%d_nV%d_d1rec%s' % (self.params['bcpnn_init_pi'], self.params['n_rf'], self.params['n_v'], str(self.params['connect_d1_after_training']))
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -105,7 +114,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['master_seed'] = 12345  # 
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 666
+        self.params['visual_stim_seed'] = 123
         self.params['tuning_prop_seed'] = 0
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
 #        self.params['debug_mpn'] = False
@@ -175,18 +184,19 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
 
-
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
         self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 20
-        self.params['v_max_tp'] = 5.0   # [a.u.] maximal velocity in visual space for tuning proprties (for each component), 1. means the whole visual field is traversed within 1 second
+        self.params['x_max_tp'] = 1.0   # [a.u.] maximal position in visual space for tuning properties
+        self.params['x_min_tp'] = 0.0   # [a.u.] minimal position in visual space for tuning properies
+        self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = 0.25, 0.25
+        self.params['blur_X'], self.params['blur_V'] = 0.1, 0.1
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -199,12 +209,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
             # regular tuning prop
             self.params['rf_size_x_gradient'] = .0  # receptive field size for x-pos increases with distance to .5
             self.params['rf_size_y_gradient'] = .0  # receptive field size for y-pos increases with distance to .5
-            self.params['rf_size_x_min'] = 1. / self.params['n_rf_x']
-            self.params['rf_size_y_min'] = 1. / self.params['n_rf_y']
+            self.params['rf_size_x_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_x']
+            self.params['rf_size_y_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_y']
             self.params['rf_size_vx_gradient'] = .0 # receptive field size for vx-pos increases with distance to 0.0
             self.params['rf_size_vy_gradient'] = .0 #
-            self.params['rf_size_vx_min'] = 2 * self.params['v_max_tp'] / self.params['n_v']
-            self.params['rf_size_vy_min'] = 2 * self.params['v_max_tp'] / self.params['n_v']
+            self.params['rf_size_vx_min'] = 2 * (self.params['v_max_tp'] - self.params['v_min_tp']) / self.params['n_v']
+            self.params['rf_size_vy_min'] = 2 * (self.params['v_max_tp'] - self.params['v_min_tp']) / self.params['n_v']
         else:
             self.params['rf_size_x_gradient'] = .1  # receptive field size for x-pos increases with distance to .5
             self.params['rf_size_y_gradient'] = .1  # receptive field size for y-pos increases with distance to .5
@@ -282,9 +292,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.10
 
         #Connections Actions and States to RP
-        self.tau_i = 2.
-        self.tau_j = 2.
-        self.tau_e = 2.
+        self.tau_i = 5.
+        self.tau_j = 5.
+        self.tau_e = 5.
 #        self.tau_p = max(1000., self.params['t_sim'])
         self.tau_p = .5 * self.params['t_sim']
         self.params['fmax'] = 150.
@@ -303,10 +313,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 12.0
+        self.params['mpn_d1_weight_amplification'] = 10.0
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.1
-        self.params['d1_d1_weight_amplification_neg'] = 0.5
+        self.params['d1_d1_weight_amplification_neg'] = 2.0
         self.params['d1_d1_weight_amplification_pos'] = 0.1
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
@@ -368,28 +378,29 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## D1 - D1 connections
         # if bcpnn_synapse is used
         self.params['synapse_d1_d1'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_d1'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K, \
+        bcpnn_init = self.params['bcpnn_init_pi'] 
+        self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
 
         self.params['actions_rp'] = 'bcpnn_synapse'
-        self.params['param_actions_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_actions_rp'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         self.params['states_rp'] = 'bcpnn_synapse'
-        self.params['param_states_rp'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_states_rp'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         self.params['bcpnn'] = 'bcpnn_synapse'
-        self.params['param_bcpnn'] =  {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_bcpnn'] =  {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         # during learning gain == 0. K = 1.0 : --> 'offline' learning
         # after learning: gain == 1. K = .0
 
         #Connections States Actions
         self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d1_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
         self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d2_MT_BG'] = {'p_i': 0.01, 'p_j': 0.01, 'p_ij': 0.0001, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d2_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 

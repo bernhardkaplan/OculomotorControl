@@ -134,7 +134,7 @@ class ActivityPlotter(object):
             if (nspikes > 0):
                 count, bins = np.histogram(self.spiketrains[gid], bins=n_bins_time, range=(0, self.params['t_sim']))
                 self.nspikes_binned[gid, :] = count
-
+        return self.nspikes_binned
 
     def plot_output(self, stim_range=(0, 1), v_or_x='x', compute_state_differences=None):
         
@@ -366,6 +366,13 @@ class ActivityPlotter(object):
             ax.plot(spikes, y_, 'o', markersize=3, color='k')
 
         xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+
+        if sort_idx == 0:
+            ax.set_ylim((-.02, 1.02))
+        elif sort_idx == 2:
+            ax.set_ylim((tp[:, 2].min() - 0.02, tp[:, 2].max() + 0.02))
+
         if sort_idx == 0:
             ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', lw=3, c='k')
         elif sort_idx == 2:
@@ -456,7 +463,7 @@ class MetaAnalysisClass(object):
         if plot_training_folder != None:
             training_params = utils.load_params(plot_training_folder)
 
-        if len(argv) == 1:
+        if len(argv) == 1: # plot current parameters
             print '\nPlotting only stim 1!\n\n'
             network_params = simulation_parameters.global_parameters()  
             params = network_params.params
@@ -520,7 +527,6 @@ class MetaAnalysisClass(object):
         else:
             t_range = None
 
-#        del Plotter
         # plot x - pos sorting
         print 'Plotting raster plots'
         fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0, t_range=t_range)
@@ -531,13 +537,14 @@ class MetaAnalysisClass(object):
         fig.savefig(output_fn)
 
         # plot vx - sorting
-#        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
-#        if params['debug_mpn']:
-#            Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
-#        output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
-#        print 'Saving to', output_fn
-#        fig.savefig(output_fn)
+        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
+        if params['debug_mpn']:
+            Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+        output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
+        print 'Saving to', output_fn
+        fig.savefig(output_fn)
 
+        del Plotter
 
     def run_analysis_for_folders(self, folders, training_params=None, stim_range=None):
         """

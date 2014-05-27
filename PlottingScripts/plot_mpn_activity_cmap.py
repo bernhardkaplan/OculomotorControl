@@ -32,7 +32,8 @@ if __name__ == '__main__':
     it_max = n_stim * params['n_iterations_per_stim']
     AP = ActivityPlotter(params, it_max)
     AP.bin_spiketimes()
-    AP.plot_output(stim_range, v_or_x='x', compute_state_differences=True)
-    AP.plot_output(stim_range, v_or_x='v', compute_state_differences=True)
-    AP.plot_output(stim_range, v_or_x='gid', compute_state_differences=True)
+    compute_state_differences = False
+    AP.plot_output(stim_range, v_or_x='x', compute_state_differences=compute_state_differences)
+    AP.plot_output(stim_range, v_or_x='v', compute_state_differences=compute_state_differences)
+    AP.plot_output(stim_range, v_or_x='gid', compute_state_differences=compute_state_differences)
     pylab.show()
