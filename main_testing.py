@@ -123,8 +123,7 @@ if __name__ == '__main__':
             VI.current_motion_params = training_stimuli[i_stim, :]
         for it in xrange(testing_params['n_iterations_per_stim']):
 
-#            if it == testing_params['n_iterations_per_stim'] - 1:
-            if it > (testing_params['n_iterations_per_stim'] - testing_params['n_silent_iterations']):
+            if it >= (testing_params['n_iterations_per_stim'] - testing_params['n_silent_iterations']):
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
                 # integrate the real world trajectory and the eye direction and compute spike trains from that

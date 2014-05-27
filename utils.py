@@ -48,6 +48,29 @@ def get_targets(conn_list, source_gid):
     return targets
 
 
+def convert_connlist_to_matrix(data, src_min=None, src_max=None, tgt_min=None, tgt_max=None):
+    """
+    data -- connections list (src, tgt, weight)
+    """
+    if src_min == None:
+        src_min = np.min(data[:, 0])
+    if src_max == None:
+        src_max = np.max(data[:, 0])
+    if tgt_min == None:
+        tgt_min = np.min(data[:, 1])
+    if tgt_max == None:
+        tgt_max = np.max(data[:, 1])
+    n_src = src_max - src_min + 1
+    tgt_min, tgt_max= np.min(data[:, 1]), np.max(data[:, 1])
+    n_tgt = tgt_max - tgt_min + 1
+    conn_mat = np.zeros((n_src, n_tgt))
+    for c in xrange(data[:,0].size):
+        src = data[c, 0] - src_min
+        tgt = data[c, 1] - tgt_min
+        conn_mat[src, tgt] = data[c, 2]
+
+    return conn_mat
+
 def get_most_active_neurons(spike_data, n_cells=None):
     gids = np.unique(spike_data[:, 0])
     if n_cells == None:

@@ -127,7 +127,6 @@ class ActivityPlotter(object):
         self.nspikes, self.spiketrains = utils.get_spikes(merged_spike_fn, n_cells=self.n_cells, get_spiketrains=True, gid_idx=0)
 
         n_bins_time = self.params['n_iterations']
-        print 'debug n_bins_time', n_bins_time
         self.nspikes_binned = np.zeros((self.n_cells, n_bins_time)) # binned activity over time
         for gid in xrange(self.n_cells):
             nspikes = len(self.spiketrains[gid])
@@ -135,6 +134,7 @@ class ActivityPlotter(object):
                 count, bins = np.histogram(self.spiketrains[gid], bins=n_bins_time, range=(0, self.params['t_sim']))
                 self.nspikes_binned[gid, :] = count
         return self.nspikes_binned
+
 
     def plot_output(self, stim_range=(0, 1), v_or_x='x', compute_state_differences=None):
         
@@ -255,7 +255,7 @@ class ActivityPlotter(object):
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         it_min = stim_range[0] * self.params['n_iterations_per_stim']
-        it_max = (stim_range[-1] + 1) * self.params['n_iterations_per_stim']
+        it_max = (stim_range[-1]) * self.params['n_iterations_per_stim']
         t_axis = d[it_min:it_max, 4]
         t_axis += .5 * self.params['t_iteration']
 #        print 'debug', t_axis.shape, d.shape, it_min, it_max
@@ -271,6 +271,7 @@ class ActivityPlotter(object):
             fig = pylab.figure()
             ax = fig.add_subplot(111)
 
+        ylim = (np.min(x_displacement), np.max(x_displacement))
         for stim in xrange(stim_range[0], stim_range[-1] + 1):
             it_start_stim = stim * self.params['n_iterations_per_stim']
             it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - 1
@@ -281,6 +282,9 @@ class ActivityPlotter(object):
                 it_1 = it_ + stim * self.params['n_iterations_per_stim']
                 it_2 = it_ + stim * self.params['n_iterations_per_stim'] + 2
                 p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
+#                print 'debug', x_displacement[it_1:it_2]
+#                ylim[0] = min(ylim[0], x_displacement[it_1:it_2].min())
+#                ylim[1] = max(ylim[1], x_displacement[it_1:it_2].max())
 #                p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
 #            ax.plot((stim + 1) * self.param['n_iterations_per_stim'], 
 
@@ -290,13 +294,13 @@ class ActivityPlotter(object):
             ax.set_title('Training')
         else:
             ax.set_title('Testing')
+        ax.set_ylim(ylim)
         self.plot_vertical_lines(ax, show_iterations=True)
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal displacement (x-dim)')
         t0 = it_min * self.params['t_iteration']
         t1 = it_max * self.params['t_iteration']
         ax.set_xlim((t0, t1))
-#        ax.set_ylim((0, 1.2))
         output_fig = self.params['figures_folder'] + 'mpn_displacement.png'
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
@@ -517,8 +521,8 @@ class MetaAnalysisClass(object):
 #        fig.savefig(output_fn)
 
 #        Plotter.plot_input()
-        Plotter.bin_spiketimes()
-        Plotter.plot_output()
+#        Plotter.bin_spiketimes()
+#        Plotter.plot_output()
 
         if stim_range != None:
             t_range = [0, 0]

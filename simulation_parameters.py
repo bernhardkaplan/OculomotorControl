@@ -39,20 +39,21 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
-        self.params['total_num_virtual_procs'] = 8
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
+        self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 960
-        self.params['n_rf'] = 8
-        self.params['n_v'] = 6
+        self.params['n_rf'] = 10
+        self.params['n_v'] = 10
 
         self.params['n_training_cycles'] = 6            # how often each stimulus is presented during training
 #        self.params['n_training_stim_per_cycle'] = 1 # number of different stimuli within one training cycle
         self.params['n_training_stim_per_cycle'] = self.params['n_v'] * self.params['n_rf']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['train_iteratively'] = True     # if trained iteratively, each stimulus is only 2 iterations long and a pause
-        self.params['test_stim_range'] = range(0, 5)
+#        self.params['train_iteratively'] = True     # if trained iteratively, each stimulus is only 2 iterations long and a pause
+        self.params['train_iteratively'] = False
+        self.params['test_stim_range'] = range(2, 5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -62,11 +63,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['train_iteratively']:
             self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations']
         else:
-            self.params['n_iterations_per_stim'] = 15 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 20 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
@@ -97,7 +98,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['sim_id'] = 'ITERATIVELY_%.2e_nRF%d_nV%d_clipWeights%d-%d' % (self.params['bcpnn_init_pi'], self.params['n_rf'], self.params['n_v'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
             #self.params['sim_id'] = 'DISCRETE_longPause_nRF%d_nV%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['n_v'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
         else:
-            self.params['sim_id'] = 'ITERATIVELY_%.2e_longPause_nRF%d_nV%d_d1rec%s' % (self.params['bcpnn_init_pi'], self.params['n_rf'], self.params['n_v'], str(self.params['connect_d1_after_training']))
+            self.params['sim_id'] = 'ITERATIVELY_%.2e_nRF%d_nV%d' % (self.params['bcpnn_init_pi'], self.params['n_rf'], self.params['n_v'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -315,7 +316,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_d1_weight_amplification'] = 10.0
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.1
-        self.params['d1_d1_weight_amplification_neg'] = 2.0
+        self.params['d1_d1_weight_amplification_neg'] = 3.0
         self.params['d1_d1_weight_amplification_pos'] = 0.1
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
@@ -583,10 +584,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_nStim%dx%d_it%d_nactions%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_bias%.2e/' % \
-                        (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], \
-                                self.params['n_actions'], self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
-                                self.params['mpn_d1_weight_amplification'], self.params['mpn_bg_bias_amplification'])
+                folder_name += '_nStim%dx%d/' % \
+                        (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'])
+#                        , self.params['t_iteration'], \
+#                                self.params['n_actions'], self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
+#                                self.params['mpn_d1_weight_amplification'], self.params['mpn_bg_bias_amplification'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

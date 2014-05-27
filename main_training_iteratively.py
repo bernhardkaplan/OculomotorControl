@@ -94,7 +94,6 @@ if __name__ == '__main__':
         VI.current_motion_params = training_stimuli[i_stim, :]
         for it in xrange(params['n_iterations_per_stim']):
 
-#            if it % 2 == 1: 
             if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
@@ -105,7 +104,6 @@ if __name__ == '__main__':
 
             #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
             print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
-#            if it % 2 == 1: 
             if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
                 BG.set_empty_input()
             else:
