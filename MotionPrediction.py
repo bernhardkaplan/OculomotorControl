@@ -100,7 +100,7 @@ class MotionPrediction(object):
 
         self.exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'label':self.params['mpn_exc_spikes_fn']})
         nest.ConvergentConnect(self.exc_pop, self.exc_spike_recorder)
-
+        
 
 
 
@@ -209,7 +209,8 @@ class MotionPrediction(object):
 #            gids_to_record = self.VI.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])[:self.params['n_exc_to_record_mpn']]
 
         self.voltmeter = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval': self.params['dt_volt']})
-        nest.SetStatus(self.voltmeter,[{"to_file": True, "withtime": True, 'label' : self.params['mpn_exc_volt_fn']}])
+        nest.SetStatus(self.voltmeter, [{"to_file": True, "withtime": True, 'label' : self.params['mpn_exc_volt_fn']}])
+        print 'gids_to_record', gids_to_record
         nest.ConvergentConnect(self.voltmeter, gids_to_record)
 
 

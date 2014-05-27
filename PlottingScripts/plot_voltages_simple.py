@@ -10,6 +10,9 @@ import utils
 colorlist = utils.get_colorlist()
 n_colors = len(colorlist)
 
+#def get_gids_from_filenames(fns):
+#    for fns 
+
 if __name__ == '__main__':
 
     print 'Usage: \nplot_voltages_simple.py [FOLDER_NAME] [GID_1] [GID_2]'
@@ -24,11 +27,13 @@ if __name__ == '__main__':
         volt_fn_base = params['bg_volt_fn']
     else:
         volt_fn_base = params['mpn_exc_volt_fn']
+
     fns = utils.find_files(params['spiketimes_folder'], volt_fn_base)
     fig = pylab.figure()
     ax = fig.add_subplot(111)
 
-    gids = params['gids_to_record_%s' % bg_or_mpn]
+#    gids = params['gids_to_record_%s' % bg_or_mpn]
+    gids = range(1, params['n_exc_mpn'] + 1)
 
     print 'GIDS:', gids
 #    gids = [4966]
@@ -51,7 +56,8 @@ if __name__ == '__main__':
                 ax.plot(time_axis, volt, label='%d' % gid, lw=2, c=colorlist[cnt_ % n_colors])
                 v_mean[gid] = volt.mean()
                 cnt_ += 1
-    for gid in gids:
+
+    for gid in v_mean.keys():
         print 'GID v_mean:', gid, v_mean[gid]
 
 

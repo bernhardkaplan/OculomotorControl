@@ -112,8 +112,11 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time7: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
+    if len(testing_params['test_stim_range']) > 1:
+        assert (testing_params['test_stim_range'][1] <= training_params['n_training_cycles'] * training_params['n_training_stim_per_cycle']), 'Corretct test_stim_range in sim params!'
     iteration_cnt = 0
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
+        print 'DEBUG', training_stimuli, training_stimuli.shape, i_stim
         if len(training_stimuli.shape) == 1:
             VI.current_motion_params = training_stimuli
         else:
@@ -160,7 +163,7 @@ if __name__ == '__main__':
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
         utils.remove_empty_files(testing_params['connections_folder'])
         utils.remove_empty_files(testing_params['spiketimes_folder'])
-        utils.compare_actions_taken(training_params, testing_params)
+#        utils.compare_actions_taken(training_params, testing_params)
         if not testing_params['Cluster'] and not testing_params['Cluster_Milner']:
             os.system('python PlottingScripts/PlotBGActivity.py %s'% testing_params['folder_name'])
             os.system('python PlottingScripts/PlotMPNActivity.py %s' % testing_params['folder_name'])

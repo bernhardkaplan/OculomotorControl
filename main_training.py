@@ -95,7 +95,7 @@ if __name__ == '__main__':
         for it in xrange(params['n_iterations_per_stim']):
 
 #            if it == params['n_iterations_per_stim'] - 1:
-            if it > (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+            if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
 #                stim, supervisor_state = VI.set_empty_input(MT.exc_pop)
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:

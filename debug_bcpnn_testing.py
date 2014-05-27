@@ -249,7 +249,7 @@ if __name__ == '__main__':
     fn_post = training_params['spiketimes_folder'] + training_params['%s_spikes_fn_merged_all' % cell_type_post]
     TP_training.load_spikes(fn_pre, fn_post)
 
-    stim_range_global = (1, 5)
+    stim_range_global = (0, 1)
 #    stim_range_global = (0, training_params['n_stim_training'])
     it_range_global = (training_params['n_iterations_per_stim'] * stim_range_global[0], training_params['n_iterations_per_stim'] * stim_range_global[1])
 #    it_range_bcpnn_in_stim = [0, 7] # within the first stimulus
@@ -281,7 +281,6 @@ if __name__ == '__main__':
 #        all_gid_pairs[it] = gid_pairs
 
     actions_taken = np.loadtxt(training_params['actions_taken_fn'])
-
     # ---------- TRAINING -----------------
     # --- get the weights between all the pre and post cells
     conn_fn = training_params['mpn_bgd1_merged_conn_fn']
@@ -310,8 +309,9 @@ if __name__ == '__main__':
     DB.plot_iteration_borders(training_params, ax1_training, it_range_global)
     ylim = ax1_training.get_ylim()
     for it in xrange(it_range_global[0], it_range_global[1]):
-        t0 = it * training_params['t_iteration']
-        ax1_training.text(t0 + .2 * training_params['t_iteration'], 1.05 * ylim[1], 'action %d' % (actions_taken[it, 2]), fontsize=16, color=colorlist[it % n_color])
+        if not np.isnan(actions_taken[it, 2]):
+            t0 = it * training_params['t_iteration']
+            ax1_training.text(t0 + .2 * training_params['t_iteration'], 1.05 * ylim[1], 'action %d' % (actions_taken[it, 2]), fontsize=16, color=colorlist[it % n_color])
     ax1_training.set_xlabel('Time [ms]')
     ax1_training.set_ylabel('Visual layer GID')
     print 'You should (re-)run the training & testing to record V_m from these cells:'
@@ -322,34 +322,34 @@ if __name__ == '__main__':
     # ---------- BCPNN TRACES --------------------
     # choose the most active pre - post gids for one iteration
     # and plot the BCPNN traces for a certain time
-#    plot_bcpnn_iteration_pre = 8
-#    plot_bcpnn_iteration_post = 8
-#    assert (plot_bcpnn_iteration_pre in it_range_global), ' plot_bcpnn_iteration_pre follows global iteration numbering (not the wihtin-stimulus numbering'
-#    assert (plot_bcpnn_iteration_post in it_range_global), ' plot_bcpnn_iteration_post follows global iteration numbering (not the wihtin-stimulus numbering'
-#    pre_gids = most_active_pre_gids[plot_bcpnn_iteration_pre][:n_pre].tolist()
-#    post_gids = most_active_post_gids[plot_bcpnn_iteration_post][:n_post].tolist()
+    plot_bcpnn_iteration_pre = 0
+    plot_bcpnn_iteration_post = 0
+    assert (plot_bcpnn_iteration_pre in it_range_global), ' plot_bcpnn_iteration_pre follows global iteration numbering (not the wihtin-stimulus numbering'
+    assert (plot_bcpnn_iteration_post in it_range_global), ' plot_bcpnn_iteration_post follows global iteration numbering (not the wihtin-stimulus numbering'
+    pre_gids = most_active_pre_gids[plot_bcpnn_iteration_pre][:n_pre].tolist()
+    post_gids = most_active_post_gids[plot_bcpnn_iteration_post][:n_post].tolist()
 
-#    all_bcpnn_traces, gid_pairs = TP_training.compute_traces(pre_gids, post_gids, it_range_bcpnn)
+    all_bcpnn_traces, gid_pairs = TP_training.compute_traces(pre_gids, post_gids, it_range_bcpnn)
 
     # ---PLOT BCPNN TRACES
-#    fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
-#    ax1 = fig.add_subplot(321)
-#    ax2 = fig.add_subplot(322)
-#    ax3 = fig.add_subplot(323)
-#    ax4 = fig.add_subplot(324)
-#    ax5 = fig.add_subplot(325)
-#    ax6 = fig.add_subplot(326)
-#    for i_ in xrange(len(all_bcpnn_traces)):
-#        print 'Plotting gid_pair', gid_pairs[i_]
-#        traces = all_bcpnn_traces[i_]
-#        if i_ == (len(all_bcpnn_traces) - 1):
-#            output_fn = training_params['figures_folder'] + 'bcpnn_traces_man%d+%d_iteration%d-%d.png' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_post, it_range_bcpnn[0], it_range_bcpnn[1])
-#            info_txt = 'Iteration %d (stim %d) action %d' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_pre / training_params['n_iterations_per_stim'], actions_taken[plot_bcpnn_iteration_post+1, 2])
-#            info_txt += '\nMost active nrns (pre %d, post %d): \nPre: %s\nPost: %s' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_post, pre_gids, post_gids)
-#        else:
-#            output_fn = None
-#            info_txt = ''
-#        TP_training.plot_trace(traces, output_fn=output_fn, info_txt=info_txt, fig=fig)
+    fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
+    ax1 = fig.add_subplot(321)
+    ax2 = fig.add_subplot(322)
+    ax3 = fig.add_subplot(323)
+    ax4 = fig.add_subplot(324)
+    ax5 = fig.add_subplot(325)
+    ax6 = fig.add_subplot(326)
+    for i_ in xrange(len(all_bcpnn_traces)):
+        print 'Plotting gid_pair', gid_pairs[i_]
+        traces = all_bcpnn_traces[i_]
+        if i_ == (len(all_bcpnn_traces) - 1):
+            output_fn = training_params['figures_folder'] + 'bcpnn_traces_man%d+%d_iteration%d-%d.png' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_post, it_range_bcpnn[0], it_range_bcpnn[1])
+            info_txt = 'Iteration %d (stim %d) action %d' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_pre / training_params['n_iterations_per_stim'], actions_taken[plot_bcpnn_iteration_post+1, 2])
+            info_txt += '\nMost active nrns (pre %d, post %d): \nPre: %s\nPost: %s' % (plot_bcpnn_iteration_pre, plot_bcpnn_iteration_post, pre_gids, post_gids)
+        else:
+            output_fn = None
+            info_txt = ''
+        TP_training.plot_trace(traces, output_fn=output_fn, info_txt=info_txt, fig=fig)
 
 
 

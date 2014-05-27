@@ -1,6 +1,7 @@
 import numpy as np
 import json
 import utils
+import random
 
 class VisualInput(object):
 
@@ -17,6 +18,7 @@ class VisualInput(object):
         if visual_stim_seed == None:
             visual_stim_seed = self.params['visual_stim_seed']
         np.random.seed(visual_stim_seed)
+        random.seed(visual_stim_seed)
         self.RNG = np.random
 
         self.supervisor_state = [0., 0.]
@@ -48,6 +50,34 @@ class VisualInput(object):
 
 #        self.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])
 
+    def create_training_sequence_iteratively(self):
+        """
+        Returns n_cycles of state vectors, each cycle containing a set of n_training_stim_per_cycle states.
+        The set of states is shuffled for each cycle
+        """
+        mp_training = np.zeros((self.params['n_stim_training'], 4))
+        if self.params['n_training_stim_per_cycle'] == self.params['n_exc_mpn']:
+            training_states = range(0, self.params['n_exc_mpn'])
+        else:
+            training_states = self.RNG.random_integers(0, self.params['n_exc_mpn'], self.params['n_training_stim_per_cycle'])
+
+        if self.params['n_stim_training'] == 1:
+            x0 = self.params['initial_state'][0]
+            v0 = self.params['initial_state'][2]
+            mp_training[0, 0] = x0
+            mp_training[0, 1] = .5
+            mp_training[0, 2] = v0
+        else:
+            for i_cycle in xrange(self.params['n_training_cycles']):
+                self.RNG.shuffle(training_states)
+                print 'Cycle %d training_states: ' % (i_cycle), training_states
+                i_ = i_cycle * self.params['n_training_stim_per_cycle']
+                j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
+                mp_training[i_:j_, :] = self.tuning_prop_exc[training_states, :]
+        np.savetxt(self.params['training_sequence_fn'], mp_training)
+        return mp_training 
+
+
 
     def create_training_sequence(self):
         """
@@ -55,7 +85,6 @@ class VisualInput(object):
         the new stimulus
         """
         mp_training = np.zeros((self.params['n_stim_training'], 4))
-        stim_params = np.zeros((self.params['n_training_stim_per_cycle'], 4))
 
         if self.params['n_stim_training'] == 1:
             x0 = self.params['initial_state'][0]
@@ -109,6 +138,40 @@ class VisualInput(object):
 #                self.current_motion_params[2], self.current_motion_params[3])
         self.iteration += 1
         return self.stim, supervisor_state
+
+
+    def compute_input_open_loop(self, local_gids):
+        """
+        In contrast to the compute_input function, the open_loop variation does not update the stimulus trajectory
+        based on the action that has been taken.
+        """
+        time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
+
+        # calculate where the stimulus will move according to the current_motion_params
+        x_stim = (self.current_motion_params[2]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
+        y_stim = (self.current_motion_params[3]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
+        trajectory = (x_stim, y_stim)
+
+        # compute the supervisor signal taking into account:
+        # - the trajectory position at the end of the iteration
+        # - the knowledge about the motion (current_motion_params
+        # - and / or the 
+        delta_x_end = (x_stim[-1] - .5)
+        delta_y_end = (y_stim[-1] - .5)
+        delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
+        k = self.params['supervisor_amp_param']
+
+        # omniscient supervisor
+        self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
+        self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
+
+
+        local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
+        self.create_spike_trains_for_trajectory(local_gids, trajectory)
+
+        self.iteration += 1
+        return self.stim, self.supervisor_state
+
 
 
     def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False):
@@ -176,6 +239,7 @@ class VisualInput(object):
                        -.5 * (tuning_prop[:, 2] - u_stim)**2 / blur_V**2)
         return L
 
+
     def get_input_new(self, tuning_prop, rfs_x, rfs_v, motion_params, blur_x, blur_v):
         """
         Arguments:
@@ -190,7 +254,7 @@ class VisualInput(object):
         x_stim, y_stim, u_stim, v_stim = motion_params[0], motion_params[1], motion_params[2], motion_params[3]
         if self.params['n_grid_dimensions'] == 2:
             d_ij = visual_field_distance2D_vec(tuning_prop[:, 0], x_stim * np.ones(n_cells), tuning_prop[:, 1], y_stim * np.ones(n_cells))
-            L = np.exp(-.5 * (d_ij)**2 / (rfs_x * blur_x)**2 
+            L = np.exp(-.5 * (d_ij)**2 / (rfs_x * blur_x)**2 \
                     -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v * blur_v)**2
                     -.5 * (tuning_prop[:, 3] - v_stim)**2 / (rfs_v * blur_v)**2)
         else:
@@ -331,8 +395,10 @@ class VisualInput(object):
         if self.params['n_grid_dimensions'] == 2:
             return self.set_tuning_prop_2D(mode, cell_type)
         else:
-            return self.set_tuning_prop_1D_regular(cell_type)
-#            return self.set_tuning_prop_1D(cell_type)
+            if self.params['regular_tuning_prop']:
+                return self.set_tuning_prop_1D_regular(cell_type)
+            else:
+                return self.set_tuning_prop_1D(cell_type)
 
 
     def set_tuning_prop_1D_regular(self, cell_type='exc'):
@@ -355,7 +421,7 @@ class VisualInput(object):
 #        v_rho[:n_v/2] = -v_rho_half_1
 #        v_rho[n_v/2:] = v_rho_half_2
         v_rho = np.linspace(-v_max, v_max, num=n_v, endpoint=True)
-        RF = np.linspace(0., 1., n_rf_x, endpoint=True)
+        RF = np.linspace(self.params['x_min_tp'], self.params['x_max_tp'], n_rf_x, endpoint=True)
         index = 0
         tuning_prop = np.zeros((n_cells, 4))
 
@@ -509,6 +575,7 @@ class VisualInput(object):
             for i in xrange(self.params['n_exc_mpn']):
                 gid = self.gids_to_record_exc[i]
                 print gid, '\t', distances[i], self.tuning_prop_exc[gid, :]
+
 
         return self.gids_to_record_exc
 
