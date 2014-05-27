@@ -39,13 +39,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 960
         self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 10 # number of different stimuli within one training cycle
+        self.params['n_training_stim_per_cycle'] = 50 # number of different stimuli within one training cycle
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['test_stim_range'] = range(0, 5)
         if len(self.params['test_stim_range']) > 1:
@@ -53,12 +53,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
+        self.params['n_silent_iterations'] = 5 # for 2 silent iterations this should be 3
         self.params['n_iterations_per_stim'] = 15 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+        #self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
@@ -83,7 +83,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['initial_state'] = (.7, .5, 0.6, .0)
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         self.params['n_rf'] = 10
-        self.params['n_v'] = 6
+        self.params['n_v'] = 10
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         if self.params['training']:
             self.params['sim_id'] = 'DISCRETE_nRF%d_nV%d_clipWeights%d-%d' % (self.params['n_rf'], self.params['n_v'], self.params['clip_weights_mpn_d1'], self.params['clip_weights_d1_d1'])
@@ -186,7 +186,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = 0.25, 0.25
+        self.params['blur_X'], self.params['blur_V'] = 0.5, 0.5
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
