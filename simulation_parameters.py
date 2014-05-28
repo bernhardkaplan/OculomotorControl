@@ -49,7 +49,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_v'] = 40
 
         self.params['n_training_cycles'] = 10            # how often each stimulus is presented during training
-
         self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
         self.params['n_training_v'] = 11 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
