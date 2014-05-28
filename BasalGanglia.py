@@ -285,34 +285,34 @@ class BasalGanglia(object):
         n_bins_x = np.int(np.round((self.params['n_actions'] - 1) / 2.))
         n_bins_y = np.int(np.round((self.params['n_actions'] - 1) / 2.))
 
-        if self.params['regular_tuning_prop']:
-            v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
-                                np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
-                                endpoint=True, base=self.params['log_scale'])).tolist()
-            v_scale_half.reverse()
-            self.action_bins_x += v_scale_half
-            self.action_bins_x += [0.]
-            v_scale_half = (np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
-                                np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
-                                endpoint=True, base=self.params['log_scale'])).tolist()
-            self.action_bins_x += v_scale_half
-            print 'BG: action_bins_x', self.action_bins_x
-            ### the same for the y-direction
-            self.action_bins_y = []
-            v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out'])/np.log(self.params['log_scale']),
-                                np.log(self.params['v_max_out'])/np.log(self.params['log_scale']), num=n_bins_y,
-                                endpoint=True, base=self.params['log_scale'])).tolist()
-            v_scale_half.reverse()
-            self.action_bins_y += v_scale_half
-            self.action_bins_y += [0.]
-            v_scale_half = (np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
-                                np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_y,
-                                endpoint=True, base=self.params['log_scale'])).tolist()
-            self.action_bins_y += v_scale_half
-            print 'BG: action_bins_y', self.action_bins_y
-        else:
-            self.action_bins_x = np.linspace(-self.params['v_max_out'], self.params['v_max_out'], n_bins_x)
-            self.action_bins_y = np.linspace(-self.params['v_max_out'], self.params['v_max_out'], n_bins_y)
+#        if self.params['regular_tuning_prop']:
+        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
+                            endpoint=True, base=self.params['log_scale'])).tolist()
+        v_scale_half.reverse()
+        self.action_bins_x += v_scale_half
+        self.action_bins_x += [0.]
+        v_scale_half = (np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
+                            endpoint=True, base=self.params['log_scale'])).tolist()
+        self.action_bins_x += v_scale_half
+        print 'BG: action_bins_x', self.action_bins_x
+        ### the same for the y-direction
+        self.action_bins_y = []
+        v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out'])/np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out'])/np.log(self.params['log_scale']), num=n_bins_y,
+                            endpoint=True, base=self.params['log_scale'])).tolist()
+        v_scale_half.reverse()
+        self.action_bins_y += v_scale_half
+        self.action_bins_y += [0.]
+        v_scale_half = (np.logspace(np.log(self.params['v_min_out']) / np.log(self.params['log_scale']),
+                            np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_y,
+                            endpoint=True, base=self.params['log_scale'])).tolist()
+        self.action_bins_y += v_scale_half
+        print 'BG: action_bins_y', self.action_bins_y
+#        else:
+#            self.action_bins_x = np.linspace(-self.params['v_max_out'], self.params['v_max_out'], n_bins_x)
+#            self.action_bins_y = np.linspace(-self.params['v_max_out'], self.params['v_max_out'], n_bins_y)
 
         output_array = np.zeros((len(self.action_bins_x), 2))
 #        header = '# first row: action_x, 2nd row: action_y'

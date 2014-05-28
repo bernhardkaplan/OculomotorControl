@@ -170,6 +170,9 @@ class VisualInput(object):
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
 
+        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
+        self.motion_params[self.iteration, -1] = self.t_current
+
         self.iteration += 1
         return self.stim, self.supervisor_state
 
@@ -306,7 +309,7 @@ class VisualInput(object):
         return trajectory, self.supervisor_state
 
 
-    def update_stimulus_trajectory(self, action_code, v_eye, network_state):
+    def update_stimulus_trajectory_OLD(self, action_code, v_eye, network_state):
         """
         Update the motion parameters based on the action
 
@@ -321,20 +324,7 @@ class VisualInput(object):
         time_axis = np.arange(0, t_integrate, self.params['dt_input_mpn'])
 
         # store the motion parameters at the beginning of this iteration
-#        print 'debug self.motion_params.shape', self.motion_params.shape, 'self.iteration:', self.iteration, 'self.n_stim_dim ', self.n_stim_dim, 'self.current_motion_params', self.current_motion_params, 'shape', self.current_motion_params.shape
-
         print 'before update current motion parameters', self.current_motion_params, 'action_code', action_code
-
-        # not working, need to separate current_motion_params (for update x_stim) from perceived_motion_params again (for calculating input response)
-#        displ_wx = (1. - np.abs(network_state[0] - .5) / .5)
-#        displ_wy = (1. - np.abs(network_state[1] - .5) / .5)
-#        self.current_motion_params[2] -= displ_wx * action_code[0]  # update v_stim_x
-#        self.current_motion_params[3] -= displ_wy * action_code[1]  # update v_stim_y
-        # calculate how the stimulus will move according to these motion parameters
-#        x_stim = network_state[2] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
-#        y_stim = network_state[3] * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
-
-        # working version
         self.current_motion_params[2] -= action_code[0]  # update v_stim_x
         self.current_motion_params[3] -= action_code[1]  # update v_stim_y
 
@@ -352,19 +342,8 @@ class VisualInput(object):
         delta_y = (y_stim[-1] - .5)
         delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
         k = self.params['supervisor_amp_param']
-
-#        dvx = k * np.abs(delta_x) / .5 * delta_x / delta_t + network_state[2] + self.current_motion_params[2] - v_eye[0]
-#        dvy = k * np.abs(delta_x) / .5 * delta_x / delta_t + network_state[3] + self.current_motion_params[3] - v_eye[1]
-#        self.supervisor_state[0] = dvx
-#        self.supervisor_state[1] = dvy
-
         self.supervisor_state[0] = k * np.abs(delta_x) / .5 * delta_x / delta_t + network_state[2] + self.current_motion_params[2]
         self.supervisor_state[1] = k * np.abs(delta_y) / .5 * delta_y / delta_t + network_state[3] + self.current_motion_params[3]
-
-#        self.supervisor_state[0] = .2 * (x_stim[-1] - .5) /  + self.current_motion_params[2]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
-#        self.supervisor_state[1] = .2 * (y_stim[-1] - .5) / (self.params['t_iteration'] / self.params['t_cross_visual_field']) + self.current_motion_params[3]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
-#        self.supervisor_state[0] = self.current_motion_params[2]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
-#        self.supervisor_state[1] = self.current_motion_params[3]# * self.params['t_iteration'] / self.params['t_cross_visual_field']
         print 'Supervised_state[%d] = ' % (self.iteration), self.supervisor_state
 
         print 'self.motion_params', self.motion_params[self.iteration, :]
