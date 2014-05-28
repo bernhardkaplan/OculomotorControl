@@ -72,6 +72,7 @@ if __name__ == '__main__':
     VI = VisualInput.VisualInput(params, comm=comm)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
+    exit(1)
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder'])
         remove_files_from_folder(params['input_folder_mpn'])

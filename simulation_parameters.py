@@ -44,15 +44,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 960
-        self.params['n_rf'] = 10
-        self.params['n_v'] = 6
+        self.params['n_rf'] = 100
+        self.params['n_v'] = 20
 
         self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
         self.params['n_training_stim_per_cycle'] = 3 # number of different stimuli within one training cycle
         self.params['n_training_stim_per_cycle'] = self.params['n_v'] * self.params['n_rf']
-#        self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['train_iteratively'] = True     # if trained iteratively, each stimulus is only 2 iterations long and a pause
-#        self.params['train_iteratively'] = False
+        self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
+        self.params['training'] = True
+#        self.params['training'] = False
+#        self.params['train_iteratively'] = True     # if trained iteratively, each stimulus is only 2 iterations long and a pause
+        self.params['train_iteratively'] = False
         self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
@@ -63,11 +65,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['train_iteratively']:
             self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations']
         else:
-            self.params['n_iterations_per_stim'] = 20 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 10 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
-        self.params['training'] = True
-#        self.params['training'] = False
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
@@ -95,9 +95,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         bcpnn_init = 0.01
         self.params['bcpnn_init_pi'] = bcpnn_init
         if self.params['training']:
-            self.params['sim_id'] = 'ITERATIVE_%.2e_nRF%d_nV%d' % (self.params['bcpnn_init_pi'], self.params['n_rf'], self.params['n_v'])
+            self.params['sim_id'] = 'nRF%d_nV%d' % (self.params['n_rf'], self.params['n_v'])
         else:
-            self.params['sim_id'] = 'ITERATIVE_%.2e_nRF%d_nV%d' % (self.params['bcpnn_init_pi'], self.params['n_rf'], self.params['n_v'])
+            self.params['sim_id'] = 'nRF%d_nV%d' % (self.params['n_rf'], self.params['n_v'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -188,7 +188,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
-        self.params['n_exc_to_record_mpn'] = 20
+        self.params['n_exc_to_record_mpn'] = 0
         self.params['x_max_tp'] = 1.0   # [a.u.] maximal position in visual space for tuning properties
         self.params['x_min_tp'] = 0.0   # [a.u.] minimal position in visual space for tuning properies
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
@@ -203,7 +203,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # receptive field sizes are determined by their relative position (for x/y relative to .5, for u/v relative to 0.)
         # rf_size = rf_size_gradient * |relative_rf_pos| + min_rf_size
         # check for reference: Dow 1981 "Magnification Factor and Receptive Field Size in Foveal Striate Cortex of the Monkey"
-        self.params['regular_tuning_prop'] = True
+        self.params['regular_tuning_prop'] = False
         if self.params['regular_tuning_prop']:
             # regular tuning prop
             self.params['rf_size_x_gradient'] = .0  # receptive field size for x-pos increases with distance to .5
@@ -215,14 +215,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['rf_size_vx_min'] = (self.params['v_max_tp'] - self.params['v_min_tp']) / self.params['n_v']
             self.params['rf_size_vy_min'] = (self.params['v_max_tp'] - self.params['v_min_tp']) / self.params['n_v']
         else:
-            self.params['rf_size_x_gradient'] = .1  # receptive field size for x-pos increases with distance to .5
-            self.params['rf_size_y_gradient'] = .1  # receptive field size for y-pos increases with distance to .5
-            self.params['rf_size_x_min'] = .005      # cells situated at .5 have this receptive field size
-            self.params['rf_size_y_min'] = .005      # cells situated at .5 have this receptive field size
-            self.params['rf_size_vx_gradient'] = .1 # receptive field size for vx-pos increases with distance to 0.0
-            self.params['rf_size_vy_gradient'] = .1 #
-            self.params['rf_size_vx_min'] = .005 # cells situated at .5 have this receptive field size
-            self.params['rf_size_vy_min'] = .005 # cells situated at .5 have this receptive field size
+            self.params['rf_size_x_gradient'] = .2  # receptive field size for x-pos increases with distance to .5
+            self.params['rf_size_y_gradient'] = .2  # receptive field size for y-pos increases with distance to .5
+#            self.params['rf_size_x_min'] = .01      # cells situated at .5 have this receptive field size
+#            self.params['rf_size_y_min'] = .01      # cells situated at .5 have this receptive field size
+            self.params['rf_size_x_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_x']
+            self.params['rf_size_y_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_y']
+            self.params['rf_size_vx_gradient'] = .2 # receptive field size for vx-pos increases with distance to 0.0
+            self.params['rf_size_vy_gradient'] = .2 #
+#            self.params['rf_size_vx_min'] = .01 # cells situated at .5 have this receptive field size
+#            self.params['rf_size_vy_min'] = .01 # cells situated at .5 have this receptive field size
+            self.params['rf_size_vx_min'] = (self.params['v_max_tp'] - self.params['v_min_tp']) / self.params['n_v']
+            self.params['rf_size_vy_min'] = (self.params['v_max_tp'] - self.params['v_min_tp']) / self.params['n_v']
 
 
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
