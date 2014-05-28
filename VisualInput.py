@@ -89,8 +89,6 @@ class VisualInput(object):
         """
         mp_training = np.zeros((self.params['n_stim_training'], 4))
 
-#        x_grid = np.linspace(self.params['x_min_tp'], self.params['x_max_tp'], self.params['n_training_x'])
-#        v_grid = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_training_v'])
         x_lim_frac = .9
         v_lim_frac = .8
         x_lim = ((1. - x_lim_frac) * (self.params['x_max_tp'] - self.params['x_min_tp']), x_lim_frac * self.params['x_max_tp'])
@@ -98,7 +96,6 @@ class VisualInput(object):
 
         x_grid = np.linspace(x_lim[0], x_lim[1], self.params['n_training_x'])
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
-#        v_grid = np.linspace(-.9 * self.params['v_max_tp'], .9 * self.params['v_max_tp'], self.params['n_training_v'])
         training_states_x = range(0, self.params['n_training_x'])
         training_states_v = range(0, self.params['n_training_v'])
         training_states = []
@@ -118,9 +115,8 @@ class VisualInput(object):
                 print 'Cycle %d training_states: ' % (i_cycle), training_states
                 i_ = i_cycle * self.params['n_training_stim_per_cycle']
                 j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
-                for i_stim in xrange(i_, j_):
-                    mp_training[i_stim, :] = training_states[i_stim][0], .5, training_states[i_stim][1], .0
-#                mp_training[i_:j_, :] = self.tuning_prop_exc[training_states, :]
+                for i_stim in xrange(self.params['n_training_stim_per_cycle']):
+                    mp_training[i_stim + i_, :] = training_states[i_stim][0], .5, training_states[i_stim][1], .0
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
 
