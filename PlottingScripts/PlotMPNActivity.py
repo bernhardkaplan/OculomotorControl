@@ -263,7 +263,7 @@ class ActivityPlotter(object):
 #        x_displacement = np.abs(d[it_min:it_max, 0] - .5)
         x_displacement = d[it_min:it_max, 0] - .5
 #        x_displacement = np.zeros(it_max - it_min)
-        output_fn = self.params['data_folder'] + 'mpn_xdisplacement.dat'
+        output_fn = self.params['data_folder'] + 'mpn_xdisplacement_%d-%d.dat' % (stim_range[0], stim_range[1])
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
@@ -301,7 +301,7 @@ class ActivityPlotter(object):
         t0 = it_min * self.params['t_iteration']
         t1 = it_max * self.params['t_iteration']
         ax.set_xlim((t0, t1))
-        output_fig = self.params['figures_folder'] + 'mpn_displacement.png'
+        output_fig = self.params['figures_folder'] + 'mpn_displacement_%d-%d.png' % (stim_range[0], stim_range[1])
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig)
         return (t_axis, x_displacement)
@@ -414,7 +414,7 @@ class ActivityPlotter(object):
         self.plot_vertical_lines(ax)
 
 
-    def plot_training_sequence(self):
+    def plot_training_sequence(self, stim_range=None):
         """
         plots the 1D training sequence
 
@@ -427,6 +427,14 @@ class ActivityPlotter(object):
          +---------------->
             x-start-pos
         """
+        if stim_range == None:
+            if self.params['training']:
+                if self.params['n_stim'] == 1:
+                    stim_range = [0, 1]
+                else:
+                    stim_range = range(self.params['n_stim'])
+            else:
+                stim_range = self.params['test_stim_range']
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
@@ -435,12 +443,12 @@ class ActivityPlotter(object):
         ax.set_xlabel('Start x-position')
 
         motion_params = np.loadtxt(self.params['motion_params_fn'])
-        n_stim = motion_params[:, 0].size
+        n_stim = stim_range[1] - stim_range[0]
+        
         mp = np.zeros((n_stim, 5))
-        for i in xrange(n_stim):
+        for i in xrange(stim_range[0], stim_range[1]):
             mp[i, :] = motion_params[i, :]
             mp[i, 1] = i
-#            print 'Debug stim and motion_params', i, mp[i, :]
             ax.annotate('(%.2f, %.2f)' % (mp[i, 0], mp[i, 2]), (max(0, mp[i, 0] - .1), mp[i, 1] + .2))
         
         ax.quiver(mp[:, 0], mp[:, 1], mp[:, 2], mp[:, 3], \
@@ -452,7 +460,9 @@ class ActivityPlotter(object):
         ax.set_xlim((xmin, xmax))
         ax.set_ylim((-.5, n_stim + 0.5))
 
-        return fig
+        output_fn = self.params['figures_folder'] + 'training_sequence_%d-%d.png' % (stim_range[0], stim_range[1])
+        print 'Saving to', output_fn
+        fig.savefig(output_fn)
 
 
 
@@ -515,10 +525,7 @@ class MetaAnalysisClass(object):
 
     def run_single_folder_analysis(self, params, stim_range):
         Plotter = ActivityPlotter(params)#, it_max=1)
-#        fig = Plotter.plot_training_sequence()
-#        output_fn = params['figures_folder'] + 'training_sequence.png'
-#        print 'Saving to', output_fn
-#        fig.savefig(output_fn)
+        Plotter.plot_training_sequence(stim_range)
 
 #        Plotter.plot_input()
 #        Plotter.bin_spiketimes()

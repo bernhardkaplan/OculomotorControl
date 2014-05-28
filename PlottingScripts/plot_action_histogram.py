@@ -36,6 +36,7 @@ pylab.rcParams.update(plot_params)
 folder = os.path.abspath(sys.argv[1])
 params = utils.load_params(folder)
 d = np.loadtxt(params['actions_taken_fn'])
+action_mapping = np.loadtxt(params['bg_action_bins_fn'])
 
 figsize=FigureCreator.get_fig_size(1200, portrait=True)
 print 'figsize:', figsize
@@ -45,7 +46,12 @@ ax1.set_title('Histogram of actions taken during training\n%d cycles x %d stimul
 print 'n_actions', params['n_actions']
 print 'd:', d[:, 2]
 cnt, bins = np.histogram(d[:, 2], bins=params['n_actions'], range=(0, params['n_actions']))
-print 'bins', bins
+print 'Action hist bins', bins
+print 'Action hist cnt', cnt
+print 'Action mapping', action_mapping
+idx_never_done = np.nonzero(cnt == 0)[0]
+print 'Actions never done:', idx_never_done
+print 'Actions never done (vx):', action_mapping[idx_never_done]
 ax1.bar(bins[:-1], cnt, width=bins[1]-bins[0])
 ax1.set_xlabel('Actions taken')
 ax1.set_ylabel('Count')
