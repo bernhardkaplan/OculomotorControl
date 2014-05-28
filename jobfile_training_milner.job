@@ -8,7 +8,7 @@
 #SBATCH -t 2:30:00
 
 # Number of cores per node to be allocated
-#SBATCH -n 24
+#SBATCH -n 40
 
 #SBATCH -e error_file.e
 #SBATCH -o output_file.o
@@ -27,7 +27,7 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-aprun -n 24 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training.py $1 > delme_training 2>&1
+aprun -n 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training.py $1 > delme_training 2>&1
 #aprun -n 960 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training.py $1 #2>&1
 
 echo "Stopping at `date`"
