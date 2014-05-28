@@ -29,22 +29,29 @@ class Plotter(object):
 
 
     def plot_training_sample_space(self, plot_process=False):
-
         if plot_process:
-            d = np.loadtxt(self.params['motion_params_fn'])
+            fn = self.params['motion_params_fn']
         else:
-            d = np.loadtxt(self.params['training_sequence_fn'])
+            fn = self.params['training_sequence_fn']
+        print 'Loading training stimuli data from:', fn
+        d = np.loadtxt(fn)
 
         fig = pylab.figure()#figsize=(12, 12))
         ax1 = fig.add_subplot(111)
 
         patches = []
+
+        for gid in xrange(self.params['n_exc_mpn']):
+            ax1.plot(self.tp[gid, 0], self.tp[gid, 2], 'o', c='k', markersize=2)
+            ellipse = mpatches.Ellipse((self.tp[gid, 0], self.tp[gid, 2]), self.rfs[gid, 0], self.rfs[gid, 2])
+            patches.append(ellipse)
+
         # plot the stimulus start points
         for i_ in xrange(self.params['n_stim']):
             if plot_process:
                 idx = i_ * self.params['n_iterations_per_stim']
                 mp = d[idx, :]
-                ax1.plot(mp[0], mp[2], 'o', markersize=5, color='r')
+                ax1.plot(mp[0], mp[2], '*', markersize=10, color='y', markeredgewidth=1)#, zorder=100)
                 idx_stop = (i_ + 1) * self.params['n_iterations_per_stim']
                 mps = d[idx:idx_stop, :]
                 ax1.plot(mps[:, 0], mps[:, 2], '--', color='r', lw=3)
@@ -54,17 +61,11 @@ class Plotter(object):
                 ax1.add_artist(ellipse)
             else:
                 mp = d[i_, :]
-                ax1.plot(mp[0], mp[2], 'o', markersize=5, color='r')
+                ax1.plot(mp[0], mp[2], '*', markersize=10, color='y', markeredgewidth=1)
                 ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0)
                 ellipse.set_facecolor('r')
                 patches.append(ellipse)
                 ax1.add_artist(ellipse)
-
-        for gid in xrange(self.params['n_exc_mpn']):
-            ax1.plot(self.tp[gid, 0], self.tp[gid, 2], 'o', c='k', markersize=2)
-            ellipse = mpatches.Ellipse((self.tp[gid, 0], self.tp[gid, 2]), self.rfs[gid, 0], self.rfs[gid, 2])
-            patches.append(ellipse)
-
         collection = PatchCollection(patches, alpha=0.1)
         ax1.add_collection(collection)
 
@@ -97,6 +98,6 @@ if __name__ == '__main__':
 
     
     Plotter = Plotter(params)#, it_max=1)
-    Plotter.plot_training_sample_space(plot_process=True)
+#    Plotter.plot_training_sample_space(plot_process=True)
     Plotter.plot_training_sample_space(plot_process=False)
     pylab.show()

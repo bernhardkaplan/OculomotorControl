@@ -43,19 +43,24 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 80
-        self.params['n_rf'] = 100
-        self.params['n_v'] = 20
+            self.params['total_num_virtual_procs'] = 120
 
-        self.params['n_training_cycles'] = 5            # how often each stimulus is presented during training
-        self.params['n_training_stim_per_cycle'] = 100 # number of different stimuli within one training cycle
-        #self.params['n_training_stim_per_cycle'] = self.params['n_v'] * self.params['n_rf']
+        self.params['n_rf'] = 100
+        self.params['n_v'] = 40
+
+        self.params['n_training_cycles'] = 10            # how often each stimulus is presented during training
+
+        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 11 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
+#        self.params['n_training_stim_per_cycle'] = 50 # number of different stimuli within one training cycle
+#        self.params['n_training_stim_per_cycle'] = self.params['n_v'] * self.params['n_rf']
         self.params['training'] = True
 #        self.params['training'] = False
         self.params['train_iteratively'] = True     # if trained iteratively, each stimulus is only 2 iterations long and a pause
-        #self.params['train_iteratively'] = False# if trained iteratively, each stimulus is only 2 iterations long and a pause
-        self.params['test_stim_range'] = range(0, 100)
+#        self.params['train_iteratively'] = False
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -194,8 +199,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
         self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['v_min_out'] = 0.01  # min velocity for eye movements
-        self.params['blur_X'], self.params['blur_V'] = 0.1, 0.1
+        self.params['v_min_out'] = 0.05  # min velocity for eye movements
+        self.params['blur_X'], self.params['blur_V'] = .2, .3
         self.params['blur_theta'] = 1.0
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.

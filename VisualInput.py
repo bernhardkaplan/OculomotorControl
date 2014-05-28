@@ -52,6 +52,7 @@ class VisualInput(object):
 
     def create_training_sequence_iteratively(self):
         """
+        Training samples are drawn from the tuning properties of the cells, i.e. follow the same distribution
         Returns n_cycles of state vectors, each cycle containing a set of n_training_stim_per_cycle states.
         The set of states is shuffled for each cycle
         """
@@ -77,6 +78,51 @@ class VisualInput(object):
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
 
+
+    def create_training_sequence_from_a_grid(self):
+        """
+        Training samples are generated in a grid-like manner, i.e. random points from a grid on the tuning property space
+        are drawn
+         
+        Returns n_cycles of state vectors, each cycle containing a set of n_training_stim_per_cycle states.
+        The set of states is shuffled for each cycle.
+        """
+        mp_training = np.zeros((self.params['n_stim_training'], 4))
+
+#        x_grid = np.linspace(self.params['x_min_tp'], self.params['x_max_tp'], self.params['n_training_x'])
+#        v_grid = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_training_v'])
+        x_lim_frac = .9
+        v_lim_frac = .8
+        x_lim = ((1. - x_lim_frac) * (self.params['x_max_tp'] - self.params['x_min_tp']), x_lim_frac * self.params['x_max_tp'])
+        v_lim = (- v_lim_frac * (self.params['v_max_tp'] - self.params['v_min_tp']), v_lim_frac * self.params['v_max_tp'])
+
+        x_grid = np.linspace(x_lim[0], x_lim[1], self.params['n_training_x'])
+        v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
+#        v_grid = np.linspace(-.9 * self.params['v_max_tp'], .9 * self.params['v_max_tp'], self.params['n_training_v'])
+        training_states_x = range(0, self.params['n_training_x'])
+        training_states_v = range(0, self.params['n_training_v'])
+        training_states = []
+        for i_, x in enumerate(training_states_x):
+            for j_, v in enumerate(training_states_v):
+                training_states.append((x_grid[i_], v_grid[j_]))
+
+        if self.params['n_stim_training'] == 1:
+            x0 = self.params['initial_state'][0]
+            v0 = self.params['initial_state'][2]
+            mp_training[0, 0] = x0
+            mp_training[0, 1] = .5
+            mp_training[0, 2] = v0
+        else:
+            for i_cycle in xrange(self.params['n_training_cycles']):
+                self.RNG.shuffle(training_states)
+                print 'Cycle %d training_states: ' % (i_cycle), training_states
+                i_ = i_cycle * self.params['n_training_stim_per_cycle']
+                j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
+                for i_stim in xrange(i_, j_):
+                    mp_training[i_stim, :] = training_states[i_stim][0], .5, training_states[i_stim][1], .0
+#                mp_training[i_:j_, :] = self.tuning_prop_exc[training_states, :]
+        np.savetxt(self.params['training_sequence_fn'], mp_training)
+        return mp_training 
 
 
     def create_training_sequence(self):
@@ -156,7 +202,7 @@ class VisualInput(object):
         # compute the supervisor signal taking into account:
         # - the trajectory position at the end of the iteration
         # - the knowledge about the motion (current_motion_params
-        # - and / or the 
+        # - and / or some sort of amplification 
         delta_x_end = (x_stim[-1] - .5)
         delta_y_end = (y_stim[-1] - .5)
         delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])

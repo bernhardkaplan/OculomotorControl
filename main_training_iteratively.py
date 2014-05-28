@@ -85,6 +85,7 @@ if __name__ == '__main__':
     network_states_net = np.zeros((params['n_iterations'], 4))
     iteration_cnt = 0
     training_stimuli = VI.create_training_sequence_iteratively()
+    training_stimuli = VI.create_training_sequence_from_a_grid()
 
 #    print 'quit'
 #    exit(1)

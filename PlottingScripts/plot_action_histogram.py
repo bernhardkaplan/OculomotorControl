@@ -35,9 +35,15 @@ pylab.rcParams.update(plot_params)
 #folder = 'Training_nRF500_expSyn_d1recFalse_nStim10x20_it25_tsim40000_taup20000//'
 folder = os.path.abspath(sys.argv[1])
 params = utils.load_params(folder)
-d = np.loadtxt(params['actions_taken_fn'])
 action_mapping = np.loadtxt(params['bg_action_bins_fn'])
 
+fig = pylab.figure()
+ax = fig.add_subplot(111)
+ax.plot(range(action_mapping[:, 0].size), action_mapping[:, 0], 'o', markersize=3)
+ax.set_xlabel('Action index')
+ax.set_ylabel('Action $v_x$ [Hz]')
+
+d = np.loadtxt(params['actions_taken_fn'])
 figsize=FigureCreator.get_fig_size(1200, portrait=True)
 print 'figsize:', figsize
 fig = pylab.figure(figsize=figsize)
