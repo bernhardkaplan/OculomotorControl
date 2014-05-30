@@ -297,6 +297,8 @@ class BasalGanglia(object):
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_x += v_scale_half
         print 'BG: action_bins_x', self.action_bins_x
+
+
         ### the same for the y-direction
         self.action_bins_y = []
         v_scale_half = ((-1.) * np.logspace(np.log(self.params['v_min_out'])/np.log(self.params['log_scale']),
@@ -310,6 +312,7 @@ class BasalGanglia(object):
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_y += v_scale_half
         print 'BG: action_bins_y', self.action_bins_y
+
 #        else:
 #            self.action_bins_x = np.linspace(-self.params['v_max_out'], self.params['v_max_out'], n_bins_x)
 #            self.action_bins_y = np.linspace(-self.params['v_max_out'], self.params['v_max_out'], n_bins_y)

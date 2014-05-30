@@ -23,7 +23,7 @@ plot_params = {'backend': 'png',
                'lines.linewidth': 3,
               'path.simplify': False,
               'figure.subplot.left' : 0.17, 
-              'figure.subplot.bottom' : 0.08, 
+              'figure.subplot.bottom' : 0.10, 
               'figure.subplot.right' : 0.97, 
               'figure.subplot.top' : 0.92, 
               'figure.subplot.hspace' : 0.45,
@@ -42,6 +42,7 @@ ax = fig.add_subplot(111)
 ax.plot(range(action_mapping[:, 0].size), action_mapping[:, 0], 'o', markersize=3)
 ax.set_xlabel('Action index')
 ax.set_ylabel('Action $v_x$ [Hz]')
+fig.savefig(params['figures_folder'] + 'vx_output_action.png')
 
 d = np.loadtxt(params['actions_taken_fn'])
 figsize=FigureCreator.get_fig_size(1200, portrait=True)

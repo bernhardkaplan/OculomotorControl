@@ -96,12 +96,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['initial_state'] = (.5, .5, -2.0, .0)
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
-        bcpnn_init = 0.01
-        self.params['bcpnn_init_pi'] = bcpnn_init
+        self.params['v_min_out'] = 0.1  # min velocity for eye movements
+        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         if self.params['training']:
-            self.params['sim_id'] = 'nRF%d_nV%d' % (self.params['n_rf'], self.params['n_v'])
+            self.params['sim_id'] = 'EXPLORE_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
         else:
-            self.params['sim_id'] = 'nRF%d_nV%d' % (self.params['n_rf'], self.params['n_v'])
+            self.params['sim_id'] = 'EXPLORE_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -197,10 +197,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['x_min_tp'] = 0.0   # [a.u.] minimal position in visual space for tuning properies
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
-        self.params['v_max_out'] = 10.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['v_min_out'] = 0.05  # min velocity for eye movements
+#        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['blur_X'], self.params['blur_V'] = .2, .3
+        self.params['training_stim_noise'] = 0.05 # noise to be applied to the training stimulus parameters
         self.params['blur_theta'] = 1.0
+
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
         # receptive field size parameters
@@ -293,8 +294,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['record_bg_volt'] = True
 #        self.params['record_bg_volt'] = False
         self.params['bg_cell_types'] = ['d1', 'd2', 'actions', 'recorder']
-        self.params['n_actions'] = 21
-        self.params['n_states'] = 20
+        self.params['n_actions'] = 17
+        self.params['n_states'] = 16
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.10
 
@@ -385,6 +386,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## D1 - D1 connections
         # if bcpnn_synapse is used
         self.params['synapse_d1_d1'] = 'bcpnn_synapse'
+        bcpnn_init = 0.01
+        self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
         self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
