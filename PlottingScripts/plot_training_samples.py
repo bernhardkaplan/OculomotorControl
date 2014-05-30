@@ -75,7 +75,7 @@ class Plotter(object):
         ax1.set_title('Training stimuli state space')
         ax1.set_xlabel('Stimulus position') 
         ax1.set_ylabel('Stimulus speed vx') 
-        output_fig = params['figures_folder'] + 'stimulus_state_space_%.2f.png' % (self.params['training_stim_noise'])
+        output_fig = params['figures_folder'] + 'stimulus_state_space_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
         print 'Saving to:', output_fig
         pylab.savefig(output_fig, dpi=200)
 
