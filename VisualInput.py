@@ -117,10 +117,14 @@ class VisualInput(object):
                 for i_stim in xrange(self.params['n_training_stim_per_cycle']):
                     plus_minus = utils.get_plus_minus(self.RNG)
 #                    mp_training[i_stim + i_, 0] = 1. % np.abs(training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise']))
-                    mp_training[i_stim + i_, 0] = (training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise'])) % 1.
+                    mp_training[i_stim + i_, 0] = (training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_x'])) % 1.
                     mp_training[i_stim + i_, 1] = .5
-                    mp_training[i_stim + i_, 2] =  training_states[i_stim][1] * self.RNG.uniform(1. - self.params['training_stim_noise'], 1. + self.params['training_stim_noise'])
-                    mp_training[i_stim + i_, 3] =  training_states[i_stim][1] * self.RNG.uniform(1. - self.params['training_stim_noise'], 1. + self.params['training_stim_noise'])
+                    plus_minus = utils.get_plus_minus(self.RNG)
+                    mp_training[i_stim + i_, 2] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+                    mp_training[i_stim + i_, 3] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+                    # noise relative to the 'pure' stimulus parameters
+#                    mp_training[i_stim + i_, 2] =  training_states[i_stim][1] * self.RNG.uniform(1. - self.params['training_stim_noise'], 1. + self.params['training_stim_noise'])
+#                    mp_training[i_stim + i_, 3] =  training_states[i_stim][1] * self.RNG.uniform(1. - self.params['training_stim_noise'], 1. + self.params['training_stim_noise'])
 #                    mp_training[i_stim + i_, 3] = .0 # this might cause a problem since the output action_bins_y are != .0 but the same as v_x_out
         print 'VisualInput saves training sequence parameters to:', self.params['training_sequence_fn']
         np.savetxt(self.params['training_sequence_fn'], mp_training)

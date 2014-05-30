@@ -87,8 +87,8 @@ if __name__ == '__main__':
     #training_stimuli = VI.create_training_sequence_iteratively()
     training_stimuli = VI.create_training_sequence_from_a_grid()
 
-    print 'quit'
-    exit(1)
+#    print 'quit'
+#    exit(1)
 
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_stim_training']):

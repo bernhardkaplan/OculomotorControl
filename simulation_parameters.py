@@ -44,10 +44,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 80
-        self.params['n_rf'] = 50
+        self.params['n_rf'] = 100
         self.params['n_v'] = 40
 
-        self.params['n_training_cycles'] = 4            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 5 # how often each stimulus is presented during training
 
         self.params['n_training_x'] = 10 # number of training samples to cover the x-direction of the tuning space
         self.params['n_training_v'] = 9 # number of training samples to cover the v-direction of the tuning space
@@ -199,7 +199,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['blur_X'], self.params['blur_V'] = .2, .3
-        self.params['training_stim_noise'] = 0.05 # noise to be applied to the training stimulus parameters
+        self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
 
         self.params['visual_field_width'] = 1.
@@ -226,8 +227,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #            self.params['rf_size_y_min'] = .01      # cells situated at .5 have this receptive field size
             self.params['rf_size_x_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_x']
             self.params['rf_size_y_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_y']
-            self.params['rf_size_vx_gradient'] = .2 # receptive field size for vx-pos increases with distance to 0.0
-            self.params['rf_size_vy_gradient'] = .2 #
+            self.params['rf_size_vx_gradient'] = .3 # receptive field size for vx-pos increases with distance to 0.0
+            self.params['rf_size_vy_gradient'] = .3 #
 #            self.params['rf_size_vx_min'] = .01 # cells situated at .5 have this receptive field size
 #            self.params['rf_size_vy_min'] = .01 # cells situated at .5 have this receptive field size
             self.params['rf_size_vx_min'] = (self.params['v_max_tp'] - self.params['v_min_tp']) / self.params['n_v']
