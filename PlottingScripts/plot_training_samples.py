@@ -43,8 +43,10 @@ class Plotter(object):
 
         for gid in xrange(self.params['n_exc_mpn']):
             ax1.plot(self.tp[gid, 0], self.tp[gid, 2], 'o', c='k', markersize=2)
-            ellipse = mpatches.Ellipse((self.tp[gid, 0], self.tp[gid, 2]), self.rfs[gid, 0], self.rfs[gid, 2])
+            ellipse = mpatches.Ellipse((self.tp[gid, 0], self.tp[gid, 2]), self.rfs[gid, 0], self.rfs[gid, 2], linewidth=0, alpha=0.1)
+            ellipse.set_facecolor('b')
             patches.append(ellipse)
+            ax1.add_artist(ellipse)
 
         # plot the stimulus start points
         for i_ in xrange(self.params['n_stim']):
@@ -62,18 +64,18 @@ class Plotter(object):
             else:
                 mp = d[i_, :]
                 ax1.plot(mp[0], mp[2], '*', markersize=10, color='y', markeredgewidth=1)
-                ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0)
+                ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
                 ellipse.set_facecolor('r')
                 patches.append(ellipse)
                 ax1.add_artist(ellipse)
-        collection = PatchCollection(patches, alpha=0.1)
+        collection = PatchCollection(patches)#, alpha=0.1)
         ax1.add_collection(collection)
 
 
         ax1.set_title('Training stimuli state space')
         ax1.set_xlabel('Stimulus position') 
         ax1.set_ylabel('Stimulus speed vx') 
-        output_fig = params['figures_folder'] + 'stimulus_state_space.png'
+        output_fig = params['figures_folder'] + 'stimulus_state_space_%.2f.png' % (self.params['training_stim_noise'])
         print 'Saving to:', output_fig
         pylab.savefig(output_fig, dpi=200)
 

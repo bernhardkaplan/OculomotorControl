@@ -87,8 +87,8 @@ if __name__ == '__main__':
     #training_stimuli = VI.create_training_sequence_iteratively()
     training_stimuli = VI.create_training_sequence_from_a_grid()
 
-#    print 'quit'
-#    exit(1)
+    print 'quit'
+    exit(1)
 
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_stim_training']):
@@ -108,7 +108,7 @@ if __name__ == '__main__':
             if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
                 BG.set_empty_input()
             else:
-                (action_index_x, action_index_y) = BG.supervised_training(supervisor_state, )
+                (action_index_x, action_index_y) = BG.supervised_training(supervisor_state)
             #print 'DEBUG action_index_x / y:', action_index_x, action_index_y
 
             if params['debug_mpn']:

@@ -71,7 +71,6 @@ class VisualInput(object):
         else:
             for i_cycle in xrange(self.params['n_training_cycles']):
                 self.RNG.shuffle(training_states)
-                print 'Cycle %d training_states: ' % (i_cycle), training_states
                 i_ = i_cycle * self.params['n_training_stim_per_cycle']
                 j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
                 mp_training[i_:j_, :] = self.tuning_prop_exc[training_states, :]
@@ -112,11 +111,18 @@ class VisualInput(object):
         else:
             for i_cycle in xrange(self.params['n_training_cycles']):
                 self.RNG.shuffle(training_states)
-                print 'Cycle %d training_states: ' % (i_cycle), training_states
+#                print 'Cycle %d training_states: ' % (i_cycle), training_states
                 i_ = i_cycle * self.params['n_training_stim_per_cycle']
                 j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
                 for i_stim in xrange(self.params['n_training_stim_per_cycle']):
-                    mp_training[i_stim + i_, :] = training_states[i_stim][0], .5, training_states[i_stim][1], .0
+                    plus_minus = utils.get_plus_minus(self.RNG)
+#                    mp_training[i_stim + i_, 0] = 1. % np.abs(training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise']))
+                    mp_training[i_stim + i_, 0] = (training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise'])) % 1.
+                    mp_training[i_stim + i_, 1] = .5
+                    mp_training[i_stim + i_, 2] =  training_states[i_stim][1] * self.RNG.uniform(1. - self.params['training_stim_noise'], 1. + self.params['training_stim_noise'])
+                    mp_training[i_stim + i_, 3] =  training_states[i_stim][1] * self.RNG.uniform(1. - self.params['training_stim_noise'], 1. + self.params['training_stim_noise'])
+#                    mp_training[i_stim + i_, 3] = .0 # this might cause a problem since the output action_bins_y are != .0 but the same as v_x_out
+        print 'VisualInput saves training sequence parameters to:', self.params['training_sequence_fn']
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
 
