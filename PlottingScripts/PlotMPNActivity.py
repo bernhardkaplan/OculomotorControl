@@ -263,7 +263,8 @@ class ActivityPlotter(object):
 #        x_displacement = np.abs(d[it_min:it_max, 0] - .5)
         x_displacement = d[it_min:it_max, 0] - .5
 #        x_displacement = np.zeros(it_max - it_min)
-        output_fn = self.params['data_folder'] + 'mpn_xdisplacement_%d-%d.dat' % (stim_range[0], stim_range[1])
+#        output_fn = self.params['data_folder'] + 'mpn_xdisplacement_%d-%d.dat' % (stim_range[0], stim_range[1])
+        output_fn = self.params['data_folder'] + 'mpn_xdisplacement.dat'
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
 
@@ -274,11 +275,11 @@ class ActivityPlotter(object):
         ylim = (np.min(x_displacement), np.max(x_displacement))
         for stim in xrange(stim_range[0], stim_range[-1] + 1):
             it_start_stim = stim * self.params['n_iterations_per_stim']
-            it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - 1
+            it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']
             x_displacement_stim = d[it_start_stim:it_stop_stim, 0] - .5
 #            x_displacement_stim = np.abs(d[it_start_stim:it_stop_stim, 0] - .5)
 #            x_displacement[it_start_stim:it_stop_stim] = x_displacement_stim
-            for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']):
+            for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations'] - 1):
                 it_1 = it_ + stim * self.params['n_iterations_per_stim']
                 it_2 = it_ + stim * self.params['n_iterations_per_stim'] + 2
                 p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
@@ -334,7 +335,7 @@ class ActivityPlotter(object):
                     it_idx = it_ + i_stim * params['n_iterations_per_stim'] + 1 # + 1 because the first row stores the 'initial action'
                     action = actions_taken[it_idx, 2]
                     if not np.isnan(action) != 0.:
-                        ax.annotate(str(int(action)), xy=(t0 + .2 * t_scale, ymin + (ymax - ymin) * .95), color='r')
+                        ax.annotate('%.1f' % (action), xy=(t0 + .2 * t_scale, ymin + (ymax - ymin) * .95), color='r', fontsize=8)
                     it_cnt += 1
 
 
@@ -447,6 +448,8 @@ class ActivityPlotter(object):
         
         mp = np.zeros((n_stim, 5))
         for i in xrange(stim_range[0], stim_range[1]):
+            print 'debug', i, motion_params.shape, mp[i, :]
+            print 'debug', i, motion_params.shape, motion_params[i, :]
             mp[i, :] = motion_params[i, :]
             mp[i, 1] = i
             ax.annotate('(%.2f, %.2f)' % (mp[i, 0], mp[i, 2]), (max(0, mp[i, 0] - .1), mp[i, 1] + .2))
@@ -499,6 +502,10 @@ class MetaAnalysisClass(object):
                 utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
                 print '\nPlotting the default parameters give in simulation_parameters.py\n'
                 self.run_single_folder_analysis(params, stim_range)
+                (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
+                for i_ in xrange(stim_range[0], stim_range[1]):
+                    (x_data, y_data) = self.run_xdisplacement_analysis(params, (i_, i_+1))
+                    self.run_single_folder_analysis(params, (i_, i_ + 1))
             else:
                 self.run_analysis_for_folders(argv[1:], training_params=training_params)
         elif len(argv) == 4: #  PlotMPNActivity [FOLDER] [STIM_1] [STIM_2]
@@ -507,9 +514,11 @@ class MetaAnalysisClass(object):
                 stim_range = (int(argv[2]), int(argv[3]))
                 params = utils.load_params(folder_name)
                 utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
+                for i_ in xrange(stim_range[0], stim_range[1]):
+                    (x_data, y_data) = self.run_xdisplacement_analysis(params, (i_, i_+1))
+                    self.run_single_folder_analysis(params, (i_, i_ + 1))
                 (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
                 self.run_single_folder_analysis(params, stim_range)
-                self.run_xdisplacement_analysis(params, stim_range)
             else:
                 self.run_analysis_for_folders(argv[1:], training_params=training_params, stim_range=stim_range)
         elif len(argv) > 4: #  PlotMPNActivity [FOLDER_1] [FOLDER_2] .... [FOLDER_N]
@@ -525,8 +534,7 @@ class MetaAnalysisClass(object):
 
     def run_single_folder_analysis(self, params, stim_range):
         Plotter = ActivityPlotter(params)#, it_max=1)
-        Plotter.plot_training_sequence(stim_range)
-
+#        Plotter.plot_training_sequence(stim_range)
 #        Plotter.plot_input()
 #        Plotter.bin_spiketimes()
 #        Plotter.plot_output()
@@ -535,15 +543,16 @@ class MetaAnalysisClass(object):
             t_range = [0, 0]
             t_range[0] = stim_range[0] * params['t_iteration'] * params['n_iterations_per_stim']
             t_range[1] = stim_range[1] * params['t_iteration'] * params['n_iterations_per_stim']
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos_%d-%d.png' % (stim_range[0], stim_range[1])
         else:
             t_range = None
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png' 
 
         # plot x - pos sorting
         print 'Plotting raster plots'
         fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0, t_range=t_range)
         if params['debug_mpn']:
             Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
-        output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png'
         print 'Saving to', output_fn
         fig.savefig(output_fn)
 

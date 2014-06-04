@@ -75,11 +75,9 @@ def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
 
     print 'src_min, src_max', src_min, src_max
     print 'tgt_min, tgt_max', tgt_min, tgt_max
-    print 'debug conn_mat shape', conn_mat.shape
     for c in xrange(data[:,0].size):
         src = data[c, 0] - src_min
         tgt = data[c, 1] - tgt_min
-#        print 'src, tgt', src, tgt, data[c, 1]
         conn_mat[src, tgt] = data[c, 2]
 
     ax = plot_matrix(conn_mat, clim=clim)
@@ -104,8 +102,8 @@ if __name__ == '__main__':
     src_type = 'mpn'
 #    src_type = 'd1'
     fns = sys.argv[1:] # 
-#    clim = None
-    clim = (0., 5.)
+    clim = None
+#    clim = (-5., 5.)
     if len(sys.argv) > 2:
         for fn in fns:
             params = utils.load_params(fn)

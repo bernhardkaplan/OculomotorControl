@@ -200,6 +200,10 @@ class BasalGanglia(object):
                     for neuron_s in self.states[istate]:
                         nest.DivergentConnect([neuron_s], self.rp[iaction + istate*self.params['n_actions']], model=self.params['states_rp'] )
         self.write_cell_gids_to_file()
+        self.gids = {}
+        self.gids['actions'] = self.get_cell_gids('actions')
+        self.gids['d1'] = self.get_cell_gids('actions')
+        self.gids['d2'] = self.get_cell_gids('actions')
         print "BG model completed"
 
 
@@ -344,6 +348,7 @@ class BasalGanglia(object):
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
 
+
     def supervised_training(self, supervisor_state):
         """
         Activates poisson generator of the required, teached, action and inactivates those of the nondesirable actions.
@@ -383,7 +388,7 @@ class BasalGanglia(object):
 
 
 
-    def get_action(self):
+    def get_action(self, WTA=False):
         """
         Returns the selected action. Calls a selection function e.g. softmax, hardmax, ...
         """
@@ -401,7 +406,7 @@ class BasalGanglia(object):
                 new_event_gids = np.r_[new_event_gids, all_events['senders'][recent_event_idx]]
             nest.SetStatus(recorder, [{'start': t_new}])
 
-#        print 'DEBUG pc_id %d' % self.pc_id, new_event_gids 
+#        print 'DEBUG pc_id %d' % self.pc_id, new_event_gids, 'new_event_times', new_event_times
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
@@ -414,11 +419,32 @@ class BasalGanglia(object):
             self.t_current += self.params['t_iteration']
             self.iteration += 1
             return (0, 0, np.nan) # maye use 0 instead of np.nan
-        winning_nspikes = np.argmax(nspikes)
-        winning_gid = gids_spiked[winning_nspikes]
-        print 'winning_gid', winning_gid
-        winning_action = self.gid_to_action_via_spikerecorder[winning_gid+1]
-        output_speed_x = self.action_bins_x[winning_action]
+
+#        print 'DEBUG pc_id %d nspikes' % self.pc_id, nspikes
+#        print 'DEBUG pc_id %d gids_spiked' % self.pc_id, gids_spiked
+        # switch between WTA behavior and Vector-Averaging
+        if WTA:
+            winning_nspikes = np.argmax(nspikes)
+            winning_gid = gids_spiked[winning_nspikes]
+            print 'winning_gid', winning_gid
+            winning_action = self.gid_to_action_via_spikerecorder[winning_gid+1]
+            output_speed_x = self.action_bins_x[winning_action]
+        else:
+            print 'nspikes .shape', nspikes.shape
+            gid_offset = np.min(self.gids['actions'])
+            vector_avg_action = 0.
+            vector_avg_speed = 0.
+            nspikes_sum = np.sum(nspikes)
+            for i_, gid_ in enumerate(gids_spiked):
+                action_idx = (gid_ + 1 - gid_offset) / self.params['num_msn_d1']
+#                print 'DEBUG gid %d action_idx %f' % (gid_, action_idx)
+                vector_avg_action += nspikes[i_] / float(nspikes_sum) * action_idx
+                vector_avg_speed += nspikes[i_] / float(nspikes_sum) * self.action_bins_x[action_idx]
+#            print 'DEBUG vector_avg_action:', vector_avg_action
+#            print 'DEBUG vector_avg_speed:', vector_avg_speed
+            winning_action = vector_avg_action
+            output_speed_x = vector_avg_speed
+
         print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
         self.t_current += self.params['t_iteration']
 

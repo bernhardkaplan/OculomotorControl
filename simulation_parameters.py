@@ -39,36 +39,39 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
         self.params['n_rf'] = 100
         self.params['n_v'] = 40
 
-        self.params['n_training_cycles'] = 10            # how often each stimulus is presented during training
-        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 11 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
+        self.params['n_training_x'] = 1 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
+#        self.params['n_training_cycles'] = 10            # how often each stimulus is presented during training
+#        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
+#        self.params['n_training_v'] = 11 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 #        self.params['n_training_stim_per_cycle'] = 50 # number of different stimuli within one training cycle
 #        self.params['n_training_stim_per_cycle'] = self.params['n_v'] * self.params['n_rf']
-        self.params['training'] = True
-#        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['training'] = False
         self.params['train_iteratively'] = True     # if trained iteratively, each stimulus is only 2 iterations long and a pause
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 3)
+        self.params['test_stim_range'] = range(2, 5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
-        if self.params['train_iteratively']:
+        if self.params['train_iteratively'] and self.params['training']:
             self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations']
         else:
-            self.params['n_iterations_per_stim'] = 10 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 25 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
@@ -98,9 +101,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         if self.params['training']:
-            self.params['sim_id'] = 'EXPLORE_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'DEBUG_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
         else:
-            self.params['sim_id'] = 'EXPLORE_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'DEBUG_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -321,11 +324,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 10.0
+        self.params['mpn_d1_weight_amplification'] = 1.7
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.1
         self.params['d1_d1_weight_amplification_neg'] = 3.0
-        self.params['d1_d1_weight_amplification_pos'] = 0.1
+        self.params['d1_d1_weight_amplification_pos'] = 0.0
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
         self.params['delay_d1_d1'] = 1.
@@ -594,11 +597,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_nStim%dx%d/' % \
-                        (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'])
+                folder_name += '_nStim%dx%d_wamp%.1f/' % \
+                        (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
+                         self.params['mpn_d1_weight_amplification'])
 #                        , self.params['t_iteration'], \
 #                                self.params['n_actions'], self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
-#                                self.params['mpn_d1_weight_amplification'], self.params['mpn_bg_bias_amplification'])
+#                                self.params['mpn_bg_bias_amplification'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
