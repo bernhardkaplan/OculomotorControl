@@ -85,7 +85,8 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
     # bias
     bias = np.log(pj)
 
-    return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
+    return [wij, bias, pi, pj, pij, ei, ej, eij, zi, zj]
+#    return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
 
 def compute_traces(si, tau_z=10, tau_e=100, tau_p=1000, dt=1., eps=1e-6, initial_value=None):
     n = si.size
@@ -288,6 +289,7 @@ def compute_bcpnn_in_place(st_pre, st_post, tau_dict, dt, fmax, tmax, save_inter
         # bias
         bias[i] = np.log(pj[i])
 
+    return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
     return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
 
 

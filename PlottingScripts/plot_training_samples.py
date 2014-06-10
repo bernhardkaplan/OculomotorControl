@@ -15,6 +15,9 @@ import utils
 import matplotlib.patches as mpatches
 from matplotlib.collections import PatchCollection
 from FigureCreator import plot_params
+
+plot_params['figure.subplot.right'] = 0.95
+
 pylab.rcParams.update(plot_params)
 
 class Plotter(object):
@@ -81,6 +84,66 @@ class Plotter(object):
 
 
 
+    def plot_precomputed_actions(self, plot_cells=True):
+
+        supervisor_states = np.loadtxt(self.params['supervisor_states_fn'])
+        action_indices = np.loadtxt(self.params['action_indices_fn'])
+#        d = np.loadtxt(self.params['motion_params_precomputed_fn'])
+        d = np.loadtxt(self.params['training_sequence_fn'])
+
+        patches = []
+        fig = pylab.figure(figsize=(12, 12))
+        ax1 = fig.add_subplot(111)
+
+        # define the colormap
+        cmap = matplotlib.cm.jet
+        # extract all colors from the cmap
+        cmaplist = [cmap(i) for i in xrange(cmap.N)]
+        # force the first color entry to be grey #cmaplist[0] = (.5,.5,.5,1.0)
+        # create the new map
+        cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
+
+        # define the bins and normalize
+        bounds = range(self.params['n_actions'])
+        norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+        m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
+        m.set_array(np.arange(bounds[0], bounds[-1], 1.))
+        cb = fig.colorbar(m)
+        cb.set_label('Action indices')#, fontsize=24)
+
+        if plot_cells:
+            for gid in xrange(self.params['n_exc_mpn']):
+                ax1.plot(self.tp[gid, 0], self.tp[gid, 2], 'o', c='k', markersize=2)
+                ellipse = mpatches.Ellipse((self.tp[gid, 0], self.tp[gid, 2]), self.rfs[gid, 0], self.rfs[gid, 2], linewidth=0, alpha=0.1)
+                ellipse.set_facecolor('b')
+                patches.append(ellipse)
+                ax1.add_artist(ellipse)
+
+        colors = m.to_rgba(action_indices)
+        for i_ in xrange(self.params['n_stim']):
+
+            mp = d[i_, :]
+            ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
+#            ax1.scatter(mp[0], mp[2], marker='*', s=10, c=color)
+#            ax1.plot(mp[0], mp[2], '*', markersize=10, color='y', markeredgewidth=1)
+            ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
+            ellipse.set_facecolor('r')
+            patches.append(ellipse)
+            ax1.add_artist(ellipse)
+
+#        ax2 = fig.add_axes([0.95, 0.1, 0.03, 0.8])
+#        cb = matplotlib.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')
+        collection = PatchCollection(patches)
+        ax1.add_collection(collection)
+        ax1.set_title('Training stimuli state space')
+        ax1.set_xlabel('Stimulus position') 
+        ax1.set_ylabel('Stimulus speed vx') 
+        output_fig = params['figures_folder'] + 'stimulus_state_space_with_precomputed_actions_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
+        print 'Saving to:', output_fig
+        pylab.savefig(output_fig, dpi=200)
+
+
+
 
 if __name__ == '__main__':
 
@@ -101,5 +164,6 @@ if __name__ == '__main__':
     
     Plotter = Plotter(params)#, it_max=1)
 #    Plotter.plot_training_sample_space(plot_process=True)
-    Plotter.plot_training_sample_space(plot_process=False)
+#    Plotter.plot_training_sample_space(plot_process=False)
+    Plotter.plot_precomputed_actions()
     pylab.show()

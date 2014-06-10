@@ -37,6 +37,7 @@ folder = os.path.abspath(sys.argv[1])
 params = utils.load_params(folder)
 action_mapping = np.loadtxt(params['bg_action_bins_fn'])
 
+# ---- Plot 2 D action_idx (int) vs Output Speed (vx)
 fig = pylab.figure()
 ax = fig.add_subplot(111)
 ax.plot(range(action_mapping[:, 0].size), action_mapping[:, 0], 'o', markersize=3)

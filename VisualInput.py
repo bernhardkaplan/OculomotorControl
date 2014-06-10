@@ -50,6 +50,7 @@ class VisualInput(object):
 
 #        self.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])
 
+
     def create_training_sequence_iteratively(self):
         """
         Training samples are drawn from the tuning properties of the cells, i.e. follow the same distribution
@@ -57,10 +58,17 @@ class VisualInput(object):
         The set of states is shuffled for each cycle
         """
         mp_training = np.zeros((self.params['n_stim_training'], 4))
+        training_states = np.zeros((self.params['n_training_stim_per_cycle'], 4))
         if self.params['n_training_stim_per_cycle'] == self.params['n_exc_mpn']:
-            training_states = range(0, self.params['n_exc_mpn'])
+            training_states_int = range(0, self.params['n_exc_mpn'])
         else:
-            training_states = self.RNG.random_integers(0, self.params['n_exc_mpn'], self.params['n_training_stim_per_cycle'])
+#            for i_ in xrange(self.params['n_training_stim_per_cycle']):
+#                rnd_ = self.RNG.random_integers(0, self.params['n_exc_mpn'] - 1, 1)
+#                print 'RND:', rnd_
+#                training_states[i_] = self.tuning_prop_exc[rnd_, :]
+            training_states_int = self.RNG.random_integers(0, self.params['n_exc_mpn'] - 1, self.params['n_training_stim_per_cycle'])
+#        print 'training_states_nit', training_states_int
+        training_states = self.tuning_prop_exc[training_states_int, :]
 
         if self.params['n_stim_training'] == 1:
             x0 = self.params['initial_state'][0]
@@ -72,8 +80,18 @@ class VisualInput(object):
             for i_cycle in xrange(self.params['n_training_cycles']):
                 self.RNG.shuffle(training_states)
                 i_ = i_cycle * self.params['n_training_stim_per_cycle']
-                j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
-                mp_training[i_:j_, :] = self.tuning_prop_exc[training_states, :]
+                for i_stim in xrange(self.params['n_training_stim_per_cycle']):
+                    plus_minus = utils.get_plus_minus(self.RNG)
+                    mp_training[i_stim + i_, 0] = (training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_x'])) % 1.
+                    mp_training[i_stim + i_, 1] = .5
+                    plus_minus = utils.get_plus_minus(self.RNG)
+                    mp_training[i_stim + i_, 2] =  training_states[i_stim][2] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+                    mp_training[i_stim + i_, 3] =  0.
+
+#                i_ = i_cycle * self.params['n_training_stim_per_cycle']
+#                j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
+#                mp_training[i_:j_, :] = self.tuning_prop_exc[training_states, :]
+
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
 
@@ -113,7 +131,6 @@ class VisualInput(object):
                 self.RNG.shuffle(training_states)
 #                print 'Cycle %d training_states: ' % (i_cycle), training_states
                 i_ = i_cycle * self.params['n_training_stim_per_cycle']
-                j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
                 for i_stim in xrange(self.params['n_training_stim_per_cycle']):
                     plus_minus = utils.get_plus_minus(self.RNG)
 #                    mp_training[i_stim + i_, 0] = 1. % np.abs(training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise']))
@@ -191,6 +208,34 @@ class VisualInput(object):
 #                self.current_motion_params[2], self.current_motion_params[3])
         self.iteration += 1
         return self.stim, supervisor_state
+
+
+
+    def get_supervisor_actions(self, training_stimuli, BG):
+        """
+        Computes the supervisor action (and index) as in compute_input_open_loop
+        """
+        time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
+        supervisor_states = np.zeros((self.params['n_stim'], 2))
+        action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
+        motion_params_pre = np.zeros((self.params['n_stim'], 4))
+
+        for i_stim in xrange(self.params['n_stim']):
+            x_stim = (training_stimuli[i_stim, 2]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 0]
+            y_stim = (training_stimuli[i_stim, 3]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 1]
+            trajectory = (x_stim, y_stim)
+            delta_x_end = (x_stim[-1] - .5)
+            delta_y_end = (y_stim[-1] - .5)
+            delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
+            k = self.params['supervisor_amp_param']
+            supervisor_states[i_stim, 0] = k * delta_x_end / delta_t + training_stimuli[i_stim, 2]
+            supervisor_states[i_stim, 1] = k * delta_y_end / delta_t + training_stimuli[i_stim, 3]
+            motion_params_pre[i_stim, 0] = x_stim[0]
+            motion_params_pre[i_stim, 1] = x_stim[1]
+            motion_params_pre[i_stim, 2] = training_stimuli[i_stim, 2]
+            motion_params_pre[i_stim, 3] = training_stimuli[i_stim, 3]
+            action_indices[i_stim] = BG.map_speed_to_action(supervisor_states[i_stim, 0], xy='x')
+        return [supervisor_states, action_indices, motion_params_pre]
 
 
     def compute_input_open_loop(self, local_gids):

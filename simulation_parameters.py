@@ -41,37 +41,45 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 4
+        self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
         self.params['n_rf'] = 100
         self.params['n_v'] = 40
+#        self.params['n_rf'] = 20
+#        self.params['n_v'] = 10
+
+#        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
+#        self.params['n_training_x'] = 10 # number of training samples to cover the x-direction of the tuning space
+#        self.params['n_training_v'] = 10 # number of training samples to cover the v-direction of the tuning space
 
         self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_x'] = 1 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 50 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space
+
 #        self.params['n_training_cycles'] = 10            # how often each stimulus is presented during training
 #        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
 #        self.params['n_training_v'] = 11 # number of training samples to cover the v-direction of the tuning space
+
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 #        self.params['n_training_stim_per_cycle'] = 50 # number of different stimuli within one training cycle
 #        self.params['n_training_stim_per_cycle'] = self.params['n_v'] * self.params['n_rf']
-#        self.params['training'] = True
-        self.params['training'] = False
+        self.params['training'] = True
+#        self.params['training'] = False
         self.params['train_iteratively'] = True     # if trained iteratively, each stimulus is only 2 iterations long and a pause
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(2, 5)
+        self.params['test_stim_range'] = range(2, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
         if self.params['train_iteratively'] and self.params['training']:
             self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations']
         else:
-            self.params['n_iterations_per_stim'] = 25 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 15 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim_training'] # [ms] total simulation time 
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
@@ -90,8 +98,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_iterations'] = self.params['n_stim_testing'] * self.params['n_iterations_per_stim']
             self.params['n_stim'] = self.params['n_stim_testing']
-        self.params['dt'] = 0.1             # [ms] simulation time step
-        self.params['dt_input_mpn'] = 0.1   # [ms] time step for the inhomogenous Poisson process for input spike train generation
+        self.params['dt'] = 0.1            # [ms] simulation time step
+        self.params['dt_input_mpn'] = 0.1  # [ms] time step for the inhomogenous Poisson process for input spike train generation
         self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
 
         # the first stimulus parameters
@@ -101,9 +109,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         if self.params['training']:
-            self.params['sim_id'] = 'DEBUG_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'withD2_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
         else:
-            self.params['sim_id'] = 'DEBUG_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -324,10 +332,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 1.7
+        self.params['mpn_d1_weight_amplification'] = 1.5
         self.params['mpn_d2_weight_amplification'] = 0.00001
         self.params['mpn_bg_bias_amplification'] = 0.1
-        self.params['d1_d1_weight_amplification_neg'] = 3.0
+        self.params['d1_d1_weight_amplification_neg'] = 5.0
         self.params['d1_d1_weight_amplification_pos'] = 0.0
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
@@ -350,6 +358,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
                 'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., 
                 'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70., \
+#                'g_L': 50., 'C_m':250., 'E_L':-70., 'E_in': -70., \
                 'K': 1., 'gain': self.params['gain']}
         self.params['param_msn_d2'] = self.params['param_msn_d1'].copy()
         # old params for alpha shaped synapses
@@ -441,14 +450,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 5.
+        self.params['str_to_output_exc_w'] = 10.
         self.params['str_to_output_inh_w'] = -0.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
         #Supervised Learning
         self.params['supervised_on'] = True
-        self.params['with_d2'] = not(self.params['supervised_on']) # the D2 population in the striatum is not needed if supervised learning is used
+        self.params['with_d2'] = True
         self.params['num_neuron_poisson_supervisor'] = 1
         self.params['num_neuron_poisson_input_BG'] = 10
         self.params['active_supervisor_rate'] = 3000.
@@ -563,6 +572,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['bg_action_bins_fn'] = self.params['data_folder'] + 'bg_actions_bins.txt'
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
         self.params['motion_params_fn'] = self.params['data_folder'] + 'motion_params.txt'
+        self.params['supervisor_states_fn'] = self.params['data_folder'] + 'supervisor_states.txt'
+        self.params['action_indices_fn'] = self.params['data_folder'] + 'action_indices.txt'
+        self.params['motion_params_precomputed_fn'] = self.params['data_folder'] + 'motion_params_precomputed.txt'
 
         # connection filenames
         self.params['mpn_bgd1_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connections'

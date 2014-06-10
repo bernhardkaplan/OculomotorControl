@@ -248,8 +248,8 @@ class BasalGanglia(object):
                 self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2'])
                 nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc']})
                 nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh']})
-                nest.Connect(self.noise_exc_d2[naction], self.strd2[naction], self.params['w_noise_exc'], self.params['dt'])
-                nest.Connect(self.noise_inh_d2[naction], self.strd2[naction], self.params['w_noise_inh'], self.params['dt'])
+                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc'], self.params['dt'])
+                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh'], self.params['dt'])
 
 
 
@@ -328,7 +328,11 @@ class BasalGanglia(object):
         np.savetxt(self.params['bg_action_bins_fn'], output_array)#, header=header)
 
 
-    def map_speed_to_action(self, speed, binning, xy='x'):
+    def map_speed_to_action(self, speed, xy='x'):
+        if xy == 'x':
+            binning = self.action_bins_x
+        else:
+            binning = self.action_bins_y
         # select an action based on the supervisor state information
         if speed > np.max(binning):
             action_index = self.params['n_actions'] - 1
@@ -355,8 +359,8 @@ class BasalGanglia(object):
         The supervisor_state --- (u, v) is mapped to discretized states
         """
         (u, v) = supervisor_state 
-        action_index_x = self.map_speed_to_action(u, self.action_bins_x, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
-        action_index_y = self.map_speed_to_action(v, self.action_bins_y, xy='y')
+        action_index_x = self.map_speed_to_action(u, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
+        action_index_y = self.map_speed_to_action(v, xy='y')
 #        action = [0, 0]
 #        action[0] = (x - .5) + u * self.params['t_iteration'] / self.params['t_cross_visual_field']
 #        action[1] = (y - .5) + v * self.params['t_iteration'] / self.params['t_cross_visual_field']
@@ -365,8 +369,8 @@ class BasalGanglia(object):
 
 #        print 'debug supervisor_state', supervisor_state
 #        print 'debug supervisor action', action
-#        action_index_x = self.map_speed_to_action(action[0], self.action_bins_x, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
-#        action_index_y = self.map_speed_to_action(action[1], self.action_bins_y, xy='y')
+#        action_index_x = self.map_speed_to_action(action[0], xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
+#        action_index_y = self.map_speed_to_action(action[1], xy='y')
 
         print 'Debug BG based on supervisor action choose action_index_x: %d ~ v_eye = %.2f ' % (action_index_x, self.action_bins_x[action_index_x])
 #        action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
@@ -426,11 +430,11 @@ class BasalGanglia(object):
         if WTA:
             winning_nspikes = np.argmax(nspikes)
             winning_gid = gids_spiked[winning_nspikes]
-            print 'winning_gid', winning_gid
+#            print 'winning_gid', winning_gid
             winning_action = self.gid_to_action_via_spikerecorder[winning_gid+1]
             output_speed_x = self.action_bins_x[winning_action]
         else:
-            print 'nspikes .shape', nspikes.shape
+#            print 'nspikes .shape', nspikes.shape
             gid_offset = np.min(self.gids['actions'])
             vector_avg_action = 0.
             vector_avg_speed = 0.
@@ -438,8 +442,9 @@ class BasalGanglia(object):
             for i_, gid_ in enumerate(gids_spiked):
                 action_idx = (gid_ + 1 - gid_offset) / self.params['num_msn_d1']
 #                print 'DEBUG gid %d action_idx %f' % (gid_, action_idx)
+#                print 'DEBUG gid %d action_idx %f' % (gid_, int(action_idx))
                 vector_avg_action += nspikes[i_] / float(nspikes_sum) * action_idx
-                vector_avg_speed += nspikes[i_] / float(nspikes_sum) * self.action_bins_x[action_idx]
+                vector_avg_speed += nspikes[i_] / float(nspikes_sum) * self.action_bins_x[int(action_idx)]
 #            print 'DEBUG vector_avg_action:', vector_avg_action
 #            print 'DEBUG vector_avg_speed:', vector_avg_speed
             winning_action = vector_avg_action

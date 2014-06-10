@@ -245,20 +245,21 @@ class ActivityPlotter(object):
 
     def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
         if stim_range == None:
-            if self.params['training']:
-                if self.params['n_stim'] == 1:
-                    stim_range = [0, 1]
-                else:
-                    stim_range = range(self.params['n_stim'])
+#            if self.params['training']:
+            if self.params['n_stim'] == 1:
+                stim_range = [0, 1]
             else:
-                stim_range = self.params['test_stim_range']
+                stim_range = range(self.params['n_stim'])
+#            else:
+#                stim_range = self.params['test_stim_range']
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         it_min = stim_range[0] * self.params['n_iterations_per_stim']
         it_max = (stim_range[-1]) * self.params['n_iterations_per_stim']
         t_axis = d[it_min:it_max, 4]
         t_axis += .5 * self.params['t_iteration']
-#        print 'debug', t_axis.shape, d.shape, it_min, it_max
+#        print 'DEBUG', self.params['n_stim'], stim_range
+#        print 'debug', t_axis.shape, d.shape, it_min, it_max, d.shape
 #        d[:, 4] = t_axis
 #        x_displacement = np.abs(d[it_min:it_max, 0] - .5)
         x_displacement = d[it_min:it_max, 0] - .5
@@ -272,7 +273,10 @@ class ActivityPlotter(object):
             fig = pylab.figure()
             ax = fig.add_subplot(111)
 
-        ylim = (np.min(x_displacement), np.max(x_displacement))
+#        print 'debug min', x_displacement.min()
+#        print 'debug max', x_displacement.max()
+#        ylim = (np.min(x_displacement), np.max(x_displacement))
+        ylim = (-.5, .5)
         for stim in xrange(stim_range[0], stim_range[-1] + 1):
             it_start_stim = stim * self.params['n_iterations_per_stim']
             it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']
@@ -302,9 +306,10 @@ class ActivityPlotter(object):
         t0 = it_min * self.params['t_iteration']
         t1 = it_max * self.params['t_iteration']
         ax.set_xlim((t0, t1))
+        ax.plot((t0, t1), (0., 0.), c='k', lw=2, ls=':')
         output_fig = self.params['figures_folder'] + 'mpn_displacement_%d-%d.png' % (stim_range[0], stim_range[1])
         print 'Saving figure to:', output_fig
-        pylab.savefig(output_fig)
+        pylab.savefig(output_fig, dpi=200)
         return (t_axis, x_displacement)
 
 
@@ -465,7 +470,7 @@ class ActivityPlotter(object):
 
         output_fn = self.params['figures_folder'] + 'training_sequence_%d-%d.png' % (stim_range[0], stim_range[1])
         print 'Saving to', output_fn
-        fig.savefig(output_fn)
+        fig.savefig(output_fn, dpi=200)
 
 
 
@@ -554,7 +559,7 @@ class MetaAnalysisClass(object):
         if params['debug_mpn']:
             Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
         print 'Saving to', output_fn
-        fig.savefig(output_fn)
+        fig.savefig(output_fn, dpi=200)
 
         # plot vx - sorting
         fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
@@ -562,7 +567,7 @@ class MetaAnalysisClass(object):
             Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
         output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
         print 'Saving to', output_fn
-        fig.savefig(output_fn)
+        fig.savefig(output_fn, dpi=200)
 
         del Plotter
 
