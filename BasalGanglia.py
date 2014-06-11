@@ -59,6 +59,9 @@ class BasalGanglia(object):
 
         if self.params['training']:
             self.connect_d1_population()
+            if self.params['with_d2']:
+                self.connect_d2_population()
+
         self.connect_noise()
 
 
@@ -217,6 +220,17 @@ class BasalGanglia(object):
                     nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
                 else:
                     nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1'], self.params['delay_d1_d1'])
+
+    def connect_d2_population(self):
+        for i_ in xrange(self.params['n_actions']):
+            src_pop = self.strD2[i_]
+            for j_ in xrange(self.params['n_actions']):
+                tgt_pop = self.strD2[j_]
+                if self.params['synapse_d2_d2'] == 'bcpnn_synapse':
+                    nest.SetDefaults(self.params['synapse_d2_d2'], params=self.params['params_synapse_d2_d2'])
+                    nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d2_d2'])
+#                else:
+#                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d2_d2'], self.params['delay_d2_d2'])
 
 
     def connect_noise(self):

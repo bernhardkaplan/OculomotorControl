@@ -44,8 +44,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
-        self.params['n_rf'] = 100
-        self.params['n_v'] = 40
+        self.params['n_rf'] = 50
+        self.params['n_v'] = 20
 #        self.params['n_rf'] = 20
 #        self.params['n_v'] = 10
 
@@ -53,9 +53,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_training_x'] = 10 # number of training samples to cover the x-direction of the tuning space
 #        self.params['n_training_v'] = 10 # number of training samples to cover the v-direction of the tuning space
 
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        self.params['n_training_x'] = 50 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
+        self.params['n_training_x'] = 10 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 10 # number of training samples to cover the v-direction of the tuning space
 
 #        self.params['n_training_cycles'] = 10            # how often each stimulus is presented during training
 #        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
@@ -340,6 +340,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
         self.params['delay_d1_d1'] = 1.
+        self.params['w_d2_d2'] = 0.
+        self.params['delay_d2_d2'] = 1.
 
         ## STR
 #        self.params['model_exc_neuron'] = 'iaf_cond_exp'
@@ -398,12 +400,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## D1 - D1 connections
         # if bcpnn_synapse is used
         self.params['synapse_d1_d1'] = 'bcpnn_synapse'
+        self.params['synapse_d2_d2'] = 'bcpnn_synapse'
         bcpnn_init = 0.01
         self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
         self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
+        self.params['params_synapse_d2_d2'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+                'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d2_d2'], \
+                'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
+
 
 
         self.params['actions_rp'] = 'bcpnn_synapse'
