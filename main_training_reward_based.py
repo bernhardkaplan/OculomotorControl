@@ -24,7 +24,6 @@ except:
     print "MPI not used"
 
 
-
 def save_spike_trains(params, iteration, stim_list, gid_list):
     assert (len(stim_list) == len(gid_list))
     n_units = len(stim_list)
@@ -46,103 +45,93 @@ def remove_files_from_folder(folder):
 if __name__ == '__main__':
 
     t1 = time.time()
-    if len(sys.argv) > 1: # re-run an old parameter file
-        param_fn = sys.argv[1]
-        if os.path.isdir(param_fn): # go to the path containing the json object storing old parameters
-            param_fn += '/Parameters/simulation_parameters.json' # hard coded subpath in ParameterContainer
-        assert os.path.exists(param_fn), 'ERROR: Can not find %s - please give an existing parameter filename or folder name to re-run a simulation' % (param_fn)
-        f = file(param_fn, 'r')
-        print 'Loading parameters from', param_fn
-        json_params = json.load(f)
-        params = utils.convert_to_NEST_conform_dict(json_params)
-    else: # run a simulation with parameters as set in simulation_parameters
-        GP = simulation_parameters.global_parameters()
-        if pc_id == 0:
-            GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
-        if comm != None:
-            comm.Barrier()
-        params = GP.params
-
-    if not params['training']:
-        print 'Set training = True!'
+    GP = simulation_parameters.global_parameters()
+    if pc_id == 0:
+        GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
+    if comm != None:
+        comm.Barrier()
+    params = GP.params
+    if params['reward_based_learning'] == False:
+        print 'Set reward_based_learning = True'
         exit(1)
+
+    if params['load_mpn_d1_weights'] or params['load_mpn_d2_weights']:
+        assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
+        training_folder = os.path.abspath(sys.argv[1]) 
+        training_params = utils.load_params(training_folder)
     
     t0 = time.time()
 
     VI = VisualInput.VisualInput(params, comm=comm)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
 
-    exit(1)
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder'])
         remove_files_from_folder(params['input_folder_mpn'])
         remove_files_from_folder(params['connections_folder'])
     
     VI.set_pc_id(pc_id)
+
     BG = BasalGanglia.BasalGanglia(params, comm)
     CC = CreateConnections.CreateConnections(params, comm)
-    CC.connect_mt_to_bg(MT, BG)
+    if params['load_mpn_d1_weights']:
+        CC.connect_mt_to_d1_after_training(MT, BG, training_params, params, model=params['mpn_d1_synapse_model'])
+    if params['load_mpn_d2_weights']:
+        CC.connect_mt_to_d2_after_training(MT, BG, training_params, params, model=params['mpn_d2_synapse_model'])
 
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
     iteration_cnt = 0
-    training_stimuli = VI.create_training_sequence()
+    training_stimuli = VI.create_training_sequence_iteratively()
+#    training_stimuli = VI.create_training_sequence_from_a_grid()
 
-    print 'quit'
-    exit(1)
-    v_eye = [0., 0.]
+    supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
+    np.savetxt(params['supervisor_states_fn'], supervisor_states)
+    np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
+    np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
+
+
     for i_stim in xrange(params['n_stim_training']):
         VI.current_motion_params = training_stimuli[i_stim, :]
-        for it in xrange(params['n_iterations_per_stim']):
 
-#            if it == params['n_iterations_per_stim'] - 1:
+        # -----------------------------------
+        # K = 0, gain = 1   T E S T I N G 
+        # -----------------------------------
+        # TODO:
+        BG.set_kappa_off(MT.local_idx_exc)
+        for it in xrange(params['n_iterations_per_stim'] / 2):
             if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
-#                stim, supervisor_state = VI.set_empty_input(MT.exc_pop)
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
-                # and get the state information BEFORE MPN perceives anything
-                # in order to set a supervisor signal
-#                stim, supervisor_state = VI.compute_input(MT.exc_pop, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
                 stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], network_states_net[iteration_cnt, :])
-
-            #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
-            print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
-            (action_index_x, action_index_y) = BG.supervised_training(supervisor_state)
-            #print 'DEBUG action_index_x / y:', action_index_x, action_index_y
-
+                reward = VI.get_reward()
             if params['debug_mpn']:
                 print 'Saving spike trains...'
-#                save_spike_trains(params, iteration_cnt, stim, MT.exc_pop)
                 save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
-
-#            print 'debug iteration %d stim' % (iteration_cnt), stim
-            MT.update_input(stim) # run the network for some time 
+            MT.update_input(stim)
             if comm != None:
                 comm.Barrier()
             nest.Simulate(params['t_iteration'])
             if comm != None:
                 comm.Barrier()
-
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-
             if pc_id == 0:
                 print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
             network_states_net[iteration_cnt, :] = state_
-
-            #print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
-            v_eye[0] = next_action[0]
-            v_eye[1] = next_action[1]
             actions[iteration_cnt + 1, :] = next_action
-            #print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
-
             if params['weight_tracking']:
                 CC.get_weights(MT, BG, iteration=iteration_cnt)
-
             iteration_cnt += 1
             if comm != None:
                 comm.Barrier()
+
+        BG.set_kappa_on(MT.local_idx_exc)
+        # ------------------------------------------
+        # K = Reward, gain = 0, + 'Efference' copy
+        # ------------------------------------------
+        for it in xrange(params['n_iterations_per_stim'] / 2):
 
     CC.get_d1_d1_weights(BG)
     CC.get_weights(MT, BG)

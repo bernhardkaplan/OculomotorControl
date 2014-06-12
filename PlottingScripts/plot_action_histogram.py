@@ -46,13 +46,29 @@ ax.set_ylabel('Action $v_x$ [Hz]')
 fig.savefig(params['figures_folder'] + 'vx_output_action.png')
 
 d = np.loadtxt(params['actions_taken_fn'])
-figsize=FigureCreator.get_fig_size(1200, portrait=True)
-print 'figsize:', figsize
+
+actions_taken = np.zeros(params['n_stim'])
+for i_ in xrange(params['n_stim']):
+#    print 'action idx[%d] = ' % i_, d[i_ * (params['n_silent_iterations'] + 1) + 1, 2]
+    actions_taken[i_] =  d[i_ * (params['n_silent_iterations'] + 1) + 1, 2]
+#    print 'action idx[%d] = ' % i_, actions_taken[i_ * (params['n_silent_iterations'] + 1)]
+
+n_bins = params['n_actions'] - 1
+cnt, bins = np.histogram(actions_taken, bins=n_bins, range=(np.min(actions_taken), np.max(actions_taken)))
+print 'Action histogram', cnt
+print 'Action histogram bins', bins
+print 'First half:', bins[:n_bins/2]
+print 'Sum first half:', cnt[:n_bins/2].sum()
+print 'Second half:', bins[-(n_bins/2 + 1):]
+print 'Sum second half:', cnt[-(n_bins/2 + 1):].sum()
+#exit(1)
+
+figsize=FigureCreator.get_fig_size(800, portrait=True)
 fig = pylab.figure(figsize=figsize)
 ax1 = fig.add_subplot(411)
 ax1.set_title('Histogram of actions taken during training\n%d cycles x %d stimuli' % (params['n_training_cycles'], params['n_training_stim_per_cycle']))
 print 'n_actions', params['n_actions']
-print 'd:', d[:, 2]
+print 'Actions takend: ', d[:, 2]
 cnt, bins = np.histogram(d[:, 2], bins=params['n_actions'], range=(0, params['n_actions']))
 print 'Action hist bins', bins
 print 'Action hist cnt', cnt

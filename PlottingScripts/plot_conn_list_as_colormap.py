@@ -101,42 +101,50 @@ if __name__ == '__main__':
 
     src_type = 'mpn'
 #    src_type = 'd1'
+    tgt_type = 'd2'
     fns = sys.argv[1:] # 
     clim = None
 #    clim = (-5., 5.)
+
     if len(sys.argv) > 2:
         for fn in fns:
             params = utils.load_params(fn)
             tgt_type = 'd1'
             conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
             plot_conn_list(conn_list_fn, params=params, clim=clim)
-            if params['with_d2']:
-                tgt_type = 'd2'
-                conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-                plot_conn_list(conn_list_fn, params=params, clim=clim)
+#            if params['with_d2']:
+#                tgt_type = 'd2'
+#                conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+#                plot_conn_list(conn_list_fn, params=params, clim=clim)
     elif len(sys.argv) == 2:
         if sys.argv[1].endswith('.json') or os.path.isdir(sys.argv[1]):
             params = utils.load_params(sys.argv[1])
-            tgt_type = 'd1'
-            print 'Plotting connections targeting :', tgt_type
 
             if src_type == 'mpn':
                 conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-            elif src_type == 'd1':
-                conn_list_fn = params['d1_d1_merged_conn_fn']
+            else:
+                conn_list_fn = params['%s_%s_merged_conn_fn' % (src_type, tgt_type)]
             plot_conn_list(conn_list_fn, params=params, clim=clim)
 
-            if params['with_d2']:
-                tgt_type = 'd2'
-                print 'Plotting connections targeting :', tgt_type
-                conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+#            tgt_type = 'd2'
+#            if params['with_d2']:
+#                print 'Plotting connections targeting :', tgt_type
+#                conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
 #                clim = (-3., 3.)
-                plot_conn_list(conn_list_fn, params=params, clim=clim)
+#                plot_conn_list(conn_list_fn, params=params, clim=clim)
     #         params = load_params_from_folder(fn)
     #         plot_conn_list(params=params)
         else:          
             conn_list_fn = sys.argv[1]
             plot_conn_list(conn_list_fn, params=None, clim=clim)
-
+    else:
+        import simulation_parameters
+        GP = simulation_parameters.global_parameters()
+        params = GP.params
+        if src_type == 'mpn':
+            conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
+        else:
+            conn_list_fn = params['%s_%s_merged_conn_fn' % (src_type, tgt_type)]
+        plot_conn_list(conn_list_fn, params=params, clim=clim)
     
     pylab.show()

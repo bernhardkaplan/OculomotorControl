@@ -135,7 +135,7 @@ if __name__ == '__main__':
             if testing_params['debug_mpn']:
                 print 'Iteration %d: Saving spike trains...' % iteration_cnt
                 save_spike_trains(testing_params, iteration_cnt, stim, MT.local_idx_exc)
-            MT.update_input(stim) # run the network for some time 
+            MT.update_input(stim)
             if comm != None:
                 comm.Barrier()
             nest.Simulate(testing_params['t_iteration'])

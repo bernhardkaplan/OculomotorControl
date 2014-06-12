@@ -21,22 +21,19 @@ class CreateConnections(object):
             self.n_proc = 1
 
 
+
     def connect_mt_to_bg(self, src_net, tgt_net):
         """
         The NEST simulation should run for some pre-fixed time
         Keyword arguments:
         src_net, tgt_net -- the source and the target network
-
         """
-
         for nactions in xrange(self.params['n_actions']):
             nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d1_MT_BG'])
             nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
-
             if self.params['with_d2']:
                 nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
                 nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
-
 
 
 
@@ -102,12 +99,59 @@ class CreateConnections(object):
         weights[neg_idx] = d[neg_idx, 2] * testing_params['d1_d1_weight_amplification_neg']
         weights[pos_idx] = d[pos_idx, 2] * testing_params['d1_d1_weight_amplification_pos']
         weights = list(weights)
-#        print 'Debug weights', weights
         delays = list(np.ones(d[:, 0].size * testing_params['delay_d1_d1']))
         nest.Connect(srcs, tgts, weights, delays)
     
 
-#    def connect_d1_cross_inhibition(self, BG, training_params):
+
+    def connect_mt_to_d1_after_training(self, mpn_net, bg_net, training_params, test_params, model='static_synapse'):
+        """
+        Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
+        based on the weights found in conn_folder
+        """
+        self.merge_connection_files(training_params, test_params)
+        if self.comm != None:
+            self.comm.Barrier()
+        print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
+        tgt_path = test_params['connections_folder'] + 'merged_mpn_bg_d1_connections_preTraining.txt'
+        cmd = 'cp %s %s' % (training_params['mpn_bgd1_merged_conn_fn'], tgt_path)
+        if self.pc_id == 0:
+            os.system(cmd)
+        mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
+        n_lines = mpn_d1_conn_list[:, 0].size 
+        w = mpn_d1_conn_list[:, 2]
+        w *= self.params['mpn_d1_weight_amplification']
+        valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
+        srcs = list(mpn_d1_conn_list[valid_idx, 0].astype(np.int))
+        tgts = list(mpn_d1_conn_list[valid_idx, 1].astype(np.int))
+        weights = list(w[valid_idx])
+        delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
+        nest.Connect(srcs, tgts, weights, delays, model=model)
+
+
+    def connect_mt_to_d2_after_training(self, mpn_net, bg_net, training_params, test_params, model='static_synapse'):
+        """
+        Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
+        based on the weights found in conn_folder
+        """
+        self.merge_connection_files(training_params, test_params)
+        if self.comm != None:
+            self.comm.Barrier()
+        print 'Loading MPN - BG D2 connections from:', training_params['mpn_bgd2_merged_conn_fn']
+        mpn_d2_conn_list = np.loadtxt(training_params['mpn_bgd2_merged_conn_fn'])
+        tgt_path = test_params['connections_folder'] + 'merged_mpn_bg_d2_connections_preTraining.txt'
+        cmd = 'cp %s %s' % (training_params['mpn_bgd2_merged_conn_fn'], tgt_path)
+        if self.pc_id == 0:
+            os.system(cmd)
+        n_lines = mpn_d2_conn_list[:, 0].size 
+        w = mpn_d2_conn_list[:, 2]
+        w *= self.params['mpn_d2_weight_amplification']
+        valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
+        srcs = list(mpn_d2_conn_list[valid_idx, 0].astype(np.int))
+        tgts = list(mpn_d2_conn_list[valid_idx, 1].astype(np.int))
+        weights = list(w[valid_idx])
+        delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
+        nest.Connect(srcs, tgts, weights, delays, model=model)
 
 
 
@@ -189,6 +233,10 @@ class CreateConnections(object):
         for nactions in xrange(self.params['n_actions']):
             print 'CreateConnections.get_weights action %d' % nactions, 'iteration:', iteration
             conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
+#            print 'DEBUG src_pop.exc_pop:', src_pop.exc_pop
+#            print 'DEBUG tgt_pop:', tgt_pop.strD1[nactions]
+            print 'DEBUG %d n_conns: %d' % (self.pc_id, len(conns))
+#            exit(1)
             if conns != None:
                 for i_, c in enumerate(conns):
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
@@ -198,6 +246,7 @@ class CreateConnections(object):
                         pij = cp[0]['p_ij']
                         w = np.log(pij / (pi * pj))
                         w_ = self.clip_weight(w, self.params['clip_weights_mpn_d1'], self.params['weight_threshold_abstract_mpn_d1'])
+                        print 'debug w_', w_, w
                         if w_:
                             D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
                             bias_d1[cp[0]['target']] = cp[0]['bias']
@@ -213,7 +262,6 @@ class CreateConnections(object):
         D1_f.write(D1_conns)
         D1_f.close()
 
-
         if self.params['with_d2']:
             D2_conns = ''
             bias_d2 = {}
@@ -227,7 +275,7 @@ class CreateConnections(object):
                             pj = cp[0]['p_j']
                             pij = cp[0]['p_ij']
                             w = np.log(pij / (pi * pj))
-                            w_ = self.clip_weight(w, self.params['clip_weights_mpn_d1'], self.params['weight_threshold_abstract_mpn_d1'])
+                            w_ = self.clip_weight(w, self.params['clip_weights_mpn_d2'], self.params['weight_threshold_abstract_mpn_d2'])
                             if w_:
                                 D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
                                 bias_d2[cp[0]['target']] = cp[0]['bias']

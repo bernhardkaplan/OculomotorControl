@@ -43,6 +43,8 @@ class VisualInput(object):
             self.comm.Barrier()
 
 
+        self.x0 = np.zeros(self.params['n_iterations_per_stim'] * self.params['n_stim'])
+
         self.current_motion_params = list(self.params['initial_state'])
         # store the motion parameters seen on the retina
         self.n_stim_dim = len(self.params['initial_state'])
@@ -201,14 +203,34 @@ class VisualInput(object):
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-        trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code, network_state)
+        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code, network_state)
+        self.x0[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
-        self.create_spike_trains_for_trajectory(local_gids, trajectory)
+        self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
 #        supervisor_state = (trajectory[0][-1], trajectory[1][-1], \
 #                self.current_motion_params[2], self.current_motion_params[3])
         self.iteration += 1
         return self.stim, supervisor_state
 
+
+    def get_reward(self):
+        """
+        Should be called after compute_input
+        """
+        punish_overshoot = .7
+        learning_rate = 30.
+        if self.iteration == 0:
+            return 0
+        else:
+            dx_i = self.x0[self.iteration-1] - .5
+            dx_j = self.x0[self.iteration] - .5
+            dx_i_abs = np.abs(dx_i)
+            dx_j_abs = np.abs(dx_j)
+            diff_dx_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement
+            R = -1 * learning_rate * diff_dx_abs
+            if np.sign(dx_i) != np.sign(dx_j): # 'overshoot'
+                R *= punish_overshoot
+        return R
 
 
     def get_supervisor_actions(self, training_stimuli, BG):
@@ -275,6 +297,7 @@ class VisualInput(object):
 
 
 
+
     def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False):
         """
         Arguments:
@@ -293,10 +316,10 @@ class VisualInput(object):
             y_stim = trajectory[1][i_time]
             motion_params = (x_stim, y_stim, self.current_motion_params[2], self.current_motion_params[3])
             # get the envelope of the Poisson process for this timestep
-#            L_input[:, i_time] = self.get_input(self.tuning_prop_exc[local_gids, :], motion_params) 
             L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
                     self.params['blur_X'], self.params['blur_V']) 
             L_input[:, i_time] *= self.params['f_max_stim']
+#            L_input[:, i_time] = self.get_input(self.tuning_prop_exc[local_gids, :], motion_params) 
 
         input_nspikes = np.zeros((len(local_gids), 2))
         # depending on trajectory and the tp create a spike train
@@ -365,14 +388,12 @@ class VisualInput(object):
         return L
 
 
-    def update_stimulus_trajectory_new(self, action_code, network_state):
+    def update_stimulus_trajectory_new(self, action_code):
         """
         Update the motion parameters based on the action
 
         Keyword arguments:
         action_code -- a tuple representing the action (direction of eye movement)
-        network_state -- [x, y, vx, vy] 'prediction' based on sensory neurons
-        network_state[2:4]  = v_object
         """
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
 
@@ -395,11 +416,10 @@ class VisualInput(object):
         delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
         k = self.params['supervisor_amp_param']
 
-        # omniscient supervisor
+        # omniscient supervisor computes the 'correct' action to take
         self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
         self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
 
-        # supervisor dependent on measurements from visual sensory layer --> network_state
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
         self.motion_params[self.iteration, -1] = self.t_current
 

@@ -244,14 +244,18 @@ class ActivityPlotter(object):
 
 
     def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
+        print 'DEBUG plot_retinal_displacement stim_range:', stim_range
         if stim_range == None:
-#            if self.params['training']:
             if self.params['n_stim'] == 1:
                 stim_range = [0, 1]
             else:
                 stim_range = range(self.params['n_stim'])
-#            else:
-#                stim_range = self.params['test_stim_range']
+            stim_range_label = [stim_range[0], stim_range[1]]
+        elif not self.params['training']:
+            stim_range_label = [stim_range[0], stim_range[1]]
+            stim_range[0] -= self.params['test_stim_range'][0]
+            stim_range[1] -= self.params['test_stim_range'][0]
+        n_stim = stim_range[-1] - stim_range[0]
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         it_min = stim_range[0] * self.params['n_iterations_per_stim']
@@ -273,27 +277,25 @@ class ActivityPlotter(object):
             fig = pylab.figure()
             ax = fig.add_subplot(111)
 
-#        print 'debug min', x_displacement.min()
-#        print 'debug max', x_displacement.max()
-#        ylim = (np.min(x_displacement), np.max(x_displacement))
         ylim = (-.5, .5)
-        for stim in xrange(stim_range[0], stim_range[-1] + 1):
+#        for stim in xrange(stim_range[0], stim_range[-1] + 1):
+        for stim, stim_ in enumerate(range(stim_range[0], stim_range[-1] + 1)):
             it_start_stim = stim * self.params['n_iterations_per_stim']
             it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']
             x_displacement_stim = d[it_start_stim:it_stop_stim, 0] - .5
 #            x_displacement_stim = np.abs(d[it_start_stim:it_stop_stim, 0] - .5)
 #            x_displacement[it_start_stim:it_stop_stim] = x_displacement_stim
+            print 'x_displacement_stim:', x_displacement_stim, self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']# - 1
+#            if n_stim == 1:
+#                for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']):
+#                    it_1 = it_ 
+#                    it_2 = it_ + 2
+#                    p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], 'o', ms=5, c=c)
+#            else:
             for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations'] - 1):
                 it_1 = it_ + stim * self.params['n_iterations_per_stim']
                 it_2 = it_ + stim * self.params['n_iterations_per_stim'] + 2
                 p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
-#                print 'debug', x_displacement[it_1:it_2]
-#                ylim[0] = min(ylim[0], x_displacement[it_1:it_2].min())
-#                ylim[1] = max(ylim[1], x_displacement[it_1:it_2].max())
-#                p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
-#            ax.plot((stim + 1) * self.param['n_iterations_per_stim'], 
-
-#        ax.plot(t, x_displacement, lw=3)
 
         if self.params['training']:
             ax.set_title('Training')
@@ -307,7 +309,7 @@ class ActivityPlotter(object):
         t1 = it_max * self.params['t_iteration']
         ax.set_xlim((t0, t1))
         ax.plot((t0, t1), (0., 0.), c='k', lw=2, ls=':')
-        output_fig = self.params['figures_folder'] + 'mpn_displacement_%d-%d.png' % (stim_range[0], stim_range[1])
+        output_fig = self.params['figures_folder'] + 'mpn_displacement_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig, dpi=200)
         return (t_axis, x_displacement)
@@ -501,7 +503,7 @@ class MetaAnalysisClass(object):
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
         elif len(argv) == 3: #  PlotMPNActivity [STIM_1] [STIM_2]
             if argv[1].isdigit() and argv[2].isdigit():
-                stim_range = (int(argv[1]), int(argv[2]))
+                stim_range = [int(argv[1]), int(argv[2])]
                 network_params = simulation_parameters.global_parameters()  
                 params = network_params.params
                 utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
@@ -509,21 +511,21 @@ class MetaAnalysisClass(object):
                 self.run_single_folder_analysis(params, stim_range)
                 (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
                 for i_ in xrange(stim_range[0], stim_range[1]):
-                    (x_data, y_data) = self.run_xdisplacement_analysis(params, (i_, i_+1))
-                    self.run_single_folder_analysis(params, (i_, i_ + 1))
+                    (x_data, y_data) = self.run_xdisplacement_analysis(params, [i_, i_+1])
+                    self.run_single_folder_analysis(params, [i_, i_ + 1])
             else:
                 self.run_analysis_for_folders(argv[1:], training_params=training_params)
         elif len(argv) == 4: #  PlotMPNActivity [FOLDER] [STIM_1] [STIM_2]
             folder_name = argv[1]
             if argv[2].isdigit() and argv[3].isdigit():
-                stim_range = (int(argv[2]), int(argv[3]))
+                stim_range = [int(argv[2]), int(argv[3])]
                 params = utils.load_params(folder_name)
                 utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
                 for i_ in xrange(stim_range[0], stim_range[1]):
-                    (x_data, y_data) = self.run_xdisplacement_analysis(params, (i_, i_+1))
-                    self.run_single_folder_analysis(params, (i_, i_ + 1))
+                    (x_data, y_data) = self.run_xdisplacement_analysis(params, [i_, i_+1])
+                    self.run_single_folder_analysis(params, [i_, i_ + 1])
                 (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
-                self.run_single_folder_analysis(params, stim_range)
+#                self.run_single_folder_analysis(params, stim_range)
             else:
                 self.run_analysis_for_folders(argv[1:], training_params=training_params, stim_range=stim_range)
         elif len(argv) > 4: #  PlotMPNActivity [FOLDER_1] [FOLDER_2] .... [FOLDER_N]
@@ -544,11 +546,15 @@ class MetaAnalysisClass(object):
 #        Plotter.bin_spiketimes()
 #        Plotter.plot_output()
 
+        if not params['training'] and (stim_range != None):
+            stim_range_label = [stim_range[0], stim_range[1]]
+            stim_range[0] -= params['test_stim_range'][0]
+            stim_range[1] -= params['test_stim_range'][0]
         if stim_range != None:
             t_range = [0, 0]
             t_range[0] = stim_range[0] * params['t_iteration'] * params['n_iterations_per_stim']
             t_range[1] = stim_range[1] * params['t_iteration'] * params['n_iterations_per_stim']
-            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos_%d-%d.png' % (stim_range[0], stim_range[1])
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
         else:
             t_range = None
             output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png' 
@@ -571,6 +577,7 @@ class MetaAnalysisClass(object):
 
         del Plotter
 
+
     def run_analysis_for_folders(self, folders, training_params=None, stim_range=None):
         """
         folders -- list of folders with same time/data parameters (wrt to data size to be analysed)
@@ -578,7 +585,7 @@ class MetaAnalysisClass(object):
 
         """
         if stim_range == None:
-            stim_range = (0, 5) # to be changed
+            stim_range = [0, 5] # to be changed
 
         n_stim = stim_range[1] - stim_range[0]
         # load the first parameter set to determine data size
