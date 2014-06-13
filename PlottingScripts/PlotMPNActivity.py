@@ -262,13 +262,7 @@ class ActivityPlotter(object):
         it_max = (stim_range[-1]) * self.params['n_iterations_per_stim']
         t_axis = d[it_min:it_max, 4]
         t_axis += .5 * self.params['t_iteration']
-#        print 'DEBUG', self.params['n_stim'], stim_range
-#        print 'debug', t_axis.shape, d.shape, it_min, it_max, d.shape
-#        d[:, 4] = t_axis
-#        x_displacement = np.abs(d[it_min:it_max, 0] - .5)
         x_displacement = d[it_min:it_max, 0] - .5
-#        x_displacement = np.zeros(it_max - it_min)
-#        output_fn = self.params['data_folder'] + 'mpn_xdisplacement_%d-%d.dat' % (stim_range[0], stim_range[1])
         output_fn = self.params['data_folder'] + 'mpn_xdisplacement.dat'
         print 'Saving data to:', output_fn
         np.savetxt(output_fn, d)
@@ -278,13 +272,10 @@ class ActivityPlotter(object):
             ax = fig.add_subplot(111)
 
         ylim = (-.5, .5)
-#        for stim in xrange(stim_range[0], stim_range[-1] + 1):
         for stim, stim_ in enumerate(range(stim_range[0], stim_range[-1] + 1)):
             it_start_stim = stim * self.params['n_iterations_per_stim']
             it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']
             x_displacement_stim = d[it_start_stim:it_stop_stim, 0] - .5
-#            x_displacement_stim = np.abs(d[it_start_stim:it_stop_stim, 0] - .5)
-#            x_displacement[it_start_stim:it_stop_stim] = x_displacement_stim
             print 'x_displacement_stim:', x_displacement_stim, self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']# - 1
 #            if n_stim == 1:
 #                for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']):
@@ -298,7 +289,10 @@ class ActivityPlotter(object):
                 p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
 
         if self.params['training']:
-            ax.set_title('Training')
+            if self.params['reward_based_learning']:
+                ax.set_title('Reward based learning')
+            else:
+                ax.set_title('Training')
         else:
             ax.set_title('Testing')
         ax.set_ylim(ylim)
@@ -309,10 +303,31 @@ class ActivityPlotter(object):
         t1 = it_max * self.params['t_iteration']
         ax.set_xlim((t0, t1))
         ax.plot((t0, t1), (0., 0.), c='k', lw=2, ls=':')
+
+        if self.params['reward_based_learning']:
+            self.plot_reward(ax)
+
         output_fig = self.params['figures_folder'] + 'mpn_displacement_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig, dpi=200)
         return (t_axis, x_displacement)
+
+    def plot_reward(self, ax):
+        rewards = np.loadtxt(self.params['rewards_given_fn'])
+        ax2 = ax.twinx()
+        ms_min = 2
+        for i_ in xrange(rewards.size):
+            if rewards[i_] > 0:
+                c = 'r'
+                s = '^'
+                fillstyle = 'full'
+            else:
+                c = 'b'
+                s = 'v'
+                fillstyle = 'full' #'none'
+            ms = np.abs(np.round(rewards[i_] / 10. * 30.)) + ms_min
+            print 'rewards i_ markersize', rewards[i_], i_, ms
+            ax2.plot(i_ * self.params['t_iteration'] + .5 * self.params['t_iteration'], rewards[i_], s, markersize=ms, c=c, fillstyle=fillstyle)
 
 
     def plot_vertical_lines(self, ax, params=None, time_scale=True, show_iterations=True):
@@ -499,7 +514,7 @@ class MetaAnalysisClass(object):
             folder_name = argv[1]
             params = utils.load_params(folder_name)
             utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
-            self.run_single_folder_analysis(params, stim_range)
+#            self.run_single_folder_analysis(params, stim_range)
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
         elif len(argv) == 3: #  PlotMPNActivity [STIM_1] [STIM_2]
             if argv[1].isdigit() and argv[2].isdigit():

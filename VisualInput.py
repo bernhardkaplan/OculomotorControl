@@ -193,7 +193,7 @@ class VisualInput(object):
         return mp_training 
 
 
-    def compute_input(self, local_gids, action_code, network_state, dummy=False):
+    def compute_input(self, local_gids, action_code):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
@@ -203,7 +203,7 @@ class VisualInput(object):
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code, network_state)
+        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code)
         self.x0[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
@@ -215,15 +215,16 @@ class VisualInput(object):
 
     def get_reward(self):
         """
-        Should be called after compute_input
+        Should be called after compute_input.
+        Hence self.iteration in this function is always + 1.
         """
         punish_overshoot = .7
         learning_rate = 30.
-        if self.iteration == 0:
+        if self.iteration < 2:
             return 0
         else:
-            dx_i = self.x0[self.iteration-1] - .5
-            dx_j = self.x0[self.iteration] - .5
+            dx_i = self.x0[self.iteration - 2] - .5 # -2 and -1 because self.iteration is + 1 (because compute_input has been called before)
+            dx_j = self.x0[self.iteration - 1] - .5
             dx_i_abs = np.abs(dx_i)
             dx_j_abs = np.abs(dx_j)
             diff_dx_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement

@@ -502,95 +502,18 @@ class BasalGanglia(object):
             nest.SetStatus([int(gid)], {'I_e' : bias_value})
 
 
-    def set_gain(self, gain):
-        # implement option to change locally to d1 or d2 or RP
+    def set_kappa_and_gain(self, source_gids, D1_or_D2, kappa=None, gain=None):
+        """
+        source_gids -- is a list of gids, e.g. MotionPrediction.local_idx_exc
+        D1_or_D2    -- is either a dictionary with int as key (=action) and gids as values, strD1 or strD2
+        kappa       -- float
+        gain        -- float
+        """
 
-       for nstate in range(self.params['n_states']):
-           for naction in range(self.params['n_actions']):
-               nest.SetStatus(nest.GetConnections(self.states[nstate], self.strD1[naction]), {'gain':gain})
-               nest.SetStatus(nest.GetConnections(self.states[nstate], self.strD2[naction]), {'gain':gain})
-    	
-       for index_rp in range(self.params['n_actions'] * self.params['n_states']):
-            for naction in range(self.params['n_actions']):
-               nest.SetStatus(nest.GetConnections(self.actions[naction], self.rp[index_rp % self.params['n_states']]), {'gain':gain})
-            for nstate in range(self.params['n_states']):
-               nest.SetStatus(nest.GetConnections(self.states[nstate], self.rp[int(index_rp / self.params['n_actions'])]), {'gain':gain})
-        
-#       for nstates in range(self.params['n_states']):
-#           #            print 'getstatus ' , nest.GetStatus(nest.FindConnections(self.states[nstates]))
-#           nest.SetStatus([nest.FindConnections(self.states[nstates])], {'gain':gain})
-#
-#       for index_rp in range(self.params['n_actions']) :
-#           nest.SetStatus([nest.FindConnections(self.actions[nactions])], {'gain':gain})
-
-    def set_kappa_ON(self, k, state, action):
-        # implement option to change locally to d1 or d2 or RP
-        #To implement the opposite effect on the D1 and D2 MSNs of the dopamine release, -k is sent to D2
-       k1 = k
-       k2 = -k
-     #  if k1 < 0:
-     #      k1 = k1 / self.params['n_actions']
-     #      #k1 = 0.
-     #  if k2 < 0:
-     #      k2 = k2 / self.params['n_actions'] 
-     #      #k2 = 0.
-     #  for nstate in range(self.params['n_states']):
-     #      for naction in range(self.params['n_actions']):
-     #          nest.SetStatus(nest.GetConnections(self.states[nstate], self.strD1[naction]), {'K':k1})
-     #          nest.SetStatus(nest.GetConnections(self.states[nstate], self.strD2[naction]), {'K':k2})
-     #      print 'KAPPA D1 SET TO', k1, 'D2 to', k2,'for STATE ', nstate
-     #  for nact in xrange(self.params['n_actions']):
-     #      nest.SetStatus(self.strD1[nact], {'kappa':k1} )
-     #      nest.SetStatus(self.strD2[nact], {'kappa':k2} )
-
-       nest.SetStatus(nest.GetConnections(self.states[state], self.strD1[action]), {'K': k} )
-       nest.SetStatus(self.strD1[action], {'kappa': k})
-       for naction in range(self.params['n_actions']):
-           # if naction == action:
-               nest.SetStatus(nest.GetConnections(self.states[state], self.strD2[naction]), {'K':-k})
-               nest.SetStatus(self.strD2[naction], {'kappa': -k})
-          # else:
-               #         nest.SetStatus(nest.GetConnections(self.states[state], self.strD2[naction]), {'K':k})
-     #          nest.SetStatus(self.strD2[naction], {'kappa': k})
-     #          nest.SetStatus(nest.GetConnections(self.states[state], self.strD1[naction]), {'K':-k})
-     #          nest.SetStatus(self.strD1[naction], {'kappa': -k})
-       
-       nest.SetStatus(nest.GetConnections(self.states[state], self.rp[action+state*self.params['n_actions']]), {'K':k})
-       nest.SetStatus(nest.GetConnections(self.actions[action], self.rp[action+state*self.params['n_actions']]), {'K':k})
-       nest.SetStatus(self.rp[state+action*self.params['n_states']], {'kappa':k} )
-
-
-     #  for index_rp in range(self.params['n_actions'] * self.params['n_states']):
-     #       for naction in range(self.params['n_actions']):
-     #          nest.SetStatus(nest.GetConnections(self.actions[naction], self.rp[index_rp % self.params['n_states']]), {'K':k})
-     #       for nstate in range(self.params['n_states']):
-     #   		nest.SetStatus(nest.GetConnections(self.states[nstate], self.rp[int(index_rp / self.params['n_actions'])]), {'K':k})
-     #       nest.SetStatus(self.rp[index_rp], {'kappa':k} )
-
-#       for nstates in range(self.params['n_states']):
-#           nest.SetStatus(nest.FindConnections([self.states[nstates]]), {'K':k})
-#
-#       for index_rp in range(self.params['n_actions']) :
-#           nest.SetStatus(nest.FindConnections([self.actions[nactions]]), {'K':k})
-
-    def set_kappa_OFF(self):
-        # implement option to change locally to d1 or d2 or RP
-        #To implement the opposite effect on the D1 and D2 MSNs of the dopamine release, -k is sent to D2
-       for nstate in range(self.params['n_states']):
-           for naction in range(self.params['n_actions']):
-               nest.SetStatus(nest.GetConnections(self.states[nstate], self.strD1[naction]), {'K':0.})
-               nest.SetStatus(nest.GetConnections(self.states[nstate], self.strD2[naction]), {'K':0.})
-       for nact in xrange(self.params['n_actions']):
-           nest.SetStatus(self.strD1[nact], {'kappa':0.} )
-           nest.SetStatus(self.strD2[nact], {'kappa':0.} )
-       #nest.SetStatus(nest.GetConnections(self.states[state], self.strD1[action]), {'K': 0.} )
-       #nest.SetStatus(self.strD1[action], {'kappa': 0.})
-       for index_rp in range(self.params['n_actions'] * self.params['n_states']):
-            for naction in range(self.params['n_actions']):
-               nest.SetStatus(nest.GetConnections(self.actions[naction], self.rp[index_rp % self.params['n_states']]), {'K':0.})
-            for nstate in range(self.params['n_states']):
-    			nest.SetStatus(nest.GetConnections(self.states[nstate], self.rp[int(index_rp / self.params['n_actions'])]), {'K':0.})
-            nest.SetStatus(self.rp[index_rp], {'kappa':0.} )
+        for i_action in xrange(self.params['n_actions']):
+            nest.SetStatus(nest.GetConnections(source_gids, D1_or_D2[i_action]), {'K': kappa, 'gain': gain})
+        for i_action in xrange(self.params['n_actions']):
+            nest.SetStatus(D1_or_D2[i_action], {'K': kappa, 'gain': gain})
 
 
     def get_cell_gids(self, cell_type):

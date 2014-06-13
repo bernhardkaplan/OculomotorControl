@@ -120,13 +120,21 @@ class CreateConnections(object):
         mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
         n_lines = mpn_d1_conn_list[:, 0].size 
         w = mpn_d1_conn_list[:, 2]
+        pi = mpn_d1_conn_list[:, 3]
+        pj = mpn_d1_conn_list[:, 4]
+        pij = mpn_d1_conn_list[:, 5]
         w *= self.params['mpn_d1_weight_amplification']
         valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
         srcs = list(mpn_d1_conn_list[valid_idx, 0].astype(np.int))
         tgts = list(mpn_d1_conn_list[valid_idx, 1].astype(np.int))
         weights = list(w[valid_idx])
         delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
-        nest.Connect(srcs, tgts, weights, delays, model=model)
+        param_dict = [ {'p_i' : pi[i_], 'p_j': pj[i_], 'p_ij': pij[i_], 'weight': weights[i_], 'delay': delays[i_]} for i_ in xrange(valid_idx.size)]
+        nest.Connect(srcs, tgts, params=param_dict, model=model)
+#        nest.Connect(srcs, tgts, weights, delays, model=model)
+
+        # set the pi, pj, traces
+#        nest.SetStatus(nest.GetConnections(srcs, tgts, 
 
 
     def connect_mt_to_d2_after_training(self, mpn_net, bg_net, training_params, test_params, model='static_synapse'):
@@ -246,9 +254,8 @@ class CreateConnections(object):
                         pij = cp[0]['p_ij']
                         w = np.log(pij / (pi * pj))
                         w_ = self.clip_weight(w, self.params['clip_weights_mpn_d1'], self.params['weight_threshold_abstract_mpn_d1'])
-                        print 'debug w_', w_, w
                         if w_:
-                            D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
+                            D1_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
                             bias_d1[cp[0]['target']] = cp[0]['bias']
 
         if iteration == None:
@@ -277,7 +284,7 @@ class CreateConnections(object):
                             w = np.log(pij / (pi * pj))
                             w_ = self.clip_weight(w, self.params['clip_weights_mpn_d2'], self.params['weight_threshold_abstract_mpn_d2'])
                             if w_:
-                                D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
+                                D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
                                 bias_d2[cp[0]['target']] = cp[0]['bias']
 
             bias_d2_f = file(self.params['bias_d2_fn_base'] + 'pc%d.json' % self.pc_id, 'w')

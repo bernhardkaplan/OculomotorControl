@@ -44,16 +44,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
-        self.params['n_rf'] = 50
-        self.params['n_v'] = 40
+#        self.params['n_rf'] = 50
+#        self.params['n_v'] = 40
+        self.params['n_rf'] = 20
+        self.params['n_v'] = 10
 
         self.params['training'] = True
         self.params['reward_based_learning'] = True
 
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-        if self.params['reward_based_learning']:
-            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
-                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
+        self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
+#        if self.params['reward_based_learning']:
+#            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
+#                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
         self.params['n_training_x'] = 1 # number of training samples to cover the x-direction of the tuning space
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
@@ -83,12 +85,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
+        self.params['clip_weights_mpn_d2'] = self.params['clip_weights_mpn_d1']
+        self.params['clip_weights_d1_d1'] = True # only for VisualLayer --> D1 weights
         self.params['weight_threshold_abstract_mpn_d1'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
         # if (THRESH, True) --> (abs(x)>thresh, -x) after thresholding abstract weights can contain also negative weights abs(w) > THRESH
         # if (THRESH, False) --> (x > thresh, x) x > 0 after thresholding abstract weights are all positive and > THRESH
-        self.params['clip_weights_mpn_d2'] = self.params['clip_weights_mpn_d1']
         self.params['weight_threshold_abstract_mpn_d2'] = self.params['weight_threshold_abstract_mpn_d1']
-        self.params['clip_weights_d1_d1'] = True # only for VisualLayer --> D1 weights
         self.params['weight_threshold_abstract_d1_d1'] = (.05, True)  # (value for thresholding, absolute_values considered for thresholding)
 
         # For reward-based learning:
@@ -113,7 +115,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['t_iter_training'] = 50
         if self.params['training']:
-            self.params['sim_id'] = 'RB_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            if (self.params['reward_based_learning']):
+                self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
         else:
             self.params['sim_id'] = 'titer_train%d_test%d_vmin%.2f_vmax%.2f' % (self.params['t_iter_training'], self.params['t_iteration'], self.params['v_min_out'], self.params['v_max_out'])
 
@@ -325,9 +329,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
         if self.params['training']:# and not self.params['reward_based_learning']:
             self.params['gain'] = 0.
+            if self.params['reward_based_learning']:
+                self.K = 0. # will be set to 1 during the main learning script
+            else:
+                self.K = 1.
         else:
-            self.params['gain'] = 100.
-        self.K = 1.
+            self.params['gain'] = 1.
+            self.K = 0.
         self.params['kappa'] = self.K
 
 
@@ -365,8 +373,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
                 'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., 
                 'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70., \
+                'K': self.K, 'gain': self.params['gain']}
 #                'g_L': 50., 'C_m':250., 'E_L':-70., 'E_in': -70., \
-                'K': 1., 'gain': self.params['gain']}
         self.params['param_msn_d2'] = self.params['param_msn_d1'].copy()
         # old params for alpha shaped synapses
 #        self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
@@ -582,6 +590,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['tuning_prop_inh_fn'] = self.params['parameters_folder'] + 'tuning_prop_inh.txt'
         self.params['receptive_fields_exc_fn'] = self.params['parameters_folder'] + 'receptive_field_sizes_exc.txt'
         # storage for actions (BG), network states (MPN) and motion parameters (on Retina)
+        self.params['rewards_given_fn'] = self.params['data_folder'] + 'rewards_given.txt' # contains (vx, vy, action_index)
         self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt' # contains (vx, vy, action_index)
         self.params['bg_action_bins_fn'] = self.params['data_folder'] + 'bg_actions_bins.txt'
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
