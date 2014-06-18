@@ -93,7 +93,7 @@ class Plotter(object):
         rnd_gids = range(0, n_cells)
 
         color_code = self.tp[rnd_gids, idx]
-        norm = matplotlib.mpl.colors.Normalize(vmin=color_code.min(), vmax=color_code.max())
+        norm = matplotlib.colors.Normalize(vmin=color_code.min(), vmax=color_code.max())
         m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cm.jet)
         rgba_colors = m.to_rgba(color_code)
         print 'idx', idx
@@ -164,10 +164,10 @@ if __name__ == '__main__':
 
     
     Plotter = Plotter(params)#, it_max=1)
-    Plotter.plot_tuning_prop()
+#    Plotter.plot_tuning_prop()
     Plotter.plot_tuning_space()
-    Plotter.plot_tuning_curves(0)
-    Plotter.plot_tuning_curves(2)
-    Plotter.plot_tuning_width_distribution()
+#    Plotter.plot_tuning_curves(0)
+#    Plotter.plot_tuning_curves(2)
+#    Plotter.plot_tuning_width_distribution()
 
     pylab.show()

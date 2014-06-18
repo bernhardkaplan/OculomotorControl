@@ -58,9 +58,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 
-#        self.params['training'] = False
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(5, 10)
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:

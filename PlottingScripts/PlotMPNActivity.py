@@ -255,6 +255,8 @@ class ActivityPlotter(object):
             stim_range_label = [stim_range[0], stim_range[1]]
             stim_range[0] -= self.params['test_stim_range'][0]
             stim_range[1] -= self.params['test_stim_range'][0]
+        else:
+            stim_range_label = [stim_range[0], stim_range[1]]
         n_stim = stim_range[-1] - stim_range[0]
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
@@ -304,13 +306,14 @@ class ActivityPlotter(object):
         ax.set_xlim((t0, t1))
         ax.plot((t0, t1), (0., 0.), c='k', lw=2, ls=':')
 
-        if self.params['reward_based_learning']:
-            self.plot_reward(ax)
+#        if self.params['training'] and self.params['reward_based_learning']:
+#            self.plot_reward(ax)
 
         output_fig = self.params['figures_folder'] + 'mpn_displacement_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig, dpi=200)
         return (t_axis, x_displacement)
+
 
     def plot_reward(self, ax):
         rewards = np.loadtxt(self.params['rewards_given_fn'])
@@ -565,6 +568,9 @@ class MetaAnalysisClass(object):
             stim_range_label = [stim_range[0], stim_range[1]]
             stim_range[0] -= params['test_stim_range'][0]
             stim_range[1] -= params['test_stim_range'][0]
+        elif stim_range != None:
+            stim_range_label = [stim_range[0], stim_range[1]]
+
         if stim_range != None:
             t_range = [0, 0]
             t_range[0] = stim_range[0] * params['t_iteration'] * params['n_iterations_per_stim']
