@@ -99,15 +99,58 @@ if __name__ == '__main__':
         # K = 0, gain = 1   T E S T I N G 
         # -----------------------------------
         # TODO:
-        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=10.)
-        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=10.)
+        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=gain)
+        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=gain)
         for it in xrange(params['n_iterations_per_stim'] / 2):
             if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
                 stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :])
-                rewards[iteration_cnt] = VI.get_reward()
+            if params['debug_mpn']:
+                print 'Saving spike trains...'
+                save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
+            MT.update_input(stim)
+            if comm != None:
+                comm.Barrier()
+            nest.Simulate(params['t_iteration'])
+            if comm != None:
+                comm.Barrier()
+            state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+            rewards[iteration_cnt] = VI.get_reward_from_perceived_stim(state_)
+            if pc_id == 0:
+                print 'DEBUG Iteration %d\tREWARD: %.2f' % (iteration_cnt, rewards[iteration_cnt])
+            network_states_net[iteration_cnt, :] = state_
+            next_action = BG.get_action() # BG returns the action for the next stimulus
+            actions[iteration_cnt + 1, :] = next_action
+            if params['weight_tracking']:
+                CC.get_weights(MT, BG, iteration=iteration_cnt)
+            if comm != None:
+                comm.Barrier()
+            iteration_cnt += 1
+
+
+#        BG.set_kappa_on(MT.local_idx_exc)
+        VI.current_motion_params = training_stimuli[i_stim, :]
+        # ------------------------------------------
+        # K = Reward, gain = 0, + 'Efference' copy
+        # ------------------------------------------
+        for it in xrange(params['n_iterations_per_stim'] / 2):
+            if pc_id == 0:
+                print 'DEBUG in iteration %d\tsetting K=REWARD = %.2f' % (iteration_cnt, rewards[iteration_cnt - params['n_iterations_per_stim'] / 2])
+            R = rewards[iteraction_cnt - params['n_iterations_per_stim'] / 2]
+            if R > 0:
+                BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=K, gain=gain)
+                BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0, gain=gain)
+            else:
+                BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0, gain=gain)
+                BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=K, gain=gain)
+            if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
+            else:
+                # integrate the real world trajectory and the eye direction and compute spike trains from that
+                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :])
+#                rewards[iteration_cnt] = VI.get_reward()
 
             if params['debug_mpn']:
                 print 'Saving spike trains...'
@@ -130,11 +173,8 @@ if __name__ == '__main__':
                 comm.Barrier()
             iteration_cnt += 1
 
-#        BG.set_kappa_on(MT.local_idx_exc)
-        # ------------------------------------------
-        # K = Reward, gain = 0, + 'Efference' copy
-        # ------------------------------------------
-#        for it in xrange(params['n_iterations_per_stim'] / 2):
+
+
     if pc_id == 0:
         np.savetxt(params['rewards_given_fn'], rewards)
 

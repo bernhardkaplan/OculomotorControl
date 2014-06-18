@@ -44,26 +44,26 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
-#        self.params['n_rf'] = 50
-#        self.params['n_v'] = 40
-        self.params['n_rf'] = 20
-        self.params['n_v'] = 10
+        self.params['n_rf'] = 50
+        self.params['n_v'] = 30
+#        self.params['n_rf'] = 20
+#        self.params['n_v'] = 10
 
-        self.params['training'] = True
-        self.params['reward_based_learning'] = True
+        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['reward_based_learning'] = False
 
-        self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 3            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 1 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 
-#        self.params['training'] = False
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(5, 10)
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
