@@ -306,8 +306,8 @@ class ActivityPlotter(object):
         ax.set_xlim((t0, t1))
         ax.plot((t0, t1), (0., 0.), c='k', lw=2, ls=':')
 
-#        if self.params['training'] and self.params['reward_based_learning']:
-#            self.plot_reward(ax)
+        if self.params['training'] and self.params['reward_based_learning']:
+            self.plot_reward(ax)
 
         output_fig = self.params['figures_folder'] + 'mpn_displacement_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
         print 'Saving figure to:', output_fig

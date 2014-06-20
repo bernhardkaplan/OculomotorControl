@@ -22,6 +22,23 @@ def remove_empty_files(folder):
 #            print 'utils.remove_empty_files: ', rm_cmd
             os.system(rm_cmd)
 
+def remove_files_from_folder(folder):
+    print 'Removing all files from folder:', folder
+    path =  os.path.abspath(folder)
+    cmd = 'rm  %s/*' % path
+    print cmd
+    os.system(cmd)
+
+
+def save_spike_trains(params, iteration, stim_list, gid_list):
+    assert (len(stim_list) == len(gid_list))
+    n_units = len(stim_list)
+    fn_base = params['input_st_fn_mpn']
+    for i_, nest_gid in enumerate(gid_list):
+        if len(stim_list[i_]) > 0:
+            fn = fn_base + '%d_%d.dat' % (iteration, nest_gid - 1)
+            np.savetxt(fn, stim_list[i_])
+
 
 def map_gid_to_action(gid, bg_cell_gids, celltype='d1'):
     """

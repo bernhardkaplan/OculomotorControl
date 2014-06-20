@@ -90,8 +90,8 @@ class BasalGanglia(object):
                     self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
 
         for nactions in range(self.params['n_actions']):
-            self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
             if self.params['record_bg_volt']:
+                self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
                 nest.SetStatus(self.voltmeter_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_volt_fn']+ str(nactions)}])
                 if self.params['with_d2']:
                     self.voltmeter_d2[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
@@ -511,9 +511,9 @@ class BasalGanglia(object):
         """
 
         for i_action in xrange(self.params['n_actions']):
-            nest.SetStatus(nest.GetConnections(source_gids, D1_or_D2[i_action]), {'K': kappa, 'gain': gain})
+            nest.SetStatus(nest.GetConnections(source_gids, D1_or_D2[i_action]), {'K': float(kappa), 'gain': float(gain)})
         for i_action in xrange(self.params['n_actions']):
-            nest.SetStatus(D1_or_D2[i_action], {'K': kappa, 'gain': gain})
+            nest.SetStatus(D1_or_D2[i_action], {'K': float(kappa), 'gain': float(gain)})
 
 
     def get_cell_gids(self, cell_type):
