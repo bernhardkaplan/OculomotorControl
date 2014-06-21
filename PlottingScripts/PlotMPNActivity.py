@@ -262,6 +262,7 @@ class ActivityPlotter(object):
         d = np.loadtxt(self.params['motion_params_fn'])
         it_min = stim_range[0] * self.params['n_iterations_per_stim']
         it_max = (stim_range[-1]) * self.params['n_iterations_per_stim']
+        print 'debug stim_range:', stim_range, 'it min max', it_min, it_max
         t_axis = d[it_min:it_max, 4]
         t_axis += .5 * self.params['t_iteration']
         x_displacement = d[it_min:it_max, 0] - .5
@@ -279,16 +280,22 @@ class ActivityPlotter(object):
             it_stop_stim = (stim + 1) * self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']
             x_displacement_stim = d[it_start_stim:it_stop_stim, 0] - .5
             print 'x_displacement_stim:', x_displacement_stim, self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']# - 1
+            print 't_axis:', t_axis
 #            if n_stim == 1:
 #                for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']):
 #                    it_1 = it_ 
 #                    it_2 = it_ + 2
 #                    p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], 'o', ms=5, c=c)
 #            else:
+
             for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations'] - 1):
                 it_1 = it_ + stim * self.params['n_iterations_per_stim']
                 it_2 = it_ + stim * self.params['n_iterations_per_stim'] + 2
+                print 'debug it_ ', it_1, it_2, '\tt_axis:', t_axis[it_1:it_2], x_displacement_stim[it_1:it_2]
+                print 'debug x_displ stim', x_displacement_stim
+                print 'debug x_displ ', x_displacement
                 p1, = ax.plot(t_axis[it_1:it_2], x_displacement[it_1:it_2], lw=lw, c=c)
+#                p1, = ax.plot(t_axis[it_1:it_2], x_displacement_stim[it_1:it_2], lw=lw, c=c)
 
         if self.params['training']:
             if self.params['reward_based_learning']:
@@ -303,12 +310,15 @@ class ActivityPlotter(object):
         ax.set_ylabel('Retinal displacement (x-dim)')
         t0 = it_min * self.params['t_iteration']
         t1 = it_max * self.params['t_iteration']
-        ax.set_xlim((t0, t1))
         ax.plot((t0, t1), (0., 0.), c='k', lw=2, ls=':')
 
         if self.params['training'] and self.params['reward_based_learning']:
-            self.plot_reward(ax)
+            try:
+                self.plot_reward(ax)
+            except:
+                print '\nPlotMPNActivity failed to plot rewards!\n File %s exists?\n\t%s\n' % (self.params['rewards_given_fn'], os.path.exists(self.params['rewards_given_fn']))
 
+        ax.set_xlim((t0, t1))
         output_fig = self.params['figures_folder'] + 'mpn_displacement_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig, dpi=200)
@@ -319,6 +329,8 @@ class ActivityPlotter(object):
         rewards = np.loadtxt(self.params['rewards_given_fn'])
         ax2 = ax.twinx()
         ms_min = 2
+        ms_max = 20.
+        reward_max = np.max(rewards)
         for i_ in xrange(rewards.size):
             if rewards[i_] > 0:
                 c = 'r'
@@ -328,7 +340,7 @@ class ActivityPlotter(object):
                 c = 'b'
                 s = 'v'
                 fillstyle = 'full' #'none'
-            ms = np.abs(np.round(rewards[i_] / 10. * 30.)) + ms_min
+            ms = np.abs(np.round(rewards[i_] / reward_max * ms_max)) + ms_min
             print 'rewards i_ markersize', rewards[i_], i_, ms
             ax2.plot(i_ * self.params['t_iteration'] + .5 * self.params['t_iteration'], rewards[i_], s, markersize=ms, c=c, fillstyle=fillstyle)
 
@@ -347,21 +359,25 @@ class ActivityPlotter(object):
         else:
             t_scale = 1
         
-        actions_taken = np.loadtxt(params['actions_taken_fn'])
-        for i_stim in xrange(params['n_stim']):
-            t0 = i_stim * params['n_iterations_per_stim'] * t_scale
-            ax.plot((t0, t0), (ymin, ymax), ls='-', lw=2, c='k')
-            if show_iterations:
-                for it_ in xrange(params['n_iterations_per_stim']):
-                    t0 = it_ * t_scale + i_stim * params['n_iterations_per_stim'] * t_scale
-                    ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
-                    ax.annotate(str(it_cnt), xy=(t0 + .45 * t_scale, ymin + (ymax - ymin) * .05))
+        try:
+            actions_taken = np.loadtxt(params['actions_taken_fn'])
+            for i_stim in xrange(params['n_stim']):
+                t0 = i_stim * params['n_iterations_per_stim'] * t_scale
+                ax.plot((t0, t0), (ymin, ymax), ls='-', lw=2, c='k')
+                if show_iterations:
+                    for it_ in xrange(params['n_iterations_per_stim']):
+                        t0 = it_ * t_scale + i_stim * params['n_iterations_per_stim'] * t_scale
+                        ax.plot((t0, t0), (ymin, ymax), ls='-.', c='k')
+                        ax.annotate(str(it_cnt), xy=(t0 + .45 * t_scale, ymin + (ymax - ymin) * .05))
 
-                    it_idx = it_ + i_stim * params['n_iterations_per_stim'] + 1 # + 1 because the first row stores the 'initial action'
-                    action = actions_taken[it_idx, 2]
-                    if not np.isnan(action) != 0.:
-                        ax.annotate('%.1f' % (action), xy=(t0 + .2 * t_scale, ymin + (ymax - ymin) * .95), color='r', fontsize=8)
-                    it_cnt += 1
+                        it_idx = it_ + i_stim * params['n_iterations_per_stim'] + 1 # + 1 because the first row stores the 'initial action'
+                        action = actions_taken[it_idx, 2]
+                        if not np.isnan(action) != 0.:
+                            ax.annotate('%.1f' % (action), xy=(t0 + .2 * t_scale, ymin + (ymax - ymin) * .95), color='r', fontsize=8)
+                        it_cnt += 1
+        except:
+            print 'PlotMPNActivity: Failed to plot_vertical_lines!\nFile %s exists:\n\t%s' % (params['actions_taken_fn'], os.path.exists(params['actions_taken_fn']))
+
 
 
     def plot_raster_sorted(self, title='', cell_type='exc', sort_idx=0, t_range=None):

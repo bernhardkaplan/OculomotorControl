@@ -64,7 +64,6 @@ class MotionPrediction(object):
                     nest.Install('pt_module')
                 except:
                     nest.Install('pt_module')
-                print '\n\n DEBU \n', nest.Models()
                 #nest.sr('(/home/bernhard/workspace/BCPNN-Module/share/nest/sli) addpath')
 #                nest.Install('/home/bernhard/workspace/BCPNN-Module/build-module-100725/pt_module')
                 #nest.Install('/home/bernhard/Downloads/install-nest-2.2.2/lib/nest/pt_module')
@@ -168,7 +167,7 @@ class MotionPrediction(object):
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
-            gids_spiked = np.unique(new_event_gids) - 1
+            gids_spiked = np.unique(new_event_gids)# - 1
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
@@ -179,17 +178,17 @@ class MotionPrediction(object):
         return stim_params_readout
 
 
-    def readout_spiking_activity(self, tuning_prop, nest_gids, nspikes):
+    def readout_spiking_activity(self, tuning_prop, gids, nspikes):
 
-        if len(nest_gids) == 0:
+        if len(gids) == 0:
             print '\nWARNING:\n\tNo spikes on core %d emitted!!!\n\tMotion Prediction Network was silent!\nReturning nonevalid stimulus prediction\n' % (self.pc_id)
             return [0, 0, 0, 0]
 
         confidence = nspikes / float(nspikes.sum())
         n_dim = tuning_prop[0, :].size
         prediction = np.zeros(n_dim)
-        for i_, nest_gid in enumerate(nest_gids):
-            gid = nest_gid - 1
+        for i_, gid in enumerate(gids):
+#            gid = gid# - 1
             prediction += tuning_prop[gid, :] * confidence[i_]
         return prediction
 

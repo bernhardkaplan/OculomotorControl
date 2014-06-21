@@ -12,9 +12,10 @@ for fn in sys.argv[1:]:
     data = pylab.loadtxt(fn)
 
     if (data.ndim == 1):
-        x_axis = numpy.arange(data.size)
+#        x_axis = numpy.arange(data.size)
     #    pylab.plot(x_axis, data)
-        pylab.scatter(x_axis, data)
+#        pylab.scatter(x_axis, data)
+        pylab.plot(data[1], data[0], 'o', markersize=1, color='k')
     else:
     #    pylab.scatter(data[:,0], data[:,1])
         pylab.plot(data[:,1], data[:,0], 'o', markersize=1, color='k')

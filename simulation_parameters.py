@@ -57,7 +57,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 1 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_x'] = 2 # number of training samples to cover the x-direction of the tuning space
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
@@ -69,10 +69,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
+        self.params['n_silent_iterations'] = 2 # for 2 silent iterations this should be 3
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['n_iterations_per_stim'] = 2 * (2 + self.params['n_silent_iterations'])
+                self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations'])
             else:
                 # 'open-loop': 
                 self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations'] 

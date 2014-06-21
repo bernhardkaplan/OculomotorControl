@@ -95,15 +95,12 @@ if __name__ == '__main__':
         VI.current_motion_params = training_stimuli[i_stim, :]
         for it in xrange(params['n_iterations_per_stim']):
 
-#            if it == params['n_iterations_per_stim'] - 1:
             if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
-#                stim, supervisor_state = VI.set_empty_input(MT.exc_pop)
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
                 # and get the state information BEFORE MPN perceives anything
                 # in order to set a supervisor signal
-#                stim, supervisor_state = VI.compute_input(MT.exc_pop, actions[iteration_cnt, :], v_eye, network_states_net[iteration_cnt, :])
                 stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], network_states_net[iteration_cnt, :])
 
             #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
@@ -113,19 +110,15 @@ if __name__ == '__main__':
 
             if params['debug_mpn']:
                 print 'Saving spike trains...'
-#                save_spike_trains(params, iteration_cnt, stim, MT.exc_pop)
                 save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
 
-#            print 'debug iteration %d stim' % (iteration_cnt), stim
             MT.update_input(stim) # run the network for some time 
             if comm != None:
                 comm.Barrier()
             nest.Simulate(params['t_iteration'])
             if comm != None:
                 comm.Barrier()
-
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-
             if pc_id == 0:
                 print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
             network_states_net[iteration_cnt, :] = state_

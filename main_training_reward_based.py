@@ -36,6 +36,9 @@ class RewardBasedLearning(object):
             exit(1)
         self.RNG = np.random
         self.RNG.seed(self.params['visual_stim_seed'])
+        self.motion_params = np.zeros((self.params['n_iterations'], 5))  # + 1 dimension for the time axis
+        self.stim_cnt = 0
+        self.iteration_cnt = 0
 
     def create_networks(self):
         self.VI = VisualInput.VisualInput(self.params, comm=self.comm)
@@ -43,6 +46,45 @@ class RewardBasedLearning(object):
         self.VI.set_pc_id(pc_id)
         self.BG = BasalGanglia.BasalGanglia(self.params, self.comm)
         self.CC = CreateConnections.CreateConnections(self.params, self.comm)
+
+
+    def run_doing_action(self, stim_params, action, K=0, gain=1.):
+        """
+        """
+        self.VI.current_motion_params = stim_params
+        stim, supervisor_state = self.VI.compute_input_open_loop(self.MT.local_idx_exc)
+        self.MT.update_input(stim) # run the network for some time 
+        nest.Simulate(self.params['t_iteration'])
+        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+        if pc_id == 0:
+            print 'DEBUG Iteration %d\tstate ' % (self.iteration_cnt), state_
+        if self.stim_cnt == 0:
+            self.rewards[self.iteration_cnt] = self.VI.get_reward_from_perceived_stim(state_)
+        self.network_states[self.iteration_cnt, :] = state_
+        action_ = [action, 0]
+        self.iteration_cnt += 1
+
+        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, action_)
+        self.actions_taken[self.iteration_cnt, :] = [action, 0., self.action_indices[self.stim_cnt]]
+        self.MT.update_input(stim) # run the network for some time 
+        nest.Simulate(self.params['t_iteration'])
+        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+        if pc_id == 0:
+            print 'DEBUG Iteration %d\tstate ' % (self.iteration_cnt), state_
+        self.rewards[self.iteration_cnt] = self.VI.get_reward_from_perceived_stim(state_)
+        self.network_states[self.iteration_cnt, :] = state_
+        self.iteration_cnt += 1
+
+        for i_ in xrange(self.params['n_silent_iterations']):
+            stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
+            self.BG.set_empty_input()
+            nest.Simulate(self.params['t_iteration'])
+#            state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+#            self.rewards[self.iteration_cnt] = self.VI.get_reward_from_perceived_stim(state_)
+#            self.network_states[self.iteration_cnt, :] = state_
+            self.iteration_cnt += 1
+
+        self.stim_cnt += 1
 
 
     def test_non_optimal_action(self, training_stimuli, i_stim=0):
@@ -54,27 +96,38 @@ class RewardBasedLearning(object):
         to trigger the non-optimal action.
         K = 0, gain > 0
         """
-        supervisor_states, action_indices, motion_params_precomputed = self.VI.get_supervisor_actions(training_stimuli, self.BG)
 
-        for i_ in xrange(training_stimuli[:, 0].size):
-            print 'i_', i_
-            print 'training_stimuli:', training_stimuli[i_, :]
-            print 'supervisor_states', supervisor_states[i_]
-            print 'action_indices', action_indices
+        actions_taken = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
+#        for i_ in xrange(training_stimuli[:, 0].size):
+#            print 'i_', i_
+#            print 'training_stimuli:', training_stimuli[i_, :]
+#            print 'supervisor_states', supervisor_states[i_]
+#            print 'action_indices', action_indices
 
 #        plus_minus = utils.get_plus_minus(self.RNG)
         non_optimal_action = action_indices[0] - 1
         vx = self.BG.action_bins_x[non_optimal_action]
         action_ = (vx, 0, non_optimal_action)
         print 'Choosing to do:', action_, 'index:', non_optimal_action
+        actions_taken[0, :] = non_optimal_action
     
+        # update Visual input
         self.VI.current_motion_params = training_stimuli[i_stim, :]
+        self.motion_params[self.VI.iteration, :4] = self.VI.current_motion_params # store the current motion parameters before they get updated
+        self.motion_params[self.VI.iteration, -1] = self.VI.t_current
         stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, action_)
+
         self.MT.update_input(stim) # run the network for some time 
         print 'supervisor_state:', supervisor_state
-        active_mpn_neurons = list(np.nonzero(np.array(stim))[0] + 1) # + 1 because NEST gids start at 1
-        print 'active_mpn_neurons:', active_mpn_neurons
-
+        idx = np.nonzero(np.array(stim))[0]
+#        print 'debug idx:', idx, type(idx)
+#        print 'debug type local_idx_exc', type(self.MT.local_idx_exc)
+        if len(idx) > 0:
+            print 'debug gids:', np.array(self.MT.local_idx_exc)[idx], pc_id
+            active_mpn_neurons = list(np.array(self.MT.local_idx_exc)[idx])
+        else:
+            active_mpn_neurons = []
+        print 'active_mpn_neurons:', active_mpn_neurons, type(active_mpn_neurons), pc_id
 
         w_dummy = 100.
         tgt_pop = self.BG.strD1[non_optimal_action]
@@ -85,21 +138,29 @@ class RewardBasedLearning(object):
         self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD2, kappa=0., gain=gain)
         syn_params = {'p_ij' : np.exp(w_dummy / gain) * self.params['bcpnn_init_pi']**2, 'p_i': self.params['bcpnn_init_pi'], \
                 'p_j': self.params['bcpnn_init_pi'], 'weight': w_dummy, 'K': 0., 'gain':gain}
-        nest.SetStatus(nest.GetConnections(active_mpn_neurons, tgt_pop), syn_params)
-#        print 'Stim:', stim
-        print ' debug', nest.GetConnections(active_mpn_neurons, tgt_pop)
-        print ' debug', nest.GetStatus(nest.GetConnections(active_mpn_neurons, tgt_pop))
+        if len(active_mpn_neurons) > 0:
+            conn_buffer = nest.GetConnections(active_mpn_neurons, tgt_pop)
+            if conn_buffer != None:
+                for c in conn_buffer:
+                    cp = nest.GetStatus([c])
+                    print 'cp:', cp
+                    if cp[0]['synapse_model'] == 'bcpnn_synapse':
+    #        print 'debug connbuffer:', conn_buffer
+                        nest.SetStatus(conn_buffer, syn_params)
+    #        print 'Stim:', stim
+#            print ' debug', nest.GetConnections(active_mpn_neurons, tgt_pop)
+#            print ' debug', nest.GetStatus(nest.GetConnections(active_mpn_neurons, tgt_pop))
         if self.comm != None:
             self.comm.Barrier()
         nest.Simulate(3 * params['t_iteration'])
-        print ' debug', nest.GetStatus(nest.GetConnections(active_mpn_neurons, tgt_pop))
+#        print ' debug', nest.GetStatus(nest.GetConnections(active_mpn_neurons, tgt_pop))
+
 #        nest.Simulate(params['t_iteration'])
 #        nest.Simulate(params['t_iteration'])
 #        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, actions[iteration_cnt, :])
         # choose a non-optimal action
 #        all_actions = range(self.params['n_actions'])
 #        all_actions.remove(action_indices[0])
-
 
     def test_optimal_action(self):
         """
@@ -117,6 +178,30 @@ class RewardBasedLearning(object):
         pass
 
 
+    def set_up_data_structures(self):
+        # data structures for recording
+        self.network_states = np.zeros((params['n_iterations'], 4))  # readout from the visual layer
+        self.actions_taken = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
+        self.training_stimuli = RBL.VI.create_training_sequence_iteratively()
+        self.supervisor_states, self.action_indices, self.motion_params_precomputed = self.VI.get_supervisor_actions(self.training_stimuli, self.BG)
+        self.rewards = np.zeros(params['n_iterations'])
+
+
+    def save_data_structures(self):
+        if pc_id == 0:
+            utils.remove_empty_files(self.params['connections_folder'])
+            utils.remove_empty_files(self.params['spiketimes_folder'])
+            np.savetxt(self.params['supervisor_states_fn'], self.supervisor_states)
+            np.savetxt(self.params['action_indices_fn'], self.action_indices, fmt='%d')
+            np.savetxt(self.params['actions_taken_fn'], self.actions_taken)
+            np.savetxt(self.params['motion_params_precomputed_fn'], self.motion_params_precomputed)
+            np.savetxt(self.params['network_states_fn'], self.network_states)
+            np.savetxt(self.params['rewards_given_fn'], self.rewards)
+            np.savetxt(params['motion_params_fn'], self.VI.motion_params)
+
+    if comm != None:
+        comm.Barrier()
+
 if __name__ == '__main__':
 
     t1 = time.time()
@@ -132,23 +217,31 @@ if __name__ == '__main__':
         comm.Barrier()
 
     t0 = time.time()
-    RBL = RewardBasedLearning(params, comm)
 
+
+
+    RBL = RewardBasedLearning(params, comm)
 #    if params['load_mpn_d1_weights'] or params['load_mpn_d2_weights']:
 #        assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
 #        training_folder = os.path.abspath(sys.argv[1]) 
 #        training_params = utils.load_params(training_folder)
 
     RBL.create_networks()
-    training_stimuli = RBL.VI.create_training_sequence_iteratively()
-    RBL.test_non_optimal_action(training_stimuli)
-    RBL.test_optimal_action()
-    RBL.train_efference_copy()
+    RBL.set_up_data_structures()
+    for i_stim in xrange(params['n_stim']):
+        stim_params = RBL.training_stimuli[i_stim, :]
+        action = RBL.supervisor_states[i_stim][0]
+        RBL.run_doing_action(stim_params, action)
 
-    if pc_id == 0:
-        utils.remove_empty_files(params['connections_folder'])
-        utils.remove_empty_files(params['spiketimes_folder'])
-    exit(1)
+    RBL.save_data_structures()
+#    exit(1)
+#        np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
+    
+
+#    RBL.test_non_optimal_action(training_stimuli[:, 0])
+#    RBL.test_optimal_action()
+#    RBL.train_efference_copy()
+
 
 #    CC.connect_mt_to_bg(MT, BG)
 #    if params['load_mpn_d1_weights']:
@@ -158,17 +251,11 @@ if __name__ == '__main__':
 #    CC.connect_mt_to_bg_random(MT, BG.strD1, params)
 #    CC.connect_mt_to_bg_random(MT, BG.strD2, params)
 
-    actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
-    network_states_net = np.zeros((params['n_iterations'], 4))
-    iteration_cnt = 0
+#    iteration_cnt = 0
 #    training_stimuli = VI.create_training_sequence_from_a_grid()
 
 #    exit(1)
-#    np.savetxt(params['supervisor_states_fn'], supervisor_states)
-#    np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
-#    np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
-    
-    rewards = np.zeros(params['n_stim_training'] * params['n_iterations_per_stim'])
+
 
     """
     gain = 1.
@@ -256,7 +343,6 @@ if __name__ == '__main__':
                 comm.Barrier()
             iteration_cnt += 1
 
-    """
 
 
     if pc_id == 0:
@@ -277,7 +363,6 @@ if __name__ == '__main__':
     if pc_id == 0:
         np.savetxt(params['actions_taken_fn'], actions)
         np.savetxt(params['network_states_fn'], network_states_net)
-        np.savetxt(params['motion_params_fn'], VI.motion_params)
 
         utils.remove_empty_files(params['connections_folder'])
         utils.remove_empty_files(params['spiketimes_folder'])
@@ -288,3 +373,4 @@ if __name__ == '__main__':
     if comm != None:
         comm.barrier()
 
+    """
