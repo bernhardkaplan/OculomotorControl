@@ -57,8 +57,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 2 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 

@@ -84,7 +84,8 @@ if __name__ == '__main__':
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
     iteration_cnt = 0
-    training_stimuli = VI.create_training_sequence_iteratively()
+#    training_stimuli = VI.create_training_sequence_iteratively()
+    training_stimuli = VI.create_training_sequence_from_a_grid()
 
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
     print 'supervisor_states:', supervisor_states
@@ -92,7 +93,6 @@ if __name__ == '__main__':
     np.savetxt(params['supervisor_states_fn'], supervisor_states)
     np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
-#    training_stimuli = VI.create_training_sequence_from_a_grid()
 
     print 'quit'
     exit(1)
