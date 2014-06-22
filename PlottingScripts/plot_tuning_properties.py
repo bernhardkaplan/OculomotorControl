@@ -55,6 +55,8 @@ class Plotter(object):
         ax4.bar(bins[:-1], cnt, width=bins[1]-bins[0])
 
 
+
+
     def plot_tuning_space(self):
 
         fig = pylab.figure()
@@ -74,7 +76,7 @@ class Plotter(object):
 #        ax.set_ylim((-3, 3))
         output_fn = self.params['figures_folder'] + 'tuning_space.png'
         print 'Saving to:', output_fn
-        pylab.savefig(output_fn)
+        pylab.savefig(output_fn, dpi=200)
 
 
 
@@ -145,6 +147,53 @@ class Plotter(object):
         # for all gid: mpatches.Ellipse(self, xy, width, height, angle=0.0, **kwargs)
 
 
+    def plot_relative_pos_error(self):
+        x = np.around(np.unique(np.abs(.5 - np.sort(self.tp[:, 0]))), decimals=4)
+        print 'x unique', x
+        diff = x[1:] - x[:-1]
+        rel_diff = diff / x[1:]
+        print 'diff', diff
+        print 'rel_diff', rel_diff
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(range(rel_diff.size), rel_diff)
+
+
+    def plot_relative_v_error(self):
+        x = np.around(np.unique(self.tp[:, 2]), decimals=4)
+        print 'x unique', x
+        diff = x[1:] - x[:-1]
+        rel_diff = diff / x[1:]
+        print 'diff', diff
+        print 'rel_diff', rel_diff
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(range(rel_diff.size), rel_diff)
+
+
+    def plot_rf_size_vs_pos(self):
+
+        x = self.tp[:, 0]
+        y = self.rfs[:, 0]
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(x, y, 'o', markersize=5)
+        ax.set_title('Receptive field sizes for position')
+        ax.set_xlabel('RF_x position')
+        ax.set_ylabel('RF_x size')
+
+
+    def plot_rf_size_vs_speed(self):
+
+        x = self.tp[:, 2]
+        y = self.rfs[:, 2]
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(x, y, 'o', markersize=5)
+        ax.set_title('Receptive field sizes for speed')
+        ax.set_xlabel('RF_v position')
+        ax.set_ylabel('RF_v size')
+
 
 if __name__ == '__main__':
 
@@ -169,5 +218,10 @@ if __name__ == '__main__':
 #    Plotter.plot_tuning_curves(0)
 #    Plotter.plot_tuning_curves(2)
 #    Plotter.plot_tuning_width_distribution()
+
+#    Plotter.plot_rf_size_vs_pos()
+#    Plotter.plot_rf_size_vs_speed()
+#    Plotter.plot_relative_pos_error()
+#    Plotter.plot_relative_v_error()
 
     pylab.show()

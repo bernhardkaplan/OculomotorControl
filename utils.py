@@ -22,6 +22,23 @@ def remove_empty_files(folder):
 #            print 'utils.remove_empty_files: ', rm_cmd
             os.system(rm_cmd)
 
+def remove_files_from_folder(folder):
+    print 'Removing all files from folder:', folder
+    path =  os.path.abspath(folder)
+    cmd = 'rm  %s/*' % path
+    print cmd
+    os.system(cmd)
+
+
+def save_spike_trains(params, iteration, stim_list, gid_list):
+    assert (len(stim_list) == len(gid_list))
+    n_units = len(stim_list)
+    fn_base = params['input_st_fn_mpn']
+    for i_, nest_gid in enumerate(gid_list):
+        if len(stim_list[i_]) > 0:
+            fn = fn_base + '%d_%d.dat' % (iteration, nest_gid - 1)
+            np.savetxt(fn, stim_list[i_])
+
 
 def map_gid_to_action(gid, bg_cell_gids, celltype='d1'):
     """
@@ -478,6 +495,87 @@ def filter_connection_list(d):
     """
     valid_idx = (d[:, 2] != 0).nonzero()[0]
     return d[valid_idx, :]
+
+
+
+def get_xpos_log_distr(params, n_x, x_min=1e-6, x_max=.5):
+    """
+    Returns the n_hc positions
+    n_x = params['n_mc_per_hc']
+    x_min = params['rf_x_center_distance']
+    x_max = .5 - params['xpos_hc_0']
+    """
+    logscale = params['log_scale']
+    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2, base=logscale)
+    logspace = list(logspace)
+    logspace.reverse()
+    x_lower = .5 - np.array(logspace)
+    
+    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2, base=logscale)
+    x_upper =  logspace + .5
+    x_rho = np.zeros(n_x)
+    x_rho[:n_x/2] = x_lower
+    x_rho[n_x/2:] = x_upper
+    return x_rho
+
+
+def get_receptive_field_sizes_x(params, rf_x):
+#    print 'rf_x', rf_x
+    idx = np.argsort(rf_x)
+    rf_size_x = np.zeros(rf_x.size)
+    pos_idx = (rf_x[idx] > 0.5).nonzero()[0]
+    neg_idx = (rf_x[idx] < 0.5).nonzero()[0]
+    dx_pos_half = np.zeros(pos_idx.size)
+    dx_neg_half = np.zeros(neg_idx.size)
+    dx_pos_half = rf_x[idx][pos_idx][1:] - rf_x[idx][pos_idx][:-1]
+    dx_neg_half = rf_x[idx][neg_idx][1:] - rf_x[idx][neg_idx][:-1]
+#    print 'rf_x[idx][pos_idx]', rf_x[idx][pos_idx]
+#    print 'rf_x[idx][neg_idx]', rf_x[idx][neg_idx]
+#    print 'dx_pos_half', dx_pos_half
+#    print 'dx_neg_half', dx_neg_half
+#    print 'pos_idx', pos_idx
+#    print 'idx', idx
+    rf_size_x[:neg_idx.size-1] = dx_neg_half
+    rf_size_x[neg_idx.size] = dx_neg_half[-1]
+    rf_size_x[pos_idx.size+1:] = dx_pos_half
+    rf_size_x[pos_idx.size] = dx_pos_half[0]
+    rf_size_x[idx.size / 2 - 1] = dx_pos_half[0]
+    rf_size_x *= params['rf_size_x_multiplicator']
+#    print 'rf_size_x', rf_size_x
+    return rf_size_x
+
+
+def get_receptive_field_sizes_v(params, rf_v):
+
+#    print 'rf_v', rf_v
+    idx = np.argsort(rf_v)
+    rf_size_v = np.zeros(rf_v.size)
+    pos_idx = (rf_v[idx] > 0.0).nonzero()[0]
+    neg_idx = (rf_v[idx] < 0.0).nonzero()[0]
+    dv_pos_half = np.zeros(pos_idx.size)
+    dv_neg_half = np.zeros(neg_idx.size)
+    dv_pos_half = rf_v[idx][pos_idx][1:] - rf_v[idx][pos_idx][:-1]
+    dv_neg_half = np.abs(rf_v[idx][neg_idx][1:] - rf_v[idx][neg_idx][:-1])
+#    print 'rf_v[idx][pos_idx]', rf_v[idx][pos_idx]
+#    print 'rf_v[idx][neg_idx]', rf_v[idx][neg_idx]
+#    print 'dv_pos_half', dv_pos_half
+#    print 'dv_neg_half', dv_neg_half
+#    print 'pos_idx', pos_idx
+#    print 'idx', idx
+    dv_neg_reverse = list(dv_neg_half)
+    dv_neg_reverse.reverse()
+    rf_size_v[:neg_idx.size-1] = dv_neg_reverse
+    rf_size_v[pos_idx.size+1:] = dv_pos_half
+    rf_size_v[pos_idx.size] = dv_pos_half[0]
+    rf_size_v[idx.size / 2 - 1] = dv_neg_half[0]
+
+    rf_size_v *= params['rf_size_v_multiplicator']
+    #print 'rf_size_v', rf_size_v
+    return rf_size_v
+
+
+
+
 
 
 #def get_neurons_active(params, d, stim, it='all'):

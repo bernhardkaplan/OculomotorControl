@@ -221,6 +221,9 @@ if __name__ == '__main__':
             stim_range = (int(sys.argv[2]), int(sys.argv[3]))
             params = utils.load_params(folder_name)
             run_plot_bg(params, stim_range)
+            for i_stim in xrange(stim_range[0], stim_range[1]):
+                run_plot_bg(params, (i_stim, i_stim + 1))
+
         else:
             for fn in sys.argv[1:]:
                 params = utils.load_params(fn)

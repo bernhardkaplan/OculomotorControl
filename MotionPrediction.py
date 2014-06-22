@@ -33,13 +33,14 @@ class MotionPrediction(object):
 
         self.setup_synapse_types()
         self.create_exc_network()
-        self.create_inh_network()
-#        self.connect_exc_inh() # not to be done at the moment
+        if self.params['with_inh_mpn']:
+            self.create_inh_network()
+            self.connect_exc_inh() # not to be done at the moment
         self.connect_noise()
         self.record_voltages(self.params['gids_to_record_mpn'])
 
         print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
-        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
+#        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
 
         self.t_current = 0
         self.write_cell_gids_to_file()
@@ -64,7 +65,6 @@ class MotionPrediction(object):
                     nest.Install('pt_module')
                 except:
                     nest.Install('pt_module')
-                print '\n\n DEBU \n', nest.Models()
                 #nest.sr('(/home/bernhard/workspace/BCPNN-Module/share/nest/sli) addpath')
 #                nest.Install('/home/bernhard/workspace/BCPNN-Module/build-module-100725/pt_module')
                 #nest.Install('/home/bernhard/Downloads/install-nest-2.2.2/lib/nest/pt_module')
@@ -139,18 +139,19 @@ class MotionPrediction(object):
 
         self.noise_exc_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # exc noise targeting exc
         self.noise_inh_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # inh -> exc
-        self.noise_exc_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # exc -> inh
-        self.noise_inh_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # inh -> inh
-
         nest.SetStatus(self.noise_exc_exc, {'rate': self.params['f_noise_exc']})
         nest.SetStatus(self.noise_inh_exc, {'rate': self.params['f_noise_inh']})
-        nest.SetStatus(self.noise_exc_inh, {'rate': self.params['f_noise_exc']})
-        nest.SetStatus(self.noise_inh_inh, {'rate': self.params['f_noise_inh']})
-
         nest.Connect(self.noise_exc_exc, self.exc_pop, self.params['w_noise_exc'], self.params['dt'])
         nest.Connect(self.noise_inh_exc, self.exc_pop, self.params['w_noise_inh'], self.params['dt'])
-        nest.Connect(self.noise_exc_inh, self.inh_pop, self.params['w_noise_exc'], self.params['dt'])
-        nest.Connect(self.noise_inh_inh, self.inh_pop, self.params['w_noise_inh'], self.params['dt'])
+
+        if self.params['with_inh_mpn']:
+            self.noise_exc_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # exc -> inh
+            self.noise_inh_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # inh -> inh
+            nest.SetStatus(self.noise_exc_inh, {'rate': self.params['f_noise_exc']})
+            nest.SetStatus(self.noise_inh_inh, {'rate': self.params['f_noise_inh']})
+            nest.Connect(self.noise_exc_inh, self.inh_pop, self.params['w_noise_exc'], self.params['dt'])
+            nest.Connect(self.noise_inh_inh, self.inh_pop, self.params['w_noise_inh'], self.params['dt'])
+
 
 
 
@@ -168,7 +169,7 @@ class MotionPrediction(object):
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
-            gids_spiked = np.unique(new_event_gids) - 1
+            gids_spiked = np.unique(new_event_gids)# - 1
             nspikes = np.zeros(len(new_event_gids))
             for i_, gid in enumerate(new_event_gids):
                 nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
@@ -179,17 +180,17 @@ class MotionPrediction(object):
         return stim_params_readout
 
 
-    def readout_spiking_activity(self, tuning_prop, nest_gids, nspikes):
+    def readout_spiking_activity(self, tuning_prop, gids, nspikes):
 
-        if len(nest_gids) == 0:
+        if len(gids) == 0:
             print '\nWARNING:\n\tNo spikes on core %d emitted!!!\n\tMotion Prediction Network was silent!\nReturning nonevalid stimulus prediction\n' % (self.pc_id)
             return [0, 0, 0, 0]
 
         confidence = nspikes / float(nspikes.sum())
         n_dim = tuning_prop[0, :].size
         prediction = np.zeros(n_dim)
-        for i_, nest_gid in enumerate(nest_gids):
-            gid = nest_gid - 1
+        for i_, gid in enumerate(gids):
+#            gid = gid# - 1
             prediction += tuning_prop[gid, :] * confidence[i_]
         return prediction
 
@@ -226,7 +227,8 @@ class MotionPrediction(object):
     def write_cell_gids_to_file(self):
         d = {}
         d['exc'] = self.exc_pop
-        d['inh'] = self.inh_pop
+        if self.params['with_inh_mpn']:
+            d['inh'] = self.inh_pop
         output_fn = self.params['mpn_gids_fn']
         print 'Writing cell_gids to:', output_fn
         f = file(output_fn, 'w')

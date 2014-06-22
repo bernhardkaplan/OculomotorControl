@@ -11,6 +11,7 @@ import numpy as np
 import time
 import os
 import utils
+import random
 
 try: 
     from mpi4py import MPI
@@ -84,7 +85,18 @@ if __name__ == '__main__':
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
     iteration_cnt = 0
-    training_stimuli = VI.create_training_sequence_iteratively()
+#    training_stimuli = VI.create_training_sequence_iteratively()
+#    training_stimuli = VI.create_training_sequence_from_a_grid()
+
+    training_stimuli_sample = VI.create_training_sequence_iteratively()
+    training_stimuli_grid = VI.create_training_sequence_from_a_grid()
+    training_stimuli = np.zeros((params['n_stim_training'], 4))
+    n_grid = int(np.round(params['n_stim_training'] * params['frac_training_samples_from_grid']))
+#    print 'debug n_grid', n_grid, params['n_stim_training'], training_stimuli_grid.shape, training_stimuli_sample.shape
+    random.seed(params['visual_stim_seed'])
+    training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(params['n_stim_training']), n_grid), :]
+    training_stimuli[n_grid:, :] = training_stimuli_sample[random.sample(range(params['n_stim_training']), params['n_stim_training'] - n_grid), :]
+    np.savetxt(params['training_sequence_fn'], training_stimuli)
 
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
     print 'supervisor_states:', supervisor_states
@@ -92,7 +104,6 @@ if __name__ == '__main__':
     np.savetxt(params['supervisor_states_fn'], supervisor_states)
     np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
-#    training_stimuli = VI.create_training_sequence_from_a_grid()
 
     print 'quit'
     exit(1)

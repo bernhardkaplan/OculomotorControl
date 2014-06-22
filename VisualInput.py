@@ -23,8 +23,11 @@ class VisualInput(object):
 
         self.supervisor_state = [0., 0.]
         self.tuning_prop_exc = self.set_tuning_prop('exc')
-        self.tuning_prop_inh = self.set_tuning_prop('inh')
-        self.rf_sizes = self.set_receptive_fields('exc')
+        if self.params['with_inh_mpn']:
+            self.tuning_prop_inh = self.set_tuning_prop('inh')
+
+#        self.rf_sizes = self.set_receptive_fields('exc')
+
         self.comm = comm
         if self.comm != None:
             self.pc_id = comm.rank
@@ -35,10 +38,11 @@ class VisualInput(object):
 
         if self.pc_id == 0:
             print 'Saving tuning properties exc to:', self.params['tuning_prop_exc_fn']
-            print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
             np.savetxt(self.params['tuning_prop_exc_fn'], self.tuning_prop_exc)
-            np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
             np.savetxt(self.params['receptive_fields_exc_fn'], self.rf_sizes)
+            if self.params['with_inh_mpn']:
+                print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
+                np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
         if self.comm != None:
             self.comm.Barrier()
 
@@ -111,8 +115,12 @@ class VisualInput(object):
 
         x_lim_frac = .9
         v_lim_frac = .8
-        x_lim = ((1. - x_lim_frac) * (self.params['x_max_tp'] - self.params['x_min_tp']), x_lim_frac * self.params['x_max_tp'])
-        v_lim = (- v_lim_frac * (self.params['v_max_tp'] - self.params['v_min_tp']), v_lim_frac * self.params['v_max_tp'])
+#        x_lim_frac = 1.
+#        v_lim_frac = 1.
+#        x_lim = ((1. - x_lim_frac) * (self.params['x_max_tp'] - self.params['x_min_tp']), x_lim_frac * self.params['x_max_tp'])
+#        v_lim = (- v_lim_frac * (self.params['v_max_tp'] - self.params['v_min_tp']), v_lim_frac * self.params['v_max_tp'])
+        x_lim = ((1. - x_lim_frac) * (np.max(self.tuning_prop_exc[:, 0]) - np.min(self.tuning_prop_exc[:, 0])), x_lim_frac * np.max(self.tuning_prop_exc[:, 0]))
+        v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
 
         x_grid = np.linspace(x_lim[0], x_lim[1], self.params['n_training_x'])
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
@@ -204,7 +212,8 @@ class VisualInput(object):
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code)
+#        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code)
+        self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(action_code)
         self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
@@ -223,7 +232,7 @@ class VisualInput(object):
         """
         self.perceived_states[self.iteration-1] = perceived_state
         punish_overshoot = .7
-        learning_rate = 30.
+        learning_rate = 10.
         if self.iteration < 2:
             return 0
         else:
@@ -274,18 +283,57 @@ class VisualInput(object):
             x_stim = (training_stimuli[i_stim, 2]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 0]
             y_stim = (training_stimuli[i_stim, 3]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 1]
             trajectory = (x_stim, y_stim)
-            delta_x_end = (x_stim[-1] - .5)
-            delta_y_end = (y_stim[-1] - .5)
+            delta_x = (x_stim[-1] - .5)
+            delta_y = (y_stim[-1] - .5)
+#            delta_x = (x_stim[0] - .5)
+#            delta_y = (y_stim[0] - .5)
+#            delta_x = (x_stim[len(x_stim) / 2] - .5)
+#            delta_y = (y_stim[len(y_stim) / 2] - .5)
+
             delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
             k = self.params['supervisor_amp_param']
-            supervisor_states[i_stim, 0] = k * delta_x_end / delta_t + training_stimuli[i_stim, 2]
-            supervisor_states[i_stim, 1] = k * delta_y_end / delta_t + training_stimuli[i_stim, 3]
+            supervisor_states[i_stim, 0] = k * delta_x / delta_t + training_stimuli[i_stim, 2]
+            supervisor_states[i_stim, 1] = k * delta_y / delta_t + training_stimuli[i_stim, 3]
             motion_params_pre[i_stim, 0] = x_stim[0]
-            motion_params_pre[i_stim, 1] = x_stim[1]
+            motion_params_pre[i_stim, 1] = .5#x_stim[1]
             motion_params_pre[i_stim, 2] = training_stimuli[i_stim, 2]
             motion_params_pre[i_stim, 3] = training_stimuli[i_stim, 3]
             action_indices[i_stim] = BG.map_speed_to_action(supervisor_states[i_stim, 0], xy='x')
         return [supervisor_states, action_indices, motion_params_pre]
+
+
+#    def get_supervisor_actions_new(self, training_stimuli, BG):
+#        """
+#        Computes the supervisor action (and index) as in compute_input_open_loop
+#        """
+#        time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
+#        supervisor_states = np.zeros((self.params['n_stim'], 2))
+#        action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
+#        motion_params_pre = np.zeros((self.params['n_stim'], 4))
+#        n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
+
+#        for i_stim in xrange(self.params['n_stim']):
+
+#            x_stim = self.current_motion_params[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
+#                    + time_axis * self.current_motion_params[2] / self.params['t_cross_visual_field']
+#            y_stim = self.current_motion_params[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
+#                    + time_axis * self.current_motion_params[3] / self.params['t_cross_visual_field']
+#            trajectory = (x_stim, y_stim)
+#            delta_x_end = (x_stim[-1] - .5)
+#            delta_y_end = (y_stim[-1] - .5)
+
+#            delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
+#            k = self.params['supervisor_amp_param']
+#            supervisor_states[i_stim, 0] = k * delta_x_end / delta_t + training_stimuli[i_stim, 2]
+#            supervisor_states[i_stim, 1] = k * delta_y_end / delta_t + training_stimuli[i_stim, 3]
+#            motion_params_pre[i_stim, 0] = x_stim[0]
+#            motion_params_pre[i_stim, 1] = .5#x_stim[1]
+#            motion_params_pre[i_stim, 2] = training_stimuli[i_stim, 2]
+#            motion_params_pre[i_stim, 3] = training_stimuli[i_stim, 3]
+#            action_indices[i_stim] = BG.map_speed_to_action(supervisor_states[i_stim, 0], xy='x')
+#        return [supervisor_states, action_indices, motion_params_pre]
+
+
 
 
     def compute_input_open_loop(self, local_gids):
@@ -315,10 +363,9 @@ class VisualInput(object):
 
 
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
-        self.create_spike_trains_for_trajectory(local_gids, trajectory)
-
-        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
         self.motion_params[self.iteration, -1] = self.t_current
+        self.create_spike_trains_for_trajectory(local_gids, trajectory)
+        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
 
         self.iteration += 1
         return self.stim, self.supervisor_state
@@ -416,6 +463,43 @@ class VisualInput(object):
         return L
 
 
+    def update_stimulus_trajectory_static(self, action_code):
+        """
+        During one iteration the stimulus is perceived as static, except for the movement given by the 
+        difference between eye (= action_code) and the stimulus
+        """
+        n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
+        time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
+#        x_stim = self.current_motion_params[0] - action_code[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps)
+#        y_stim = self.current_motion_params[1] - action_code[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps)
+        x_stim = self.current_motion_params[0] - action_code[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
+                + time_axis * self.current_motion_params[2] / self.params['t_cross_visual_field']
+        y_stim = self.current_motion_params[1] - action_code[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
+                + time_axis * self.current_motion_params[3] / self.params['t_cross_visual_field']
+#        (self.current_motion_params[3] - action_code[1]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
+        trajectory = (x_stim, y_stim)
+        self.current_motion_params[0] = x_stim[0]
+        self.current_motion_params[1] = y_stim[0]
+        # compute the supervisor signal taking into account:
+        # - the trajectory position at the end of the iteration
+        # - the knowledge about the motion (current_motion_params
+        # - and / or the 
+        delta_x_end = (x_stim[-1] - .5)
+        delta_y_end = (y_stim[-1] - .5)
+        delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
+        k = self.params['supervisor_amp_param']
+
+        # omniscient supervisor computes the 'correct' action to take
+        self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
+        self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
+
+        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
+        self.motion_params[self.iteration, -1] = self.t_current
+
+        return trajectory, self.supervisor_state
+
+
+
     def update_stimulus_trajectory_new(self, action_code):
         """
         Update the motion parameters based on the action
@@ -508,7 +592,8 @@ class VisualInput(object):
         """
         n_cells = self.params['n_exc_mpn']
         rfs = np.zeros((n_cells, 4))
-        rfs[:, 0] = self.params['rf_size_x_gradient'] * np.abs(self.tuning_prop_exc[:, 0] - .5) + self.params['rf_size_x_min']
+        rfs[:, 0] = utils.get_receptive_field_sizes_x(self.params, self.tuning_prop_exc[:, 0])
+#        rfs[:, 0] = self.params['rf_size_x_gradient'] * np.abs(self.tuning_prop_exc[:, 0] - .5) + self.params['rf_size_x_min']
         rfs[:, 1] = self.params['rf_size_y_gradient'] * np.abs(self.tuning_prop_exc[:, 1] - .5) + self.params['rf_size_y_min']
         rfs[:, 2] = self.params['rf_size_vx_gradient'] * np.abs(self.tuning_prop_exc[:, 2]) + self.params['rf_size_vx_min']
         rfs[:, 3] = self.params['rf_size_vy_gradient'] * np.abs(self.tuning_prop_exc[:, 3]) + self.params['rf_size_vy_min']
@@ -585,25 +670,34 @@ class VisualInput(object):
                             np.log(v_max)/np.log(self.params['log_scale']), num=n_v/2,
                             endpoint=True, base=self.params['log_scale'])
 
+#        n_cells = self.params['n_exc_mpn']
+#        self.rf_sizes = self.set_receptive_fields('exc')
+        self.rf_sizes = np.zeros((n_cells, 4))
+
         v_rho = np.zeros(n_v)
         v_rho[:n_v/2] = -v_rho_half
         v_rho[n_v/2:] = v_rho_half
-        RF = np.random.normal(0.5, self.params['sigma_rf_pos'], n_cells)
-        RF = RF % self.params['visual_field_width']
+#        RF = np.random.normal(0.5, self.params['sigma_rf_pos'], n_cells)
+        RF_x = utils.get_xpos_log_distr(self.params, n_rf_x, x_min=self.params['x_min_tp'], x_max=self.params['x_max_tp'])
+        RF_x = RF_x % self.params['visual_field_width']
         index = 0
         tuning_prop = np.zeros((n_cells, 4))
+        rf_sizes_x = utils.get_receptive_field_sizes_x(self.params, RF_x)
+        rf_sizes_v = utils.get_receptive_field_sizes_v(self.params, v_rho)
 
         for i_RF in xrange(n_rf_x):
             for i_v_rho, rho in enumerate(v_rho):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
-#                    tuning_prop[index, 0] = (RF[i_RF] + self.params['sigma_rf_pos'] * np.random.randn()) % self.params['visual_field_width']
-                    tuning_prop[index, 0] = RF[index]
+                    x = RF_x[i_RF]
+                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
-                    tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
+                    tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
+                    self.rf_sizes[index, 0] = rf_sizes_x[i_RF]
+                    self.rf_sizes[index, 2] = rf_sizes_v[i_v_rho]
                     index += 1
-#        print 'debug', n_v, n_rf_x, n_v * n_rf_x, self.params['n_exc_per_state'], cell_type
         assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
+#        exit(1)
         return tuning_prop
 
 
@@ -660,7 +754,6 @@ class VisualInput(object):
 
 
         parity = np.arange(self.params['n_v']) % 2
-#        print 'debug parity', parity
 
         # wrapping up:
         index = 0
@@ -714,8 +807,8 @@ class VisualInput(object):
         for i_ in xrange(len(local_gids)):
             self.stim[i_] = []
         self.motion_params[self.iteration, -1] = self.t_current
-        self.iteration += 1
         self.t_current += self.params['t_iteration']
+        self.iteration += 1
         self.supervisor_state = [0., 0.]
         return self.stim, self.supervisor_state
 

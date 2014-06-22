@@ -121,6 +121,7 @@ class VoltPlotter(object):
         self.color_cnt = 0
         return ax
     
+
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
