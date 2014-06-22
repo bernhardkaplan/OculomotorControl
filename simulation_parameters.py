@@ -49,9 +49,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-#        self.params['training'] = False
-        self.params['training'] = True
-        self.params['reward_based_learning'] = True
+        self.params['training'] = False
+#        self.params['training'] = True
+        self.params['reward_based_learning'] = False
 
         self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
@@ -66,7 +66,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 3)
+        self.params['test_stim_range'] = range(0, 2)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -219,7 +219,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['blur_X'], self.params['blur_V'] = .1, .2
+        self.params['blur_X'], self.params['blur_V'] = .2, .3
         self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
@@ -353,8 +353,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 2.5
-        self.params['mpn_d2_weight_amplification'] = 2.5
+        self.params['mpn_d1_weight_amplification'] = 4.0
+        self.params['mpn_d2_weight_amplification'] = 3.0
         self.params['mpn_bg_bias_amplification'] = 0.1
         self.params['d1_d1_weight_amplification_neg'] = 5.0
         self.params['d1_d1_weight_amplification_pos'] = 0.0

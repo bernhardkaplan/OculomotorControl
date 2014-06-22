@@ -38,7 +38,6 @@ class ActivityPlotter(object):
     def load_tuning_prop(self):
         print 'ActivityPlotter.load_tuning_prop ...'
         self.tuning_prop_exc = np.loadtxt(self.params['tuning_prop_exc_fn'])
-        self.tuning_prop_inh = np.loadtxt(self.params['tuning_prop_inh_fn'])
         vmin, vmax = np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])
         self.y_grid_x = np.linspace(0, 1, self.n_bins_y, endpoint=False)
         self.y_grid_vx = np.linspace(vmin, vmax, self.n_bins_y, endpoint=False)
@@ -387,7 +386,7 @@ class ActivityPlotter(object):
         if cell_type == 'exc':
             tp = self.tuning_prop_exc
         else:
-            tp = self.tuning_prop_ing
+            tp = self.tuning_prop_inh
 
         tp_idx_sorted = tp[:, sort_idx].argsort() # + 1 because nest indexing
 
@@ -608,7 +607,11 @@ class MetaAnalysisClass(object):
         fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
         if params['debug_mpn']:
             Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
-        output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png'
+
+        if stim_range != None:
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
+        else:
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png' 
         print 'Saving to', output_fn
         fig.savefig(output_fn, dpi=200)
 
