@@ -227,6 +227,7 @@ if __name__ == '__main__':
 #        training_params = utils.load_params(training_folder)
 
     RBL.create_networks()
+    exit(1)
     RBL.set_up_data_structures()
     for i_stim in xrange(params['n_stim']):
         stim_params = RBL.training_stimuli[i_stim, :]

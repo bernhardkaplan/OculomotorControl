@@ -23,8 +23,11 @@ class VisualInput(object):
 
         self.supervisor_state = [0., 0.]
         self.tuning_prop_exc = self.set_tuning_prop('exc')
-        self.tuning_prop_inh = self.set_tuning_prop('inh')
-        self.rf_sizes = self.set_receptive_fields('exc')
+        if self.params['with_inh_mpn']:
+            self.tuning_prop_inh = self.set_tuning_prop('inh')
+
+#        self.rf_sizes = self.set_receptive_fields('exc')
+
         self.comm = comm
         if self.comm != None:
             self.pc_id = comm.rank
@@ -35,10 +38,11 @@ class VisualInput(object):
 
         if self.pc_id == 0:
             print 'Saving tuning properties exc to:', self.params['tuning_prop_exc_fn']
-            print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
             np.savetxt(self.params['tuning_prop_exc_fn'], self.tuning_prop_exc)
-            np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
             np.savetxt(self.params['receptive_fields_exc_fn'], self.rf_sizes)
+            if self.params['with_inh_mpn']:
+                print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
+                np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
         if self.comm != None:
             self.comm.Barrier()
 
@@ -505,7 +509,6 @@ class VisualInput(object):
         x_stim = (self.current_motion_params[2] - action_code[0]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
         y_stim = (self.current_motion_params[3] - action_code[1]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
         trajectory = (x_stim, y_stim)
-        print 'debug x_stim:', x_stim, action_code
 
         # update the current motion parameters based on the action that was selected for this iteration
         self.current_motion_params[0] = x_stim[-1]
@@ -585,7 +588,8 @@ class VisualInput(object):
         """
         n_cells = self.params['n_exc_mpn']
         rfs = np.zeros((n_cells, 4))
-        rfs[:, 0] = self.params['rf_size_x_gradient'] * np.abs(self.tuning_prop_exc[:, 0] - .5) + self.params['rf_size_x_min']
+        rfs[:, 0] = utils.get_receptive_field_sizes_x(self.params, self.tuning_prop_exc[:, 0])
+#        rfs[:, 0] = self.params['rf_size_x_gradient'] * np.abs(self.tuning_prop_exc[:, 0] - .5) + self.params['rf_size_x_min']
         rfs[:, 1] = self.params['rf_size_y_gradient'] * np.abs(self.tuning_prop_exc[:, 1] - .5) + self.params['rf_size_y_min']
         rfs[:, 2] = self.params['rf_size_vx_gradient'] * np.abs(self.tuning_prop_exc[:, 2]) + self.params['rf_size_vx_min']
         rfs[:, 3] = self.params['rf_size_vy_gradient'] * np.abs(self.tuning_prop_exc[:, 3]) + self.params['rf_size_vy_min']
@@ -662,25 +666,34 @@ class VisualInput(object):
                             np.log(v_max)/np.log(self.params['log_scale']), num=n_v/2,
                             endpoint=True, base=self.params['log_scale'])
 
+#        n_cells = self.params['n_exc_mpn']
+#        self.rf_sizes = self.set_receptive_fields('exc')
+        self.rf_sizes = np.zeros((n_cells, 4))
+
         v_rho = np.zeros(n_v)
         v_rho[:n_v/2] = -v_rho_half
         v_rho[n_v/2:] = v_rho_half
-        RF = np.random.normal(0.5, self.params['sigma_rf_pos'], n_cells)
-        RF = RF % self.params['visual_field_width']
+#        RF = np.random.normal(0.5, self.params['sigma_rf_pos'], n_cells)
+        RF_x = utils.get_xpos_log_distr(self.params, n_rf_x, x_min=self.params['x_min_tp'], x_max=self.params['x_max_tp'])
+        RF_x = RF_x % self.params['visual_field_width']
         index = 0
         tuning_prop = np.zeros((n_cells, 4))
+        rf_sizes_x = utils.get_receptive_field_sizes_x(self.params, RF_x)
+        rf_sizes_v = utils.get_receptive_field_sizes_v(self.params, v_rho)
 
         for i_RF in xrange(n_rf_x):
             for i_v_rho, rho in enumerate(v_rho):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
-#                    tuning_prop[index, 0] = (RF[i_RF] + self.params['sigma_rf_pos'] * np.random.randn()) % self.params['visual_field_width']
-                    tuning_prop[index, 0] = RF[index]
+                    x = RF_x[i_RF]
+                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
-                    tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
+                    tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
+                    self.rf_sizes[index, 0] = rf_sizes_x[i_RF]
+                    self.rf_sizes[index, 2] = rf_sizes_v[i_v_rho]
                     index += 1
-#        print 'debug', n_v, n_rf_x, n_v * n_rf_x, self.params['n_exc_per_state'], cell_type
         assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
+#        exit(1)
         return tuning_prop
 
 
@@ -737,7 +750,6 @@ class VisualInput(object):
 
 
         parity = np.arange(self.params['n_v']) % 2
-#        print 'debug parity', parity
 
         # wrapping up:
         index = 0

@@ -44,10 +44,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
-        self.params['n_rf'] = 50
-        self.params['n_v'] = 40
+        self.params['n_rf'] = 40
+        self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
-        self.params['n_v'] = 30
+#        self.params['n_v'] = 30
 
 #        self.params['training'] = False
         self.params['training'] = True
@@ -206,13 +206,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
 
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
-        self.params['sigma_rf_pos'] = .25 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
+        self.params['sigma_rf_pos'] = .10 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
         self.params['n_exc_to_record_mpn'] = 0
-        self.params['x_max_tp'] = 1.0   # [a.u.] maximal position in visual space for tuning properties
-        self.params['x_min_tp'] = 0.0   # [a.u.] minimal position in visual space for tuning properies
+        self.params['x_max_tp'] = 0.45   # [a.u.] max distance from the center (0.5)
+        self.params['x_min_tp'] = 0.001  # [a.u.] minimal distance to the center
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
@@ -220,6 +220,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
+        self.params['rf_size_x_multiplicator'] = 1.2 # receptive field sizes for x-position are multiplied with this factor (to increase / decrease overlap)
+        self.params['rf_size_v_multiplicator'] = 0.9 # receptive field sizes for vx are multiplied with this factor (to increase / decrease overlap)
 
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -243,8 +245,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['rf_size_y_gradient'] = .2  # receptive field size for y-pos increases with distance to .5
 #            self.params['rf_size_x_min'] = .01      # cells situated at .5 have this receptive field size
 #            self.params['rf_size_y_min'] = .01      # cells situated at .5 have this receptive field size
-            self.params['rf_size_x_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_x']
-            self.params['rf_size_y_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_y']
+#            self.params['rf_size_x_min'] = 0.00
+#            self.params['rf_size_y_min'] = 0.00
+#            self.params['rf_size_x_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_x']
+#            self.params['rf_size_y_min'] = (self.params['x_max_tp'] - self.params['x_min_tp']) / self.params['n_rf_y']
             self.params['rf_size_vx_gradient'] = .3 # receptive field size for vx-pos increases with distance to 0.0
             self.params['rf_size_vy_gradient'] = .3 #
 #            self.params['rf_size_vx_min'] = .01 # cells situated at .5 have this receptive field size
@@ -259,7 +263,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ##############################
         # INHIBITOTY NETWORK PARAMETERS
         # ##############################
-        self.params['fraction_inh_cells_mpn'] = 0.25 # fraction of inhibitory cells in the network, only approximately!
+        self.params['with_inh_mpn'] = False # if True: make sure the number of inh cells (or n_rf_x_inh) is an even number (for setting tuning properties)
+        self.params['fraction_inh_cells_mpn'] = 0.01 # fraction of inhibitory cells in the network, only approximately!
         self.params['n_theta_inh'] = self.params['n_theta']
         self.params['n_v_inh'] = self.params['n_v']
         self.params['n_rf_inh'] = int(round(self.params['fraction_inh_cells_mpn'] * self.params['n_rf']))

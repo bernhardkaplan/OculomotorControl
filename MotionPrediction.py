@@ -33,13 +33,14 @@ class MotionPrediction(object):
 
         self.setup_synapse_types()
         self.create_exc_network()
-        self.create_inh_network()
-#        self.connect_exc_inh() # not to be done at the moment
+        if self.params['with_inh_mpn']:
+            self.create_inh_network()
+            self.connect_exc_inh() # not to be done at the moment
         self.connect_noise()
         self.record_voltages(self.params['gids_to_record_mpn'])
 
         print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
-        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
+#        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
 
         self.t_current = 0
         self.write_cell_gids_to_file()
@@ -138,18 +139,19 @@ class MotionPrediction(object):
 
         self.noise_exc_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # exc noise targeting exc
         self.noise_inh_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # inh -> exc
-        self.noise_exc_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # exc -> inh
-        self.noise_inh_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # inh -> inh
-
         nest.SetStatus(self.noise_exc_exc, {'rate': self.params['f_noise_exc']})
         nest.SetStatus(self.noise_inh_exc, {'rate': self.params['f_noise_inh']})
-        nest.SetStatus(self.noise_exc_inh, {'rate': self.params['f_noise_exc']})
-        nest.SetStatus(self.noise_inh_inh, {'rate': self.params['f_noise_inh']})
-
         nest.Connect(self.noise_exc_exc, self.exc_pop, self.params['w_noise_exc'], self.params['dt'])
         nest.Connect(self.noise_inh_exc, self.exc_pop, self.params['w_noise_inh'], self.params['dt'])
-        nest.Connect(self.noise_exc_inh, self.inh_pop, self.params['w_noise_exc'], self.params['dt'])
-        nest.Connect(self.noise_inh_inh, self.inh_pop, self.params['w_noise_inh'], self.params['dt'])
+
+        if self.params['with_inh_mpn']:
+            self.noise_exc_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # exc -> inh
+            self.noise_inh_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # inh -> inh
+            nest.SetStatus(self.noise_exc_inh, {'rate': self.params['f_noise_exc']})
+            nest.SetStatus(self.noise_inh_inh, {'rate': self.params['f_noise_inh']})
+            nest.Connect(self.noise_exc_inh, self.inh_pop, self.params['w_noise_exc'], self.params['dt'])
+            nest.Connect(self.noise_inh_inh, self.inh_pop, self.params['w_noise_inh'], self.params['dt'])
+
 
 
 
@@ -225,7 +227,8 @@ class MotionPrediction(object):
     def write_cell_gids_to_file(self):
         d = {}
         d['exc'] = self.exc_pop
-        d['inh'] = self.inh_pop
+        if self.params['with_inh_mpn']:
+            d['inh'] = self.inh_pop
         output_fn = self.params['mpn_gids_fn']
         print 'Writing cell_gids to:', output_fn
         f = file(output_fn, 'w')
