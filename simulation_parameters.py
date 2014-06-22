@@ -57,11 +57,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 25 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 25 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['frac_training_samples_from_grid'] = .6 
+        self.params['frac_training_samples_from_grid'] = .5
         # to generate the training samples, two methods are used: 1) sampling from the tuning properties, 2) sampling from a grid
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
@@ -219,7 +219,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['blur_X'], self.params['blur_V'] = .2, .3
+        self.params['blur_X'], self.params['blur_V'] = .1, .2
         self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
@@ -634,9 +634,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_nStim%dx%d_nactions%d_blur%.2f_taup%d/' % (self.params['sim_id'], \
+                folder_name = 'Training_%s_nStim%dx%d_nactions%d_blurX%.2f_V%.2f_taup%d/' % (self.params['sim_id'], \
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                        self.params['n_actions'], self.params['blur_X'], \
+                        self.params['n_actions'], self.params['blur_X'], self.params['blur_V'], \
                         self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
