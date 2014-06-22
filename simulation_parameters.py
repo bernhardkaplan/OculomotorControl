@@ -61,6 +61,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
+        self.params['frac_training_samples_from_grid'] = .6 
+        # to generate the training samples, two methods are used: 1) sampling from the tuning properties, 2) sampling from a grid
+        # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
         self.params['test_stim_range'] = range(0, 3)

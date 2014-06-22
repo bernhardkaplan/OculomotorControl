@@ -113,13 +113,14 @@ class VisualInput(object):
         """
         mp_training = np.zeros((self.params['n_stim_training'], 4))
 
-#        x_lim_frac = .9
-#        v_lim_frac = .8
-        x_lim_frac = 1.
-        v_lim_frac = 1.
+        x_lim_frac = .9
+        v_lim_frac = .8
+#        x_lim_frac = 1.
+#        v_lim_frac = 1.
 #        x_lim = ((1. - x_lim_frac) * (self.params['x_max_tp'] - self.params['x_min_tp']), x_lim_frac * self.params['x_max_tp'])
+#        v_lim = (- v_lim_frac * (self.params['v_max_tp'] - self.params['v_min_tp']), v_lim_frac * self.params['v_max_tp'])
         x_lim = ((1. - x_lim_frac) * (np.max(self.tuning_prop_exc[:, 0]) - np.min(self.tuning_prop_exc[:, 0])), x_lim_frac * np.max(self.tuning_prop_exc[:, 0]))
-        v_lim = (- v_lim_frac * (self.params['v_max_tp'] - self.params['v_min_tp']), v_lim_frac * self.params['v_max_tp'])
+        v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
 
         x_grid = np.linspace(x_lim[0], x_lim[1], self.params['n_training_x'])
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
@@ -282,10 +283,10 @@ class VisualInput(object):
             x_stim = (training_stimuli[i_stim, 2]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 0]
             y_stim = (training_stimuli[i_stim, 3]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 1]
             trajectory = (x_stim, y_stim)
-#            delta_x = (x_stim[-1] - .5)
-#            delta_y = (y_stim[-1] - .5)
-            delta_x = (x_stim[0] - .5)
-            delta_y = (y_stim[0] - .5)
+            delta_x = (x_stim[-1] - .5)
+            delta_y = (y_stim[-1] - .5)
+#            delta_x = (x_stim[0] - .5)
+#            delta_y = (y_stim[0] - .5)
 #            delta_x = (x_stim[len(x_stim) / 2] - .5)
 #            delta_y = (y_stim[len(y_stim) / 2] - .5)
 
