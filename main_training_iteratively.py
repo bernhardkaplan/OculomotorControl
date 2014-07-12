@@ -22,7 +22,10 @@ try:
 except:
     USE_MPI = False
     pc_id, n_proc, comm = 0, 1, None
-    print "MPI not used"
+    print "MPI could not be loaded\nPlease install python-mpi4py"
+    print 'utils.communicate_local_spikes will not work, hence action readout will give false results\nWill now quit'
+    print 'If you are sure, that you want to run on a single core, remove the exit(1) statement'
+#    exit(1)
 
 
 def save_spike_trains(params, iteration, stim_list, gid_list):
@@ -71,6 +74,7 @@ if __name__ == '__main__':
 
     VI = VisualInput.VisualInput(params, comm=comm)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
+#    exit(1)
 
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder'])
@@ -105,8 +109,8 @@ if __name__ == '__main__':
     np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
-    print 'quit'
-    exit(1)
+#    print 'quit'
+#    exit(1)
 
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_stim_training']):
@@ -148,8 +152,8 @@ if __name__ == '__main__':
                 print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
             network_states_net[iteration_cnt, :] = state_
 
-            #print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_, '\tnext action: ', next_action
             v_eye[0] = next_action[0]
             v_eye[1] = next_action[1]
             actions[iteration_cnt + 1, :] = next_action

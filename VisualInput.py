@@ -454,12 +454,12 @@ class VisualInput(object):
         if self.params['n_grid_dimensions'] == 2:
             d_ij = visual_field_distance2D_vec(tuning_prop[:, 0], x_stim * np.ones(n_cells), tuning_prop[:, 1], y_stim * np.ones(n_cells))
             L = np.exp(-.5 * (d_ij)**2 / (rfs_x * blur_x)**2 \
-                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v * blur_v)**2
-                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (rfs_v * blur_v)**2)
+                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v * blur_v))**2
+                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (np.sqrt(rfs_v * blur_v))**2)
         else:
-            d_ij = np.sqrt((tuning_prop[:, 0] - x_stim * np.ones(n_cells))**2)
-            L = np.exp(-.5 * (d_ij)**2 / (rfs_x * blur_x)**2 \
-                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v * blur_v)**2)
+            d_ij = np.abs(tuning_prop[:, 0] - x_stim)
+            L = np.exp(-.5 * (d_ij)**2 / (np.sqrt(rfs_x * blur_x))**2 \
+                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v * blur_v))**2)
         return L
 
 
@@ -608,7 +608,8 @@ class VisualInput(object):
             if self.params['regular_tuning_prop']:
                 return self.set_tuning_prop_1D_regular(cell_type)
             else:
-                return self.set_tuning_prop_1D(cell_type)
+                return self.set_tuning_prop_1D_with_const_fovea(cell_type)
+#                return self.set_tuning_prop_1D(cell_type)
 
 
     def set_tuning_prop_1D_regular(self, cell_type='exc'):
@@ -646,6 +647,73 @@ class VisualInput(object):
                     index += 1
         assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
         return tuning_prop
+
+
+    def set_tuning_prop_1D_with_const_fovea(self, cell_type='exc'):
+        np.random.seed(self.params['tuning_prop_seed'])
+        if cell_type == 'exc':
+            n_cells = self.params['n_exc_mpn']
+            n_v = self.params['n_v']
+            n_rf_x = self.params['n_rf_x']
+            v_max = self.params['v_max_tp']
+            v_min = self.params['v_min_tp']
+        else:
+            n_cells = self.params['n_inh_mpn']
+            n_v = self.params['n_v_inh']
+            n_rf_x = self.params['n_rf_x_inh']
+            v_max = self.params['v_max_tp']
+            v_min = self.params['v_min_tp']
+        if self.params['log_scale']==1:
+            v_rho_half = np.linspace(v_min, v_max, num=n_v/2, endpoint=True)
+        else:
+            v_rho_half = np.logspace(np.log(v_min)/np.log(self.params['log_scale']),
+                            np.log(v_max)/np.log(self.params['log_scale']), num=n_v/2,
+                            endpoint=True, base=self.params['log_scale'])
+        self.rf_sizes = np.zeros((n_cells, 4))
+        v_rho = np.zeros(n_v)
+        v_rho[:n_v/2] = -v_rho_half
+        v_rho[n_v/2:] = v_rho_half
+        
+        n_rf_x_log = self.params['n_rf_x'] - self.params['n_rf_x_fovea']
+        RF_x_log = utils.get_xpos_log_distr(self.params, n_rf_x_log, x_min=self.params['x_min_tp'], x_max=self.params['x_max_tp'])
+        RF_x_const = np.linspace(.5 - self.params['x_min_tp'], .5 + self.params['x_min_tp'], self.params['n_rf_x_fovea'])
+        RF_x = np.zeros(n_rf_x)
+#        idx_lower = n_rf_x_log / 2
+        idx_upper = n_rf_x_log / 2 + self.params['n_rf_x_fovea']
+        RF_x[:n_rf_x_log / 2] = RF_x_log[:n_rf_x_log / 2]
+        RF_x[idx_upper:] = RF_x_log[n_rf_x_log / 2:]
+        RF_x[n_rf_x_log / 2 : n_rf_x_log / 2 + self.params['n_rf_x_fovea']] = RF_x_const
+#        rf_sizes_const = self.params['x_min_tp'] * np.ones(self.params['n_rf_x_fovea'])
+
+        print '------------------------------\nDEBUG'
+        print 'n_rf_x: ', n_rf_x
+        print 'n_rf_x_log: ', n_rf_x_log
+        print 'n_rf_x_fovea: ', self.params['n_rf_x_fovea']
+        print 'RF_x_const:', RF_x_const
+        print 'RF_x_log:', RF_x_log
+        print 'RF_x:', RF_x
+
+        index = 0
+        tuning_prop = np.zeros((n_cells, 4))
+        rf_sizes_x = utils.get_receptive_field_sizes_x(self.params, RF_x)
+        rf_sizes_v = utils.get_receptive_field_sizes_v(self.params, v_rho)
+
+        for i_RF in xrange(n_rf_x):
+            for i_v_rho, rho in enumerate(v_rho):
+                for i_in_mc in xrange(self.params['n_exc_per_state']):
+                    x = RF_x[i_RF]
+                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
+                    tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
+                    tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
+                    tuning_prop[index, 3] = 0. 
+                    self.rf_sizes[index, 0] = rf_sizes_x[i_RF]
+                    self.rf_sizes[index, 2] = rf_sizes_v[i_v_rho]
+                    index += 1
+        assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
+#        exit(1)
+        return tuning_prop
+
+
 
 
     def set_tuning_prop_1D(self, cell_type='exc'):

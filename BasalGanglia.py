@@ -23,6 +23,8 @@ class BasalGanglia(object):
         self.rp = {}
         self.recorder_output= {} # the actual NEST recorder object, indexed by naction
         self.gid_to_action = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
+        self.gid_to_action_D1 = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
+        self.gid_to_action_D2 = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.gid_to_action_via_spikerecorder= {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.efference_copy = {}
         self.supervisor = {}
@@ -79,16 +81,17 @@ class BasalGanglia(object):
         for nactions in range(self.params['n_actions']):
             self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params=self.params['param_msn_d1'])
             for gid in self.strD1[nactions]:
-                self.gid_to_action[gid] = nactions
+                self.gid_to_action_D1[gid] = nactions
                 self.bg_offset['d1'] = min(gid, self.bg_offset['d1'])
 
         if self.params['with_d2']:
             for nactions in range(self.params['n_actions']):
                 self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params=self.params['param_msn_d2'])
                 for gid in self.strD2[nactions]:
-                    self.gid_to_action[gid] = nactions
+                    self.gid_to_action_D2[gid] = nactions
                     self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
-
+#        print 'DEBUG11111', self.gid_to_action
+#        print 'DEBUG22222', self.gid_to_action_via_spikerecorder
         for nactions in range(self.params['n_actions']):
             if self.params['record_bg_volt']:
                 self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
@@ -100,6 +103,8 @@ class BasalGanglia(object):
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
         for nactions in range(self.params['n_actions']):
             self.actions[nactions] = nest.Create(self.params['model_bg_output_neuron'], self.params['num_actions_output'], params= self.params['param_bg_output'])
+            for gid in self.actions[nactions]:
+                self.gid_to_action[gid] = nactions
 
         for nactions in range(self.params['n_actions']):
             self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
@@ -425,21 +430,23 @@ class BasalGanglia(object):
             nest.SetStatus(recorder, [{'start': t_new}])
 
 #        print 'DEBUG pc_id %d' % self.pc_id, new_event_gids, 'new_event_times', new_event_times
+#        print 'DEBUG pc_id %d' % self.pc_id, new_event_times, 'new_event_times', new_event_times
         if self.comm != None:
             gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
         else:
             gids_spiked = np.unique(new_event_gids) - 1 # maybe here should be a - 1 (if there is one in communicate_local_spikes)
-            nspikes = np.zeros(len(new_event_gids))
-            for i_, gid in enumerate(new_event_gids):
-                nspikes[i_] = (new_event_gids == gid).nonzero()[0].size
+            nspikes = np.zeros(len(gids_spiked))
+            for i_, gid in enumerate(gids_spiked):
+                nspikes[i_] = (new_event_gids == gid + 1).nonzero()[0].size # + 1 because new_event gids holds the NEST gids, but there is a -1 in communicate_local_spikes 
+
         if len(nspikes) == 0:
             print 'No spikes found in iteration', self.t_current/self.params['t_iteration']
             self.t_current += self.params['t_iteration']
             self.iteration += 1
             return (0, 0, np.nan) # maye use 0 instead of np.nan
 
-#        print 'DEBUG pc_id %d nspikes' % self.pc_id, nspikes
-#        print 'DEBUG pc_id %d gids_spiked' % self.pc_id, gids_spiked
+#        print 'DEBUG pc_id %d iteration %d nspikes' % (self.pc_id, self.iteration), nspikes
+#        print 'DEBUG pc_id %d iteration %d gids_spiked' % (self.pc_id, self.iteration), gids_spiked
         # switch between WTA behavior and Vector-Averaging
         if WTA:
             winning_nspikes = np.argmax(nspikes)
@@ -449,13 +456,17 @@ class BasalGanglia(object):
             output_speed_x = self.action_bins_x[winning_action]
         else:
 #            print 'nspikes .shape', nspikes.shape
-            gid_offset = np.min(self.gids['actions'])
             vector_avg_action = 0.
             vector_avg_speed = 0.
             nspikes_sum = np.sum(nspikes)
+#            print 'DEBUG0000 pc_id %d nspikes' % self.pc_id, nspikes
+#            print 'DEBUG0000 pc_id %d gids_spiked' % self.pc_id, gids_spiked
+#            print 'debug self.gid_to_action', self.gid_to_action
+#            print 'debug self.gid_to_action type', type(self.gid_to_action.keys()[0])
+#            print 'debug has key ', self.gid_to_action.has_key(3806)
             for i_, gid_ in enumerate(gids_spiked):
-                action_idx = (gid_ + 1 - gid_offset) / self.params['num_msn_d1']
-#                print 'DEBUG gid %d action_idx %f' % (gid_, action_idx)
+                action_idx = self.gid_to_action[int(gid_)]
+#                print 'DEBUG1111 gid %d action_idx %f nspikes %d nspikes_sum %f' % (gid_, action_idx, nspikes[i_], nspikes_sum)
 #                print 'DEBUG gid %d action_idx %f' % (gid_, int(action_idx))
                 vector_avg_action += nspikes[i_] / float(nspikes_sum) * action_idx
                 vector_avg_speed += nspikes[i_] / float(nspikes_sum) * self.action_bins_x[int(action_idx)]
@@ -534,6 +545,9 @@ class BasalGanglia(object):
         d = {}
         for cell_type in self.params['bg_cell_types']:
             d[cell_type] = self.get_cell_gids(cell_type)
+        d['gid_to_action_D1'] = self.gid_to_action_D1
+        d['gid_to_action_D2'] = self.gid_to_action_D2
+        d['gid_to_action'] = self.gid_to_action
         output_fn = self.params['bg_gids_fn']
         print 'Writing cell_gids to:', output_fn
         f = file(output_fn, 'w')

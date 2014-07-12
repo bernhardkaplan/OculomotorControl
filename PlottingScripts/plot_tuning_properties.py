@@ -86,10 +86,10 @@ class Plotter(object):
         """
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-#        n_cells = self.params['n_exc_mpn']
-        n_cells = min(100, self.params['n_exc_mpn'])
+        n_cells = self.params['n_exc_mpn']
+#        n_cells = min(100, self.params['n_exc_mpn'])
 #        assert (n_cells  == self.rfs[:, 0].size), 'Mismatch in parameters given to plot_tuning_properties and simulation_parameters.py'
-        n_dots = min(100, n_cells) # for one curve
+        n_dots = 100 # min(100, n_cells) # for one curve
 #        n_rnd = n_cells
 #        rnd_gids = np.random.randint(0, self.params['n_exc_mpn'], n_rnd)
         rnd_gids = range(0, n_cells)
@@ -148,27 +148,30 @@ class Plotter(object):
 
 
     def plot_relative_pos_error(self):
-        x = np.around(np.unique(np.abs(.5 - np.sort(self.tp[:, 0]))), decimals=4)
+#        x = np.around(np.unique(np.abs(.5 - np.sort(self.tp[:, 0]))), decimals=4)
+        x = self.tp[:, 0]
         print 'x unique', x
         diff = x[1:] - x[:-1]
         rel_diff = diff / x[1:]
-        print 'diff', diff
-        print 'rel_diff', rel_diff
+        print 'diff x', diff
+        print 'rel_diff x', rel_diff
         fig = pylab.figure()
         ax = fig.add_subplot(111)
         ax.plot(range(rel_diff.size), rel_diff)
+        ax.set_title('relative error x')
 
 
     def plot_relative_v_error(self):
-        x = np.around(np.unique(self.tp[:, 2]), decimals=4)
-        print 'x unique', x
+        x = np.around(np.unique(np.sort(self.tp[:, 2])), decimals=4)
+        print 'v unique', x
         diff = x[1:] - x[:-1]
         rel_diff = diff / x[1:]
-        print 'diff', diff
-        print 'rel_diff', rel_diff
+        print 'diff v ', diff
+        print 'rel_diff v ', rel_diff
         fig = pylab.figure()
         ax = fig.add_subplot(111)
         ax.plot(range(rel_diff.size), rel_diff)
+        ax.set_title('relative error v')
 
 
     def plot_rf_size_vs_pos(self):
@@ -213,15 +216,16 @@ if __name__ == '__main__':
 
     
     Plotter = Plotter(params)#, it_max=1)
-#    Plotter.plot_tuning_prop()
+    Plotter.plot_tuning_prop()
     Plotter.plot_tuning_space()
-#    Plotter.plot_tuning_curves(0)
-#    Plotter.plot_tuning_curves(2)
-#    Plotter.plot_tuning_width_distribution()
+    Plotter.plot_tuning_curves(0)
+    Plotter.plot_tuning_curves(2)
+    Plotter.plot_tuning_width_distribution()
+
+    Plotter.plot_relative_pos_error()
+    Plotter.plot_relative_v_error()
 
 #    Plotter.plot_rf_size_vs_pos()
 #    Plotter.plot_rf_size_vs_speed()
-#    Plotter.plot_relative_pos_error()
-#    Plotter.plot_relative_v_error()
 
     pylab.show()

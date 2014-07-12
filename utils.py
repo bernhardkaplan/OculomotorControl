@@ -478,8 +478,8 @@ def communicate_local_spikes(gids, comm):
     all_nspikes = {} # dictionary containing all cells that spiked during that iteration
     for pid in xrange(comm.size):
         for gid in all_spikes[pid].keys():
-#            gid_ = gid
-            gid_ = gid - 1
+            gid_ = gid
+#            gid_ = gid - 1
             all_nspikes[gid_] = all_spikes[pid][gid]
     gids_spiked = np.array(all_nspikes.keys(), dtype=np.int)
     nspikes =  np.array(all_nspikes.values(), dtype=np.int)
@@ -506,17 +506,19 @@ def get_xpos_log_distr(params, n_x, x_min=1e-6, x_max=.5):
     x_max = .5 - params['xpos_hc_0']
     """
     logscale = params['log_scale']
-    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2, base=logscale)
+    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2 + 1, base=logscale)
     logspace = list(logspace)
     logspace.reverse()
     x_lower = .5 - np.array(logspace)
     
-    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2, base=logscale)
+    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2 + 1, base=logscale)
     x_upper =  logspace + .5
     x_rho = np.zeros(n_x)
-    x_rho[:n_x/2] = x_lower
-    x_rho[n_x/2:] = x_upper
+    x_rho[:n_x/2] = x_lower[:-1]
+    x_rho[n_x/2:] = x_upper[1:]
     return x_rho
+
+#def get_xpos_log_distr_const_fovea(params, n_x, x_min=1e-6, x_max=.5):
 
 
 def get_receptive_field_sizes_x(params, rf_x):
