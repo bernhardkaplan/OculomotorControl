@@ -29,6 +29,7 @@ class Plotter(object):
         self.tp = np.loadtxt(tp_fn)
         print 'Loading', self.params['receptive_fields_exc_fn']
         self.rfs = np.loadtxt(self.params['receptive_fields_exc_fn'])
+        self.mp_training = None
 
 
     def plot_training_sample_space(self, plot_process=False):
@@ -38,6 +39,7 @@ class Plotter(object):
             fn = self.params['training_sequence_fn']
         print 'Loading training stimuli data from:', fn
         d = np.loadtxt(fn)
+        self.mp_training = d
 
         fig = pylab.figure()#figsize=(12, 12))
         ax1 = fig.add_subplot(111)
@@ -90,9 +92,10 @@ class Plotter(object):
         action_indices = np.loadtxt(self.params['action_indices_fn'])
 #        d = np.loadtxt(self.params['motion_params_precomputed_fn'])
         d = np.loadtxt(self.params['training_sequence_fn'])
+        self.mp_training = d
 
         patches = []
-        fig = pylab.figure(figsize=(12, 12))
+        fig = pylab.figure(figsize=(10, 10))
         ax1 = fig.add_subplot(111)
 
         # define the colormap
@@ -143,6 +146,44 @@ class Plotter(object):
         pylab.savefig(output_fig, dpi=200)
 
 
+    def plot_training_sample_histograms(self):
+
+        if self.mp_training == None:
+            fn = self.params['training_sequence_fn']
+            print 'Loading training stimuli data from:', fn
+            self.mp_training = np.loadtxt(fn)
+
+        n_bins = 100
+        d = self.mp_training[:, 0]
+        cnt_x, bins_x = np.histogram(d, bins=n_bins, range=(np.min(d), np.max(d)))
+
+        d = self.mp_training[:, 2]
+        cnt_v, bins_v = np.histogram(d, bins=n_bins, range=(np.min(d), np.max(d)))
+
+        fig = pylab.figure()
+        ax1 = fig.add_subplot(211)
+        ax1.bar(bins_x[:-1], cnt_x, width=bins_x[1]-bins_x[0])
+        ax1.set_xlabel('x-pos training stimuli')
+        ax1.set_ylabel('Count')
+
+        print 'Position histogram:'
+        print 'First half:', bins_x[:n_bins/2]
+        print 'Sum first half:', cnt_x[:n_bins/2].sum()
+        print 'Second half:', bins_x[-(n_bins/2 + 1):]
+        print 'Sum second half:', cnt_x[-(n_bins/2 + 1):].sum()
+
+
+        ax2 = fig.add_subplot(212)
+        ax2.bar(bins_v[:-1], cnt_v, width=bins_v[1]-bins_v[0])
+        ax2.set_xlabel('Speed of training stimuli')
+        ax2.set_ylabel('Count')
+
+
+        print 'Velocity histogram:'
+        print 'First half:', bins_v[:n_bins/2]
+        print 'Sum first half:', cnt_v[:n_bins/2].sum()
+        print 'Second half:', bins_v[-(n_bins/2 + 1):]
+        print 'Sum second half:', cnt_v[-(n_bins/2 + 1):].sum()
 
 
 if __name__ == '__main__':
@@ -165,5 +206,6 @@ if __name__ == '__main__':
     Plotter = Plotter(params)#, it_max=1)
 #    Plotter.plot_training_sample_space(plot_process=True)
 #    Plotter.plot_training_sample_space(plot_process=False)
-    Plotter.plot_precomputed_actions()
+#    Plotter.plot_precomputed_actions()
+    Plotter.plot_training_sample_histograms()
     pylab.show()

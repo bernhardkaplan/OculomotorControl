@@ -144,20 +144,25 @@ class VisualInput(object):
                 i_ = i_cycle * self.params['n_training_stim_per_cycle']
                 for i_stim in xrange(self.params['n_training_stim_per_cycle']):
                     plus_minus = utils.get_plus_minus(self.RNG)
-#                    mp_training[i_stim + i_, 0] = 1. % np.abs(training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise']))
                     mp_training[i_stim + i_, 0] = (training_states[i_stim][0] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_x'])) % 1.
                     mp_training[i_stim + i_, 1] = .5
                     plus_minus = utils.get_plus_minus(self.RNG)
                     mp_training[i_stim + i_, 2] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
                     mp_training[i_stim + i_, 3] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
-                    # noise relative to the 'pure' stimulus parameters
-#                    mp_training[i_stim + i_, 2] =  training_states[i_stim][1] * self.RNG.uniform(1. - self.params['training_stim_noise'], 1. + self.params['training_stim_noise'])
-#                    mp_training[i_stim + i_, 3] =  training_states[i_stim][1] * self.RNG.uniform(1. - self.params['training_stim_noise'], 1. + self.params['training_stim_noise'])
-#                    mp_training[i_stim + i_, 3] = .0 # this might cause a problem since the output action_bins_y are != .0 but the same as v_x_out
         print 'VisualInput saves training sequence parameters to:', self.params['training_sequence_fn']
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
 
+
+    def create_training_sequence_around_center(self):
+
+        n_center = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_center']))
+
+        mp_center = np.zeros((n_center, 4))
+        mp_center[:, 0] = self.RNG.normal(.5, self.params['center_stim_width'], n_center)
+        mp_center[:, 2] = self.RNG.uniform(-self.params['v_max_tp'], self.params['v_max_tp'], n_center)
+        return mp_center
+        
 
     def create_training_sequence(self):
         """
@@ -593,10 +598,13 @@ class VisualInput(object):
         n_cells = self.params['n_exc_mpn']
         rfs = np.zeros((n_cells, 4))
         rfs[:, 0] = utils.get_receptive_field_sizes_x(self.params, self.tuning_prop_exc[:, 0])
+        rfs[:, 1] = utils.get_receptive_field_sizes_x(self.params, self.tuning_prop_exc[:, 1])
+        rfs[:, 2] = utils.get_receptive_field_sizes_v(self.params, self.tuning_prop_exc[:, 2])
+        rfs[:, 3] = utils.get_receptive_field_sizes_v(self.params, self.tuning_prop_exc[:, 3])
 #        rfs[:, 0] = self.params['rf_size_x_gradient'] * np.abs(self.tuning_prop_exc[:, 0] - .5) + self.params['rf_size_x_min']
-        rfs[:, 1] = self.params['rf_size_y_gradient'] * np.abs(self.tuning_prop_exc[:, 1] - .5) + self.params['rf_size_y_min']
-        rfs[:, 2] = self.params['rf_size_vx_gradient'] * np.abs(self.tuning_prop_exc[:, 2]) + self.params['rf_size_vx_min']
-        rfs[:, 3] = self.params['rf_size_vy_gradient'] * np.abs(self.tuning_prop_exc[:, 3]) + self.params['rf_size_vy_min']
+#        rfs[:, 1] = self.params['rf_size_y_gradient'] * np.abs(self.tuning_prop_exc[:, 1] - .5) + self.params['rf_size_y_min']
+#        rfs[:, 2] = self.params['rf_size_vx_gradient'] * np.abs(self.tuning_prop_exc[:, 2]) + self.params['rf_size_vx_min']
+#        rfs[:, 3] = self.params['rf_size_vy_gradient'] * np.abs(self.tuning_prop_exc[:, 3]) + self.params['rf_size_vy_min']
         return rfs
 
 
@@ -675,15 +683,15 @@ class VisualInput(object):
         v_rho[n_v/2:] = v_rho_half
         
         n_rf_x_log = self.params['n_rf_x'] - self.params['n_rf_x_fovea']
-        RF_x_log = utils.get_xpos_log_distr(self.params, n_rf_x_log, x_min=self.params['x_min_tp'], x_max=self.params['x_max_tp'])
+        RF_x_log = utils.get_xpos_log_distr(self.params['log_scale'], n_rf_x_log, x_min=self.params['x_min_tp'], x_max=self.params['x_max_tp'])
         RF_x_const = np.linspace(.5 - self.params['x_min_tp'], .5 + self.params['x_min_tp'], self.params['n_rf_x_fovea'])
         RF_x = np.zeros(n_rf_x)
-#        idx_lower = n_rf_x_log / 2
         idx_upper = n_rf_x_log / 2 + self.params['n_rf_x_fovea']
         RF_x[:n_rf_x_log / 2] = RF_x_log[:n_rf_x_log / 2]
         RF_x[idx_upper:] = RF_x_log[n_rf_x_log / 2:]
         RF_x[n_rf_x_log / 2 : n_rf_x_log / 2 + self.params['n_rf_x_fovea']] = RF_x_const
-#        rf_sizes_const = self.params['x_min_tp'] * np.ones(self.params['n_rf_x_fovea'])
+
+
 
         print '------------------------------\nDEBUG'
         print 'n_rf_x: ', n_rf_x
@@ -697,18 +705,22 @@ class VisualInput(object):
         tuning_prop = np.zeros((n_cells, 4))
         rf_sizes_x = utils.get_receptive_field_sizes_x(self.params, RF_x)
         rf_sizes_v = utils.get_receptive_field_sizes_v(self.params, v_rho)
-
         for i_RF in xrange(n_rf_x):
             for i_v_rho, rho in enumerate(v_rho):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
                     x = RF_x[i_RF]
-                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
+#                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
+                    tuning_prop[index, 0] = RF_x[i_RF] % 1.0
+                    tuning_prop[index, 0] += self.RNG.normal(.0, self.params['sigma_rf_pos'] / 2) # add some extra noise to the neurons representing the fovea (because if their noise is only a percentage of their distance from the center, it's too small
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
                     tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
                     self.rf_sizes[index, 0] = rf_sizes_x[i_RF]
                     self.rf_sizes[index, 2] = rf_sizes_v[i_v_rho]
                     index += 1
+
+
+
         assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
 #        exit(1)
         return tuning_prop
@@ -746,7 +758,7 @@ class VisualInput(object):
         v_rho[:n_v/2] = -v_rho_half
         v_rho[n_v/2:] = v_rho_half
 #        RF = np.random.normal(0.5, self.params['sigma_rf_pos'], n_cells)
-        RF_x = utils.get_xpos_log_distr(self.params, n_rf_x, x_min=self.params['x_min_tp'], x_max=self.params['x_max_tp'])
+        RF_x = utils.get_xpos_log_distr(self.params['logscale'], n_rf_x, x_min=self.params['x_min_tp'], x_max=self.params['x_max_tp'])
         RF_x = RF_x % self.params['visual_field_width']
         index = 0
         tuning_prop = np.zeros((n_cells, 4))
