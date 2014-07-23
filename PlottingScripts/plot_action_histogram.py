@@ -46,6 +46,7 @@ ax.set_ylabel('Action $v_x$ [Hz]')
 fig.savefig(params['figures_folder'] + 'vx_output_action.png')
 
 d = np.loadtxt(params['actions_taken_fn'])
+#d = np.loadtxt(params['action_indices_fn'])
 
 actions_taken = np.zeros(params['n_stim'])
 for i_ in xrange(params['n_stim']):

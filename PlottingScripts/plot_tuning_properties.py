@@ -65,7 +65,7 @@ class Plotter(object):
         ax.set_ylabel('Preferred speed', fontsize=18)
         patches = []
         for gid in xrange(self.tp[:, 0].size):
-            ax.plot(self.tp[gid, 0], self.tp[gid, 2], 'o', c='k', markersize=3)
+            ax.plot(self.tp[gid, 0], self.tp[gid, 2], 'o', c='k', markersize=2)
             ellipse = mpatches.Ellipse((self.tp[gid, 0], self.tp[gid, 2]), self.rfs[gid, 0], self.rfs[gid, 2])
             patches.append(ellipse)
 
@@ -87,9 +87,9 @@ class Plotter(object):
         fig = pylab.figure()
         ax = fig.add_subplot(111)
 #        n_cells = self.params['n_exc_mpn']
-        n_cells = min(100, self.params['n_exc_mpn'])
+        n_cells = min(200, self.params['n_exc_mpn'])
 #        assert (n_cells  == self.rfs[:, 0].size), 'Mismatch in parameters given to plot_tuning_properties and simulation_parameters.py'
-        n_dots = min(100, n_cells) # for one curve
+        n_dots = 100 # min(100, n_cells) # for one curve
 #        n_rnd = n_cells
 #        rnd_gids = np.random.randint(0, self.params['n_exc_mpn'], n_rnd)
         rnd_gids = range(0, n_cells)
@@ -131,14 +131,14 @@ class Plotter(object):
 
         x_axis = self.tp[:, 0]
         y_axis = self.rfs[:, 0]
-        ax1.plot(x_axis, y_axis, marker='o', linestyle='None', markersize=5, c='k')
+        ax1.plot(x_axis, y_axis, marker='o', linestyle='None', markersize=2, c='k')
         ax1.set_xlabel('RF_x center')
         ax1.set_ylabel('RF_x size')
         ax1.set_title('Preferred position tuning widths')
 
         x_axis = self.tp[:, 2]
         y_axis = self.rfs[:, 2]
-        ax2.plot(x_axis, y_axis, marker='o', linestyle='None', markersize=5, c='k')
+        ax2.plot(x_axis, y_axis, marker='o', linestyle='None', markersize=2, c='k')
         ax2.set_title('Preferred speed tuning widths')
         ax2.set_xlabel('RF_vx center')
         ax2.set_ylabel('RF_vx size')
@@ -148,27 +148,32 @@ class Plotter(object):
 
 
     def plot_relative_pos_error(self):
-        x = np.around(np.unique(np.abs(.5 - np.sort(self.tp[:, 0]))), decimals=4)
-        print 'x unique', x
-        diff = x[1:] - x[:-1]
+#        x = np.around(np.unique(np.abs(.5 - np.sort(self.tp[:, 0]))), decimals=4)
+        x = self.tp[:, 0]
+        print 'x unique', np.unique(x)
+        diff = np.abs(x[1:] - x[:-1])
         rel_diff = diff / x[1:]
-        print 'diff', diff
-        print 'rel_diff', rel_diff
+
+        print 'diff x', diff
+        print 'rel_diff x', rel_diff
         fig = pylab.figure()
         ax = fig.add_subplot(111)
         ax.plot(range(rel_diff.size), rel_diff)
+        ax.set_title('relative error x')
 
 
     def plot_relative_v_error(self):
-        x = np.around(np.unique(self.tp[:, 2]), decimals=4)
-        print 'x unique', x
+#        x = np.around(np.unique(np.sort(self.tp[:, 2])), decimals=4)
+        x = self.tp[:, 2]
+        print 'v unique', np.unique(x)
         diff = x[1:] - x[:-1]
         rel_diff = diff / x[1:]
-        print 'diff', diff
-        print 'rel_diff', rel_diff
+        print 'diff v ', diff
+        print 'rel_diff v ', rel_diff
         fig = pylab.figure()
         ax = fig.add_subplot(111)
         ax.plot(range(rel_diff.size), rel_diff)
+        ax.set_title('relative error v')
 
 
     def plot_rf_size_vs_pos(self):
@@ -177,7 +182,7 @@ class Plotter(object):
         y = self.rfs[:, 0]
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        ax.plot(x, y, 'o', markersize=5)
+        ax.plot(x, y, 'o', markersize=2)
         ax.set_title('Receptive field sizes for position')
         ax.set_xlabel('RF_x position')
         ax.set_ylabel('RF_x size')
@@ -189,7 +194,7 @@ class Plotter(object):
         y = self.rfs[:, 2]
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        ax.plot(x, y, 'o', markersize=5)
+        ax.plot(x, y, 'o', markersize=2)
         ax.set_title('Receptive field sizes for speed')
         ax.set_xlabel('RF_v position')
         ax.set_ylabel('RF_v size')
@@ -213,15 +218,16 @@ if __name__ == '__main__':
 
     
     Plotter = Plotter(params)#, it_max=1)
-#    Plotter.plot_tuning_prop()
+    Plotter.plot_tuning_prop()
     Plotter.plot_tuning_space()
-#    Plotter.plot_tuning_curves(0)
-#    Plotter.plot_tuning_curves(2)
-#    Plotter.plot_tuning_width_distribution()
+    Plotter.plot_tuning_curves(0)
+    Plotter.plot_tuning_curves(2)
+    Plotter.plot_tuning_width_distribution()
+
+    Plotter.plot_relative_pos_error()
+    Plotter.plot_relative_v_error()
 
 #    Plotter.plot_rf_size_vs_pos()
 #    Plotter.plot_rf_size_vs_speed()
-#    Plotter.plot_relative_pos_error()
-#    Plotter.plot_relative_v_error()
 
     pylab.show()

@@ -41,38 +41,43 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 8
+        self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
-        self.params['n_rf'] = 40
+        self.params['n_rf'] = 50
         self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-        self.params['training'] = False
-#        self.params['training'] = True
+#        self.params['training'] = False
+        self.params['training'] = True
         self.params['reward_based_learning'] = False
 
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 3            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 25 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 25 # number of training samples to cover the v-direction of the tuning space
+#        self.params['n_training_x'] = 1 # number of training samples to cover the x-direction of the tuning space
+#        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['frac_training_samples_from_grid'] = .5
+        self.params['frac_training_samples_from_grid'] = .4
+        self.params['frac_training_samples_center'] = .4 # fraction of training samples drawn from the center
+        self.params['center_stim_width'] = .10 # width from which the center training samples are drawn
+        assert (1.0 > self.params['frac_training_samples_center'] + self.params['frac_training_samples_from_grid'])
         # to generate the training samples, two methods are used: 1) sampling from the tuning properties, 2) sampling from a grid
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 2)
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
         self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
-        self.params['n_silent_iterations'] = 2 # for 2 silent iterations this should be 3
+        self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
         if self.params['training']:
             if self.params['reward_based_learning']:
                 self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations'])
@@ -111,14 +116,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
 
         # the first stimulus parameters
-        self.params['initial_state'] = (.8, .5, -2.0, .0)
+        self.params['initial_state'] = (.8, .5, -1.0, .0)
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['t_iter_training'] = 50
         if self.params['training']:
-            self.params['sim_id'] = 'titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'OpenLoop_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
             if (self.params['reward_based_learning']):
                 self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
         else:
@@ -160,6 +165,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_rf_x'] = self.params['n_rf']
             self.params['n_rf_y'] = 1
             self.params['n_theta'] = 1 # 2 because it's rightwards or leftwards 
+
+        self.params['frac_rf_x_fovea'] = 0.5 # this fraction of all n_rf_x cells will have constant (minimum) RF size
+        self.params['n_rf_x_fovea'] = np.int(np.round(self.params['frac_rf_x_fovea'] * self.params['n_rf_x']))
+        if self.params['n_rf_x_fovea'] % 2:
+            self.params['n_rf_x_fovea'] += 1
 
         
 
@@ -213,18 +223,23 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
+#        self.params['sigma_rf_pos'] = .0 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
+#        self.params['sigma_rf_speed'] = .0 # some variability in the speed of RFs
+#        self.params['sigma_rf_direction'] = .0
+#        self.params['sigma_rf_orientation'] = .0
+
         self.params['n_exc_to_record_mpn'] = 0
-        self.params['x_max_tp'] = 0.45   # [a.u.] max distance from the center (0.5)
-        self.params['x_min_tp'] = 0.001  # [a.u.] minimal distance to the center
+        self.params['x_max_tp'] = 0.45 # [a.u.] minimal distance to the center  
+        self.params['x_min_tp'] = 0.1  # [a.u.] all cells with abs(rf_x - .5) < x_min_tp are considered to be in the center and will have constant, minimum RF size (--> see n_rf_x_fovea)
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['blur_X'], self.params['blur_V'] = .2, .3
+        self.params['blur_X'], self.params['blur_V'] = .05, .1
         self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
-        self.params['rf_size_x_multiplicator'] = 1.2 # receptive field sizes for x-position are multiplied with this factor (to increase / decrease overlap)
-        self.params['rf_size_v_multiplicator'] = 0.9 # receptive field sizes for vx are multiplied with this factor (to increase / decrease overlap)
+        self.params['rf_size_x_multiplicator'] = 1.0 # receptive field sizes for x-position are multiplied with this factor (to increase / decrease overlap)
+        self.params['rf_size_v_multiplicator'] = 1.0 # receptive field sizes for vx are multiplied with this factor (to increase / decrease overlap)
 
         self.params['visual_field_width'] = 1.
         self.params['visual_field_height'] = 1.
@@ -322,7 +337,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['record_bg_volt'] = False
         self.params['bg_cell_types'] = ['d1', 'd2', 'actions', 'recorder']
         self.params['n_actions'] = 17
-        self.params['n_states'] = 16
+        self.params['n_states'] = 12
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.20
 
