@@ -380,22 +380,7 @@ class BasalGanglia(object):
         (u, v) = supervisor_state 
         action_index_x = self.map_speed_to_action(u, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
         action_index_y = self.map_speed_to_action(v, xy='y')
-#        action = [0, 0]
-#        action[0] = (x - .5) + u * self.params['t_iteration'] / self.params['t_cross_visual_field']
-#        action[1] = (y - .5) + v * self.params['t_iteration'] / self.params['t_cross_visual_field']
-#        action[0] = u 
-#        action[1] = v 
-
-#        print 'debug supervisor_state', supervisor_state
-#        print 'debug supervisor action', action
-#        action_index_x = self.map_speed_to_action(action[0], xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
-#        action_index_y = self.map_speed_to_action(action[1], xy='y')
-
         print 'Debug BG based on supervisor action choose action_index_x: %d ~ v_eye = %.2f ' % (action_index_x, self.action_bins_x[action_index_x])
-#        action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
-#        cnt_v, bins = np.histogram(action[1], action_bins_y)
-#        action_index_y = cnt_v.nonzero()[0][0]
-
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
         nest.SetStatus(self.supervisor[action_index_x], {'rate' : self.params['active_supervisor_rate']})

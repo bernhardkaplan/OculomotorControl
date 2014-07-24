@@ -34,6 +34,12 @@ class RewardBasedLearning(object):
         if params['reward_based_learning'] == False:
             print 'Set reward_based_learning = True'
             exit(1)
+        if params['training'] == False:
+            print 'Set training = True'
+            exit(1)
+        if params['supervised_on'] == False:
+            print 'Set supervised_on = True'
+            exit(1)
         self.RNG = np.random
         self.RNG.seed(self.params['visual_stim_seed'])
         self.motion_params = np.zeros((self.params['n_iterations'], 5))  # + 1 dimension for the time axis
@@ -85,6 +91,44 @@ class RewardBasedLearning(object):
             self.iteration_cnt += 1
 
         self.stim_cnt += 1
+
+
+
+    def simulate_stimulus(self, stim_params, action):
+
+        self.VI.current_motion_params = stim_params
+        v_eye = [0., 0.]
+        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, v_eye)
+        (action_index_x, action_index_y) = self.BG.supervised_training(action)
+        if params['debug_mpn']:
+            print 'Saving spike trains...'
+            utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
+        self.MT.update_input(stim) 
+        if comm != None:
+            comm.Barrier()
+        nest.Simulate(params['t_iteration'])
+        if comm != None:
+            comm.Barrier()
+
+            state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+            if pc_id == 0:
+                print 'DEBUG Iteration %d\tstate ' % (self.iteration_cnt), state_
+            self.network_states[self.iteration_cnt, :] = state_
+
+            #print 'Iteration: %d\t%d\tState before action: ' % (self.iteration_cnt, pc_id), state_
+            next_action = self.BG.get_action() # BG returns the network_states of the next stimulus
+            v_eye[0] = next_action[0]
+            v_eye[1] = next_action[1]
+            self.actions_taken[self.iteration_cnt + 1, :] = next_action
+            #print 'Iteration: %d\t%d\tState after action: ' % (self.iteration_cnt, pc_id), next_action
+
+            if params['weight_tracking']:
+                CC.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
+
+            self.iteration_cnt += 1
+            if comm != None:
+                comm.Barrier()
+
 
 
     def test_non_optimal_action(self, training_stimuli, i_stim=0):
@@ -179,12 +223,26 @@ class RewardBasedLearning(object):
 
 
     def set_up_data_structures(self):
+        """
+        Creates:
+            - training stimulus sequence
+        Create empty containers for:
+            - taken actions
+            - supervisor states
+            - precomputed motion parameters
+        """
         # data structures for recording
         self.network_states = np.zeros((params['n_iterations'], 4))  # readout from the visual layer
         self.actions_taken = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
-        self.training_stimuli = RBL.VI.create_training_sequence_iteratively()
+#        self.training_stimuli = RBL.VI.create_training_sequence_iteratively()
+        self.training_stimuli = np.zeros((params['n_stim_training'], 4))
+        self.training_stimuli[0, :] = [.7, .5, .5, .0]
+#        self.training_stimuli = RBL.VI.create_training_sequence_RBL()
         self.supervisor_states, self.action_indices, self.motion_params_precomputed = self.VI.get_supervisor_actions(self.training_stimuli, self.BG)
         self.rewards = np.zeros(params['n_iterations'])
+#        print 'self.training_stimuli:', self.training_stimuli
+#        print 'self.training_stimuli.shape', self.training_stimuli.shape
+        print 'self.supervisor_states', self.supervisor_states
 
 
     def save_data_structures(self):
@@ -202,37 +260,63 @@ class RewardBasedLearning(object):
     if comm != None:
         comm.Barrier()
 
+
+
 if __name__ == '__main__':
 
-    t1 = time.time()
+
+    # during development
+
+#    folder = 'Test_RBL_titer_test30_0-2_nStim2x400_wampD10.3_wampD20.3_d1d1wap0.00e+00_d1d1wan3.00e+01/'
+#    params_json = utils.load_params(folder)
+#    params = utils.convert_to_NEST_conform_dict(params_json)
+
+#    params['n_stim_training'] = 2
+
+#    t1 = time.time()
     GP = simulation_parameters.global_parameters()
     if pc_id == 0:
         GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
     params = GP.params
-    if pc_id == 0:
-        utils.remove_files_from_folder(params['spiketimes_folder'])
-        utils.remove_files_from_folder(params['input_folder_mpn'])
-        utils.remove_files_from_folder(params['connections_folder'])
+
+#    if pc_id == 0:
+#        utils.remove_files_from_folder(params['spiketimes_folder'])
+#        utils.remove_files_from_folder(params['input_folder_mpn'])
+#        utils.remove_files_from_folder(params['connections_folder'])
     if comm != None:
         comm.Barrier()
-
     t0 = time.time()
 
-
-
     RBL = RewardBasedLearning(params, comm)
+    # optionally load trained weights
 #    if params['load_mpn_d1_weights'] or params['load_mpn_d2_weights']:
 #        assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
 #        training_folder = os.path.abspath(sys.argv[1]) 
 #        training_params = utils.load_params(training_folder)
-
     RBL.create_networks()
-    exit(1)
     RBL.set_up_data_structures()
     for i_stim in xrange(params['n_stim']):
+
         stim_params = RBL.training_stimuli[i_stim, :]
-        action = RBL.supervisor_states[i_stim][0]
-        RBL.run_doing_action(stim_params, action)
+        action_v = [.5, 0.]
+
+        # simulate, do the given action and simulate again with the stimulus modified by the action
+        RBL.simulate_stimulus(stim_params, action_v) # 2 x simulate in here
+
+#        action = RBL.supervisor_states[i_stim][0]
+#        RBL.()
+#        RBL.run_doing_action(stim_params, action)
+#        new_stim = RBL.readout_new_stim()
+#        RBL.run_doing_action(new_stim, action=None)
+        RBL.compute_kappa()
+        RBL.simulate_without_input()
+
+
+
+
+
+
+
 
     RBL.save_data_structures()
 #    exit(1)

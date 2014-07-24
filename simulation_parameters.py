@@ -41,7 +41,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 4
+        self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
         self.params['n_rf'] = 50
@@ -51,9 +51,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
 #        self.params['training'] = False
         self.params['training'] = True
-        self.params['reward_based_learning'] = False
+        self.params['reward_based_learning'] = True
 
-        self.params['n_training_cycles'] = 3            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
@@ -76,7 +76,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 20.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
         if self.params['training']:
             if self.params['reward_based_learning']:
@@ -125,9 +125,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['sim_id'] = 'OpenLoop_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
             if (self.params['reward_based_learning']):
-                self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+                self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
         else:
-            self.params['sim_id'] = 'titer_train%d_test%d_vmin%.2f_vmax%.2f' % (self.params['t_iter_training'], self.params['t_iteration'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'RBL_titer_test%d' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -234,7 +234,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['blur_X'], self.params['blur_V'] = .05, .1
+        self.params['blur_X'], self.params['blur_V'] = .05, .05
         self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
@@ -368,10 +368,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 4.0
-        self.params['mpn_d2_weight_amplification'] = 3.0
-        self.params['mpn_bg_bias_amplification'] = 0.1
-        self.params['d1_d1_weight_amplification_neg'] = 5.0
+        self.params['mpn_d1_weight_amplification'] = 0.3
+        self.params['mpn_d2_weight_amplification'] = 0.3
+        self.params['mpn_bg_bias_amplification'] = 1.0
+        self.params['d1_d1_weight_amplification_neg'] = 30.0
         self.params['d1_d1_weight_amplification_pos'] = 0.0
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
@@ -655,12 +655,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_nStim%dx%d_wampD1%.1f_wampD2%.1f/' % \
+                folder_name += '_nStim%dx%d_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_d1d1wan%.2e_bX%.2e_bV%.2e/' % \
                         (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                         self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'])
-#                        , self.params['t_iteration'], \
-#                                self.params['n_actions'], self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
-#                                self.params['mpn_bg_bias_amplification'])
+                         self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], \
+                         self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
+                         self.params['blur_X'], self.params['blur_V'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
