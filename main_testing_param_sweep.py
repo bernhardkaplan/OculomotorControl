@@ -11,6 +11,8 @@ import simulation_parameters
 import CreateConnections
 import utils
 from main_training import remove_files_from_folder, save_spike_trains
+from PlottingScripts.PlotBGActivity import run_plot_bg
+from PlottingScripts.PlotMPNActivity import MetaAnalysisClass
 
 try: 
     from mpi4py import MPI
@@ -38,13 +40,25 @@ if __name__ == '__main__':
 
     write_params = True
     testing_params = GP.params
-    if len(sys.argv) < 3:
-        testing_params = GP.params
-    else:
-        testing_params_json = utils.load_params(os.path.abspath(sys.argv[2]))
-        testing_params = utils.convert_to_NEST_conform_dict(testing_params_json)
-        write_params = False
+
+    #if len(sys.argv) < 3:
+        #testing_params = GP.params
+    #else:
+        #testing_params_json = utils.load_params(os.path.abspath(sys.argv[2]))
+        #testing_params = utils.convert_to_NEST_conform_dict(testing_params_json)
+        #write_params = False
     
+    testing_params['mpn_d1_weight_amplification'] = float(sys.argv[2])
+    testing_params['mpn_d2_weight_amplification'] = float(sys.argv[3])
+    testing_params['d1_d1_weight_amplification_pos'] = float(sys.argv[4])
+    testing_params['d1_d1_weight_amplification_neg'] = float(sys.argv[5])
+    folder_name = 'Test_%s_%d-%d' % (testing_params['sim_id'], testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1])
+    folder_name += '_nStim%dx%d_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_bias%.2e_bX%.2e_bV%.2e/' % \
+            (testing_params['n_training_cycles'], testing_params['n_training_stim_per_cycle'], testing_params['t_iteration'], \
+                    testing_params['d1_d1_weight_amplification_pos'], testing_params['d1_d1_weight_amplification_neg'], \
+                    testing_params['mpn_d1_weight_amplification'], testing_params['mpn_bg_bias_amplification'], testing_params['blur_X'], testing_params['blur_V'])
+    GP.set_filenames(folder_name)
+    testing_params['folder_name'] = folder_name
 
     if testing_params['training']:
         print 'Set training = False!'
@@ -117,7 +131,6 @@ if __name__ == '__main__':
         assert (testing_params['test_stim_range'][1] <= training_params['n_training_cycles'] * training_params['n_training_stim_per_cycle']), 'Corretct test_stim_range in sim params!'
     iteration_cnt = 0
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
-        print 'DEBUG', training_stimuli, training_stimuli.shape, i_stim
         if len(training_stimuli.shape) == 1:
             VI.current_motion_params = training_stimuli
         else:
@@ -157,21 +170,22 @@ if __name__ == '__main__':
 
     t1 = time.time() - t0
     print 'Time8: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
+    print 'Now plotting ...'
     if pc_id == 0:
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
+        print 'DEBUG folder_name', folder_name
+        print 'DEBUG testing_params', testing_params['folder_name']
+        run_plot_bg(testing_params, (testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1]))
+        if testing_params['n_stim'] > 1:
+            MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(testing_params['test_stim_range'][0]), str(testing_params['test_stim_range'][-1])])
+        else:
+            MAC = MetaAnalysisClass([testing_params['folder_name']])
+        print 'Now saving and removing files ...'
+#        utils.compare_actions_taken(training_params, testing_params)
         utils.remove_empty_files(testing_params['connections_folder'])
         utils.remove_empty_files(testing_params['spiketimes_folder'])
-#        utils.compare_actions_taken(training_params, testing_params)
-        if not testing_params['Cluster'] and not testing_params['Cluster_Milner'] and testing_params['n_stim'] > 1:
-            os.system('python PlottingScripts/PlotBGActivity.py %s %d %d' % (testing_params['folder_name'], testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1]))
-            os.system('python PlottingScripts/PlotMPNActivity.py %s %d %d' % (testing_params['folder_name'], testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1]))
-            os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
-        elif not testing_params['Cluster'] and not testing_params['Cluster_Milner']:
-            os.system('python PlottingScripts/PlotBGActivity.py %s ' % (testing_params['folder_name']))
-            os.system('python PlottingScripts/PlotMPNActivity.py %s ' % (testing_params['folder_name']))
-            os.system('python PlottingScripts/compare_test_and_training_performance.py %s %s' % (training_params['folder_name'], testing_params['folder_name']))
     if comm != None:
         comm.Barrier()
     t1 = time.time() - t0

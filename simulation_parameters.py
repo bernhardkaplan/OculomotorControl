@@ -43,7 +43,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 160
+            self.params['total_num_virtual_procs'] = 240
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
@@ -52,15 +52,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['training'] = False
         self.params['training'] = True
         self.params['reward_based_learning'] = True
-
         self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
 #        self.params['n_training_x'] = 1 # number of training samples to cover the x-direction of the tuning space
 #        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
-        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 30 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['frac_training_samples_from_grid'] = .4
@@ -71,7 +70,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 3)
+        self.params['test_stim_range'] = range(0, 5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -87,7 +86,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
             # else:
         else:
-            self.params['n_iterations_per_stim'] = 20 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 4 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
@@ -109,7 +108,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_stim'] = self.params['n_stim_training']
         else:
             self.params['n_stim'] = self.params['n_stim_testing']
-        self.params['n_iterations'] = (self.params['n_iterations_per_stim']) * self.params['n_stim'] # [ms] total simulation time 
+        self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
         self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim'] # [ms] total simulation time 
         self.params['dt'] = 0.1            # [ms] simulation time step
         self.params['dt_input_mpn'] = 0.1  # [ms] time step for the inhomogenous Poisson process for input spike train generation
@@ -121,7 +120,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['t_iter_training'] = 50
+        self.params['t_iter_training'] = 25
         if self.params['training']:
             self.params['sim_id'] = 'OpenLoop_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
             if (self.params['reward_based_learning']):

@@ -10,6 +10,8 @@ import os
 import utils
 import re
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import pylab
 import simulation_parameters
 import matplotlib
@@ -513,7 +515,7 @@ class ActivityPlotter(object):
 class MetaAnalysisClass(object):
 
     def __init__(self, argv, plot_training_folder=None):
-        print 'Argv:', len(argv)
+        print 'Argv:', len(argv), argv
         stim_range = None
 
         # optional: plot the training data
