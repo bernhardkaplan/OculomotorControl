@@ -101,7 +101,8 @@ if __name__ == '__main__':
 
     src_type = 'mpn'
 #    src_type = 'd1'
-    tgt_type = 'd2'
+    tgt_type = 'd1'
+#    tgt_type = 'd2'
     fns = sys.argv[1:] # 
     clim = None
 #    clim = (-5., 5.)

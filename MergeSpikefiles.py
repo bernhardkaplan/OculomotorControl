@@ -30,7 +30,7 @@ class MergeSpikefiles(object):
         # merge files from different processors
         tmp_file = "tmp_%d" % (rnd_nr2)
         cmd = "cat %s* > %s" % (merge_pattern,  tmp_file)
-#        print 'debug', cmd
+        print 'debug', cmd
         os.system(cmd)
         # sort according to cell id
         os.system("sort -gk %d %s > %s" % (sort_idx, tmp_file, fn_out))

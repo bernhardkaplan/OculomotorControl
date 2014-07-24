@@ -190,7 +190,7 @@ class MotionPrediction(object):
         n_dim = tuning_prop[0, :].size
         prediction = np.zeros(n_dim)
         for i_, gid in enumerate(gids):
-#            gid = gid# - 1
+            gid = gid - 1
             prediction += tuning_prop[gid, :] * confidence[i_]
         return prediction
 

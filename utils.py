@@ -478,8 +478,8 @@ def communicate_local_spikes(gids, comm):
     all_nspikes = {} # dictionary containing all cells that spiked during that iteration
     for pid in xrange(comm.size):
         for gid in all_spikes[pid].keys():
-#            gid_ = gid
-            gid_ = gid - 1
+            gid_ = gid
+#            gid_ = gid - 1
             all_nspikes[gid_] = all_spikes[pid][gid]
     gids_spiked = np.array(all_nspikes.keys(), dtype=np.int)
     nspikes =  np.array(all_nspikes.values(), dtype=np.int)
@@ -498,25 +498,32 @@ def filter_connection_list(d):
 
 
 
-def get_xpos_log_distr(params, n_x, x_min=1e-6, x_max=.5):
+def get_xpos_log_distr(logscale, n_x, x_min=1e-6, x_max=.5):
     """
     Returns the n_hc positions
     n_x = params['n_mc_per_hc']
     x_min = params['rf_x_center_distance']
     x_max = .5 - params['xpos_hc_0']
     """
-    logscale = params['log_scale']
-    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2, base=logscale)
+    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2 + 1, base=logscale)
     logspace = list(logspace)
     logspace.reverse()
     x_lower = .5 - np.array(logspace)
     
-    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2, base=logscale)
+    logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2 + 1, base=logscale)
     x_upper =  logspace + .5
     x_rho = np.zeros(n_x)
-    x_rho[:n_x/2] = x_lower
-    x_rho[n_x/2:] = x_upper
+    x_rho[:n_x/2] = x_lower[:-1]
+
+    print 'debug', n_x, x_rho[n_x/2+1:].shape, x_upper[1:].shape
+    if n_x % 2:
+        x_rho[n_x/2+1:] = x_upper[1:]
+    else:
+        x_rho[n_x/2:] = x_upper[1:]
     return x_rho
+
+
+#def get_xpos_log_distr_const_fovea(params, n_x, x_min=1e-6, x_max=.5):
 
 
 def get_receptive_field_sizes_x(params, rf_x):
@@ -537,7 +544,10 @@ def get_receptive_field_sizes_x(params, rf_x):
 #    print 'idx', idx
     rf_size_x[:neg_idx.size-1] = dx_neg_half
     rf_size_x[neg_idx.size] = dx_neg_half[-1]
-    rf_size_x[pos_idx.size+1:] = dx_pos_half
+    if params['n_rf_x'] % 2:
+        rf_size_x[pos_idx.size+2:] = dx_pos_half # for 21
+    else:
+        rf_size_x[pos_idx.size+1:] = dx_pos_half # for 20
     rf_size_x[pos_idx.size] = dx_pos_half[0]
     rf_size_x[idx.size / 2 - 1] = dx_pos_half[0]
     rf_size_x *= params['rf_size_x_multiplicator']

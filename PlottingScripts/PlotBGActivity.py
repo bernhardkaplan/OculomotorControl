@@ -8,6 +8,8 @@ import simulation_parameters
 import utils
 import re
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import pylab
 import MergeSpikefiles
 import PlotMPNActivity
@@ -116,7 +118,7 @@ class ActivityPlotter(object):
         mn, mx = utils.get_min_max_gids_for_bg(self.params, cell_type)
         ypos_label = .5 * (mx - mn) + mn
         xa = - 20 #(self.params['t_sim'] / 6.)
-        print 'DEBUG', ypos_label, cell_type, mn, mx, xa
+#        print 'DEBUG', ypos_label, cell_type, mn, mx, xa
         ax.text(xa, ypos_label, cell_type, color=color, fontsize=16)
         ax.set_xlabel('Time [ms]')
         if self.params['training']:
@@ -157,7 +159,7 @@ def run_plot_bg(params, stim_range):
     MS = MergeSpikefiles.MergeSpikefiles(params)
     for cell_type in cell_types:
         for naction in range(params['n_actions']):
-            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction)
+            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction) + '-' # '-' because NEST attaches something like -8357-0.dat to the file name
             output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
             if not os.path.exists(output_fn):
                 MS.merge_spiketimes_files(merge_pattern, output_fn)

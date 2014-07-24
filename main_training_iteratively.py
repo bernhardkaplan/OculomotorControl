@@ -22,7 +22,10 @@ try:
 except:
     USE_MPI = False
     pc_id, n_proc, comm = 0, 1, None
-    print "MPI not used"
+    print "MPI could not be loaded\nPlease install python-mpi4py"
+    print 'utils.communicate_local_spikes will not work, hence action readout will give false results\nWill now quit'
+    print 'If you are sure, that you want to run on a single core, remove the exit(1) statement'
+#    exit(1)
 
 
 def save_spike_trains(params, iteration, stim_list, gid_list):
@@ -71,6 +74,7 @@ if __name__ == '__main__':
 
     VI = VisualInput.VisualInput(params, comm=comm)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
+#    exit(1)
 
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder'])
@@ -90,12 +94,15 @@ if __name__ == '__main__':
 
     training_stimuli_sample = VI.create_training_sequence_iteratively()
     training_stimuli_grid = VI.create_training_sequence_from_a_grid()
+    training_stimuli_center = VI.create_training_sequence_around_center()
     training_stimuli = np.zeros((params['n_stim_training'], 4))
     n_grid = int(np.round(params['n_stim_training'] * params['frac_training_samples_from_grid']))
-#    print 'debug n_grid', n_grid, params['n_stim_training'], training_stimuli_grid.shape, training_stimuli_sample.shape
+    n_center = int(np.round(params['n_stim_training'] * params['frac_training_samples_center']))
     random.seed(params['visual_stim_seed'])
+    np.random.seed(params['visual_stim_seed'])
     training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(params['n_stim_training']), n_grid), :]
-    training_stimuli[n_grid:, :] = training_stimuli_sample[random.sample(range(params['n_stim_training']), params['n_stim_training'] - n_grid), :]
+    training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
+    training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(params['n_stim_training']), params['n_stim_training'] - n_grid - n_center), :]
     np.savetxt(params['training_sequence_fn'], training_stimuli)
 
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
@@ -105,8 +112,8 @@ if __name__ == '__main__':
     np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
-    print 'quit'
-    exit(1)
+    #print 'quit'
+    #exit(1)
 
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_stim_training']):
@@ -148,8 +155,8 @@ if __name__ == '__main__':
                 print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
             network_states_net[iteration_cnt, :] = state_
 
-            #print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_, '\tnext action: ', next_action
             v_eye[0] = next_action[0]
             v_eye[1] = next_action[1]
             actions[iteration_cnt + 1, :] = next_action
