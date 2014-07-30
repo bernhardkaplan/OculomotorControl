@@ -15,6 +15,8 @@ class BasalGanglia(object):
             assert (comm.rank == self.pc_id), 'mpi4py and NEST tell me different PIDs!'
             assert (comm.size == self.n_proc), 'mpi4py and NEST tell me different PIDs!'
 
+        self.RNG = np.random
+        self.RNG.seed(self.params['basal_ganglia_seed'])
         self.iteration = 0
         self.set_action_speed_mapping_bins() 
         self.strD1 = {}
@@ -90,8 +92,6 @@ class BasalGanglia(object):
                 for gid in self.strD2[nactions]:
                     self.gid_to_action_D2[gid] = nactions
                     self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
-#        print 'DEBUG11111', self.gid_to_action
-#        print 'DEBUG22222', self.gid_to_action_via_spikerecorder
         for nactions in range(self.params['n_actions']):
             if self.params['record_bg_volt']:
                 self.voltmeter_d1[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
@@ -372,7 +372,7 @@ class BasalGanglia(object):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
 
 
-    def supervised_training(self, supervisor_state):
+    def supervised_training(self, supervisor_state, randomize_action=False):
         """
         Activates poisson generator of the required, teached, action and inactivates those of the nondesirable actions.
         The supervisor_state --- (u, v) is mapped to discretized states
@@ -380,22 +380,11 @@ class BasalGanglia(object):
         (u, v) = supervisor_state 
         action_index_x = self.map_speed_to_action(u, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
         action_index_y = self.map_speed_to_action(v, xy='y')
-#        action = [0, 0]
-#        action[0] = (x - .5) + u * self.params['t_iteration'] / self.params['t_cross_visual_field']
-#        action[1] = (y - .5) + v * self.params['t_iteration'] / self.params['t_cross_visual_field']
-#        action[0] = u 
-#        action[1] = v 
-
-#        print 'debug supervisor_state', supervisor_state
-#        print 'debug supervisor action', action
-#        action_index_x = self.map_speed_to_action(action[0], xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
-#        action_index_y = self.map_speed_to_action(action[1], xy='y')
+        if randomize_action:
+            action_index_x += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
+            action_index_y += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
 
         print 'Debug BG based on supervisor action choose action_index_x: %d ~ v_eye = %.2f ' % (action_index_x, self.action_bins_x[action_index_x])
-#        action_bins_y = np.linspace(-self.params['v_max_tp'], self.params['v_max_tp'], self.params['n_actions'])
-#        cnt_v, bins = np.histogram(action[1], action_bins_y)
-#        action_index_y = cnt_v.nonzero()[0][0]
-
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
         nest.SetStatus(self.supervisor[action_index_x], {'rate' : self.params['active_supervisor_rate']})

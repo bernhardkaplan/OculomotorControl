@@ -368,6 +368,7 @@ class VisualInput(object):
 
 
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
+#        print 'debug shape motion_params', self.motion_params.shape, self.iteration
         self.motion_params[self.iteration, -1] = self.t_current
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
@@ -468,20 +469,20 @@ class VisualInput(object):
         return L
 
 
-    def update_stimulus_trajectory_static(self, action_code):
+    def update_stimulus_trajectory_static(self, v_eye):
         """
         During one iteration the stimulus is perceived as static, except for the movement given by the 
-        difference between eye (= action_code) and the stimulus
+        difference between eye (= v_eye) and the stimulus
         """
         n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
-#        x_stim = self.current_motion_params[0] - action_code[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps)
-#        y_stim = self.current_motion_params[1] - action_code[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps)
-        x_stim = self.current_motion_params[0] - action_code[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
+#        x_stim = self.current_motion_params[0] - v_eye[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps)
+#        y_stim = self.current_motion_params[1] - v_eye[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps)
+        x_stim = self.current_motion_params[0] - v_eye[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
                 + time_axis * self.current_motion_params[2] / self.params['t_cross_visual_field']
-        y_stim = self.current_motion_params[1] - action_code[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
+        y_stim = self.current_motion_params[1] - v_eye[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
                 + time_axis * self.current_motion_params[3] / self.params['t_cross_visual_field']
-#        (self.current_motion_params[3] - action_code[1]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
+#        (self.current_motion_params[3] - v_eye[1]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
         trajectory = (x_stim, y_stim)
         self.current_motion_params[0] = x_stim[0]
         self.current_motion_params[1] = y_stim[0]

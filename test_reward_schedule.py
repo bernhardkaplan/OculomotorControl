@@ -14,6 +14,7 @@ def plot_reward_schedule(x, R):
     ax1.plot(range(N), x, '-', ls='-', c='k', lw=2)
 
     ms_min = 2
+    ms_max = 20
     for i_ in xrange(N - 1):
         if R[i_] > 0:
             c = 'r'
@@ -23,7 +24,7 @@ def plot_reward_schedule(x, R):
             c = 'b'
             s = 'v'
             fillstyle = 'full' #'none'
-        ms = np.abs(np.round(R[i_] / 10. * 30.)) + ms_min
+        ms = np.abs(np.round(R[i_] / np.max(R) * ms_max)) + ms_min
         print 'R i_ markersize', R[i_], i_, ms
         ax2.plot(i_, R[i_], s, markersize=ms, c=c, fillstyle=fillstyle)
 
@@ -41,19 +42,19 @@ def plot_reward_schedule(x, R):
 def get_reward(dx, dx_abs, dj_di_abs):
     n_it = dx.size
     R = np.zeros(n_it - 1)
-    A = 30# amplify the improvement / worsening linearly
+    A = 2# amplify the improvement / worsening linearly
     B = .7  # punish overshoot, 0 <= B <= 1.
     for i_ in xrange(1, n_it):
         print 'i_ R, dj_di_abs', i_, R.size, dj_di_abs.size, i_ - 1
 #        R[i_-1] = -1 * A * dj_di_abs[i_-1] * np.abs(dj_di_abs[i_-1])
-        R[i_-1] = -1 * A * dj_di_abs[i_-1]
+        R[i_-1] = -2. * A * dj_di_abs[i_-1]
         if np.sign(dx[i_-1]) != np.sign(dx[i_]):
             R[i_-1] *= B
     return R
 
 
 np.random.seed(0)
-n_iterations = 20
+n_iterations = 50
 
 x = np.zeros(n_iterations)
 

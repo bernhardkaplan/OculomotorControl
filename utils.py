@@ -330,10 +330,9 @@ def merge_connection_files(params):
 
     if params['weight_tracking']:
         # Merge the _dev files recorded for tracking the weights
-        if pc_id == 0:
-            merge_for_weight_tracking('d1')
-            if params['with_d2']:
-                merge_for_weight_tracking('d2')
+        merge_for_weight_tracking('d1')
+        if params['with_d2']:
+            merge_for_weight_tracking('d2')
 
 
 

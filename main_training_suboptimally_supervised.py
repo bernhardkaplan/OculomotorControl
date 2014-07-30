@@ -103,6 +103,7 @@ if __name__ == '__main__':
                 # and get the state information BEFORE MPN perceives anything
                 # in order to set a supervisor signal
                 stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :])
+#                supervisor_state[0] *= 1.5
 
             #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
             print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state

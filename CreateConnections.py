@@ -58,8 +58,8 @@ class CreateConnections(object):
                 json.dump(all_bias, f_out, indent=0)
 
         def merge_for_weight_tracking(cell_type):
-            for it in xrange(self.training_params['n_iterations']):
-                fn_merged = self.training_params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it)
+            for it in xrange(training_params['n_iterations']):
+                fn_merged = training_params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it)
                 if not os.path.exists(fn_merged):
                     # merge the connection files
                     merge_pattern = training_params['mpn_bg%s_conntracking_fn_base' % cell_type] + 'it%d_' % it

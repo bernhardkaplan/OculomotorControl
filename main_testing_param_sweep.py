@@ -175,8 +175,6 @@ if __name__ == '__main__':
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
-        print 'DEBUG folder_name', folder_name
-        print 'DEBUG testing_params', testing_params['folder_name']
         run_plot_bg(testing_params, (testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1]))
         if testing_params['n_stim'] > 1:
             MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(testing_params['test_stim_range'][0]), str(testing_params['test_stim_range'][-1])])
