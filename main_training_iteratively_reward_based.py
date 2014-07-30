@@ -73,6 +73,10 @@ if __name__ == '__main__':
         print 'Set reward_based_learning = True'
         exit(1)
     
+
+    training_folder = os.path.abspath(sys.argv[1]) 
+    training_params = utils.load_params(training_folder)
+
     t0 = time.time()
 
     VI = VisualInput.VisualInput(params, comm=comm)
@@ -87,7 +91,9 @@ if __name__ == '__main__':
     VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(params, comm)
     CC = CreateConnections.CreateConnections(params, comm)
-    CC.connect_mt_to_bg(MT, BG)
+    CC.set_pc_id(pc_id)
+#    CC.connect_mt_to_bg(MT, BG)
+    CC.connect_mt_to_bg_after_training(MT, BG, training_params, params)
 
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))

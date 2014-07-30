@@ -17,6 +17,7 @@ class BasalGanglia(object):
 
         self.RNG = np.random
         self.RNG.seed(self.params['basal_ganglia_seed'])
+        self.create_suboptimal_action_mapping()
         self.iteration = 0
         self.set_action_speed_mapping_bins() 
         self.strD1 = {}
@@ -371,8 +372,18 @@ class BasalGanglia(object):
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
 
+    def create_suboptimal_action_mapping(self):
+        self.map_suboptimal_action = {}
+        for action in xrange(self.params['n_actions']):
+            self.map_suboptimal_action[action] = int(action + self.params['suboptimal_training'] * utils.get_plus_minus(self.RNG)) % self.params['n_actions']
+        output_fn = self.params['bg_suboptimal_action_mapping_fn']
+        output_file = file(output_fn, 'w')
+        json.dump(self.map_suboptimal_action, output_file, indent=2)
+        output_file.flush()
+        output_file.close()
 
-    def supervised_training(self, supervisor_state, randomize_action=False):
+
+    def supervised_training(self, supervisor_state):
         """
         Activates poisson generator of the required, teached, action and inactivates those of the nondesirable actions.
         The supervisor_state --- (u, v) is mapped to discretized states
@@ -380,9 +391,11 @@ class BasalGanglia(object):
         (u, v) = supervisor_state 
         action_index_x = self.map_speed_to_action(u, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
         action_index_y = self.map_speed_to_action(v, xy='y')
-        if randomize_action:
-            action_index_x += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
-            action_index_y += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
+        if self.params['suboptimal_training'] != 0.:
+            action_index_x = self.map_suboptimal_action[action_index_x]
+            action_index_y = self.map_suboptimal_action[action_index_y]
+#            action_index_x += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
+#            action_index_y += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
 
         print 'Debug BG based on supervisor action choose action_index_x: %d ~ v_eye = %.2f ' % (action_index_x, self.action_bins_x[action_index_x])
         for nactions in xrange(self.params['n_actions']):

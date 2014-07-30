@@ -51,7 +51,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
 #        self.params['training'] = False
         self.params['training'] = True
-        self.params['reward_based_learning'] = True
+        self.params['reward_based_learning'] = False
         self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
@@ -70,7 +70,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['test_stim_range'] = range(0, 2)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -86,7 +86,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
             # else:
         else:
-            self.params['n_iterations_per_stim'] = 4 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 8 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
@@ -125,7 +125,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['t_iter_training'] = 25
         if self.params['training']:
-            self.params['sim_id'] = 'ClosedLoop_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'SubOptimal_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
             if (self.params['reward_based_learning']):
                 self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
         else:
@@ -626,6 +626,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['supervisor_states_fn'] = self.params['data_folder'] + 'supervisor_states.txt'
         self.params['action_indices_fn'] = self.params['data_folder'] + 'action_indices.txt'
         self.params['motion_params_precomputed_fn'] = self.params['data_folder'] + 'motion_params_precomputed.txt'
+        self.params['bg_suboptimal_action_mapping_fn'] = self.params['parameters_folder'] + 'suboptimal_action_mapping.json'
 
         # connection filenames
         self.params['mpn_bgd1_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connections'
