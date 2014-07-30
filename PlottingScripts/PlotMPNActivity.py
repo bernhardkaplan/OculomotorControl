@@ -534,7 +534,7 @@ class MetaAnalysisClass(object):
             folder_name = argv[1]
             params = utils.load_params(folder_name)
             utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
-#            self.run_single_folder_analysis(params, stim_range)
+            self.run_single_folder_analysis(params, stim_range)
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
         elif len(argv) == 3: #  PlotMPNActivity [STIM_1] [STIM_2]
             if argv[1].isdigit() and argv[2].isdigit():

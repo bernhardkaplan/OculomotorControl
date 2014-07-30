@@ -11,8 +11,7 @@ import numpy as np
 import time
 import os
 import utils
-from PlottingScripts.PlotBGActivity import run_plot_bg
-from PlottingScripts.PlotMPNActivity import MetaAnalysisClass
+import random
 
 try: 
     from mpi4py import MPI
@@ -23,8 +22,10 @@ try:
 except:
     USE_MPI = False
     pc_id, n_proc, comm = 0, 1, None
-    print "MPI not used"
-
+    print "MPI could not be loaded\nPlease install python-mpi4py"
+    print 'utils.communicate_local_spikes will not work, hence action readout will give false results\nWill now quit'
+    print 'If you are sure, that you want to run on a single core, remove the exit(1) statement'
+#    exit(1)
 
 
 def save_spike_trains(params, iteration, stim_list, gid_list):
@@ -68,11 +69,15 @@ if __name__ == '__main__':
     if not params['training']:
         print 'Set training = True!'
         exit(1)
+    if params['reward_based_learning'] == False:
+        print 'Set reward_based_learning = True'
+        exit(1)
     
     t0 = time.time()
 
     VI = VisualInput.VisualInput(params, comm=comm)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
+#    exit(1)
 
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder'])
@@ -86,46 +91,86 @@ if __name__ == '__main__':
 
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
+    rewards = np.zeros((params['n_iterations'], 4))
     iteration_cnt = 0
-    training_stimuli = VI.create_training_sequence()
+#    training_stimuli = VI.create_training_sequence_iteratively()
+#    training_stimuli = VI.create_training_sequence_from_a_grid()
 
-#    print 'quit'
-#    exit(1)
+    training_stimuli_sample = VI.create_training_sequence_iteratively()
+    training_stimuli_grid = VI.create_training_sequence_from_a_grid()
+    training_stimuli_center = VI.create_training_sequence_around_center()
+    training_stimuli = np.zeros((params['n_stim_training'], 4))
+    n_grid = int(np.round(params['n_stim_training'] * params['frac_training_samples_from_grid']))
+    n_center = int(np.round(params['n_stim_training'] * params['frac_training_samples_center']))
+    random.seed(params['visual_stim_seed'])
+    np.random.seed(params['visual_stim_seed'])
+    training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(params['n_stim_training']), n_grid), :]
+    training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
+    training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(params['n_stim_training']), params['n_stim_training'] - n_grid - n_center), :]
+    np.savetxt(params['training_sequence_fn'], training_stimuli)
+
+    supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
+    print 'supervisor_states:', supervisor_states
+    print 'action_indices:', action_indices
+    np.savetxt(params['supervisor_states_fn'], supervisor_states)
+    np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
+    np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
+
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_stim_training']):
         VI.current_motion_params = training_stimuli[i_stim, :]
-        for it in xrange(params['n_iterations_per_stim']):
+        for it_ in xrange(params['n_iterations_per_stim']):
 
-            if it >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+            if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
             else:
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
                 # and get the state information BEFORE MPN perceives anything
                 # in order to set a supervisor signal
-                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :])
+                stim, supervisor_state = VI.compute_input_open_loop(MT.local_idx_exc)
 
-            #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+            #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it_, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
             print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
-            (action_index_x, action_index_y) = BG.supervised_training(supervisor_state)
+            if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                BG.set_empty_input()
+            else:
+                (action_index_x, action_index_y) = BG.supervised_training(supervisor_state)
             #print 'DEBUG action_index_x / y:', action_index_x, action_index_y
 
             if params['debug_mpn']:
                 print 'Saving spike trains...'
+#                save_spike_trains(params, iteration_cnt, stim, MT.exc_pop)
                 save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
 
+#            print 'debug iteration %d stim' % (iteration_cnt), stim
             MT.update_input(stim) # run the network for some time 
             if comm != None:
                 comm.Barrier()
             nest.Simulate(params['t_iteration'])
             if comm != None:
                 comm.Barrier()
+
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+            if it_ < 1:
+                R = 0
+            else:
+                R = VI.get_reward_from_perceived_stim(state_)
+
+            rewards[iteration_cnt] = R
+            if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                if R >= 0:
+                    BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=R, gain=0)
+                    BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=0) 
+                else:
+                    BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=0)
+                    BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=-R, gain=0)
+
             if pc_id == 0:
                 print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
             network_states_net[iteration_cnt, :] = state_
 
-            #print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_, '\tnext action: ', next_action
             v_eye[0] = next_action[0]
             v_eye[1] = next_action[1]
             actions[iteration_cnt + 1, :] = next_action
@@ -137,6 +182,7 @@ if __name__ == '__main__':
             iteration_cnt += 1
             if comm != None:
                 comm.Barrier()
+
 
     CC.get_d1_d1_weights(BG)
     CC.get_weights(MT, BG)
@@ -153,17 +199,13 @@ if __name__ == '__main__':
         np.savetxt(params['actions_taken_fn'], actions)
         np.savetxt(params['network_states_fn'], network_states_net)
         np.savetxt(params['motion_params_fn'], VI.motion_params)
+        np.savetxt(params['rewards_given_fn'], rewards)
 
-        run_plot_bg(params, (0, params['n_stim']))
-        run_plot_bg(params, None)
-        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(params['n_stim'])])
-#        MAC = MetaAnalysisClass([params['folder_name']])
-
-#        if not params['Cluster']:
-#            os.system('python PlottingScripts/PlotBGActivity.py')
-#            os.system('python PlottingScripts/PlotMPNActivity.py')
         utils.remove_empty_files(params['connections_folder'])
         utils.remove_empty_files(params['spiketimes_folder'])
+        if not params['Cluster']:
+            os.system('python PlottingScripts/PlotBGActivity.py')
+            os.system('python PlottingScripts/PlotMPNActivity.py')
 
     if comm != None:
         comm.barrier()

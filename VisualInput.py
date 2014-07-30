@@ -368,6 +368,7 @@ class VisualInput(object):
 
 
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
+#        print 'debug shape motion_params', self.motion_params.shape, self.iteration
         self.motion_params[self.iteration, -1] = self.t_current
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated

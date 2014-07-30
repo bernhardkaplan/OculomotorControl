@@ -330,10 +330,9 @@ def merge_connection_files(params):
 
     if params['weight_tracking']:
         # Merge the _dev files recorded for tracking the weights
-        if pc_id == 0:
-            merge_for_weight_tracking('d1')
-            if params['with_d2']:
-                merge_for_weight_tracking('d2')
+        merge_for_weight_tracking('d1')
+        if params['with_d2']:
+            merge_for_weight_tracking('d2')
 
 
 
@@ -585,7 +584,22 @@ def get_receptive_field_sizes_v(params, rf_v):
 
 
 
-
+def distribute_n(n, n_proc, pid):
+    """
+    n: number of elements to be distributed
+    pid: (int) process id of the process calling this function
+    n_proc: total number of processors
+    Returns the min and max index to be assigned to the processor with id pid
+    """
+    n_per_proc = int(n / n_proc)
+    R = n % n_proc
+    offset = min(pid, R)
+    n_min = int(pid * n_per_proc + offset)
+    if (pid < R):
+        n_max = int(n_min + n_per_proc + 1)
+    else:
+        n_max = int(n_min + n_per_proc)
+    return (n_min, n_max)
 
 
 #def get_neurons_active(params, d, stim, it='all'):
