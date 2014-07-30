@@ -53,10 +53,10 @@ if __name__ == '__main__':
     testing_params['d1_d1_weight_amplification_pos'] = float(sys.argv[4])
     testing_params['d1_d1_weight_amplification_neg'] = float(sys.argv[5])
     folder_name = 'Test_%s_%d-%d' % (testing_params['sim_id'], testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1])
-    folder_name += '_nStim%dx%d_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_bias%.2e_bX%.2e_bV%.2e/' % \
-            (testing_params['n_training_cycles'], testing_params['n_training_stim_per_cycle'], testing_params['t_iteration'], \
-                    testing_params['d1_d1_weight_amplification_pos'], testing_params['d1_d1_weight_amplification_neg'], \
-                    testing_params['mpn_d1_weight_amplification'], testing_params['mpn_bg_bias_amplification'], testing_params['blur_X'], testing_params['blur_V'])
+    folder_name += '_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e_bX%.2e_bV%.2e/' % \
+            (testing_params['t_iteration'], testing_params['d1_d1_weight_amplification_pos'], testing_params['d1_d1_weight_amplification_neg'], \
+                    testing_params['mpn_d1_weight_amplification'], testing_params['mpn_d2_weight_amplification'], testing_params['mpn_bg_bias_amplification'], 
+                    testing_params['blur_X'], testing_params['blur_V'])
     GP.set_filenames(folder_name)
     testing_params['folder_name'] = folder_name
 
@@ -182,10 +182,10 @@ if __name__ == '__main__':
             MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(testing_params['test_stim_range'][0]), str(testing_params['test_stim_range'][-1])])
         else:
             MAC = MetaAnalysisClass([testing_params['folder_name']])
-        print 'Now saving and removing files ...'
+        #print 'Now saving and removing files ...'
 #        utils.compare_actions_taken(training_params, testing_params)
-        utils.remove_empty_files(testing_params['connections_folder'])
-        utils.remove_empty_files(testing_params['spiketimes_folder'])
+        #utils.remove_empty_files(testing_params['connections_folder'])
+        #utils.remove_empty_files(testing_params['spiketimes_folder'])
     if comm != None:
         comm.Barrier()
     t1 = time.time() - t0

@@ -90,6 +90,10 @@ class CreateConnections(object):
 
         fn = training_params['d1_d1_merged_conn_fn']
         print 'CreateConnections.connect_d1_after_training loads', fn
+        file_size = os.path.getsize(fn)
+        if file_size == 0:
+            utils.merge_and_sort_files(training_params['d1_d1_conn_fn_base'], training_params['d1_d1_merged_conn_fn'])
+
         d = np.loadtxt(fn)
         srcs = list(d[:, 0].astype(np.int))
         tgts = list(d[:, 1].astype(np.int))

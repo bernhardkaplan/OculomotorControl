@@ -71,12 +71,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 5)
+        self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
         if self.params['training']:
             if self.params['reward_based_learning']:
@@ -87,7 +87,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
             # else:
         else:
-            self.params['n_iterations_per_stim'] = 4 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 20 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False # if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
@@ -127,7 +127,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             if (self.params['reward_based_learning']):
                 self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
         else:
-            self.params['sim_id'] = 'titertest%d' % (self.params['t_iteration'])
+            self.params['sim_id'] = 'titertest%d_wout10-3_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -346,8 +346,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_j = 5.
         self.tau_e = 5.
 #        self.au_p = max(1000., self.params['t_sim'])
-#        self.tau_p = .5 * self.params['t_sim']
-        self.tau_p = 1. * self.params['t_sim']
+        self.tau_p = .5 * self.params['t_sim']
+        #self.tau_p = 1. * self.params['t_sim']
         self.params['fmax'] = 150.
         self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
         if self.params['training']:# and not self.params['reward_based_learning']:
@@ -496,7 +496,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
         self.params['str_to_output_exc_w'] = 10.
-        self.params['str_to_output_inh_w'] = -0.
+        self.params['str_to_output_inh_w'] = -3.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
@@ -655,11 +655,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_nStim%dx%d_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_d1d1wan%.2e_bX%.2e_bV%.2e/' % \
-                        (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                         self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], \
-                         self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
-                         self.params['blur_X'], self.params['blur_V'])
+                folder_name += '_nStim%dx%d_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e_bX%.2e_bV%.2e/' % \
+                        (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], \
+                                self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
+                                self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], self.params['mpn_bg_bias_amplification'], self.params['blur_X'], self.params['blur_V'])
 
 #                        , self.params['t_iteration'], \
 #                                self.params['n_actions'], self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
