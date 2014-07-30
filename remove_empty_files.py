@@ -27,8 +27,6 @@ else:
 
     if USE_MPI:
         my_folder_idx = utils.distribute_n(len(list_of_folders), n_proc, pc_id)
-        print 'DEBUG', list_of_folders[my_folder_idx[0]:my_folder_idx[1]]
-        exit(1)
         for i_ in xrange(my_folder_idx[0], my_folder_idx[1]):
             print 'Proc %d removes files from folder: %s' % (pc_id, list_of_folders[i_])
             utils.remove_empty_files(list_of_folders[i_])
