@@ -182,11 +182,12 @@ if __name__ == '__main__':
         np.savetxt(params['network_states_fn'], network_states_net)
         np.savetxt(params['motion_params_fn'], VI.motion_params)
 
+        print 'Removing empty files....'
         utils.remove_empty_files(params['connections_folder'])
         utils.remove_empty_files(params['spiketimes_folder'])
-        if not params['Cluster']:
-            os.system('python PlottingScripts/PlotBGActivity.py')
-            os.system('python PlottingScripts/PlotMPNActivity.py')
+        #if not params['Cluster']:
+            #os.system('python PlottingScripts/PlotBGActivity.py')
+            #os.system('python PlottingScripts/PlotMPNActivity.py')
 
     if comm != None:
         comm.barrier()

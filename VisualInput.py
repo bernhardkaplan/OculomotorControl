@@ -711,8 +711,9 @@ class VisualInput(object):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
                     x = RF_x[i_RF]
 #                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
-                    tuning_prop[index, 0] = RF_x[i_RF] % 1.0
+                    tuning_prop[index, 0] = RF_x[i_RF]
                     tuning_prop[index, 0] += self.RNG.normal(.0, self.params['sigma_rf_pos'] / 2) # add some extra noise to the neurons representing the fovea (because if their noise is only a percentage of their distance from the center, it's too small
+                    tuning_prop[index, 0] = tuning_prop[index, 0] % 1.0
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
                     tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
