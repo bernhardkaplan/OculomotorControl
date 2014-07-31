@@ -47,23 +47,27 @@ class TracePlotter(object):
         self.t_range = (self.it_range[0] * self.params['t_iteration'], self.it_range[1] * self.params['t_iteration'])
         self.d_pre = utils.get_spiketimes_within_interval(self.pre_spikes, self.t_range[0], self.t_range[1])
         self.d_post = utils.get_spiketimes_within_interval(self.post_spikes, self.t_range[0], self.t_range[1])
-        print 'Most active neurons during t_range', self.t_range
+#        print 'Most active neurons during t_range', self.t_range
         if pre_gids == None:
             mpn_gids = np.unique(self.d_pre[:, 0])
             (pre_gids, nspikes) = utils.get_most_active_neurons(self.d_pre, n_pre)
             pre_gids = pre_gids.astype(np.int)
-        print 'Pre_gids (%d most active pre-synaptic neurons)' % (n_pre), list(pre_gids), 'nspikes:', nspikes
+#        print 'Pre_gids (%d most active pre-synaptic neurons)' % (n_pre), list(pre_gids), 'nspikes:', nspikes
 
         if post_gids == None:
             mpn_gids = np.unique(self.d_post[:, 0])
             (post_gids, nspikes) = utils.get_most_active_neurons(self.d_post, n_post)
             post_gids = post_gids.astype(np.int)
-        print 'Post (%d most active post-synaptic neurons)' % (n_post), list(post_gids), 'nspikes:', nspikes
+#        print 'Post (%d most active post-synaptic neurons)' % (n_post), list(post_gids), 'nspikes:', nspikes
         return pre_gids, post_gids
 
 
-    def compute_traces(self, pre_gids, post_gids, it_range):
+    def compute_traces(self, pre_gids, post_gids, it_range, K_vec=None):
+        """
+        K_vec -- vector holding Kappa values, must of same length as the pre-synaptic spike trace after calling convert_spiketrain_to_trace
+        """
         self.t_range = (it_range[0] * self.params['t_iteration'], it_range[1] * self.params['t_iteration'])
+        print 'DEBUG', self.t_range, self.params['t_iteration'], it_range
         self.d_pre = utils.get_spiketimes_within_interval(self.pre_spikes, self.t_range[0], self.t_range[1])
         self.d_post = utils.get_spiketimes_within_interval(self.post_spikes, self.t_range[0], self.t_range[1])
         bcpnn_traces = []
@@ -77,7 +81,7 @@ class TracePlotter(object):
                 s_pre = BCPNN.convert_spiketrain_to_trace(st_pre, self.t_range[1])
                 s_post = BCPNN.convert_spiketrain_to_trace(st_post, self.t_range[1])
 
-                wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, self.params['params_synapse_%s_MT_BG' % self.cell_type_post])
+                wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, self.params['params_synapse_%s_MT_BG' % self.cell_type_post], K_vec=K_vec)
                 bcpnn_traces.append([wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, s_pre, s_post])
                 gid_pairs.append((pre_gid, post_gid))
 
@@ -87,6 +91,7 @@ class TracePlotter(object):
 
     def plot_trace(self, bcpnn_traces, bcpnn_params, dt, output_fn=None, info_txt=None, fig=None, \
             color_pre='b', color_post='g', color_joint='r', style_joint='-'):
+        # unpack the bcpnn_traces
         wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
         t_axis = dt * np.arange(zi.size)
         plots = []
@@ -178,6 +183,7 @@ class TracePlotter(object):
             print 'Saving traces to:', output_fn
             pylab.savefig(output_fn)
 
+        return fig
 
     def get_weights(self, pre_gids, post_gids):
 

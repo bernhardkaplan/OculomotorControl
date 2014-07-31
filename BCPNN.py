@@ -6,6 +6,8 @@ def convert_spiketrain_to_trace(st, t_max, dt=0.1, spike_width=1):
     st --  spike train in the format [time, id]
     spike_width -- number of time steps (in dt) for which the trace is set to 1
     Returns a np.array with st[i] = 1 if i in st[:, 0], st[i] = 0 else.
+
+    TODO: get t_min
     """
     n = np.int(t_max / dt) + spike_width
     trace = np.zeros(n)
@@ -14,11 +16,10 @@ def convert_spiketrain_to_trace(st, t_max, dt=0.1, spike_width=1):
     trace[idx] = 1
     for i in xrange(spike_width):
         trace[idx + i] = 1
-#    trace *= spike_height
     return trace
 
 
-def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
+def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_vec=None):
     """
     Arguments:
         pre_trace, post_trace: pre-synaptic activity (0 means no spike, 1 means spike) (not spike trains!)
@@ -26,7 +27,9 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
         dt -- should be the simulation time step because it influences spike_height
     """
     assert (len(pre_trace) == len(post_trace)), "Bcpnn.get_spiking_weight_and_bias: pre and post activity have different lengths!"
-
+    if K_vec != None:
+        assert (len(K_vec) == len(pre_trace)), "Bcpnn.get_spiking_weight_and_bias: pre-trace and Kappa-Vector have different lengths! %d K_vec %d" % \
+                (len(pre_trace), len(K_vec))
 
     initial_value = bcpnn_params['p_i']
     n = len(pre_trace)
@@ -45,6 +48,8 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
     spike_height = 1000. / (bcpnn_params['fmax'] * dt)
     eps = bcpnn_params['epsilon']
     K = bcpnn_params['K']
+    if K_vec == None:
+        K_vec = np.ones(n) * K
 
     for i in xrange(1, n):
         # pre-synaptic trace zi follows si
@@ -68,15 +73,15 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1):
         eij[i] = eij[i-1] + deij
 
         # pre-synaptic probability pi follows zi
-        dpi = dt * K * (ei[i] - pi[i-1]) / bcpnn_params['tau_p']
+        dpi = dt * K_vec[i] * (ei[i] - pi[i-1]) / bcpnn_params['tau_p']
         pi[i] = pi[i-1] + dpi
 
         # post-synaptic probability pj follows ej
-        dpj = dt * K * (ej[i] - pj[i-1]) / bcpnn_params['tau_p']
+        dpj = dt * K_vec[i] * (ej[i] - pj[i-1]) / bcpnn_params['tau_p']
         pj[i] = pj[i-1] + dpj
 
         # joint probability pij follows e_ij
-        dpij = dt * K * (eij[i] - pij[i-1]) / bcpnn_params['tau_p']
+        dpij = dt * K_vec[i] * (eij[i] - pij[i-1]) / bcpnn_params['tau_p']
         pij[i] = pij[i-1] + dpij
 
     # weights
