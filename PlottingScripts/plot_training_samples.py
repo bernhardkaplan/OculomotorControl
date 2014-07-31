@@ -34,11 +34,18 @@ class Plotter(object):
 
     def plot_training_sample_space(self, plot_process=False):
         if plot_process:
-            fn = self.params['motion_params_fn']
+            try:
+                fn = self.params['motion_params_fn']
+                print 'Loading training stimuli data from:', fn
+                d = np.loadtxt(fn)
+            except:
+                fn = self.params['motion_params_precomputed_fn']
+                print 'Loading training stimuli data from:', fn
+                d = np.loadtxt(fn)
         else:
             fn = self.params['training_sequence_fn']
-        print 'Loading training stimuli data from:', fn
-        d = np.loadtxt(fn)
+            print 'Loading training stimuli data from:', fn
+            d = np.loadtxt(fn)
         self.mp_training = d
 
         fig = pylab.figure()#figsize=(12, 12))
@@ -56,8 +63,9 @@ class Plotter(object):
         # plot the stimulus start points
         for i_ in xrange(self.params['n_stim']):
             if plot_process:
-                idx = i_ * self.params['n_iterations_per_stim']
-                mp = d[idx, :]
+#                idx = i_ * self.params['n_iterations_per_stim']
+#                mp = d[idx, :]
+                mp = d[i_, :]
                 ax1.plot(mp[0], mp[2], '*', markersize=10, color='y', markeredgewidth=1)#, zorder=100)
                 idx_stop = (i_ + 1) * self.params['n_iterations_per_stim']
                 mps = d[idx:idx_stop, :]
@@ -205,7 +213,7 @@ if __name__ == '__main__':
     
     Plotter = Plotter(params)#, it_max=1)
 #    Plotter.plot_training_sample_space(plot_process=True)
-#    Plotter.plot_training_sample_space(plot_process=False)
-#    Plotter.plot_precomputed_actions()
+    Plotter.plot_training_sample_space(plot_process=False)
+    Plotter.plot_precomputed_actions()
     Plotter.plot_training_sample_histograms()
     pylab.show()

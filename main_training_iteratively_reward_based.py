@@ -49,22 +49,28 @@ def remove_files_from_folder(folder):
 if __name__ == '__main__':
 
     t1 = time.time()
-    if len(sys.argv) > 1: # re-run an old parameter file
-        param_fn = sys.argv[1]
-        if os.path.isdir(param_fn): # go to the path containing the json object storing old parameters
-            param_fn += '/Parameters/simulation_parameters.json' # hard coded subpath in ParameterContainer
-        assert os.path.exists(param_fn), 'ERROR: Can not find %s - please give an existing parameter filename or folder name to re-run a simulation' % (param_fn)
-        f = file(param_fn, 'r')
-        print 'Loading parameters from', param_fn
-        json_params = json.load(f)
-        params = utils.convert_to_NEST_conform_dict(json_params)
-    else: # run a simulation with parameters as set in simulation_parameters
-        GP = simulation_parameters.global_parameters()
-        if pc_id == 0:
-            GP.write_parameters_to_file() # write_parameters_to_file MUST be called before every simulation
-        if comm != None:
-            comm.Barrier()
+
+    write_params = True
+    GP = simulation_parameters.global_parameters()
+    if len(sys.argv) < 3:
         params = GP.params
+    else:
+        testing_params_json = utils.load_params(os.path.abspath(sys.argv[2]))
+        params = utils.convert_to_NEST_conform_dict(testing_params_json)
+        write_params = False
+    
+    assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
+    training_folder = os.path.abspath(sys.argv[1]) 
+    print 'Training folder:', training_folder
+    training_params_json = utils.load_params(training_folder)
+    training_params = utils.convert_to_NEST_conform_dict(training_params_json)
+    params['training_folder'] = training_folder
+    if pc_id == 0 and write_params:
+        GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
+
+    if comm != None:
+        comm.Barrier()
+
 
     if not params['training']:
         print 'Set training = True!'
@@ -73,9 +79,6 @@ if __name__ == '__main__':
         print 'Set reward_based_learning = True'
         exit(1)
     
-
-    training_folder = os.path.abspath(sys.argv[1]) 
-    training_params = utils.load_params(training_folder)
 
     t0 = time.time()
 
@@ -93,7 +96,7 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params, comm)
     CC.set_pc_id(pc_id)
 #    CC.connect_mt_to_bg(MT, BG)
-    CC.connect_mt_to_bg_after_training(MT, BG, training_params, params)
+    CC.connect_mt_to_bg_after_training(MT, BG, training_params, params, model='bcpnn_synapse') # connect with zero weights via BCPNN synapses
 
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
@@ -140,8 +143,8 @@ if __name__ == '__main__':
             if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
                 BG.set_empty_input()
             else:
-                (action_index_x, action_index_y) = BG.supervised_training(supervisor_state)
-            #print 'DEBUG action_index_x / y:', action_index_x, action_index_y
+                (action_index_x, action_index_y) = BG.softmax_action_selection(supervisor_state)
+            print 'DEBUG action_index_x / y:', action_index_x, action_index_y
 
             if params['debug_mpn']:
                 print 'Saving spike trains...'

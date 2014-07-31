@@ -3,7 +3,6 @@ import nest
 import utils
 import json
 
-
 class BasalGanglia(object):
 
     def __init__(self, params, comm=None):
@@ -348,6 +347,7 @@ class BasalGanglia(object):
         np.savetxt(self.params['bg_action_bins_fn'], output_array)#, header=header)
 
 
+
     def map_speed_to_action(self, speed, xy='x'):
         if xy == 'x':
             binning = self.action_bins_x
@@ -381,6 +381,30 @@ class BasalGanglia(object):
         json.dump(self.map_suboptimal_action, output_file, indent=2)
         output_file.flush()
         output_file.close()
+
+
+    def softmax_action_selection(self, supervisor_state):
+        """
+        Will select the action corresponding to the supervisor_state 
+        by applying softmax to all actions, i.e. depending on the temperature the 'correct' action
+        is selected.
+        For temperature = 0 all actions are equally likely (softmax yields a flat distribution), 
+        and for temperature >= 10 the supervisor_state is basically mapped to the correct action (as in supervised_training).
+        """
+           
+        (u, v) = supervisor_state 
+        action_index_x = self.map_speed_to_action(u, xy='x')
+        action_index_y = self.map_speed_to_action(v, xy='y')
+        actions = np.zeros(self.params['n_actions'])
+        actions[action_index_x] = 1.
+        actions_softmax = utils.softmax(actions, self.params['softmax_temperature'])
+        rnd_action = utils.draw_from_discrete_distribution(actions_softmax, size=1)[0]
+           
+        # set rate for all to inactive
+        for nactions in xrange(self.params['n_actions']):
+            nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
+        nest.SetStatus(self.supervisor[rnd_action], {'rate' : self.params['active_supervisor_rate']})
+        return (rnd_action, action_index_y)
 
 
     def supervised_training(self, supervisor_state):
