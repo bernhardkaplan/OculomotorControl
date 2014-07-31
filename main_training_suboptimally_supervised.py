@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
         run_plot_bg(params, (0, params['n_stim']))
         run_plot_bg(params, None)
-        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(params['n_stim'])])
+        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(5)])
 #        MAC = MetaAnalysisClass([params['folder_name']])
 
 #        if not params['Cluster']:

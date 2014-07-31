@@ -27,7 +27,8 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-aprun -n 240 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_iteratively.py > delme_training_iteratively_titer50_1x25x25_np160_25 2>&1
+#aprun -n 240 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_iteratively.py > delme_training_iteratively_titer50_1x25x25_np160_25 2>&1
+aprun -n 240 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_suboptimally_supervised.py > delme_training_iteratively_2 2>&1
 #aprun -n 960 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training.py $1 #2>&1
 
 echo "Stopping at `date`"

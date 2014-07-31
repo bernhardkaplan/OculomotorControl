@@ -39,27 +39,25 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 240
+            self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-#        self.params['training'] = False
-        self.params['training'] = True
+        self.params['training'] = False
+        #self.params['training'] = True
         self.params['reward_based_learning'] = False
-        self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 4            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 2 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 2 # number of training samples to cover the v-direction of the tuning space
-#        self.params['n_training_x'] = 30 # number of training samples to cover the x-direction of the tuning space
-#        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 30 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['frac_training_samples_from_grid'] = .4
@@ -70,23 +68,23 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 2)
+        self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
         if self.params['training']:
             if self.params['reward_based_learning']:
                 self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations'])
             else:
                 # 'open-loop': 
-                self.params['n_iterations_per_stim'] = 5 + self.params['n_silent_iterations'] 
+                self.params['n_iterations_per_stim'] = 2 + self.params['n_silent_iterations'] 
 
             # else:
         else:
-            self.params['n_iterations_per_stim'] = 8 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 20 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
@@ -129,7 +127,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             if (self.params['reward_based_learning']):
                 self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
         else:
-            self.params['sim_id'] = 'titertest%d_wout10-3_' % (self.params['t_iteration'])
+            self.params['sim_id'] = 'SubOpt_0_titertest%d_wout10-3_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -280,7 +278,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
         self.params['supervisor_amp_param'] = 1.
-        self.params['suboptimal_training'] = 1 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
+        self.params['suboptimal_training'] = 0 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
 
         # ##############################
         # INHIBITOTY NETWORK PARAMETERS
@@ -655,16 +653,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_nStim%dx%d_nactions%d_blurX%.2f_V%.2f_taup%d/' % (self.params['sim_id'], \
+                folder_name = 'Training_%s_%d_nStim%dx%d_nactions%d_blurX%.2f_V%.2f_taup%d/' % (self.params['sim_id'], \
+                        self.params['suboptimal_training'], \
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
                         self.params['n_actions'], self.params['blur_X'], self.params['blur_V'], \
                         self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_nStim%dx%d_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e_bX%.2e_bV%.2e/' % \
-                        (self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], self.params['t_iteration'], \
+                folder_name += '_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e/' % \
+                        (self.params['t_iteration'], \
                                 self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
-                                self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], self.params['mpn_bg_bias_amplification'], self.params['blur_X'], self.params['blur_V'])
+                                self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], self.params['mpn_bg_bias_amplification'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
