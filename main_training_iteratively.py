@@ -74,7 +74,6 @@ if __name__ == '__main__':
 
     VI = VisualInput.VisualInput(params, comm=comm)
     MT = MotionPrediction.MotionPrediction(params, VI, comm)
-#    exit(1)
 
     if pc_id == 0:
         remove_files_from_folder(params['spiketimes_folder'])
@@ -105,12 +104,15 @@ if __name__ == '__main__':
     training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(params['n_stim_training']), params['n_stim_training'] - n_grid - n_center), :]
     np.savetxt(params['training_sequence_fn'], training_stimuli)
 
+
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
     print 'supervisor_states:', supervisor_states
     print 'action_indices:', action_indices
     np.savetxt(params['supervisor_states_fn'], supervisor_states)
     np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
+
+    exit(1)
 
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_stim_training']):

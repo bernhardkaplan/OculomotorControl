@@ -11,18 +11,20 @@ import pylab
 import FigureCreator
 
 
-def plot_action_indices_histogram(params):
-    fn = params['action_indices_fn']
-    d = np.loadtxt(fn)
+def plot_action_indices_histogram(fn):
+#    fn = params['action_indices_fn']
+#    d = np.loadtxt(fn)
+    d = d[:, 2]
     cnt, bins = np.histogram(d, bins=params['n_actions'], range=(0, params['n_actions']))
     print 'Action hist bins', bins
     print 'Action hist cnt', cnt
     print 'to be completed...',
 
 
-def plot_histogram(fn):
+def plot_histogram(fn, column=0):
 
     d = np.loadtxt(fn)
+    d = d[:, 2]
     n_bins = (np.max(d) - np.min(d))
     cnt, bins = np.histogram(d, bins=n_bins, range=(np.min(d), np.max(d)))
     print 'First half:', bins[:n_bins/2]
@@ -50,6 +52,8 @@ def plot_histogram(fn):
 
 
 if __name__ == '__main__':
+#    column = 0
+#    print 'Plotting column ', column
     try:
         folder = os.path.abspath(sys.argv[1])
         params = utils.load_params(folder)
@@ -57,8 +61,8 @@ if __name__ == '__main__':
         fn = sys.argv[1]
         plot_histogram(fn)
 
-
     pylab.show()
+
 #print 'Action mapping', action_mapping
 #idx_never_done = np.nonzero(cnt == 0)[0]
 #print 'Actions never done:', idx_never_done

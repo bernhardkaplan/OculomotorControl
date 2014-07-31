@@ -167,7 +167,7 @@ class CreateConnections(object):
 
 
 
-    def connect_mt_to_bg_after_training(self, mpn_net, bg_net, training_params, test_params, debug=False):
+    def connect_mt_to_bg_after_training(self, mpn_net, bg_net, training_params, test_params, model='static_synapse', debug=False):
         """
         Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
         based on the weights found in conn_folder
@@ -186,7 +186,7 @@ class CreateConnections(object):
         tgts = list(mpn_d1_conn_list[valid_idx, 1].astype(np.int))
         weights = list(w[valid_idx])
         delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
-        nest.Connect(srcs, tgts, weights, delays)
+        nest.Connect(srcs, tgts, weights, delays, model=model)
         if debug:
             output_array_d1 = np.zeros((len(weights), 3))
             output_array_d1[:, 0] = srcs
@@ -206,7 +206,7 @@ class CreateConnections(object):
             tgts = list(mpn_d2_conn_list[valid_idx, 1].astype(np.int))
             weights = list(w[valid_idx])
             delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
-            nest.Connect(srcs, tgts, weights, delays)
+            nest.Connect(srcs, tgts, weights, delays, model=model)
             if debug:
                 output_array_d2 = np.zeros((len(weights), 3))
                 output_array_d2[:, 0] = srcs

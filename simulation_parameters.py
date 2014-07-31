@@ -373,6 +373,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['weight_threshold'] = 0.05
         self.params['mpn_d1_weight_amplification'] = 0.3
         self.params['mpn_d2_weight_amplification'] = 0.3
+        if self.params['reward_based_learning']:
+            self.params['mpn_d1_weight_amplification'] = 0.0
+            self.params['mpn_d2_weight_amplification'] = 0.0
         self.params['mpn_bg_bias_amplification'] = 1.0
         self.params['d1_d1_weight_amplification_neg'] = 30.0
         self.params['d1_d1_weight_amplification_pos'] = 0.0
