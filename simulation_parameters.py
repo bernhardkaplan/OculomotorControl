@@ -127,7 +127,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             if (self.params['reward_based_learning']):
                 self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
         else:
-            self.params['sim_id'] = 'SubOpt_0_titertest%d_wout10-3_' % (self.params['t_iteration'])
+            self.params['sim_id'] = 'SubOpt_it%d_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -501,7 +501,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 10.
+        self.params['str_to_output_exc_w'] = 8.
         self.params['str_to_output_inh_w'] = -3.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
