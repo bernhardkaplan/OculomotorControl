@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
-    rewards = np.zeros((params['n_iterations'], 4))
+    rewards = np.zeros(params['n_iterations'])
     iteration_cnt = 0
 #    training_stimuli = VI.create_training_sequence_iteratively()
 #    training_stimuli = VI.create_training_sequence_from_a_grid()
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
     v_eye = [0., 0.]
-    for i_stim in xrange(params['n_stim_training']):
+    for i_stim in xrange(params['n_stim']):
         VI.current_motion_params = training_stimuli[i_stim, :]
         for it_ in xrange(params['n_iterations_per_stim']):
 

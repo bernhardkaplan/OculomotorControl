@@ -24,7 +24,7 @@ def plot_action_indices_histogram(fn):
 def plot_histogram(fn, column=0):
 
     d = np.loadtxt(fn)
-    d = d[:, 2]
+#    d = d[:, 2]
     n_bins = (np.max(d) - np.min(d))
     cnt, bins = np.histogram(d, bins=n_bins, range=(np.min(d), np.max(d)))
     print 'First half:', bins[:n_bins/2]

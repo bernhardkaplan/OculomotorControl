@@ -133,7 +133,6 @@ if __name__ == '__main__':
                 # and get the state information BEFORE MPN perceives anything
                 # in order to set a supervisor signal
                 stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
-#                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], network_states_net[iteration_cnt, :])
 
             if testing_params['debug_mpn']:
                 print 'Iteration %d: Saving spike trains...' % iteration_cnt
