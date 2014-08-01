@@ -112,7 +112,7 @@ if __name__ == '__main__':
     np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
-    exit(1)
+#    exit(1)
 
     v_eye = [0., 0.]
     for i_stim in xrange(params['n_stim_training']):

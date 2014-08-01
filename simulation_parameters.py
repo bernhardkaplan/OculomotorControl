@@ -50,15 +50,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_v'] = 30
 
 #        self.params['training'] = False
+        self.params['reward_based_learning'] = False
         self.params['training'] = True
-        self.params['reward_based_learning'] = True
+#        self.params['reward_based_learning'] = True
         self.params['softmax_temperature'] = 10.
         self.params['n_training_cycles'] = 4            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 30 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['frac_training_samples_from_grid'] = .4
@@ -74,7 +75,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
         if self.params['training']:
             if self.params['reward_based_learning']:
@@ -372,7 +373,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.3
+        self.params['mpn_d1_weight_amplification'] = 0.1
         self.params['mpn_d2_weight_amplification'] = 0.3
         if self.params['reward_based_learning']:
             self.params['mpn_d1_weight_amplification'] = 0.0
@@ -663,7 +664,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['n_actions'], self.params['blur_X'], self.params['blur_V'], \
                         self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
-                folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
+                folder_name = 'DEBUGTest_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
                 folder_name += '_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e/' % \
                         (self.params['t_iteration'], \
                                 self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
