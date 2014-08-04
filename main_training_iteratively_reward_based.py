@@ -95,8 +95,8 @@ if __name__ == '__main__':
     BG = BasalGanglia.BasalGanglia(params, comm)
     CC = CreateConnections.CreateConnections(params, comm)
     CC.set_pc_id(pc_id)
-#    CC.connect_mt_to_bg(MT, BG)
-    CC.connect_mt_to_bg_after_training(MT, BG, training_params, params, model='bcpnn_synapse') # connect with zero weights via BCPNN synapses
+    CC.connect_mt_to_bg(MT, BG)
+    #CC.connect_mt_to_bg_after_training(MT, BG, training_params, params, model='bcpnn_synapse') # connect with zero weights via BCPNN synapses
 
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))

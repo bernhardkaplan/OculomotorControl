@@ -39,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
@@ -50,16 +50,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_v'] = 30
 
         self.params['training'] = False
-#        self.params['reward_based_learning'] = False
-        self.params['training'] = True
-        self.params['reward_based_learning'] = True
+        self.params['reward_based_learning'] = False
+        #self.params['training'] = True
+        #self.params['reward_based_learning'] = True
         self.params['softmax_temperature'] = 10.
-        self.params['n_training_cycles'] = 2            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 3            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 1 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['frac_training_samples_from_grid'] = .4
@@ -70,7 +70,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 3)
+        self.params['test_stim_range'] = range(0, 20)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -108,9 +108,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['load_mpn_d2_weights'] = False
 
         if self.params['training']:
-            if self.params['reward_based_learning']:
-                self.params['n_stim'] = 1
-            else:
+            #if self.params['reward_based_learning']:
+                #self.params['n_stim'] = 1
+            #else:
                 self.params['n_stim'] = self.params['n_stim_training']
         else:
             self.params['n_stim'] = self.params['n_stim_testing']
@@ -127,12 +127,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['t_iter_training'] = 25
+        self.params['suboptimal_training'] = 0 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         if self.params['training']:
-            self.params['sim_id'] = 'SubOptimal_titer%d_nRF%d_nV%d_vmin%.2f_vmax%.2f' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'], self.params['v_min_out'], self.params['v_max_out'])
+            self.params['sim_id'] = 'SubOpt_%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
             if (self.params['reward_based_learning']):
-                self.params['sim_id'] = 'RBL_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
+                self.params['sim_id'] = 'RBL_2_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
         else:
-            self.params['sim_id'] = 'SubOpt_it%d_' % (self.params['t_iteration'])
+            self.params['sim_id'] = 'afterRBL_2_it%d_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -668,7 +669,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
                         self.params['params_synapse_d1_MT_BG']['tau_p'])
             else:
-                folder_name = 'DEBUGTest_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
+                folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
                 folder_name += '_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e/' % \
                         (self.params['t_iteration'], \
                                 self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \

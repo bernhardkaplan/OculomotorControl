@@ -5,7 +5,7 @@
 #SBATCH -J OCT_testing
 
 # Only 1 hour wall-clock time will be given to this job
-#SBATCH -t 0:15:00
+#SBATCH -t 0:30:00
 
 # Number of cores to be allocated (multiple of 20)
 #SBATCH -n 40
@@ -29,7 +29,7 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-aprun -n 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing_param_sweep.py Training_SubOptimal_titer25_nRF50_nV50_vmin0.10_vmax12.00_0_nStim4x900_nactions17_blurX0.05_V0.05_taup225000/ $1 $2 $3 $4 $5 $6 > delme_testing 2>&1
+aprun -n 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing_param_sweep.py Training_0_titer25_nRF50_nV50_nStim4x400_nactions17_blurX0.05_V0.05_taup100000/  $1 $2 $3 $4 $5 $6 > delme_testing_$3 2>&1
 
 echo "Stopping at `date`"
 
