@@ -487,8 +487,8 @@ class VisualInput(object):
                 + time_axis * self.current_motion_params[3] / self.params['t_cross_visual_field']
 
 #        print 'DEBUG'
-#        print 'v_eye', v_eye
-#        print 'current_motion_params', self.current_motion_params
+        print 'v_eye', v_eye
+        print 'current_motion_params', self.current_motion_params
 #        print 'trajectory', x_stim
 #        exit(1)
 

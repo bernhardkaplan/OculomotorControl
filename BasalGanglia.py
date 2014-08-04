@@ -5,7 +5,7 @@ import json
 
 class BasalGanglia(object):
 
-    def __init__(self, params, comm=None):
+    def __init__(self, params, comm=None, dummy=False):
 
         self.params = params
         self.pc_id, self.n_proc = nest.Rank(), nest.NumProcesses()
@@ -52,21 +52,24 @@ class BasalGanglia(object):
         self.voltmeter_action = {}
 
         self.t_current = 0 
+        self.currently_trained_action = None    # used for reward-based relearning
 
         self.bg_offset = {}
         self.bg_offset['d1'] = np.infty
         self.bg_offset['d2'] = np.infty
         self.bg_offset['actions'] = np.infty
-        self.create_populations()
-        if self.params['gids_to_record_bg']:
-            self.record_extra_cells()
 
-        if self.params['training']:
-            self.connect_d1_population()
-            if self.params['with_d2']:
-                self.connect_d2_population()
+        if not dummy:
+            self.create_populations()
+            if self.params['gids_to_record_bg']:
+                self.record_extra_cells()
 
-        self.connect_noise()
+            if self.params['training']:
+                self.connect_d1_population()
+                if self.params['with_d2']:
+                    self.connect_d2_population()
+
+            self.connect_noise()
 
 
 
@@ -319,7 +322,7 @@ class BasalGanglia(object):
                             np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_x += v_scale_half
-        print 'BG: action_bins_x', self.action_bins_x
+#        print 'BG: action_bins_x', self.action_bins_x
 
 
         ### the same for the y-direction
@@ -334,7 +337,7 @@ class BasalGanglia(object):
                             np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_y,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_y += v_scale_half
-        print 'BG: action_bins_y', self.action_bins_y
+#        print 'BG: action_bins_y', self.action_bins_y
 
 #        else:
 #            self.action_bins_x = np.linspace(-self.params['v_max_out'], self.params['v_max_out'], n_bins_x)
@@ -372,15 +375,71 @@ class BasalGanglia(object):
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
 
+
     def create_suboptimal_action_mapping(self):
         self.map_suboptimal_action = {}
         for action in xrange(self.params['n_actions']):
-            self.map_suboptimal_action[action] = int(action + self.params['suboptimal_training'] * utils.get_plus_minus(self.RNG)) % self.params['n_actions']
+            rnd_action = int(action + self.params['suboptimal_training'] * utils.get_plus_minus(self.RNG))
+            if rnd_action >= self.params['n_actions']:
+                rnd_action = self.RNG.choice(xrange(self.params['n_actions'] - self.params['suboptimal_training']))
+            elif rnd_action < 0:
+                rnd_action = self.RNG.choice(xrange(0, self.params['suboptimal_training']))
+            self.map_suboptimal_action[action] = rnd_action
+#            self.map_suboptimal_action[action] = int(action + self.params['suboptimal_training'] * utils.get_plus_minus(self.RNG)) % self.params['n_actions']
         output_fn = self.params['bg_suboptimal_action_mapping_fn']
         output_file = file(output_fn, 'w')
         json.dump(self.map_suboptimal_action, output_file, indent=2)
         output_file.flush()
         output_file.close()
+
+
+    def get_action_spike_based_memory_based(self, i_trial, stim_params):
+        """
+        Based on the spiking activity in the current iteration and the number of trials (i_trial) the stimulus has been presented, an action is selected.
+
+        i_trial -- (int) indicating how often this stimulus has been presented (and is retrained)
+        If i_trial == 0:
+            the spiking activity determines the output action
+            if there is no spiking activity, a random action is selected
+        """
+
+        if i_trial == 0:
+            action = self.get_action()
+            self.currently_trained_action = action # update the currently trained action
+
+#        elif i_trial == 1:
+        else:
+            all_outcomes = np.zeros(len(self.action_bins_x))
+            for i_, action in enumerate(self.action_bins_x):    
+                all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
+            best_action = np.argmin(np.abs(all_outcomes - .5))
+            output_speed_x = self.action_bins_x[best_action]
+            print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, best_action), output_speed_x
+            self.t_current += self.params['t_iteration']
+            self.iteration += 1
+            return (output_speed_x, 0, best_action)
+             
+        # TODO:
+        # else: randomly choose another action use softmax_action_selection (without supervisor_state), b
+
+
+
+
+
+    def get_reward_from_action(self, chosen_action, stim_params):
+        action_bins = self.action_bins_x
+        all_outcomes = np.zeros(len(action_bins))
+        for i_, action in enumerate(action_bins):    
+            all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
+        best_action = np.argmin(np.abs(all_outcomes - .5))
+        # the reward is determined by the distance between the best_action and the chosen_action
+
+        reward = (self.params['K_max'] - self.params['shift_reward_distribution']) * np.exp( - (chosen_action - best_action)**2 / (2. * self.params['sigma_reward_distribution'])) + self.params['shift_reward_distribution']
+        return reward
+#        if chosen_action != best_action:
+#            return -1.
+#        else:
+#            return 1.
 
 
     def softmax_action_selection(self, supervisor_state):

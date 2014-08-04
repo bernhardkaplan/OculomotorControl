@@ -20,7 +20,7 @@ import simulation_parameters
 def create_K_vector(params, it_range, dt=0.1):
 
     rewards = np.loadtxt(params['rewards_given_fn']) 
-    print 'K_vec', rewards
+    print 'rewards', rewards
     t_max = it_range[1] * params['t_iteration']
     n = np.int(t_max/ dt) + 1 # +1 because the length needs to be the same computed in the BCPNN module after convert_spiketrain_to_trace
     K_vec = np.zeros(n)
@@ -34,10 +34,10 @@ def create_K_vector(params, it_range, dt=0.1):
 if __name__ == '__main__':
 
 
-    n_pre = 2
-    n_post = 1
-    it_range_selection = (0, 2)
-    it_range_plotting = (0, 5)
+    n_pre = 3
+    n_post = 3
+    it_range_cell_selection = (1, 2)
+    it_range_plotting = (0, 4)
     output_fn = None 
     info_txt = None
 
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         params = param_tool.params
 
     # merge spike files if needed
-    cell_type_post = 'd1'
+    cell_type_post = 'd2'
     dt = params['dt']
     fn_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
     fn_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
@@ -57,11 +57,15 @@ if __name__ == '__main__':
         utils.merge_spikes(params)
 
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
+    bcpnn_params['tau_p'] = 1500.
 
     K_vec = create_K_vector(params, it_range_plotting, dt=0.1)
+#    print 'debug K_vec', K_vec
+#    print 'debug K_vec', K_vec.nonzero()[0], len(K_vec)
+#    exit(1)
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
-    pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range_selection)
+    pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range_cell_selection)
     print 'pre_gids', pre_gids
     print 'post_gids', post_gids
     all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, it_range_plotting, K_vec=K_vec)

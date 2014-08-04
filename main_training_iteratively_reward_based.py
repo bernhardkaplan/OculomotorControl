@@ -102,6 +102,12 @@ if __name__ == '__main__':
     network_states_net = np.zeros((params['n_iterations'], 4))
     rewards = np.zeros(params['n_iterations'])
     iteration_cnt = 0
+
+
+#    training_stimuli = np.zeros((training_params['n_stim_training'], 4))
+    training_stimuli = np.loadtxt(training_params['training_sequence_fn'])
+    training_params['training_params'] = training_params # double check
+
 #    training_stimuli = VI.create_training_sequence_iteratively()
 #    training_stimuli = VI.create_training_sequence_from_a_grid()
 
@@ -126,72 +132,76 @@ if __name__ == '__main__':
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
     v_eye = [0., 0.]
-    for i_stim in xrange(params['n_stim']):
-        VI.current_motion_params = training_stimuli[i_stim, :]
-        for it_ in xrange(params['n_iterations_per_stim']):
+    for i_training_stim in xrange(params['n_training_cycles']): # how many of all the training samples shall be retrained
+        for i_trial in xrange(params['n_training_stim_per_cycle']):
+            VI.current_motion_params = training_stimuli[i_training_stim, :]
+            for it_ in xrange(params['n_iterations_per_stim']):
 
-            if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
-                stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
-            else:
-                # integrate the real world trajectory and the eye direction and compute spike trains from that
-                # and get the state information BEFORE MPN perceives anything
-                # in order to set a supervisor signal
-                stim, supervisor_state = VI.compute_input_open_loop(MT.local_idx_exc)
-
-            #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it_, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
-            print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
-            if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
-                BG.set_empty_input()
-            else:
-                (action_index_x, action_index_y) = BG.softmax_action_selection(supervisor_state)
-            print 'DEBUG action_index_x / y:', action_index_x, action_index_y
-
-            if params['debug_mpn']:
-                print 'Saving spike trains...'
-#                save_spike_trains(params, iteration_cnt, stim, MT.exc_pop)
-                save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
-
-#            print 'debug iteration %d stim' % (iteration_cnt), stim
-            MT.update_input(stim) # run the network for some time 
-            if comm != None:
-                comm.Barrier()
-            nest.Simulate(params['t_iteration'])
-            if comm != None:
-                comm.Barrier()
-
-            state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-            if it_ < 1:
-                R = 0
-            else:
-                R = VI.get_reward_from_perceived_stim(state_)
-
-            rewards[iteration_cnt] = R
-            if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
-                if R >= 0:
-                    BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=R, gain=0)
-                    BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=0) 
+                if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                    stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
                 else:
-                    BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=0)
-                    BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=-R, gain=0)
+                    # closed-loop
+                    stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
 
-            if pc_id == 0:
-                print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
-            network_states_net[iteration_cnt, :] = state_
+                #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it_, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
+                #print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
+                #if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                    #BG.set_empty_input()
+                #else:
+                    #(action_index_x, action_index_y) = BG.softmax_action_selection(supervisor_state)
+    #                (action_index_x, action_index_y) = BG.softmax_action_selection(supervisor_state)
+#                print 'DEBUG action_index_x / y:', action_index_x, action_index_y
 
-            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
-            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_, '\tnext action: ', next_action
-            v_eye[0] = next_action[0]
-            v_eye[1] = next_action[1]
-            actions[iteration_cnt + 1, :] = next_action
-            #print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
+                if params['debug_mpn']:
+                    print 'Saving spike trains...'
+                    save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
+
+                MT.update_input(stim) # run the network for some time 
+                if comm != None:
+                    comm.Barrier()
+                nest.Simulate(params['t_iteration'])
+                if comm != None:
+                    comm.Barrier()
+
+                state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+                if it_ < 1:
+                    R = 0
+                elif it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                    pass
+                else:
+#                    R = VI.get_reward_from_perceived_stim(state_)
+                    # pass the selected action to BG to retrieve the reward - the action is the vector average of the BG activity
+                    R = BG.get_reward_from_action(actions[iteration_cnt, 2], VI.current_motion_params)
+                rewards[iteration_cnt] = R
+
+                if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                    if R >= 0:
+                        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=R, gain=0)
+                        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=0) 
+                    else:
+                        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=0)
+                        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=-R, gain=0)
+
+                if pc_id == 0:
+                    print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
+                network_states_net[iteration_cnt, :] = state_
+
+                next_action = BG.get_action_spike_based_memory_based(i_trial, VI.current_motion_params) # BG returns the network_states_net of the next stimulus
+
+                print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_, '\tnext action: ', next_action
+                v_eye[0] = next_action[0]
+                v_eye[1] = next_action[1]
+                actions[iteration_cnt + 1, :] = next_action
+                #print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
+
+                iteration_cnt += 1
+                if comm != None:
+                    comm.Barrier()
 
             if params['weight_tracking']:
                 CC.get_weights(MT, BG, iteration=iteration_cnt)
-
-            iteration_cnt += 1
             if comm != None:
                 comm.Barrier()
-
 
     CC.get_d1_d1_weights(BG)
     CC.get_weights(MT, BG)
