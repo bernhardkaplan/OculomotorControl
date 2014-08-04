@@ -88,12 +88,10 @@ if __name__ == '__main__':
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
     iteration_cnt = 0
-#    training_stimuli = VI.create_training_sequence_iteratively()
-#    training_stimuli = VI.create_training_sequence_from_a_grid()
 
-    training_stimuli_sample = VI.create_training_sequence_iteratively()
-    training_stimuli_grid = VI.create_training_sequence_from_a_grid()
-    training_stimuli_center = VI.create_training_sequence_around_center()
+    training_stimuli_sample = VI.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
+    training_stimuli_grid = VI.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
+    training_stimuli_center = VI.create_training_sequence_around_center()   # sample more from the center in order to reduce risk of overtraining action 0 and v_x_max
     training_stimuli = np.zeros((params['n_stim_training'], 4))
     n_grid = int(np.round(params['n_stim_training'] * params['frac_training_samples_from_grid']))
     n_center = int(np.round(params['n_stim_training'] * params['frac_training_samples_center']))

@@ -52,6 +52,7 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_ve
         K_vec = np.ones(n) * K
 
     for i in xrange(1, n):
+#        print 'debug', K_vec[i]
         # pre-synaptic trace zi follows si
         dzi = dt * (si[i] * spike_height - zi[i-1] + eps) / bcpnn_params['tau_i']
         zi[i] = zi[i-1] + dzi

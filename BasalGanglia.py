@@ -5,7 +5,7 @@ import json
 
 class BasalGanglia(object):
 
-    def __init__(self, params, comm=None):
+    def __init__(self, params, comm=None, dummy=False):
 
         self.params = params
         self.pc_id, self.n_proc = nest.Rank(), nest.NumProcesses()
@@ -57,16 +57,18 @@ class BasalGanglia(object):
         self.bg_offset['d1'] = np.infty
         self.bg_offset['d2'] = np.infty
         self.bg_offset['actions'] = np.infty
-        self.create_populations()
-        if self.params['gids_to_record_bg']:
-            self.record_extra_cells()
 
-        if self.params['training']:
-            self.connect_d1_population()
-            if self.params['with_d2']:
-                self.connect_d2_population()
+        if not dummy:
+            self.create_populations()
+            if self.params['gids_to_record_bg']:
+                self.record_extra_cells()
 
-        self.connect_noise()
+            if self.params['training']:
+                self.connect_d1_population()
+                if self.params['with_d2']:
+                    self.connect_d2_population()
+
+            self.connect_noise()
 
 
 
@@ -319,7 +321,7 @@ class BasalGanglia(object):
                             np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_x,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_x += v_scale_half
-        print 'BG: action_bins_x', self.action_bins_x
+#        print 'BG: action_bins_x', self.action_bins_x
 
 
         ### the same for the y-direction
@@ -334,7 +336,7 @@ class BasalGanglia(object):
                             np.log(self.params['v_max_out']) / np.log(self.params['log_scale']), num=n_bins_y,
                             endpoint=True, base=self.params['log_scale'])).tolist()
         self.action_bins_y += v_scale_half
-        print 'BG: action_bins_y', self.action_bins_y
+#        print 'BG: action_bins_y', self.action_bins_y
 
 #        else:
 #            self.action_bins_x = np.linspace(-self.params['v_max_out'], self.params['v_max_out'], n_bins_x)
@@ -381,6 +383,29 @@ class BasalGanglia(object):
         json.dump(self.map_suboptimal_action, output_file, indent=2)
         output_file.flush()
         output_file.close()
+
+
+    def get_action_spike_based_memory_based(self, i_trial):
+        """
+        Based on the spiking activity in the current iteration and the number of trials (i_trial) the stimulus has been presented, an action is selected.
+
+        i_trial -- (int) indicating how often this stimulus has been presented (and is retrained)
+        If i_trial == 0:
+            the spiking activity determines the output action
+            if there is no spiking activity, a random action is selected
+        """
+        pass
+
+
+    def get_reward_from_action(self, chosen_action, stim_params, action_bins):
+        all_outcomes = np.zeros(len(action_bins))
+        for i_, action in enumerate(action_bins):    
+            all_outcomes[i_] = get_next_stim(params, stim_params, action)[0]
+        best_action = np.argmin(np.abs(all_outcomes - .5))
+        if chosen_action != best_action:
+            return -1.
+        else:
+            return 1.
 
 
     def softmax_action_selection(self, supervisor_state):
