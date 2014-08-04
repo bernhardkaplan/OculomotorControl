@@ -26,6 +26,12 @@ def draw_from_discrete_distribution(prob_dist, size=1):
     return R
 
 
+def get_next_stim(params, stim_params, v_eye):
+    """
+    Returns the stimulus parameters for a given action (v_eye) in x-direction
+    """
+    x_stim = stim_params[0] - (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
+    return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
 def distance(x,y):   

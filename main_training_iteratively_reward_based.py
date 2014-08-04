@@ -169,8 +169,9 @@ if __name__ == '__main__':
                 elif it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
                     pass
                 else:
-                    R = BG.get_reward_from_action(actions[iteration_cnt, 0], stim_params, action_bins)
 #                    R = VI.get_reward_from_perceived_stim(state_)
+                    # pass the selected action to BG to retrieve the reward - the action is the vector average of the BG activity
+                    R = BG.get_reward_from_action(actions[iteration_cnt, 2], VI.current_motion_params)
                 rewards[iteration_cnt] = R
 
                 if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
@@ -185,7 +186,7 @@ if __name__ == '__main__':
                     print 'DEBUG Iteration %d\tstate ' % (iteration_cnt), state_
                 network_states_net[iteration_cnt, :] = state_
 
-                next_action = BG.get_action_spike_based_limited_softmax(i_trial) # BG returns the network_states_net of the next stimulus
+                next_action = BG.get_action_spike_based_memory_based(i_trial, VI.current_motion_params) # BG returns the network_states_net of the next stimulus
 
                 print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_, '\tnext action: ', next_action
                 v_eye[0] = next_action[0]
@@ -193,13 +194,14 @@ if __name__ == '__main__':
                 actions[iteration_cnt + 1, :] = next_action
                 #print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
 
-                if params['weight_tracking']:
-                    CC.get_weights(MT, BG, iteration=iteration_cnt)
-
                 iteration_cnt += 1
                 if comm != None:
                     comm.Barrier()
 
+            if params['weight_tracking']:
+                CC.get_weights(MT, BG, iteration=iteration_cnt)
+            if comm != None:
+                comm.Barrier()
 
     CC.get_d1_d1_weights(BG)
     CC.get_weights(MT, BG)

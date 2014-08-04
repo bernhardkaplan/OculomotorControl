@@ -75,18 +75,21 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
             self.params['n_stim_testing'] = 1
-        self.params['t_iteration'] = 100.   # [ms] stimulus integration time, after this time the input stimulus will be transformed
+        if self.params['training']:
+            self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
+        else:
+            self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations'])
+                self.params['n_iterations_per_stim'] = (1 + self.params['n_silent_iterations'])
             else:
                 # 'open-loop': 
                 self.params['n_iterations_per_stim'] = 2 + self.params['n_silent_iterations'] 
 
             # else:
         else:
-            self.params['n_iterations_per_stim'] = 10 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 25 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
@@ -281,6 +284,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
         self.params['supervisor_amp_param'] = 1.
         self.params['suboptimal_training'] = 2 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
+        self.params['sigma_reward_distribution'] = .5
+        self.params['K_max'] = 1.
 
         # ##############################
         # INHIBITOTY NETWORK PARAMETERS
