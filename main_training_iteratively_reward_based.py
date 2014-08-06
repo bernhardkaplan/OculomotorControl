@@ -95,19 +95,10 @@ if __name__ == '__main__':
     BG = BasalGanglia.BasalGanglia(params, comm)
     CC = CreateConnections.CreateConnections(params, comm)
     CC.set_pc_id(pc_id)
-#    CC.connect_mt_to_bg(MT, BG)
-#    CC.connect_mt_to_bg_after_training_RBL(MT, BG, training_params, params, model='bcpnn_synapse')
     CC.connect_mt_to_bg_RBL(MT, BG, training_params, params, target='d1', model='bcpnn_synapse')
     CC.connect_mt_to_bg_RBL(MT, BG, training_params, params, target='d2', model='bcpnn_synapse')
-#    CC.connect_mt_to_d2_after_training(MT, BG, training_params, params, model='bcpnn_synapse')
-
-    bcpnn_params_d1_d1 = params['params_synapse_d1_d1']
-#    bcpnn_params_d1_d1.update({'gain': 1., 'kappa': 0.})
-    bcpnn_params_d1_d1['gain'] = 1.
-    bcpnn_params_d1_d1['kappa'] = 0.
     if params['connect_d1_after_training']:
         CC.connect_d1_after_training(BG, training_params, params)
-
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
     rewards = np.zeros(params['n_iterations'])

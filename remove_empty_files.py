@@ -21,7 +21,7 @@ if len(sys.argv) > 1:
 else:
     list_of_folders = []
     for thing in os.listdir('.'):
-        if thing.find('Test_titertest25_') != -1:
+        if thing.find('Test_') != -1:
             path = thing + '/' + 'Spikes/'
             list_of_folders.append(path)
 

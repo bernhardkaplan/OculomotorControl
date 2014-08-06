@@ -52,11 +52,13 @@ if __name__ == '__main__':
     testing_params['mpn_d2_weight_amplification'] = float(sys.argv[3])
     testing_params['d1_d1_weight_amplification_pos'] = float(sys.argv[4])
     testing_params['d1_d1_weight_amplification_neg'] = float(sys.argv[5])
+    testing_params['str_to_output_exc_w'] = float(sys.argv[6])
+    testing_params['str_to_output_inh_w'] = float(sys.argv[7])
     folder_name = 'Test_%s_%d-%d' % (testing_params['sim_id'], testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1])
-    folder_name += '_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e_bX%.2e_bV%.2e/' % \
-            (testing_params['t_iteration'], testing_params['d1_d1_weight_amplification_pos'], testing_params['d1_d1_weight_amplification_neg'], \
-                    testing_params['mpn_d1_weight_amplification'], testing_params['mpn_d2_weight_amplification'], testing_params['mpn_bg_bias_amplification'], 
-                    testing_params['blur_X'], testing_params['blur_V'])
+    folder_name += '_wout%d-%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e/' % \
+            (testing_params['str_to_output_exc_w'], testing_params['str_to_output_inh_w'], \
+            testing_params['d1_d1_weight_amplification_pos'], testing_params['d1_d1_weight_amplification_neg'], \
+                    testing_params['mpn_d1_weight_amplification'], testing_params['mpn_d2_weight_amplification'], testing_params['mpn_bg_bias_amplification'])
     GP.set_filenames(folder_name)
     testing_params['folder_name'] = folder_name
 
