@@ -403,22 +403,28 @@ class BasalGanglia(object):
             if there is no spiking activity, a random action is selected
         """
 
-        if i_trial == 0:
-            action = self.get_action()
-            self.currently_trained_action = action # update the currently trained action
+#        if i_trial == 0:
+        action = self.get_action() # updates self.t_iteration and self.t_current
+        self.currently_trained_action = action[2] # update the currently trained action
+        return action
 
 #        elif i_trial == 1:
-        else:
-            all_outcomes = np.zeros(len(self.action_bins_x))
-            for i_, action in enumerate(self.action_bins_x):    
-                all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
-            best_action = np.argmin(np.abs(all_outcomes - .5))
-            output_speed_x = self.action_bins_x[best_action]
-            print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, best_action), output_speed_x
-            self.t_current += self.params['t_iteration']
-            self.iteration += 1
-            return (output_speed_x, 0, best_action)
-             
+
+#        else:
+#            all_outcomes = np.zeros(len(self.action_bins_x))
+#            for i_, action in enumerate(self.action_bins_x):    
+#                all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
+#            best_action = np.argmin(np.abs(all_outcomes - .5))
+#            output_speed_x = self.action_bins_x[best_action]
+#            print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, best_action), output_speed_x
+#            self.t_current += self.params['t_iteration']
+#            self.iteration += 1
+#            for nactions in xrange(self.params['n_actions']):
+#                nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
+#            nest.SetStatus(self.supervisor[best_action], {'rate' : self.params['active_supervisor_rate']})
+#            return (output_speed_x, 0, best_action)
+#             
+
         # TODO:
         # else: randomly choose another action use softmax_action_selection (without supervisor_state), b
 
@@ -433,6 +439,7 @@ class BasalGanglia(object):
             all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
         best_action = np.argmin(np.abs(all_outcomes - .5))
         # the reward is determined by the distance between the best_action and the chosen_action
+        print 'debug get_reward_from_action: best_action:', best_action
 
         reward = (self.params['K_max'] - self.params['shift_reward_distribution']) * np.exp( - (chosen_action - best_action)**2 / (2. * self.params['sigma_reward_distribution'])) + self.params['shift_reward_distribution']
         return reward
@@ -528,7 +535,7 @@ class BasalGanglia(object):
             print 'No spikes found in iteration', self.t_current/self.params['t_iteration']
             self.t_current += self.params['t_iteration']
             self.iteration += 1
-            return (0, 0, np.nan) # maye use 0 instead of np.nan
+            return (0, 0, np.int(self.params['n_actions'] / 2)) # maye use 0 instead of np.nan
 
 #        print 'DEBUG pc_id %d iteration %d nspikes' % (self.pc_id, self.iteration), nspikes
 #        print 'DEBUG pc_id %d iteration %d gids_spiked' % (self.pc_id, self.iteration), gids_spiked

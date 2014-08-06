@@ -96,7 +96,17 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params, comm)
     CC.set_pc_id(pc_id)
 #    CC.connect_mt_to_bg(MT, BG)
-    CC.connect_mt_to_bg_after_training(MT, BG, training_params, params, model='bcpnn_synapse') # connect with zero weights via BCPNN synapses
+#    CC.connect_mt_to_bg_after_training_RBL(MT, BG, training_params, params, model='bcpnn_synapse')
+    CC.connect_mt_to_bg_RBL(MT, BG, training_params, params, target='d1', model='bcpnn_synapse')
+    CC.connect_mt_to_bg_RBL(MT, BG, training_params, params, target='d2', model='bcpnn_synapse')
+#    CC.connect_mt_to_d2_after_training(MT, BG, training_params, params, model='bcpnn_synapse')
+
+    bcpnn_params_d1_d1 = params['params_synapse_d1_d1']
+#    bcpnn_params_d1_d1.update({'gain': 1., 'kappa': 0.})
+    bcpnn_params_d1_d1['gain'] = 1.
+    bcpnn_params_d1_d1['kappa'] = 0.
+    if params['connect_d1_after_training']:
+        CC.connect_d1_after_training(BG, training_params, params)
 
     actions = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
     network_states_net = np.zeros((params['n_iterations'], 4))
@@ -106,23 +116,8 @@ if __name__ == '__main__':
 
 #    training_stimuli = np.zeros((training_params['n_stim_training'], 4))
     training_stimuli = np.loadtxt(training_params['training_sequence_fn'])
-    training_params['training_params'] = training_params # double check
-
-#    training_stimuli = VI.create_training_sequence_iteratively()
-#    training_stimuli = VI.create_training_sequence_from_a_grid()
-
-    training_stimuli_sample = VI.create_training_sequence_iteratively()
-    training_stimuli_grid = VI.create_training_sequence_from_a_grid()
-    training_stimuli_center = VI.create_training_sequence_around_center()
-    training_stimuli = np.zeros((params['n_stim_training'], 4))
-    n_grid = int(np.round(params['n_stim_training'] * params['frac_training_samples_from_grid']))
-    n_center = int(np.round(params['n_stim_training'] * params['frac_training_samples_center']))
-    random.seed(params['visual_stim_seed'])
-    np.random.seed(params['visual_stim_seed'])
-    training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(params['n_stim_training']), n_grid), :]
-    training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
-    training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(params['n_stim_training']), params['n_stim_training'] - n_grid - n_center), :]
     np.savetxt(params['training_sequence_fn'], training_stimuli)
+
 
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
     print 'supervisor_states:', supervisor_states
@@ -132,9 +127,16 @@ if __name__ == '__main__':
     np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
     v_eye = [0., 0.]
+
+
     for i_training_stim in xrange(params['n_training_cycles']): # how many of all the training samples shall be retrained
+        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=params['gain'])
+        BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=params['gain'])
         for i_trial in xrange(params['n_training_stim_per_cycle']):
             VI.current_motion_params = training_stimuli[i_training_stim, :]
+            if i_trial == 1:
+                BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=params['gain'])
+                BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=params['gain'])
             for it_ in xrange(params['n_iterations_per_stim']):
 
                 if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
@@ -142,31 +144,24 @@ if __name__ == '__main__':
                 else:
                     # closed-loop
                     stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
-
-                #print 'DEBUG iteration %d pc_id %d current motion params: (x,y) (u, v)' % (it_, pc_id), VI.current_motion_params[0], VI.current_motion_params[1], VI.current_motion_params[2], VI.current_motion_params[3]
-                #print 'Iteration: %d\t%d\tsupervisor_state : ' % (iteration_cnt, pc_id), supervisor_state
-                #if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
-                    #BG.set_empty_input()
-                #else:
-                    #(action_index_x, action_index_y) = BG.softmax_action_selection(supervisor_state)
-    #                (action_index_x, action_index_y) = BG.softmax_action_selection(supervisor_state)
-#                print 'DEBUG action_index_x / y:', action_index_x, action_index_y
-
                 if params['debug_mpn']:
                     print 'Saving spike trains...'
                     save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
-
                 MT.update_input(stim) # run the network for some time 
                 if comm != None:
                     comm.Barrier()
+
+                # for i_trial >= 1: 'pre-choose' the BG activity 1
+
                 nest.Simulate(params['t_iteration'])
                 if comm != None:
                     comm.Barrier()
 
                 state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
                 if it_ < 1:
-                    R = 0
+                    R = 0 # no learning during this iteration
                 elif it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                    # do not update the reward, but keep the same Kappa as before
                     pass
                 else:
 #                    R = VI.get_reward_from_perceived_stim(state_)
@@ -174,7 +169,8 @@ if __name__ == '__main__':
                     R = BG.get_reward_from_action(actions[iteration_cnt, 2], VI.current_motion_params)
                 rewards[iteration_cnt] = R
 
-                if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+#                if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
+                if it_ >= 2:
                     if R >= 0:
                         BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=R, gain=0)
                         BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=0) 
@@ -194,14 +190,11 @@ if __name__ == '__main__':
                 actions[iteration_cnt + 1, :] = next_action
                 #print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
 
-                iteration_cnt += 1
+#                if params['weight_tracking']:
+#                    CC.get_weights(MT, BG, iteration=iteration_cnt)
                 if comm != None:
                     comm.Barrier()
-
-            if params['weight_tracking']:
-                CC.get_weights(MT, BG, iteration=iteration_cnt)
-            if comm != None:
-                comm.Barrier()
+                iteration_cnt += 1
 
     CC.get_d1_d1_weights(BG)
     CC.get_weights(MT, BG)

@@ -124,7 +124,7 @@ class ActivityPlotter(object):
         if self.params['training']:
             ax.set_title('Spikes in BG during training')
         else:
-            ax.set_title('Spikes in BG during testing, w_mpn_D1(D2)=%.1f (%.1f)' % (self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification']))
+            ax.set_title('Spikes in BG during testing, w_mpn_D1(D2)=%.2f (%.2f)' % (self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification']))
         return ax
 
 
@@ -182,10 +182,10 @@ def run_plot_bg(params, stim_range):
     PMPN = PlotMPNActivity.ActivityPlotter(params)
     PMPN.plot_vertical_lines(ax, params)
     if len(stim_range) > 1:
-        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f_stim%d-%d.png' % \
+        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%.2f_%.2f_stim%d-%d.png' % \
                 (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'], stim_range[0], stim_range[1])
     else:
-        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%1f_%.1f_stim%d.png' % \
+        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%.2f_%.2f_stim%d.png' % \
                 (params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'], stim_range[0])
     print 'Saving figure to:', output_fig
     pylab.savefig(output_fig, dpi=200)
