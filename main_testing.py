@@ -66,7 +66,7 @@ if __name__ == '__main__':
     training_stimuli = training_stimuli_
     print 'debug', training_stimuli.shape
     print 'debug', training_params['training_sequence_fn']
-    training_stimuli.reshape((training_params['n_stim_training'], 4))
+#    training_stimuli.reshape((training_params['n_stim_training'], 4))
 
     training_params['training_params'] = training_params # double check
     motion_params = np.loadtxt(training_params['motion_params_fn'])

@@ -222,11 +222,9 @@ class VisualInput(object):
         self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
-#        supervisor_state = (trajectory[0][-1], trajectory[1][-1], \
-#                self.current_motion_params[2], self.current_motion_params[3])
         # update the position of the stimulus regardless of the action
-        self.current_motion_params[0] += self.current_motion_params[2] * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
-        self.current_motion_params[1] += self.current_motion_params[3] * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
+        self.current_motion_params[0] += (self.current_motion_params[2] + action_code[0]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
+        self.current_motion_params[1] += (self.current_motion_params[3] + action_code[1]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
         self.iteration += 1
         return self.stim, supervisor_state
 
@@ -479,27 +477,15 @@ class VisualInput(object):
         """
         n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
-#        x_stim = self.current_motion_params[0] - v_eye[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps)
-#        y_stim = self.current_motion_params[1] - v_eye[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps)
-        x_stim = self.current_motion_params[0] - v_eye[0] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
-                + time_axis * self.current_motion_params[2] / self.params['t_cross_visual_field']
-        y_stim = self.current_motion_params[1] - v_eye[1] * self.params['t_iteration'] / self.params['t_cross_visual_field'] * np.ones(n_steps) \
-                + time_axis * self.current_motion_params[3] / self.params['t_cross_visual_field']
+        x_stim = self.current_motion_params[0] - (v_eye[0] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[2]) / self.params['t_cross_visual_field']
+        y_stim = self.current_motion_params[1] - (v_eye[1] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[3]) / self.params['t_cross_visual_field']
 
-#        print 'DEBUG'
-        print 'v_eye', v_eye
-        print 'current_motion_params', self.current_motion_params
-#        print 'trajectory', x_stim
-#        exit(1)
-
-#        (self.current_motion_params[3] - v_eye[1]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
         trajectory = (x_stim, y_stim)
         self.current_motion_params[0] = x_stim[0]
         self.current_motion_params[1] = y_stim[0]
         # compute the supervisor signal taking into account:
         # - the trajectory position at the end of the iteration
         # - the knowledge about the motion (current_motion_params
-        # - and / or the 
         delta_x_end = (x_stim[-1] - .5)
         delta_y_end = (y_stim[-1] - .5)
         delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
@@ -704,13 +690,13 @@ class VisualInput(object):
 
 
 
-        print '------------------------------\nDEBUG'
-        print 'n_rf_x: ', n_rf_x
-        print 'n_rf_x_log: ', n_rf_x_log
-        print 'n_rf_x_fovea: ', self.params['n_rf_x_fovea']
-        print 'RF_x_const:', RF_x_const
-        print 'RF_x_log:', RF_x_log
-        print 'RF_x:', RF_x
+#        print '------------------------------\nDEBUG'
+#        print 'n_rf_x: ', n_rf_x
+#        print 'n_rf_x_log: ', n_rf_x_log
+#        print 'n_rf_x_fovea: ', self.params['n_rf_x_fovea']
+#        print 'RF_x_const:', RF_x_const
+#        print 'RF_x_log:', RF_x_log
+#        print 'RF_x:', RF_x
 
         index = 0
         tuning_prop = np.zeros((n_cells, 4))

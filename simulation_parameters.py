@@ -77,10 +77,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
-        self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
+        self.params['n_silent_iterations'] = 5 # for 2 silent iterations this should be 3
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['n_iterations_per_stim'] = (1 + self.params['n_silent_iterations'])
+                self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations']) 
+                # must be larger or equal to 2  + n_silent_iterations
             else:
                 # 'open-loop': 
                 self.params['n_iterations_per_stim'] = 2 + self.params['n_silent_iterations'] 
@@ -89,7 +90,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_iterations_per_stim'] = 25 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
-        self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
+        self.params['weight_tracking'] = True# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
@@ -106,10 +107,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['load_mpn_d2_weights'] = False
 
         if self.params['training']:
-            #if self.params['reward_based_learning']:
-                #self.params['n_stim'] = 1
-            #else:
-                self.params['n_stim'] = self.params['n_stim_training']
+            self.params['n_stim'] = self.params['n_stim_training']
         else:
             self.params['n_stim'] = self.params['n_stim_testing']
         self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
@@ -119,7 +117,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
 
         # the first stimulus parameters
-        self.params['initial_state'] = (.8, .5, -1.0, .0)
+        self.params['initial_state'] = (.8, .5, 0.7, .0)
 #        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
@@ -284,7 +282,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['supervisor_amp_param'] = 1.
         self.params['suboptimal_training'] = 2 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         self.params['sigma_reward_distribution'] = .5
-        self.params['K_max'] = 1.
+        self.params['K_max'] = 10.
+        self.params['shift_reward_distribution'] = -20.0
 
         # ##############################
         # INHIBITOTY NETWORK PARAMETERS
@@ -354,15 +353,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_j = 5.
         self.tau_e = 5.
 #        self.au_p = max(1000., self.params['t_sim'])
-        self.tau_p = .5 * self.params['t_sim']
-#        if self.params['reward_based_learning']:
-#            self.tau_p = 1. * self.params['t_sim']
+        if self.params['reward_based_learning']:
+            self.tau_p = .3 * self.params['t_sim']
+        else:
+            self.tau_p = .5 * self.params['t_sim']
         self.params['fmax'] = 150.
         self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
         if self.params['training']:# and not self.params['reward_based_learning']:
             self.params['gain'] = 0.
             if self.params['reward_based_learning']:
                 self.K = 0. # will be set to 1 during the main learning script
+                self.params['gain'] = 1.
             else:
                 self.K = 1.
         else:
@@ -377,13 +378,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 0.6
-        self.params['mpn_d2_weight_amplification'] = 0.6
+        self.params['mpn_d1_weight_amplification'] = 4.8
+        self.params['mpn_d2_weight_amplification'] = 8.0
 #        if self.params['reward_based_learning']:
 #            self.params['mpn_d1_weight_amplification'] = 0.0
 #            self.params['mpn_d2_weight_amplification'] = 0.0
         self.params['mpn_bg_bias_amplification'] = 1.0
-        self.params['d1_d1_weight_amplification_neg'] = 1.0
+        self.params['d1_d1_weight_amplification_neg'] = 10.0
         self.params['d1_d1_weight_amplification_pos'] = 0.0
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
