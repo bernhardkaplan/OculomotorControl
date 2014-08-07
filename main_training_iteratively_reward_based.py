@@ -119,22 +119,28 @@ if __name__ == '__main__':
 
     v_eye = [0., 0.]
 
-
     for i_training_stim in xrange(params['n_training_cycles']): # how many of all the training samples shall be retrained
         BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=params['gain'])
         BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=params['gain'])
         for i_trial in xrange(params['n_training_stim_per_cycle']):
             VI.current_motion_params = training_stimuli[i_training_stim, :]
-            if i_trial == 1:
-                BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=params['gain'])
-                BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=params['gain'])
+#            if i_trial < 2: # switch off plasticity
+            BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD1, kappa=0., gain=params['gain'])
+            BG.set_kappa_and_gain(MT.local_idx_exc, BG.strD2, kappa=0., gain=params['gain'])
             for it_ in xrange(params['n_iterations_per_stim']):
 
                 if it_ >= (params['n_iterations_per_stim'] -  params['n_silent_iterations']):
                     stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
+                    it_0 = i_training_stim * params['n_training_stim_per_cycle']
+                    it_1 = i_training_stim * params['n_training_stim_per_cycle'] + params['n_iterations_per_stim'] - params['n_silent_iterations']
+                    if i_trial < 1:
+                        BG.activate_efference_copy(it_0, it_1)
+                    else:
+                        BG.stop_efference_copy()
                 else:
                     # closed-loop
                     stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
+                    BG.stop_efference_copy()
                 if params['debug_mpn']:
                     print 'Saving spike trains...'
                     save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
@@ -203,6 +209,7 @@ if __name__ == '__main__':
         np.savetxt(params['network_states_fn'], network_states_net)
         np.savetxt(params['motion_params_fn'], VI.motion_params)
         np.savetxt(params['rewards_given_fn'], rewards)
+        np.savetxt(params['nspikes_action_fn'], BG.activity_memory)
 
         utils.remove_empty_files(params['connections_folder'])
         utils.remove_empty_files(params['spiketimes_folder'])

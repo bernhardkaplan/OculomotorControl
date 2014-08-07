@@ -39,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
@@ -50,16 +50,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_v'] = 30
 
         self.params['training'] = True
-        self.params['reward_based_learning'] = False
+        self.params['reward_based_learning'] = True
         #self.params['training'] = True
         #self.params['reward_based_learning'] = True
         self.params['softmax_temperature'] = 10.
-        self.params['n_training_cycles'] = 3            # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 20 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 20 # number of training samples to cover the v-direction of the tuning space
+        self.params['n_training_x'] = 4 # number of training samples to cover the x-direction of the tuning space
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['frac_training_samples_from_grid'] = .4
@@ -284,8 +284,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['supervisor_amp_param'] = 1.
         self.params['suboptimal_training'] = 2 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         self.params['sigma_reward_distribution'] = .5
-        self.params['K_max'] = 10.
-        self.params['shift_reward_distribution'] = -20.0
+        self.params['K_max'] = 1.
+        self.params['shift_reward_distribution'] = -1.
 
         # ##############################
         # INHIBITOTY NETWORK PARAMETERS
@@ -353,10 +353,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #Connections Actions and States to RP
         self.tau_i = 5.
         self.tau_j = 5.
-        self.tau_e = 5.
+        self.tau_e = 100.
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
-            self.tau_p = .3 * self.params['t_sim']
+            self.tau_p = 125.
+            # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
         self.params['fmax'] = 150.
@@ -511,7 +512,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
         self.params['str_to_output_exc_w'] = 8.
-        self.params['str_to_output_inh_w'] = -8.
+        self.params['str_to_output_inh_w'] = -20.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
@@ -522,8 +523,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['num_neuron_poisson_input_BG'] = 10
         self.params['active_supervisor_rate'] = 3000.
         self.params['inactive_supervisor_rate'] = 0.
-        self.params['active_poisson_input_rate'] = 20.
-        self.params['inactive_poisson_input_rate'] = 2.
         self.params['param_poisson_pop_input_BG'] = {}
         self.params['param_poisson_supervisor'] = {}
         self.params['weight_supervisor_strd1'] = 7.
@@ -536,18 +535,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['num_neuron_states'] = 30
         self.params['param_states_pop'] = {} 
 
-        # Reinforcement Learning
-        self.params['num_neuron_poisson_efference'] = 40
-        self.params['active_full_efference_rate'] = 40.
+        # Reinforcement Learning: efference copy activates both D1 and D2 for one action at the same time (same parameters as supervisor)
+        self.params['num_neuron_poisson_efference'] = 1
+        self.params['active_efference_rate'] = 3000.
         self.params['inactive_efference_rate'] = 0.
-        self.params['active_poisson_input_rate'] = 50.
-        self.params['inactive_poisson_input_rate'] = 0.5
         self.params['supervisor_off'] = 0.
         self.params['active_poisson_rew_rate'] = 70.
         self.params['inactive_poisson_rew_rate'] = 1.
         self.params['param_poisson_efference'] = {}
-        self.params['weight_efference_strd1'] = 15.
-        self.params['weight_efference_strd2'] = 15.
+        self.params['weight_efference_strd1'] = 7.
+        self.params['weight_efference_strd2'] = 7.
         self.params['delay_efference_strd1'] = 1.
         self.params['delay_efference_strd2'] = 1.
 
@@ -635,6 +632,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['motion_params_fn'] = self.params['data_folder'] + 'motion_params.txt'
         self.params['supervisor_states_fn'] = self.params['data_folder'] + 'supervisor_states.txt'
         self.params['action_indices_fn'] = self.params['data_folder'] + 'action_indices.txt'
+        self.params['nspikes_action_fn'] = self.params['data_folder'] + 'action_activity.txt'
         self.params['motion_params_precomputed_fn'] = self.params['data_folder'] + 'motion_params_precomputed.txt'
         self.params['bg_suboptimal_action_mapping_fn'] = self.params['parameters_folder'] + 'suboptimal_action_mapping.json'
 
