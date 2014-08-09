@@ -41,7 +41,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 8
+        self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 50
@@ -51,14 +51,23 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['training'] = True
         self.params['reward_based_learning'] = True
-        #self.params['training'] = True
-        #self.params['reward_based_learning'] = True
+#        self.params['training'] = False
+#        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
         self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
 #        if self.params['reward_based_learning']:
 #            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
 #                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 4 # number of training samples to cover the x-direction of the tuning space
+        """
+         for normal training n_training_x/v is the number of training samples to cover the x-direction of the tuning space
+         for reward based learning (RBL) two modes are possible:
+           - verification mode: the retraining effect is tested immediately
+           - relearning mode: 
+                n_training_cycles is the number how often a stimulus is retrained
+                n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
+        """
+
+        self.params['n_training_x'] = 2 # 
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
@@ -70,7 +79,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -79,10 +88,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
-        self.params['n_silent_iterations'] = 5 # for 2 silent iterations this should be 3
+        self.params['n_silent_iterations'] = 2 # for 2 silent iterations this should be 3
+        self.params['n_iterations_RBL_retraining'] = 3
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations']) 
+                self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations'] + self.params['n_iterations_RBL_retraining']) 
                 # must be larger or equal to 2  + n_silent_iterations
             else:
                 # 'open-loop': 
@@ -92,7 +102,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_iterations_per_stim'] = 25 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
-        self.params['weight_tracking'] = True# if True weights will be written to file after each iteration --> use only for debugging / plotting
+        self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = True
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
@@ -131,7 +141,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             if (self.params['reward_based_learning']):
                 self.params['sim_id'] = 'RBL_2_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
         else:
-            self.params['sim_id'] = 'afterRBL_2_it%d_' % (self.params['t_iteration'])
+            self.params['sim_id'] = 'subOpt_0_it%d_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -356,7 +366,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_e = 100.
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
-            self.tau_p = 125.
+            self.tau_p = 5.
             # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
