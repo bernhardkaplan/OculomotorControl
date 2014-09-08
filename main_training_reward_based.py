@@ -352,7 +352,9 @@ class RewardBasedLearning(object):
         self.actions_taken = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
 #        self.training_stimuli = RBL.VI.create_training_sequence_iteratively()
         self.training_stimuli = np.zeros((params['n_stim'], 4))
-        self.training_stimuli[0, :] = self.params['initial_state']
+
+        for i_ in xrange(self.params['n_stim']):
+            self.training_stimuli[i_, :] = self.params['initial_state']
 #        self.training_stimuli = RBL.VI.create_training_sequence_RBL()
 
         self.action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
