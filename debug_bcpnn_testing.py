@@ -239,7 +239,7 @@ if __name__ == '__main__':
 
     colorlist = utils.get_colorlist()
     n_color = len(colorlist)
-    cell_type_post = 'd1'
+    cell_type_post = 'd2'
 
     DB = DebugTraces()
     DB.check_spike_files(training_params)

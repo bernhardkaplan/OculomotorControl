@@ -30,7 +30,7 @@ def get_next_stim(params, stim_params, v_eye):
     """
     Returns the stimulus parameters for a given action (v_eye) in x-direction
     """
-    x_stim = stim_params[0] - (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
+    x_stim = stim_params[0] - (stim_params[2] + v_eye) * params['t_iteration'] / params['t_cross_visual_field']
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 

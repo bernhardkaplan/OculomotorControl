@@ -379,10 +379,6 @@ class BasalGanglia(object):
         return action_index
 
 
-    def set_empty_input(self):
-        for nactions in xrange(self.params['n_actions']):
-            nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
-
 
     def create_suboptimal_action_mapping(self):
         self.map_suboptimal_action = {}
@@ -417,16 +413,15 @@ class BasalGanglia(object):
             return action
 
         elif i_trial >= 1:
-
-#        else:
             all_outcomes = np.zeros(len(self.action_bins_x))
             for i_, action in enumerate(self.action_bins_x):    
                 all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
             best_action = np.argmin(np.abs(all_outcomes - .5))
             output_speed_x = self.action_bins_x[best_action]
-            print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, best_action), output_speed_x
+            print 'BG for trial %d says (it %d, pc_id %d): do action %d, output_speed:' % (i_trial, self.t_current / self.params['t_iteration'], self.pc_id, best_action), output_speed_x
             self.t_current += self.params['t_iteration']
-            self.iteration += 1
+            self.advance_iteration()
+            print 'DEBUG BG sets supervisor for action %d' % (best_action)
             for nactions in xrange(self.params['n_actions']):
                 nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
             nest.SetStatus(self.supervisor[best_action], {'rate' : self.params['active_supervisor_rate']})
@@ -447,9 +442,11 @@ class BasalGanglia(object):
             all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
         best_action = np.argmin(np.abs(all_outcomes - .5))
         # the reward is determined by the distance between the best_action and the chosen_action
-        print 'debug get_reward_from_action: best_action:', best_action
+        best_speed = self.action_bins_x[best_action]
 
         reward = (self.params['K_max'] - self.params['shift_reward_distribution']) * np.exp( - (chosen_action - best_action)**2 / (2. * self.params['sigma_reward_distribution'])) + self.params['shift_reward_distribution']
+
+        print 'debug get_reward_from_action: best_action:', best_action, 'best_speed', best_speed, 'chosen action', chosen_action, '\treward', reward
         return reward
 #        if chosen_action != best_action:
 #            return -1.
@@ -503,6 +500,9 @@ class BasalGanglia(object):
         return (action_index_x, action_index_y)
         
 
+    def stop_supervisor(self):
+        for nactions in xrange(self.params['n_actions']):
+            nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
 
 
     def activate_efference_copy(self, it_0, it_1):
@@ -519,6 +519,10 @@ class BasalGanglia(object):
             nest.SetStatus(self.efference_copy[i_action], {'rate' : amp * self.params['active_supervisor_rate']})
 
     def stop_efference_copy(self):
+        for nactions in xrange(self.params['n_actions']):
+            nest.SetStatus(self.efference_copy[nactions], {'rate' : self.params['inactive_efference_rate']})
+
+    def stop_supervisor(self):
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
 
@@ -553,7 +557,7 @@ class BasalGanglia(object):
         if len(nspikes) == 0:
             print 'No spikes found in iteration', self.t_current/self.params['t_iteration']
             self.t_current += self.params['t_iteration']
-            self.iteration += 1
+            self.advance_iteration()
             return (0, 0, np.int(self.params['n_actions'] / 2)) # maye use 0 instead of np.nan
 
         # switch between WTA behavior and Vector-Averaging
@@ -578,7 +582,7 @@ class BasalGanglia(object):
         print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
         self.t_current += self.params['t_iteration']
 
-        self.iteration += 1
+        self.advance_iteration()
         return (output_speed_x, 0, winning_action)
 
 
@@ -653,6 +657,10 @@ class BasalGanglia(object):
         print 'Writing cell_gids to:', output_fn
         f = file(output_fn, 'w')
         json.dump(d, f, indent=2)
+
+
+    def advance_iteration(self):
+        self.iteration += 1
 
 
     def get_eye_direction(self):

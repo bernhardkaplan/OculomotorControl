@@ -79,7 +79,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 3)
+        self.params['test_stim_range'] = range(0, 5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -88,7 +88,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
-        self.params['n_silent_iterations'] = 2 # for 2 silent iterations this should be 3
+        self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
         self.params['n_iterations_RBL_retraining'] = 3
         if self.params['training']:
             if self.params['reward_based_learning']:
@@ -139,7 +139,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['sim_id'] = 'SubOpt_%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
             if (self.params['reward_based_learning']):
-                self.params['sim_id'] = 'RBL_2_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
+                self.params['sim_id'] = 'RBL_+10_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
         else:
             self.params['sim_id'] = 'subOpt_0_it%d_' % (self.params['t_iteration'])
 
@@ -366,7 +366,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_e = 100.
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
-            self.tau_p = 5.
+            self.tau_p = 50.
             # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
@@ -391,13 +391,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 4.8
-        self.params['mpn_d2_weight_amplification'] = 8.0
+        self.params['mpn_d1_weight_amplification'] = 1.0
+        self.params['mpn_d2_weight_amplification'] = 1.0
 #        if self.params['reward_based_learning']:
 #            self.params['mpn_d1_weight_amplification'] = 0.0
 #            self.params['mpn_d2_weight_amplification'] = 0.0
         self.params['mpn_bg_bias_amplification'] = 1.0
-        self.params['d1_d1_weight_amplification_neg'] = 10.0
+        self.params['d1_d1_weight_amplification_neg'] = 0.0
         self.params['d1_d1_weight_amplification_pos'] = 0.0
         # if static synapses are used
         self.params['w_d1_d1'] = -5.

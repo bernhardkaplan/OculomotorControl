@@ -26,9 +26,9 @@ def create_spikes(t_start, t_stop, rate):
 
 
 def run_2stim_1action(bcpnn_params):
-    t_iteration = 50
+    t_iteration = 25
     t_sim = 4 * t_iteration
-    firing_rate = 100
+    firing_rate = 300
 
     stim_0 = create_spikes(0, t_iteration, firing_rate)
     stim_1 = create_spikes(t_iteration, 2 * t_iteration, firing_rate)
@@ -80,6 +80,8 @@ def run_Xstim_1action(bcpnn_params, n_stim):
     s_post = BCPNN.convert_spiketrain_to_trace(action_0, t_sim)
 
 
+#def run_
+
 if __name__ == '__main__':
 
 #    TP.plot_trace(bcpnn_traces[1], bcpnn_params, dt, output_fn=output_fn, info_txt=info_txt)
@@ -87,7 +89,7 @@ if __name__ == '__main__':
     tau_i = 5.
     tau_j = 5.
     tau_e = 5.
-    tau_p = 50000.
+    tau_p = 50.
     bcpnn_init = 0.01
     gain = 0.
     K = 1.
@@ -98,6 +100,8 @@ if __name__ == '__main__':
             'tau_i': tau_i, 'tau_j': tau_j, 'tau_e': tau_e, 'tau_p': tau_p}
 
     run_2stim_1action(bcpnn_params)
-    run_Xstim_1action(bcpnn_params, n_stim)
+
+#    n_stim = 1
+#    run_Xstim_1action(bcpnn_params, n_stim)
 
     pylab.show()

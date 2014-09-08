@@ -203,8 +203,9 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    cell_type_post = 'd1'
+    cell_type_post = 'd2'
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
+    bcpnn_params['K'] = 1.
     dt = params['dt']
     fn_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
     fn_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
@@ -217,13 +218,14 @@ if __name__ == '__main__':
     TP.load_spikes(fn_pre, fn_post)
     n_pre = 1
     n_post = 1
-    pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post)
+    pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range)
 #    pre_gids = [2238]
 #    pre_gids = [1158]
 #    post_gids = [5023]
 
+    plot_range = (0, 10)
     w = TP.get_weights(pre_gids, post_gids)
-    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, it_range)
+    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, plot_range)
     output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
     for i_, traces in enumerate(all_traces):
         output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])

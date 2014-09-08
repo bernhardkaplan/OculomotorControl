@@ -12,7 +12,6 @@ class VisualInput(object):
         """
         self.params = params
         self.trajectories = []
-        self.t_axis = np.arange(0, self.params['t_iteration'], self.params['dt'])
         self.iteration = 0
         self.t_current = 0 # stores the 'current' time
         if visual_stim_seed == None:
@@ -222,9 +221,9 @@ class VisualInput(object):
         self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
-        # update the position of the stimulus regardless of the action
-        self.current_motion_params[0] += (self.current_motion_params[2] + action_code[0]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
-        self.current_motion_params[1] += (self.current_motion_params[3] + action_code[1]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
+        # stimulus parameter update is done in update_stimulus_trajectory_static
+#        self.current_motion_params[0] += (self.current_motion_params[2] + action_code[0]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
+#        self.current_motion_params[1] += (self.current_motion_params[3] + action_code[1]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
         self.iteration += 1
         return self.stim, supervisor_state
 
@@ -480,9 +479,10 @@ class VisualInput(object):
         x_stim = self.current_motion_params[0] - (v_eye[0] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[2]) / self.params['t_cross_visual_field']
         y_stim = self.current_motion_params[1] - (v_eye[1] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[3]) / self.params['t_cross_visual_field']
 
+
         trajectory = (x_stim, y_stim)
-        self.current_motion_params[0] = x_stim[0]
-        self.current_motion_params[1] = y_stim[0]
+        self.current_motion_params[0] = x_stim[-1]
+        self.current_motion_params[1] = y_stim[-1]
         # compute the supervisor signal taking into account:
         # - the trajectory position at the end of the iteration
         # - the knowledge about the motion (current_motion_params

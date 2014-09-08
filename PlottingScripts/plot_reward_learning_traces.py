@@ -27,7 +27,7 @@ def create_K_vector(params, it_range, dt=0.1):
     for it_ in xrange(it_range[0], it_range[1]):
         idx_1 = np.int(it_ * params['t_iteration'])
         idx_2 = np.int((it_ + 1) * params['t_iteration'])
-        K_vec[idx_1:idx_2] = rewards[it_]
+        K_vec[idx_1:idx_2] = np.abs(rewards[it_])
     return K_vec            
 
 
@@ -36,8 +36,8 @@ if __name__ == '__main__':
 
     n_pre = 3
     n_post = 3
-    it_range_cell_selection = (1, 2)
-    it_range_plotting = (0, 4)
+    it_range_cell_selection = (0, 2)
+    it_range_plotting = (0, 6)
     output_fn = None 
     info_txt = None
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         utils.merge_spikes(params)
 
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
-    bcpnn_params['tau_p'] = 1500.
+    bcpnn_params['tau_p'] = 5.
 
     K_vec = create_K_vector(params, it_range_plotting, dt=0.1)
 #    print 'debug K_vec', K_vec
@@ -75,7 +75,12 @@ if __name__ == '__main__':
 #        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
         info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
         fig = TP.plot_trace(traces, bcpnn_params, dt, output_fn=output_fn, info_txt=info_txt, fig=fig)
+
+    output_fn = params['figures_folder'] + 'bcpnn_trace_RBL_taup%d.png' % bcpnn_params['tau_p']
+    pylab.savefig(output_fn, dpi=200)
+
     pylab.show()
+
     
 #     load spike files 
 #    print 'Loading spike data from:', fn_pre, '\n', fn_post

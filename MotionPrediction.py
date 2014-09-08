@@ -74,14 +74,9 @@ class MotionPrediction(object):
         """
         Keyword arguments:
         stim -- list of spike trains with length = self.params['n_exc_mpn']
-
         """
-#        for i_ in xrange(self.params['n_exc_mpn']):
-#            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
         for i_, gid in enumerate(self.local_idx_exc):
             nest.SetStatus([self.stimulus[gid - 1]], {'spike_times' : stim[i_]})
-#            nest.SetStatus([self.stimulus[i_]], {'spike_times' : stim[i_]})
-#            print 't_current: %d udpating input stimulus spiketrains:' % self.t_current, i_, stim[i_]
 
 
     def create_exc_network(self):
