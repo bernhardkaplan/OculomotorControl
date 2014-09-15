@@ -9,6 +9,7 @@ import json
 import simulation_parameters
 import MergeSpikefiles
 import scipy.stats as stats
+import random
 
 def draw_from_discrete_distribution(prob_dist, size=1):
     """
@@ -115,6 +116,7 @@ def convert_connlist_to_matrix(data, src_min=None, src_max=None, tgt_min=None, t
 
 def get_most_active_neurons(spike_data, n_cells=None):
     gids = np.unique(spike_data[:, 0])
+    gids = np.array(gids, dtype=np.int)
     if n_cells == None:
         n_cells = gids.size
     n_spikes = np.zeros(gids.size)
@@ -194,7 +196,7 @@ def get_min_max_gids_for_bg(params, cell_type):
     return gid_min, gid_max
 
 
-def get_colorlist():
+def get_colorlist(n_colors=17):
     colorlist = ['k', 'b', 'r', 'g', 'm', 'c', 'y', \
             '#00FF99', \
             #light green
@@ -217,6 +219,12 @@ def get_colorlist():
             '#7700ff', \
                     # dark violet
                     ]
+
+    if n_colors > 17:
+        r = lambda: random.randint(0,255)
+        for i_ in xrange(n_colors - 17):
+            colorlist.append('#%02X%02X%02X' % (r(),r(),r()))
+
     return colorlist
 
 
@@ -367,24 +375,27 @@ def merge_connection_files(params):
 
 
 
-def merge_and_sort_files(merge_pattern, fn_out, sort=True):
+def merge_and_sort_files(merge_pattern, fn_out, sort=True, verbose=True):
     rnd_nr1 = np.random.randint(0,10**8)
     # merge files from different processors
     tmp_file = "tmp_%d" % (rnd_nr1)
     cmd = "cat %s* > %s" % (merge_pattern, tmp_file)
-    print 'utils.merge_and_sort_files: ', cmd
+    if verbose:
+        print 'utils.merge_and_sort_files: ', cmd
     os.system(cmd)
     # sort according to cell id
     if sort:
         sort_cmd = "sort -gk 1 %s > %s" % (tmp_file, fn_out)
 #        print 'DEBUG utils.merge_and_sort_files:', sort_cmd
         os.system(sort_cmd)
+        os.system("rm %s" % (tmp_file))
     else:
         mv_cmd = 'mv %s %s' % (tmp_file, fn_out)
 #        print 'DEBUG utils.merge_and_sort_files:', mv_cmd
         os.system(mv_cmd)
-    os.system("rm %s" % (tmp_file))
-    print 'utils.merge_and_sort_files output: ', fn_out
+
+    if verbose:
+        print 'utils.merge_and_sort_files output: ', fn_out
 
 
 def find_files(folder, to_match):
@@ -484,15 +495,37 @@ def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
     return spiketimes
 
 
+
+def extract_weight_from_connection_list(conn_list, pre_gid, post_gid):
+    """
+    Extract the weight that connects the pre_gid to the post_gid
+    """
+    pre_idx = set((conn_list[:, 0] == pre_gid).nonzero()[0])
+    post_idx = set((conn_list[:, 1] == post_gid).nonzero()[0])
+    valid_idx = list(pre_idx.intersection(post_idx))
+#    print 'debug', conn_list[valid_idx, 2]
+    if len(valid_idx) == 0:
+        return 0.
+    return conn_list[valid_idx, 2]
+
+
+
+
 def get_spiketimes_within_interval(spike_data, t0, t1):
     """
     all_spikes: 2-dim array containing all spiketimes
     return those spike times which are between > t0 and <= t1
     """
-    t0_idx = set((spike_data[:, 1] > t0).nonzero()[0])
-    t1_idx = set((spike_data[:, 1] <= t1).nonzero()[0])
-    valid_idx = list(t0_idx.intersection(t1_idx))
-    return spike_data[valid_idx, :]
+    if spike_data.ndim == 2:
+        t0_idx = set((spike_data[:, 1] > t0).nonzero()[0])
+        t1_idx = set((spike_data[:, 1] <= t1).nonzero()[0])
+        valid_idx = list(t0_idx.intersection(t1_idx))
+        return spike_data[valid_idx, :]
+    else:
+        t0_idx = set((spike_data > t0).nonzero()[0])
+        t1_idx = set((spike_data <= t1).nonzero()[0])
+        valid_idx = list(t0_idx.intersection(t1_idx))
+        return spike_data[valid_idx]
 
 
 def communicate_local_spikes(gids, comm):

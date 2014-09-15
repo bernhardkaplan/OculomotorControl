@@ -23,24 +23,27 @@ if __name__ == '__main__':
 
     for fn in sys.argv[1:]:
 #    fn = sys.argv[1]
-        d = np.loadtxt(fn)
-        gids = np.unique(d[:, 0])
+        file_size = os.path.getsize(fn)
+        if file_size != 0:
+            
+            d = np.loadtxt(fn)
+            gids = np.unique(d[:, 0])
 
-        print 'GIDS:', gids
-        if new_fig:
-            fig = pylab.figure()
-            ax = fig.add_subplot(111)
-        for gid in gids:
-            time_axis, volt = utils.extract_trace(d, gid)
-            ax.plot(time_axis, volt, label='%d' % gid, lw=2)
+            print 'GIDS:', gids
+            if new_fig:
+                fig = pylab.figure()
+                ax = fig.add_subplot(111)
+            for gid in gids:
+                time_axis, volt = utils.extract_trace(d, gid)
+                ax.plot(time_axis, volt, label='%d' % gid, lw=2)
 
-        title = fn.rsplit('/')[-1]
-        ax.set_title(title)
-        ax.set_xlabel('Time [ms]')
-        ax.set_ylabel('Volt [mV]')
+            title = fn.rsplit('/')[-1]
+            ax.set_title(title)
+            ax.set_xlabel('Time [ms]')
+            ax.set_ylabel('Volt [mV]')
 
-        if new_fig:
-            pylab.legend()
+            if new_fig:
+                pylab.legend()
     if not new_fig:
         pylab.legend()
     pylab.show()

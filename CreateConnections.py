@@ -252,7 +252,7 @@ class CreateConnections(object):
         if iteration == None:
             fn_out = self.params['mpn_bgd1_conn_fn_base'] + '%d.txt' % (self.pc_id)
         else:
-            fn_out = self.params['mpn_bgd1_conntracking_fn_base'] + 'it%d_%d.txt' % (iteration, self.pc_id)
+            fn_out = self.params['mpn_bgd1_conntracking_fn_base'] + 'it%04d_%d.txt' % (iteration, self.pc_id)
         bias_d1_f = file(self.params['bias_d1_fn_base'] + 'pc%d.json' % self.pc_id, 'w')
         json.dump(bias_d1, bias_d1_f, indent=0)
         print 'Writing MPN - D1 connections to:', fn_out
@@ -283,7 +283,7 @@ class CreateConnections(object):
             if iteration == None:
                 fn_out = self.params['mpn_bgd2_conn_fn_base'] + '%d.txt' % (self.pc_id)
             else:
-                fn_out = self.params['mpn_bgd2_conntracking_fn_base'] + 'it%d_%d.txt' % (iteration, self.pc_id)
+                fn_out = self.params['mpn_bgd2_conntracking_fn_base'] + 'it%04d_%d.txt' % (iteration, self.pc_id)
             print 'Writing MPN - D2 connections to:', fn_out
             D2_f = file(fn_out, 'w')
             D2_f.write(D2_conns)

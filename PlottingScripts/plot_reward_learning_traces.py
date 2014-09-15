@@ -25,9 +25,9 @@ def create_K_vector(params, it_range, dt=0.1):
     n = np.int(t_max/ dt) + 1 # +1 because the length needs to be the same computed in the BCPNN module after convert_spiketrain_to_trace
     K_vec = np.zeros(n)
     for it_ in xrange(it_range[0], it_range[1]):
-        idx_1 = np.int(it_ * params['t_iteration'])
-        idx_2 = np.int((it_ + 1) * params['t_iteration'])
-        K_vec[idx_1:idx_2] = np.abs(rewards[it_])
+        idx_1 = np.int(it_ * params['t_iteration'] / dt)
+        idx_2 = np.int((it_ + 1) * params['t_iteration'] / dt)
+        K_vec[idx_1:idx_2] = np.abs(rewards[it_]) * np.ones(idx_2 - idx_1)
     return K_vec            
 
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     n_pre = 3
     n_post = 3
     it_range_cell_selection = (0, 2)
-    it_range_plotting = (0, 6)
+#    it_range_plotting = (0, 24)
     output_fn = None 
     info_txt = None
 
@@ -48,6 +48,10 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
+    # checks:
+    it_range_plotting = (0, params['n_iterations'])
+    assert (it_range_plotting[1] <= params['n_iterations']) and (it_range_cell_selection[1] <= it_range_plotting[1]), 'Given iteration ranges are larger than simulated data'
+
     # merge spike files if needed
     cell_type_post = 'd2'
     dt = params['dt']
@@ -57,12 +61,9 @@ if __name__ == '__main__':
         utils.merge_spikes(params)
 
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
-    bcpnn_params['tau_p'] = 5.
+#    bcpnn_params['tau_p'] = 5.
 
     K_vec = create_K_vector(params, it_range_plotting, dt=0.1)
-#    print 'debug K_vec', K_vec
-#    print 'debug K_vec', K_vec.nonzero()[0], len(K_vec)
-#    exit(1)
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
     pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range_cell_selection)

@@ -284,36 +284,6 @@ class BasalGanglia(object):
 
 
 
-    # used as long as MT and BG are not directly connected
-    def create_input_pop(self):
-        """
-        Creates the inputs populations, and their respective poisson pop, and connect them to Striatum MSNs D1 D2 populations
-        """
-        self.states = {}
-        self.input_poisson = {}
-
-        for nstates in range(self.params['n_states']):
-            self.input_poisson[nstates] = nest.Create( 'poisson_generator', self.params['num_neuron_poisson_input_BG'], params = self.params['param_poisson_pop_input_BG']  )
-            self.states[nstates] = nest.Create( self.params['model_exc_neuron'], self.params['num_neuron_states'], params = self.params['param_states_pop']  )
-            nest.RandomDivergentConnect(self.input_poisson[nstates], self.states[nstates],int(self.params['random_divconnect_poisson']*self.params['num_neuron_poisson_input_BG']), weight=self.params['weight_poisson_input'], delay=self.params['delay_poisson_input'])
-            for neuron_input in self.states[nstates]:
-                for nactions in range(self.params['n_actions']):
-                    nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d1'])
-                    nest.DivergentConnect([neuron_input], self.strD1[nactions], model=self.params['synapse_d1'])
-                    nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2'])
-                    nest.DivergentConnect([neuron_input], self.strD2[nactions], model=self.params['synapse_d2'])
-            
-            self.recorder_states[nstates] = nest.Create("spike_detector", params= self.params['spike_detector_states'])
-            nest.SetStatus(self.recorder_states[nstates],[{"to_file": True, "withtime": True, 'label' : self.params['states_spikes_fn'] + str(nstates)}])
-            nest.ConvergentConnect(self.states[nstates], self.recorder_states[nstates])
-
-        print "BG input stage created"
-
-
-
-
-
-
     def set_action_speed_mapping_bins(self):
         self.action_bins_x = []
         n_bins_x = np.int(np.round((self.params['n_actions'] - 1) / 2.))
@@ -506,17 +476,21 @@ class BasalGanglia(object):
 
 
     def activate_efference_copy(self, it_0, it_1):
+        print 'debug activity_memory ', self.iteration, self.activity_memory[it_0:it_1, :]
         recent_activity = self.activity_memory[it_0:it_1, :]
         mean_activity = np.zeros(self.params['n_actions'])
         for i_action in xrange(self.params['n_actions']):
             mean_activity[i_action] = recent_activity[:, i_action].mean()
         # set the activity for all to inactive
         for i_action in xrange(self.params['n_actions']):
-            nest.SetStatus(self.efference_copy[i_action], {'rate' : self.params['inactive_supervisor_rate']})
+            nest.SetStatus(self.efference_copy[i_action], {'rate' : self.params['inactive_efference_rate']})
         # set the activity for all to the recent mean activity
         for i_action in xrange(self.params['n_actions']):
-            amp = mean_activity[i_action] / mean_activity.max()
-            nest.SetStatus(self.efference_copy[i_action], {'rate' : amp * self.params['active_supervisor_rate']})
+            if mean_activity.max() != 0:
+                amp = mean_activity[i_action] / mean_activity.max()
+                nest.SetStatus(self.efference_copy[i_action], {'rate' : amp * self.params['active_efference_rate']})
+            else:
+                nest.SetStatus(self.efference_copy[i_action], {'rate' : 0.})
 
     def stop_efference_copy(self):
         for nactions in xrange(self.params['n_actions']):
@@ -529,9 +503,13 @@ class BasalGanglia(object):
 
 
 
-    def get_action(self, WTA=False):
+    def get_action(self, WTA=False, random_action=False):
         """
         Returns the selected action. Calls a selection function e.g. softmax, hardmax, ...
+        random_action   -- is only relevant if no spikes are found in this iteration
+                    False: do nothing
+                    True:  choose a random action
+                    int:   choose to do this action instead
         """
         
         print 'BG.get_action ...'
@@ -558,7 +536,19 @@ class BasalGanglia(object):
             print 'No spikes found in iteration', self.t_current/self.params['t_iteration']
             self.t_current += self.params['t_iteration']
             self.advance_iteration()
-            return (0, 0, np.int(self.params['n_actions'] / 2)) # maye use 0 instead of np.nan
+            if random_action == False: # do nothing:
+                return (0, 0, np.int(self.params['n_actions'] / 2)) # maye use 0 instead of np.nan
+            elif random_action == True:
+                rnd_action_idx = self.RNG.randint(0, self.params['n_actions'])
+                output_speed_x = self.action_bins_x[rnd_action_idx]
+                return (output_speed_x, 0, rnd_action_idx)
+            else:
+                assert (type(random_action) == type(0)), 'random_action is either True, False or an integer representing the action to be taken as default when action layer is silent'
+                output_speed_x = self.action_bins_x[random_action]
+                return (output_speed_x, 0, random_action)
+
+
+
 
         # switch between WTA behavior and Vector-Averaging
         if WTA:
@@ -613,23 +603,27 @@ class BasalGanglia(object):
             pop = self.strD2
 
         for gid in bias_values.keys(): 
-            bias_value = bias_values[gid] * self.params['mpn_bg_bias_amplification']
+            bias_value = bias_values[gid] * self.params['mpn_bg_bias_amplification_%s' % cell_type]
             nest.SetStatus([int(gid)], {'I_e' : bias_value})
 
 
-    def set_kappa_and_gain(self, source_gids, D1_or_D2, kappa=None, gain=None):
+    def set_kappa_and_gain(self, source_gids, D1_or_D2, kappa, syn_gain, bias_gain):
         """
         source_gids -- is a list of gids, e.g. MotionPrediction.local_idx_exc
         D1_or_D2    -- is either a dictionary with int as key (=action) and gids as values, strD1 or strD2
         kappa       -- float
-        gain        -- float
+        syn_gain    -- float
+        bias_gain   -- float
         """
 
         for i_action in xrange(self.params['n_actions']):
-            nest.SetStatus(nest.GetConnections(source_gids, D1_or_D2[i_action]), {'K': float(kappa), 'gain': float(gain)})
+#            dummy = nest.GetConnections(source_gids, D1_or_D2[i_action])
+#            print 'DEBUG dummy pc_id %d action %d' % (self.pc_id, i_action), dummy
+#            nest.SetStatus(dummy, {'K': float(kappa), 'gain': float(syn_gain)})
+            nest.SetStatus(nest.GetConnections(source_gids, D1_or_D2[i_action]), {'K': float(kappa), 'gain': float(syn_gain)})
 
         for i_action in xrange(self.params['n_actions']):
-            nest.SetStatus(D1_or_D2[i_action], {'K': float(kappa), 'gain': float(gain)})
+            nest.SetStatus(D1_or_D2[i_action], {'K': float(kappa), 'gain': float(bias_gain)})
 
 
     def get_cell_gids(self, cell_type):

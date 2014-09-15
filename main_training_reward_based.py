@@ -11,6 +11,7 @@ import numpy as np
 import time
 import os
 import utils
+from copy import deepcopy
 from PlottingScripts.PlotBGActivity import run_plot_bg
 from PlottingScripts.PlotMPNActivity import MetaAnalysisClass
 
@@ -47,6 +48,10 @@ class RewardBasedLearning(object):
         self.motion_params = np.zeros((self.params['n_iterations'], 5))  # + 1 dimension for the time axis
         self.stim_cnt = 0
         self.iteration_cnt = 0
+        self.retrained_actions = []
+        
+    def set_connection_module(self, CM):
+        self.CM = CM
 
     def create_networks(self):
         self.VI = VisualInput.VisualInput(self.params, comm=self.comm)
@@ -54,6 +59,16 @@ class RewardBasedLearning(object):
         self.VI.set_pc_id(pc_id)
         self.BG = BasalGanglia.BasalGanglia(self.params, self.comm)
         self.CC = CreateConnections.CreateConnections(self.params, self.comm)
+
+
+    def get_random_action(self):
+        """
+        When no activity is seen in the BG action layer, a 'random' action can be given as 'random' response.
+        This function keeps track of the chosen actions and the 'random' actions to be taken.
+        """
+        # either choose the optimal action
+        # or choose a random action, which is not in self.retrained_actions
+        pass
 
 
     def run_doing_action(self, stim_params, action, K=0, gain=1., v_eye=[0., 0.]):
@@ -70,272 +85,132 @@ class RewardBasedLearning(object):
         """
 
 #        print 'DEBUG, iteration %d VI.t_current ' % self.iteration_cnt, self.VI.t_current, 'current_motion_params', self.VI.current_motion_params
+        R = 0.
         #####
         # 1 # 
         #####
-        self.VI.current_motion_params = stim_params
+        # present a stimulus (with a possible 'ongoing' eye movement of v_eye)
+        self.VI.current_motion_params = deepcopy(stim_params)
+        self.motion_params[self.iteration_cnt, :4] = deepcopy(self.VI.current_motion_params) # store the current motion parameters before they get updated
         stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, v_eye)
-#        stim, supervisor_state = self.VI.compute_input_open_loop(self.MT.local_idx_exc)
+
+        # and activate the supervisor in the BG for a given action 
+        # NOTE: this does not mean that the system actually performs this action, 
+        # because the BG action-decision is based on the supervisor activity and the 
+        # inherent activity forwarded from D1 and D2 driven by the stimulus
         (action_index_x, action_index_y) = self.BG.supervised_training(action)
-        self.actions_taken[self.iteration_cnt, :] = [action[0], action[1], action_index_x]
-        R = self.BG.get_reward_from_action(self.actions_taken[self.iteration_cnt, 2], self.VI.current_motion_params)
-        self.rewards[self.iteration_cnt] = R
-        print 'DEBUG actions_action %d' % self.iteration_cnt, self.actions_taken[self.iteration_cnt, :]
 
         if params['debug_mpn']:
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
         self.MT.update_input(stim) # run the network for some time 
-        self.motion_params[self.iteration_cnt, :4] = self.VI.current_motion_params # store the current motion parameters before they get updated
-#        self.motion_params[self.iteration_cnt, -1] = self.VI.t_current
-
 
         # for the first two iterations switch off plasticity and set gain to 1
-        self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD1, kappa=0., gain=1.)
-        self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD2, kappa=0., gain=1.)
+        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, kappa=0., syn_gain=self.params['params_synapse_d1_MT_BG']['gain'], bias_gain=self.params['param_msn_d1']['gain'])
+        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, kappa=0., syn_gain=self.params['params_synapse_d2_MT_BG']['gain'], bias_gain=self.params['param_msn_d2']['gain'])
 
         nest.Simulate(self.params['t_iteration'])
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-        if pc_id == 0:
-            print 'DEBUG Iteration %d\tperceived state ' % (self.iteration_cnt), state_
         self.network_states[self.iteration_cnt, :] = state_
-        self.BG.advance_iteration()
+
+        next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
+        self.retrained_actions.append(next_action)
+        v_eye[0] = next_action[0]
+        v_eye[1] = next_action[1]
+        self.actions_taken[self.iteration_cnt, :] = next_action
+        self.MT.advance_iteration()
         self.iteration_cnt += 1
 
-#        print 'DEBUG, iteration %d VI.t_current ' % self.iteration_cnt, self.VI.t_current, 'current_motion_params', self.VI.current_motion_params
+        self.CM.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
+
+
         #####
-        # 2 #
+        # 2 # Do the action that has been decided in the previous iteration (or trigger a 'random' action)
         #####
-        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, action)
-#        action_index = self.BG.map_speed_to_action(action[0], xy='x')
-#        (action_index_x, action_index_y) = self.BG.supervised_training(action)
-#        self.actions_taken[self.iteration_cnt, :] = [action[0], action[1], action_index_x]
-#        print 'DEBUG actions_action %d' % self.iteration_cnt, self.actions_taken[self.iteration_cnt, :]
+        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, v_eye)
         self.MT.update_input(stim) # run the network for some time 
+        self.BG.stop_supervisor()
         if params['debug_mpn']:
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
         self.motion_params[self.iteration_cnt, :4] = self.VI.current_motion_params # store the current motion parameters before they get updated
-#        self.motion_params[self.iteration_cnt, -1] = self.VI.t_current
+
+        # activate the efference copy in order to make correlation-binding between visual neurons and D2 / D1 neurons more likely
+        self.BG.activate_efference_copy(self.iteration_cnt - 1, self.iteration_cnt)
+
         nest.Simulate(self.params['t_iteration'])
-        R = self.BG.get_reward_from_action(self.actions_taken[self.iteration_cnt, 2], self.VI.current_motion_params)
-        self.rewards[self.iteration_cnt] = R
-#        if self.stim_cnt == 0:
-#            self.rewards[self.iteration_cnt] = self.VI.get_reward_from_perceived_stim(state_)
-        self.network_states[self.iteration_cnt, :] = state_
-        self.iteration_cnt += 1
-#        print 'DEBUG, iteration %d VI.t_current ' % self.iteration_cnt, self.VI.t_current, 'current_motion_params', self.VI.current_motion_params
-#        print 'DEBUG end run_doing_action motion_params', self.motion_params
-        
-        # after the given action has been taken, switch on kappa and set gain to zero
-        # However, keep in mind, that the previous action was a mixture of
-        #  - the desired action AND
-        #  - the activity driven by the (probably non-optimal) MPN-BG connectivity
-        if R >= 0:
-            self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, kappa=R, gain=0)
-            self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, kappa=0., gain=0) 
-        else:
-            self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, kappa=0., gain=0)
-            self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, kappa=-R, gain=0)
-#        stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
-#        self.MT.update_input(stim) 
-        self.BG.stop_supervisor()
-
-        for i_ in xrange(self.params['n_iterations_per_stim'] - 2):
-            stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
-            self.MT.update_input(stim) 
-            nest.Simulate(self.params['t_iteration'])
-            self.iteration_cnt += 1
-
-
-
-    def simulate_stimulus(self, stim_params, action):
-
-
-        ######################################
-        #
-        #    C O N N E C T    M T ---> B G 
-        #
-        #######################################
-        self.CC.connect_mt_to_bg(self.MT, self.BG)
-
-        self.VI.current_motion_params = stim_params
-        v_eye = [0., 0.]
-        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, v_eye)
-        (action_index_x, action_index_y) = self.BG.supervised_training(action)
-        if params['debug_mpn']:
-            print 'Saving spike trains...'
-            utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
-        self.MT.update_input(stim) 
-
-        if comm != None:
-            comm.Barrier()
-        self.CC.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
-
-        ######################################
-        #
-        #    R U N    0
-        #
-        #######################################
-        nest.Simulate(params['t_iteration'])
-        if comm != None:
-            comm.Barrier()
-
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-        if pc_id == 0:
-            print 'DEBUG Iteration %d\tstate ' % (self.iteration_cnt), state_
         self.network_states[self.iteration_cnt, :] = state_
-        #print 'Iteration: %d\t%d\tState before action: ' % (self.iteration_cnt, pc_id), state_
-        next_action = self.BG.get_action() # BG returns the network_states of the next stimulus
+        next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
         v_eye[0] = next_action[0]
         v_eye[1] = next_action[1]
-        self.actions_taken[self.iteration_cnt + 1, :] = next_action
-        #print 'Iteration: %d\t%d\tState after action: ' % (self.iteration_cnt, pc_id), next_action
-
-        if params['weight_tracking']:
-            self.CC.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
+        self.actions_taken[self.iteration_cnt, :] = next_action
+        self.MT.advance_iteration()
+        R = self.MT.get_reward_from_perceived_stim(state_)
+        self.rewards[self.iteration_cnt + 1] = R # + 1 because the reward will affect the next iteration
         self.iteration_cnt += 1
 
-        if comm != None:
-            comm.Barrier()
 
-        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, v_eye)
-        self.MT.update_input(stim) 
-        ######################################
-        #
-        #    R U N    1
-        #
-        #######################################
-        nest.Simulate(self.params['t_iteration'])
-        if params['debug_mpn']:
-            print 'Saving spike trains...'
-            utils.save_spike_trains(params, self.iteration_cnt, stim, self.MT.local_idx_exc)
-
-        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-        self.network_states[self.iteration_cnt, :] = state_
-        self.rewards[self.iteration_cnt] = self.VI.get_reward_from_perceived_stim(state_)
-        print 'DEBUG, rewards', self.rewards
-
-        R = self.rewards[self.iteration_cnt]
-        if R >= 0:
-            self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD1, kappa=R, gain=0)
-            self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD2, kappa=0., gain=0) 
-        else:
-            self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD1, kappa=0., gain=0)
-            self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD2, kappa=-R, gain=0)
-
-        if params['weight_tracking']:
-            self.CC.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
-        self.iteration_cnt += 1
-
+        #####
+        # 3 #
+        #####
+        # after the given action has been taken, run an empty iteration without any BG or MT activity to 'clean' the activity and avoid overlap between iterations
+        self.BG.stop_supervisor()
         stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
         self.MT.update_input(stim) 
+        # Also switch on Kappa to let the traces evolve 
+#        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, kappa=0., syn_gain=self.params['params_synapse_d1_MT_BG']['gain'], bias_gain=self.params['param_msn_d1']['gain'])
+#        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, kappa=0., syn_gain=self.params['params_synapse_d2_MT_BG']['gain'], bias_gain=self.params['param_msn_d2']['gain'])
 
-        if comm != None:
-            comm.Barrier()
 
-        for i_ in xrange(self.params['n_silent_iterations']):
-            ######################################
-            #
-            #    R U N 
-            #
-            #######################################
+        nest.Simulate(self.params['t_iteration'])
+        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+        self.network_states[self.iteration_cnt, :] = state_
+        next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
+        v_eye[0] = next_action[0]
+        v_eye[1] = next_action[1]
+        self.actions_taken[self.iteration_cnt, :] = next_action
+        # don't update R, because the plasticity should act based on the initial movement
+        self.rewards[self.iteration_cnt + 1] = R # + 1 because the reward will affect the next iteration
+        self.MT.advance_iteration()
+        self.iteration_cnt += 1
+        
+
+        #####
+        # 4 #   L E A R N I N G    P H A S E 
+        #####
+        # Now, switch on kappa, set gain to zero
+        # However, keep in mind, that the previous action was a mixture of
+        #  - the desired action AND
+        #  - the activity driven by the (probably non-optimal) MT-BG connectivity
+        if R >= 0:
+            self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, kappa=R, syn_gain=0, bias_gain=0.)
+            self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, kappa=0., syn_gain=0, bias_gain=0.) 
+        else:
+            self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, kappa=0., syn_gain=0, bias_gain=0.)
+            self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, kappa=-R, syn_gain=0, bias_gain=0.)
+        self.BG.stop_supervisor()
+
+        for i_ in xrange(self.params['n_iterations_per_stim'] - 3): # - 3 because of the 2 iterations for performing the action + 1 silent iteration
+            stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
+            self.MT.update_input(stim) 
+            if i_ == (self.params['n_iterations_per_stim'] - 4):
+                self.BG.stop_efference_copy()
+                self.BG.stop_supervisor()
             nest.Simulate(self.params['t_iteration'])
-            self.CC.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
+            state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+            self.network_states[self.iteration_cnt, :] = state_
+            next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
+            v_eye[0] = next_action[0]
+            v_eye[1] = next_action[1]
+            self.actions_taken[self.iteration_cnt, :] = next_action
+            # don't update R, because the plasticity should act based on the initial movement
+            self.rewards[self.iteration_cnt] = R
+            self.MT.advance_iteration()
             self.iteration_cnt += 1
 
-        self.CC.get_weights(self.MT, self.BG)
-        utils.merge_connection_files(self.params)
-
-    def test_non_optimal_action(self, training_stimuli, i_stim=0):
-        """
-        Demonstrate a non-optimal action.
-        Simulate for two iterations and get the reward.
-
-        First compute the MPN->BG connections which should have positive weight in order 
-        to trigger the non-optimal action.
-        K = 0, gain > 0
-        """
-
-        actions_taken = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
-#        for i_ in xrange(training_stimuli[:, 0].size):
-#            print 'i_', i_
-#            print 'training_stimuli:', training_stimuli[i_, :]
-#            print 'supervisor_states', supervisor_states[i_]
-#            print 'action_indices', action_indices
-
-#        plus_minus = utils.get_plus_minus(self.RNG)
-        non_optimal_action = action_indices[0] - 1
-        vx = self.BG.action_bins_x[non_optimal_action]
-        action_ = (vx, 0, non_optimal_action)
-        print 'Choosing to do:', action_, 'index:', non_optimal_action
-        actions_taken[0, :] = non_optimal_action
-    
-        # update Visual input
-        self.VI.current_motion_params = training_stimuli[i_stim, :]
-        self.motion_params[self.VI.iteration, :4] = self.VI.current_motion_params # store the current motion parameters before they get updated
-        self.motion_params[self.VI.iteration, -1] = self.VI.t_current
-        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, action_)
-
-        self.MT.update_input(stim) # run the network for some time 
-        print 'supervisor_state:', supervisor_state
-        idx = np.nonzero(np.array(stim))[0]
-#        print 'debug idx:', idx, type(idx)
-#        print 'debug type local_idx_exc', type(self.MT.local_idx_exc)
-        if len(idx) > 0:
-            print 'debug gids:', np.array(self.MT.local_idx_exc)[idx], pc_id
-            active_mpn_neurons = list(np.array(self.MT.local_idx_exc)[idx])
-        else:
-            active_mpn_neurons = []
-        print 'active_mpn_neurons:', active_mpn_neurons, type(active_mpn_neurons), pc_id
-
-        w_dummy = 100.
-        tgt_pop = self.BG.strD1[non_optimal_action]
-
-        gain = 1.
-        nest.ConvergentConnect(self.MT.exc_pop, self.BG.strD1[non_optimal_action], model=self.params['synapse_d1_MT_BG'])
-        self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD1, kappa=0., gain=gain)
-        self.BG.set_kappa_and_gain(self.MT.local_idx_exc, self.BG.strD2, kappa=0., gain=gain)
-        syn_params = {'p_ij' : np.exp(w_dummy / gain) * self.params['bcpnn_init_pi']**2, 'p_i': self.params['bcpnn_init_pi'], \
-                'p_j': self.params['bcpnn_init_pi'], 'weight': w_dummy, 'K': 0., 'gain':gain}
-        if len(active_mpn_neurons) > 0:
-            conn_buffer = nest.GetConnections(active_mpn_neurons, tgt_pop)
-            if conn_buffer != None:
-                for c in conn_buffer:
-                    cp = nest.GetStatus([c])
-                    print 'cp:', cp
-                    if cp[0]['synapse_model'] == 'bcpnn_synapse':
-    #        print 'debug connbuffer:', conn_buffer
-                        nest.SetStatus(conn_buffer, syn_params)
-    #        print 'Stim:', stim
-#            print ' debug', nest.GetConnections(active_mpn_neurons, tgt_pop)
-#            print ' debug', nest.GetStatus(nest.GetConnections(active_mpn_neurons, tgt_pop))
-        if self.comm != None:
-            self.comm.Barrier()
-        nest.Simulate(3 * params['t_iteration'])
-#        print ' debug', nest.GetStatus(nest.GetConnections(active_mpn_neurons, tgt_pop))
-
-#        nest.Simulate(params['t_iteration'])
-#        nest.Simulate(params['t_iteration'])
-#        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, actions[iteration_cnt, :])
-        # choose a non-optimal action
-#        all_actions = range(self.params['n_actions'])
-#        all_actions.remove(action_indices[0])
-
-    def test_optimal_action(self):
-        """
-        K = 1, gain = 0
-        as during the normal 'open-loop' training, the optimal action to a given stimulus is selected.
-        Additionally, the corresponding reward is computed and stored for later training (using the efference copy).
-        """
-        pass
-
-        
-    def train_efference_copy(self):#, stim_params, reward):
-        """
-        Repeat presentation of the given stimulus selecting the optimal action and give the reward as K
-        """
-        pass
+        self.BG.stop_efference_copy()
+        self.BG.stop_supervisor()
 
 
     def set_up_data_structures(self):
@@ -360,7 +235,7 @@ class RewardBasedLearning(object):
         self.action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
 #        self.supervisor_states, self.action_indices, self.motion_params_precomputed = self.VI.get_supervisor_actions(self.training_stimuli, self.BG)
         self.rewards = np.zeros(params['n_iterations'])
-#        print 'self.training_stimuli:', self.training_stimuli
+        print 'self.training_stimuli:', self.training_stimuli
 #        print 'self.training_stimuli.shape', self.training_stimuli.shape
 #        print 'self.supervisor_states', self.supervisor_states
         # unnecessary as it will be overwritten
@@ -423,9 +298,11 @@ if __name__ == '__main__':
     #
     #######################################
     CC = CreateConnections.CreateConnections(params, comm)
+    RBL.set_connection_module(CC)
     CC.set_pc_id(pc_id)
     CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d1', model='bcpnn_synapse')
     CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d2', model='bcpnn_synapse')
+
 #    if params['connect_d1_after_training']:
 #        CC.connect_d1_after_training(BG, training_params, params)
 #    RBL.CC.connect_mt_to_bg(RBL.MT, RBL.BG)
@@ -438,31 +315,31 @@ if __name__ == '__main__':
 #        stim_params = RBL.training_stimuli[i_stim, :]
 #        RBL.run_doing_action(stim_params, action_sequence[i_stim, :])
 
-        # simulate, do the given action and simulate again with the stimulus modified by the action
-    stim_params = RBL.training_stimuli[0, :]
+    # simulate, do the given action and simulate again with the stimulus modified by the action
     action_v = [+10., 0]
 
     CC.get_weights(RBL.MT, RBL.BG, iteration=RBL.iteration_cnt)
 
     for iter_stim in xrange(params['n_stim']):
         # use the initial stimulus parameters 
-        stim_params = RBL.training_stimuli[iter_stim, :]
-        RBL.run_doing_action(stim_params, action_v)
-#    RBL.simulate_stimulus(stim_params, action_v) # 2 x simulate in here
-        CC.get_weights(RBL.MT, RBL.BG, iteration=RBL.iteration_cnt)
+        stim_params = deepcopy(RBL.training_stimuli[iter_stim, :])
+#        print 'DEBUG RBL.training_stimuli before doing action', RBL.training_stimuli[iter_stim, :]
+#        print 'DEBUG stim_params before doing action', stim_params
+        RBL.run_doing_action(stim_params, action_v, v_eye=[0., 0.])
+#        print 'DEBUG RBL.training_stimuli after doing action', RBL.training_stimuli[iter_stim, :]
+#        print 'DEBUG stim_params after doing action', stim_params
+#        CC.get_weights(RBL.MT, RBL.BG, iteration=RBL.iteration_cnt)
 
+
+    print 'DEBUG stim_params after everything', RBL.training_stimuli
     RBL.save_data_structures()
-
-#        action = RBL.supervisor_states[i_stim][0]
-#        RBL.()
-#        RBL.run_doing_action(stim_params, action)
-#        new_stim = RBL.readout_new_stim()
-#        RBL.run_doing_action(new_stim, action=None)
-#        RBL.compute_kappa()
-#        RBL.simulate_without_input()
+    CC.get_weights(RBL.MT, RBL.BG)
 
     if pc_id == 0:
         run_plot_bg(params, (0, params['n_stim']))
         MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(params['n_stim'])])
         MAC = MetaAnalysisClass([params['folder_name']])
         run_plot_bg(params, None)
+
+    t1 = time.time()
+    print 'Time pc_id %d: %d [sec] %.1f [min]' % (pc_id, t1 - t0, (t1 - t0)/60.)

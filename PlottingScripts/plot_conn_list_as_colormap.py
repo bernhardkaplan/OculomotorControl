@@ -160,6 +160,7 @@ if __name__ == '__main__':
     fns = sys.argv[1:] # 
     clim = None
 #    clim = (-5., 5.)
+#    clim = (-200., 200.)
 
     xv = 'v'
 

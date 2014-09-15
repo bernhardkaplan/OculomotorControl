@@ -27,15 +27,6 @@ class DebugTraces(object):
         print 'Debug, spike data sizes:', os.path.getsize(fn_pre), os.path.getsize(fn_post)
 
 
-    def get_weights(self, pre_gids, post_gids, tgt_cell_type='d1'):
-        conn_list_fn = training_params['mpn_bg%s_merged_conn_fn' % tgt_cell_type]
-        print 'Loading weights from:', conn_list_fn
-        if not os.path.exists(conn_list_fn):
-            print 'Merging default connection files...'
-            merge_pattern = params['mpn_bgd1_conn_fn_base']
-            fn_out = params['mpn_bgd1_merged_conn_fn']
-            utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
-
 
     def plot_wij_for_iteration(self, it, gid_pairs, ax):
 
@@ -174,6 +165,16 @@ class DebugTraces(object):
             self.trace_buffer[it][post_gid]['zj'] = traces[i_][9]
 
 
+def merge_connection_lists(params, tgt_cell_type='d1'):
+    conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_cell_type]
+    print 'Loading weights from:', conn_list_fn
+    if not os.path.exists(conn_list_fn):
+        print 'Merging default connection files...'
+        merge_pattern = params['mpn_bg%s_conn_fn_base' % tgt_cell_type]
+        fn_out = params['mpn_bg%s_merged_conn_fn' % tgt_cell_type]
+        utils.merge_and_sort_files(merge_pattern, fn_out, sort=False)
+
+
 def get_weights(pre_gids, post_gids, d):
     """
     d -- n x 3 array (src, tgt, weight)
@@ -236,7 +237,7 @@ def get_target_action(pre_gid, d, bg_cell_gids, actions_taken, iteration):
 if __name__ == '__main__':
 
     training_params = utils.load_params( os.path.abspath(sys.argv[1]) )
-
+    merge_connection_lists(training_params, tgt_cell_type='d2')
     colorlist = utils.get_colorlist()
     n_color = len(colorlist)
     cell_type_post = 'd2'
@@ -299,24 +300,24 @@ if __name__ == '__main__':
 
     # -------- PLOT SPIKES (color coded for actions) ----------------
     # --- plot the spikes from the most active cells for the different iterations
-    fig_test = pylab.figure()
-    ax1_training = fig_test.add_subplot(111)
-    for it in xrange(it_range_global[0], it_range_global[1]):
-        pre_gids = most_active_pre_gids[it]
-        DB.plot_spikes_raster(training_params, pre_gids, it_range_global, ax1_training, color=colorlist[it % n_color])
-        post_gids = most_active_post_gids[it]
-        DB.plot_spikes_raster(training_params, post_gids, it_range_global, ax1_training, color=colorlist[it % n_color])
-    DB.plot_iteration_borders(training_params, ax1_training, it_range_global)
-    ylim = ax1_training.get_ylim()
-    for it in xrange(it_range_global[0], it_range_global[1]):
-        if not np.isnan(actions_taken[it, 2]):
-            t0 = it * training_params['t_iteration']
-            ax1_training.text(t0 + .2 * training_params['t_iteration'], 1.05 * ylim[1], 'action %d' % (actions_taken[it, 2]), fontsize=16, color=colorlist[it % n_color])
-    ax1_training.set_xlabel('Time [ms]')
-    ax1_training.set_ylabel('Visual layer GID')
-    print 'You should (re-)run the training & testing to record V_m from these cells:'
-    print 'gids_to_record_mpn:', list(np.unique(all_pre_gids))
-    print 'gids_to_record_bg:', list(np.unique(all_post_gids))
+#    fig_test = pylab.figure()
+#    ax1_training = fig_test.add_subplot(111)
+#    for it in xrange(it_range_global[0], it_range_global[1]):
+#        pre_gids = most_active_pre_gids[it]
+#        DB.plot_spikes_raster(training_params, pre_gids, it_range_global, ax1_training, color=colorlist[it % n_color])
+#        post_gids = most_active_post_gids[it]
+#        DB.plot_spikes_raster(training_params, post_gids, it_range_global, ax1_training, color=colorlist[it % n_color])
+#    DB.plot_iteration_borders(training_params, ax1_training, it_range_global)
+#    ylim = ax1_training.get_ylim()
+#    for it in xrange(it_range_global[0], it_range_global[1]):
+#        if not np.isnan(actions_taken[it, 2]):
+#            t0 = it * training_params['t_iteration']
+#            ax1_training.text(t0 + .2 * training_params['t_iteration'], 1.05 * ylim[1], 'action %d' % (actions_taken[it, 2]), fontsize=16, color=colorlist[it % n_color])
+#    ax1_training.set_xlabel('Time [ms]')
+#    ax1_training.set_ylabel('Visual layer GID')
+#    print 'You should (re-)run the training & testing to record V_m from these cells:'
+#    print 'gids_to_record_mpn:', list(np.unique(all_pre_gids))
+#    print 'gids_to_record_bg:', list(np.unique(all_post_gids))
 
 
     # ---------- BCPNN TRACES --------------------
@@ -330,6 +331,8 @@ if __name__ == '__main__':
     post_gids = most_active_post_gids[plot_bcpnn_iteration_post][:n_post].tolist()
 
     all_bcpnn_traces, gid_pairs = TP_training.compute_traces(pre_gids, post_gids, it_range_bcpnn)
+    bcpnn_params = training_params['params_synapse_%s_MT_BG' % cell_type_post]
+    dt = 0.1
 
     # ---PLOT BCPNN TRACES
     fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
@@ -349,7 +352,10 @@ if __name__ == '__main__':
         else:
             output_fn = None
             info_txt = ''
-        TP_training.plot_trace(traces, output_fn=output_fn, info_txt=info_txt, fig=fig)
+        
+        TP_training.plot_trace(traces, bcpnn_params, dt, output_fn=output_fn, info_txt=info_txt, fig=fig)
+#    def plot_trace(self, bcpnn_traces, bcpnn_params, dt, output_fn=None, info_txt=None, fig=None, \
+#            color_pre='b', color_post='g', color_joint='r', style_joint='-'):
 
 
 

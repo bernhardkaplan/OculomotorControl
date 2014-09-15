@@ -16,7 +16,7 @@ import matplotlib
 import MergeSpikefiles
 import simulation_parameters
 import plot_conn_list_as_colormap as PlotCmap
-
+import string
 
 class PlotWeights(object):
 
@@ -92,15 +92,16 @@ class PlotWeights(object):
 
 
 
-    def merge_conn_dev_files(self, it, celltype='d1'):
-        merge_pattern = self.params['mpn_bg%s_conntracking_fn_base' % tgt_celltype] + 'it%d' % (it)
-        conn_list_merged = self.params['mpn_bg%s_merged_conntracking_fn' % tgt_celltype] + 'it%d'
-        utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
+    def merge_conn_dev_files(self, it, tgt_cell_type='d1'):
+        merge_pattern = self.params['mpn_bg%s_conntracking_fn_base' % tgt_cell_type] + 'it%04d' % (it)
+        fn_out = self.params['mpn_bg%s_merged_conntracking_fn_base' % tgt_cell_type] + 'it%04d.txt' % (it)
+        utils.merge_and_sort_files(merge_pattern, fn_out, sort=False, verbose=False)
 
 
     def plot_final_weights(self, cell_type, clim=None):
         conn_fn = self.params['mpn_bg%s_merged_conn_fn' % cell_type]
-        conn_mat = PlotCmap.plot_conn_list(self.params, conn_list_fn=conn_fn, clim=clim)
+        conn_mat = PlotCmap.plot_conn_list(conn_fn, params=self.params, clim=clim)
+#def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
         self.conn_mat[cell_type] = conn_mat
         print 'min max weights', conn_mat.min(), conn_mat.max()
 
@@ -179,8 +180,110 @@ def plot_final_weights(params, action_idx):
     P = PlotWeights(params)
     cell_type = 'd1'
     clim = (-5, 5)
+
     P.plot_final_weights(cell_type, clim=clim)
     P.get_weights_to_action(action_idx, cell_type)
+
+
+def select_presynaptic_cells(params, it_range=(0, 1)):
+    fn_pre_spikes = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
+    if not os.path.exists(fn_pre_spikes):
+        utils.merge_spikes(params)
+       
+    pre_spikes = np.loadtxt(fn_pre_spikes)
+    t_range = (it_range[0] * params['t_iteration'], it_range[1] * params['t_iteration'])
+    spikes_filtered_by_time = utils.get_spiketimes_within_interval(pre_spikes, t_range[0], t_range[1])
+    (pre_gids, nspikes) = utils.get_most_active_neurons(spikes_filtered_by_time)
+    return pre_gids
+
+
+def get_connection_files(params, cell_type):
+
+    fn_list = []
+    pattern = params['mpn_bg%s_merged_conntracking_fn_base' % cell_type].rsplit('/')[-1]
+    iterations = []
+    for thing in os.listdir(params['connections_folder']):
+        if string.count(thing, pattern) != 0:
+            path = params['connections_folder'] + thing
+            fn_list.append(path)
+            m = re.match('(.*)it(\d+)\.txt$', thing)
+            print 'thing:', thing, m.groups()[1], type(m.groups()[1])
+
+    fn_list.sort()
+    print 'sorted', fn_list
+
+    return fn_list 
+        
+
+def get_weights_versus_iterations(params, action_idx, it_range_pre, cell_type='d1'):
+
+    P = PlotWeights(params)
+    for it_ in xrange(params['n_iterations']):
+        P.merge_conn_dev_files(it_, cell_type)
+    utils.remove_empty_files(params['connections_folder'])
+
+    conn_files = get_connection_files(params, cell_type)
+#    exit(1)
+    n_conn_data = len(conn_files) # how many measurements for weights exist
+    # select the presynaptic cells for which the weights are to plotted
+    pre_gids = select_presynaptic_cells(params, it_range=it_range_pre)
+    n_pre = len(pre_gids)
+    assert (n_pre > 0), 'ERROR: No presynaptic cells could be determined due to a lack of pre-synaptic spikes. Check spike files and paths!'
+
+    f = file(params['bg_gids_fn'], 'r')
+    bg_gids = json.load(f) 
+    gids_for_action = bg_gids[cell_type][action_idx]
+    print 'Plotting post gids:', gids_for_action
+    n_post = len(gids_for_action)
+
+#    weight_data = np.zeros((n_pre, n_post, n_conn_data))
+    weight_data = np.zeros((n_pre * n_post, n_conn_data + 2)) # + 2 to store the pre and post gid at the beginning of the row
+
+    # load connection files for all iterations
+    for (it_, conn_fn) in enumerate(conn_files):
+        print 'Loading', conn_fn
+        d = np.loadtxt(conn_fn)
+        for (i_, pre_gid) in enumerate(pre_gids):
+            for (j_, post_gid) in enumerate(gids_for_action):
+                w_ij_t = utils.extract_weight_from_connection_list(d, pre_gid, post_gid)
+                row_idx = i_ * n_post + j_
+                weight_data[row_idx, 0] = pre_gid
+                weight_data[row_idx, 1] = post_gid
+                weight_data[row_idx, it_+2] = w_ij_t
+#                print 'Pre %d Post %d Weight' % (pre_gid, post_gid), weight_data[row_idx, :]
+
+    output_fn = params['data_folder'] + 'weights_action_%d_it%d-%d.dat' % (action_idx, it_range_pre[0], it_range_pre[1])
+    print 'Saving weight data to:', output_fn
+    np.savetxt(output_fn, weight_data)
+    return output_fn
+
+#    for it_ in xrange(params['n_iterations']):
+#        fn = params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it_)
+#        os.path.exists(fn):
+#        try:
+#            d = np.loadtxt(fn)
+            # extract the weight for the action_idx
+
+
+def plot_weights_versus_iterations(data_fn):
+    d = np.loadtxt(data_fn)
+
+    pre_gids = np.unique(d[:, 0])
+    post_gids = np.unique(d[:, 1])
+
+    print 'plot_weights_versus_iterations:'
+    print 'pre_gids:', pre_gids
+    print 'post_gids:', post_gids
+    n_points = d[0, 2:].size
+
+    colorlist = utils.get_colorlist(post_gids.size)
+    fig = pylab.figure()
+    ax = fig.add_subplot(111)
+    for (j_, post_gid) in enumerate(post_gids):
+        row_idx = (d[:, 1] == post_gid).nonzero()[0]
+        for row in row_idx:
+            ax.plot(xrange(n_points), d[row, 2:], c=colorlist[j_])
+
 
 
 if __name__ == '__main__':
@@ -201,10 +304,15 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    action_idx = 2
-    plot_final_weights(params, action_idx)
+    action_idx = 1
+
+    it_range_pre = (0, 1) # determines iteration range to determine the presynaptic cells
+    data_fn = get_weights_versus_iterations(params, action_idx, it_range_pre, cell_type='d2')
+#    data_fn = params['data_folder'] + 'weights_action_%d_it%d-%d.dat' % (action_idx, it_range_pre[0], it_range_pre[1])
+    plot_weights_versus_iterations(data_fn)
+#    plot_final_weights(params, action_idx)
+
     pylab.show()
 
 #    iterations = (0, 2)
 #    for it in xrange(iterations):
-
