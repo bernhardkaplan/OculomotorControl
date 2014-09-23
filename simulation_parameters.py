@@ -41,7 +41,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 4
+        self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 50
@@ -89,7 +89,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         self.params['n_silent_iterations'] = 3 # for 2 silent iterations this should be 3
-        self.params['n_iterations_RBL_retraining'] = 3
+        self.params['n_iterations_RBL_retraining'] = 4
         if self.params['training']:
             if self.params['reward_based_learning']:
                 self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations'] + self.params['n_iterations_RBL_retraining']) 
@@ -130,7 +130,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # the first stimulus parameters
         self.params['initial_state'] = (.8, .5, 0.7, .0)
-#        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
@@ -228,7 +227,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
         self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_bg'] = None
+        self.params['gids_to_record_bg'] = [10093, 10094, 10095, 10096, 10097]
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
@@ -361,12 +360,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.20
 
         #Connections Actions and States to RP
-        self.tau_i = 5.
-        self.tau_j = 5.
-        self.tau_e = 100.
+        self.tau_i = 50.
+        self.tau_j = 3.
+        self.tau_e = 50.
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
-            self.tau_p = 50.
+            self.tau_p = 50000.
             # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
@@ -376,13 +375,19 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain'] = 0.
             if self.params['reward_based_learning']:
                 self.K = 0. # will be set to 1 during the main learning script
-                self.params['gain'] = 1.
+                self.params['gain'] = 1.0
             else:
                 self.K = 1.
         else:
-            self.params['gain'] = 1.
             self.K = 0.
         self.params['kappa'] = self.K
+
+        # gain parameters
+        self.params['gain_d1_d1'] = 0.
+        self.params['gain_d2_d2'] = 0.
+        self.params['gain_MT_d1'] = 1.
+        self.params['gain_MT_d2'] = 1.
+        self.params['bias_gain'] = 0.
 
 
         # #####################################
@@ -391,14 +396,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 1.0
-        self.params['mpn_d2_weight_amplification'] = 1.0
+        self.params['mpn_d1_weight_amplification'] = self.params['gain_MT_d1']
+        self.params['mpn_d2_weight_amplification'] = self.params['gain_MT_d2']
 #        if self.params['reward_based_learning']:
 #            self.params['mpn_d1_weight_amplification'] = 0.0
 #            self.params['mpn_d2_weight_amplification'] = 0.0
-        self.params['mpn_bg_bias_amplification'] = 1.0
-        self.params['d1_d1_weight_amplification_neg'] = 0.0
-        self.params['d1_d1_weight_amplification_pos'] = 0.0
+        self.params['mpn_bg_bias_amplification_d1'] = self.params['bias_gain']
+        self.params['mpn_bg_bias_amplification_d2'] = self.params['bias_gain']
+        self.params['d1_d1_weight_amplification_neg'] = self.params['gain_d1_d1']
+        self.params['d1_d1_weight_amplification_pos'] = self.params['gain_d1_d1']
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
         self.params['delay_d1_d1'] = 1.
@@ -419,10 +425,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['param_msn_d1'] = { 't_ref': 2.0, 'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5.,  \
 #                'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70.}
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
-                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
-                'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., 
+                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, \
+                'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., \
                 'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70., \
-                'K': self.K, 'gain': self.params['gain']}
+                'K': self.K, 'gain': self.params['bias_gain']}
 #                'g_L': 50., 'C_m':250., 'E_L':-70., 'E_in': -70., \
         self.params['param_msn_d2'] = self.params['param_msn_d1'].copy()
         # old params for alpha shaped synapses
@@ -468,10 +474,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         bcpnn_init = 0.01
         self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
-        self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
-        self.params['params_synapse_d2_d2'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d2_d2'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d2_d2'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d2_d2'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
@@ -489,11 +495,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         #Connections States Actions
         self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d1_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_MT_d1'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
         self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d2_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d2_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_MT_d2'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
@@ -553,8 +559,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['active_poisson_rew_rate'] = 70.
         self.params['inactive_poisson_rew_rate'] = 1.
         self.params['param_poisson_efference'] = {}
-        self.params['weight_efference_strd1'] = 7.
-        self.params['weight_efference_strd2'] = 7.
+        self.params['weight_efference_strd1'] = 8.
+        self.params['weight_efference_strd2'] = 8.
         self.params['delay_efference_strd1'] = 1.
         self.params['delay_efference_strd2'] = 1.
 
@@ -574,7 +580,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_inh_volt_fn'] = 'mpn_inh_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['training_sequence_fn'] = self.params['parameters_folder'] + 'training_stimuli_parameters.txt'
+        self.params['training_sequence_fn'] = self.params['data_folder'] + 'training_stimuli_parameters.txt'
 
         # bg files:
         self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
@@ -673,10 +679,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_%d_nStim%dx%d_taup%d/' % (self.params['sim_id'], \
+                folder_name = 'Training_%s_%d_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
                         self.params['suboptimal_training'], \
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                        self.params['params_synapse_d1_MT_BG']['tau_p'])
+                        self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
                 folder_name += '_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e/' % \

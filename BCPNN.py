@@ -48,6 +48,7 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_ve
     spike_height = 1000. / (bcpnn_params['fmax'] * dt)
     eps = bcpnn_params['epsilon']
     K = bcpnn_params['K']
+    gain = bcpnn_params['gain']
     if K_vec == None:
         K_vec = np.ones(n) * K
 
@@ -86,13 +87,14 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_ve
         pij[i] = pij[i-1] + dpij
 
     # weights
-    wij = np.log(pij / (pi * pj))
+    wij = gain * np.log(pij / (pi * pj))
 
     # bias
-    bias = np.log(pj)
+    bias = gain * np.log(pj)
 
     return [wij, bias, pi, pj, pij, ei, ej, eij, zi, zj]
-#    return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
+
+
 
 def compute_traces(si, tau_z=10, tau_e=100, tau_p=1000, dt=1., eps=1e-6, initial_value=None):
     n = si.size
@@ -296,11 +298,6 @@ def compute_bcpnn_in_place(st_pre, st_post, tau_dict, dt, fmax, tmax, save_inter
         bias[i] = np.log(pj[i])
 
     return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
-    return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
 
 
 
-#        bcpnn_params=None, dt=1., fmax=1000., initial_value=0.01, eps=1e-6):
-#def get_spiking_weight_and_bias(pre_trace, post_trace, bin_size=1, \
-#        bcpnn_params=None, dt=1., fmax=1000., initial_value=0.01, eps=1e-6):
-#        bcpnn_params=None, dt=1., fmax=1000.):

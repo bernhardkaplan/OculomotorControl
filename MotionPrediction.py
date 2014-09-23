@@ -44,6 +44,8 @@ class MotionPrediction(object):
 
         self.t_current = 0
         self.write_cell_gids_to_file()
+        self.perceived_states = np.zeros((self.params['n_iterations'], 4))
+        self.iteration = 0 
 
 
 
@@ -172,6 +174,7 @@ class MotionPrediction(object):
         # for all local gids: count occurence in new_event_gids
         stim_params_readout = self.readout_spiking_activity(tuning_prop_exc, gids_spiked, nspikes)
         self.t_current += self.params['t_iteration']
+        self.perceived_states[self.iteration, :] = stim_params_readout
         return stim_params_readout
 
 
@@ -189,7 +192,36 @@ class MotionPrediction(object):
             prediction += tuning_prop[gid, :] * confidence[i_]
         return prediction
 
+
+
+    def get_reward_from_perceived_stim(self, perceived_state):
+        """
+        Computes the reward based on the internal states of the MPN (motion-perception / prediction network).
+        Must be called after a simulation step.
+        Also, compute_input increase self.iteration to + 1 (hence an addition -1 is used here)
+        perceived_state -- is a 4-element list of the vector-average resembling [x, y, u, v]
+        """
+        self.perceived_states[self.iteration-1] = perceived_state
+        punish_overshoot = .7
+        learning_rate = 10.
+        if self.iteration < 2:
+            return 0
+        else:
+            x, y, v, u = perceived_state
+            dx_i = self.perceived_states[self.iteration - 2][0] - .5 # -2 and -1 because self.iteration is + 1 (because compute_input has been called before)
+            dx_j = self.perceived_states[self.iteration - 1][0] - .5
+            dx_i_abs = np.abs(dx_i)
+            dx_j_abs = np.abs(dx_j)
+            diff_dx_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement
+            R = -1 * learning_rate * diff_dx_abs
+            if np.sign(dx_i) != np.sign(dx_j): # 'overshoot'
+                R *= punish_overshoot
+        return R
+
+
         
+    def advance_iteration(self):
+        self.iteration += 1
 
 
     def get_local_indices(self, pop):

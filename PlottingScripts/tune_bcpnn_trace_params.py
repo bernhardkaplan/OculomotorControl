@@ -1,107 +1,150 @@
+"""
+This script is to plot spikes and BCPNN traces from simulated spike trains 
+and gives the opportunity to play with the BCPNN parameters without re-simulating the whole network.
+"""
+
 import os, sys, inspect
 # use this if you want to include modules from a subforder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../")))
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
-import json
-import numpy as np
+
+import sys
+import os
 import utils
-from PlottingScripts.plot_bcpnn_traces import TracePlotter
-from PlottingScripts.plot_voltages import VoltPlotter
+import re
+import numpy as np
 import pylab
-from PlottingScripts import FigureCreator
+import simulation_parameters
+import json
+import itertools
 import BCPNN
+from plot_bcpnn_traces import TracePlotter
+from PlottingScripts.plot_reward_learning_traces import create_K_vector
 
-FigureCreator.plot_params['figure.subplot.left'] = .17
-pylab.rcParams.update(FigureCreator.plot_params)
-
-
-
-def create_spikes(t_start, t_stop, rate):
-    assert (t_stop > t_start)
-    n_spikes = (t_stop - t_start) / 1000. * rate
-    spikes = np.random.uniform(t_start, t_stop, n_spikes)
-    return spikes
+#import MergeSpikefiles
+#import PlotMPNActivity
+#import FigureCreator
 
 
 
-def run_2stim_1action(bcpnn_params):
-    t_iteration = 25
-    t_sim = 4 * t_iteration
-    firing_rate = 300
+def select_most_active_cells(params, spike_data, it_range):
 
-    stim_0 = create_spikes(0, t_iteration, firing_rate)
-    stim_1 = create_spikes(t_iteration, 2 * t_iteration, firing_rate)
-    action_0 = create_spikes(0, t_iteration, firing_rate)
-
-    s_pre = BCPNN.convert_spiketrain_to_trace(stim_0, t_sim)
-    s_post = BCPNN.convert_spiketrain_to_trace(action_0, t_sim)
-    wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, bcpnn_params)
-    bcpnn_traces_0 = [wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, s_pre, s_post]
-    print 'debug', len(bcpnn_traces_0)
-
-    s_pre = BCPNN.convert_spiketrain_to_trace(stim_1, t_sim)
-    s_post = BCPNN.convert_spiketrain_to_trace(action_0, t_sim)
-
-    wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, bcpnn_params)
-    bcpnn_traces_1 = [wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, s_pre, s_post]
-
-    params = None
-    TP = TracePlotter(params)
-    output_fn = None
-    info_txt = None
-    dt = .1
-
-    fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
-    ax1 = fig.add_subplot(321)
-    ax2 = fig.add_subplot(322)
-    ax3 = fig.add_subplot(323)
-    ax4 = fig.add_subplot(324)
-    ax5 = fig.add_subplot(325)
-    ax6 = fig.add_subplot(326)
-
-    TP.plot_trace(bcpnn_traces_0, bcpnn_params, dt, output_fn=output_fn, info_txt='Stim 0 - Action\n', fig=fig, \
-            color_pre='b', color_post='k', color_joint='b', style_joint='--')
-    TP.plot_trace(bcpnn_traces_1, bcpnn_params, dt, output_fn=output_fn, info_txt='Stim 1 - Action\n', fig=fig, \
-            color_pre='g', color_post='m', color_joint='g', style_joint='--')
+    t_range = np.array(it_range) * params['t_iteration']
+    time_filtered_spikes = utils.get_spiketimes_within_interval(spike_data, t_range[0], t_range[1])
+    (pre_gids, nspikes) = utils.get_most_active_neurons(time_filtered_spikes)
+    return pre_gids
 
 
-def run_Xstim_1action(bcpnn_params, n_stim):
-    t_iteration = 50
-    t_sim = 4 * t_iteration
 
-    firing_rate = 100
-    pre_traces = []
-    for i_stim in xrange(n_stim):
-        spikes = create_spikes(i_stim * t_iteration, firing_rate)
-        pre_traces.append(BCPNN.convert_spiketrain_to_trace(spikes, t_sim))
+def get_spikes_for_gids(spike_data, gids):
 
-    action_0 = create_spikes(0, t_iteration, firing_rate)
-    s_post = BCPNN.convert_spiketrain_to_trace(action_0, t_sim)
+    spike_times = {gid : None for gid in gids}
+    for gid in gids:
+        idx = (spike_data[:, 0] == gid).nonzero()[0]
+        spike_times[gid] = spike_data[idx, 1]
+    return spike_times
 
-
-#def run_
 
 if __name__ == '__main__':
 
-#    TP.plot_trace(bcpnn_traces[1], bcpnn_params, dt, output_fn=output_fn, info_txt=info_txt)
-    np.random.seed(0)
-    tau_i = 5.
-    tau_j = 5.
-    tau_e = 5.
-    tau_p = 50.
-    bcpnn_init = 0.01
-    gain = 0.
-    K = 1.
-    fmax = 150.
-    epsilon = 1. / (fmax * tau_p)
-    bcpnn_params = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': gain, 'K': K, \
-            'fmax': fmax, 'epsilon': epsilon, 'delay': 1.0, \
-            'tau_i': tau_i, 'tau_j': tau_j, 'tau_e': tau_e, 'tau_p': tau_p}
+    if len(sys.argv) > 1:
+        params = utils.load_params(sys.argv[1])
+    else:
+        param_tool = simulation_parameters.global_parameters()
+        params = param_tool.params
 
-    run_2stim_1action(bcpnn_params)
+    
+    # load spikes
+    cell_type_post = 'd2'
+    bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
+    fn_spikes_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
+    fn_spikes_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
+    if (not os.path.exists(fn_spikes_pre)) or (not os.path.exists(fn_spikes_post)):
+        utils.merge_spikes(params)
+    all_spikes_pre = np.loadtxt(fn_spikes_pre)
+    all_spikes_post = np.loadtxt(fn_spikes_post)
 
-#    n_stim = 1
-#    run_Xstim_1action(bcpnn_params, n_stim)
+    # load BG cell gids
+    f = file(params['bg_gids_fn'], 'r')
+    bg_gids = json.load(f) 
+    action_idx = 1
+    post_gids = bg_gids[cell_type_post][action_idx]
+    print 'Plotting post gids:', post_gids
+    n_post = len(post_gids)
 
-    pylab.show()
+    # PARAMETERS
+    it_range_pre_selection = (0, 1) # sets time frame for pre synaptic cell selection
+    it_range_bcpnn_computations = (0, params['n_iterations'])
+    t_range_bcpnn_computations = np.array(it_range_bcpnn_computations) * params['t_iteration']
+    dt = params['dt']
+
+    bcpnn_params['tau_p'] = float(sys.argv[5])
+    bcpnn_params['tau_e'] = float(sys.argv[4])
+    bcpnn_params['tau_j'] = float(sys.argv[3])
+    bcpnn_params['tau_i'] = float(sys.argv[2])
+    bcpnn_params['gain'] = 5.
+
+#    bcpnn_params['tau_p'] = 2400 * 10
+#    bcpnn_params['tau_i'] = 50 # 50 
+#    bcpnn_params['tau_j'] = 10 # 3
+
+    # select pre-synaptic cells
+    pre_gids = select_most_active_cells(params, all_spikes_pre, it_range_pre_selection)
+    pre_gids = list(pre_gids)
+    pre_gids.reverse()
+    print 'Plotting pre gids:', pre_gids
+
+    
+    # filter all_spikes for gids
+    spike_times_pre = get_spikes_for_gids(all_spikes_pre, pre_gids)
+    spike_times_post = get_spikes_for_gids(all_spikes_post, post_gids)
+#    print 'Spike times pre:', spike_times_pre
+#    print 'Spike times post:', spike_times_post
+
+    # for all pairs of pre- and post-cells, compute traces
+    gid_pairs = list(itertools.product(pre_gids, post_gids))
+    print 'number of gid_pairs:', len(gid_pairs)
+
+    n_traces_to_compute = 5 # for debugging and development
+    bcpnn_traces = []
+
+
+    # create a vector controlling the weight update 
+    K_vec = create_K_vector(params, it_range_bcpnn_computations, dt=dt)
+    np.savetxt('delme_kvec', K_vec)
+
+    # compute 
+    fig = None
+    for i_trace in xrange(n_traces_to_compute):
+        pre_gid = gid_pairs[i_trace][0]
+        post_gid = gid_pairs[i_trace][1]
+
+        time_filtered_spikes_pre = utils.get_spiketimes_within_interval(spike_times_pre[pre_gid], t_range_bcpnn_computations[0], t_range_bcpnn_computations[1])
+        time_filtered_spikes_post = utils.get_spiketimes_within_interval(spike_times_post[post_gid], t_range_bcpnn_computations[0], t_range_bcpnn_computations[1])
+        s_pre = BCPNN.convert_spiketrain_to_trace(time_filtered_spikes_pre , t_range_bcpnn_computations[1])
+        s_post = BCPNN.convert_spiketrain_to_trace(time_filtered_spikes_post , t_range_bcpnn_computations[1])
+
+        wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, params['params_synapse_%s_MT_BG' % cell_type_post], K_vec=K_vec)
+        bcpnn_traces.append([wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, s_pre, s_post])
+
+    # plotting 
+    TP = TracePlotter(params, cell_type_post)
+    fig = None
+    output_fn = None 
+    for i_, traces in enumerate(bcpnn_traces):
+#        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
+        fig = TP.plot_trace_with_spikes(bcpnn_traces[i_], bcpnn_params, dt, output_fn=output_fn, fig=fig)
+
+    ax_rp = fig.axes[1]
+#    plot_
+
+    output_fn = params['figures_folder'] + 'bcpnn_traces_RBL_action%d_tau_zi%04d_zj%04d_e%04d_p%04d_gain%.1f.png' % (action_idx, bcpnn_params['tau_i'], bcpnn_params['tau_j'], bcpnn_params['tau_e'], bcpnn_params['tau_p'], bcpnn_params['gain'])
+    print 'Saving figure to:', output_fn
+    pylab.savefig(output_fn, dpi=200)
+
+#    pylab.show()
+
+
+#    bcpnn_params['K'] = 1.
+#    dt = params['dt']
