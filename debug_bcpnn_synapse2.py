@@ -22,14 +22,13 @@ exc_spike_recorder = nest.Create('spike_detector', params={'to_file':True, 'labe
 nest.ConvergentConnect(nrns, exc_spike_recorder)
 
 source_0 = nest.Create('spike_generator', 1)
-# pre synaptic spikes
-spike_times_0 = np.array([50., 100., 300., 350., 400.])
-# post synaptic spikes 
-spike_times_1 = np.array([51., 101., 201., 221., 231., 241., 300., 350., 400.])
-nest.SetStatus(source_0, {'spike_times' : spike_times_0})
-
-delta_t = 3.
 source_1 = nest.Create('spike_generator', 1)
+
+# pre synaptic spikes
+#spike_times_0 = np.array([50.])# 100., 300., 350., 400.])
+#nest.SetStatus(source_0, {'spike_times' : spike_times_0})
+# post synaptic spikes 
+spike_times_1 = np.array([])# 51., 101., 201., 221., 231., 241., 300., 350., 400.])
 nest.SetStatus(source_1, {'spike_times' : spike_times_1})
 
 weight = 15.
@@ -61,13 +60,25 @@ nest.Connect([nrns[0]], [nrns[1]], syn_params, model='bcpnn_synapse')
 #nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 0., 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
 nest.Simulate(150.)
 
+# pre synaptic spikes
+#spike_times_0 = np.array([160., 170.])
+#nest.SetStatus(source_0, {'spike_times' : spike_times_0})
+# post synaptic spikes 
+spike_times_1 = np.array([165., 175.])
+nest.SetStatus(source_1, {'spike_times' : spike_times_1})
+
+
 # 150 - 250: no presynaptic activity
 # Kappa ON: 150 - 250 only post-synaptic spikes
 #nest.Simulate(20.)
 #nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 1., 'gain': 0.})
-nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': .7, 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
 
+nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': .7, 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
 nest.Simulate(50.)
+
+spike_times_0 = np.array([210., 220.])
+nest.SetStatus(source_0, {'spike_times' : spike_times_0})
+
 nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': .3, 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
 nest.Simulate(50.)
 #nest.Simulate(80.)
@@ -75,7 +86,7 @@ nest.Simulate(50.)
 # 250 - 350
 # Kappa OFF + correlated activity
 #nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 1., 'gain': 0.})
-nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 0.1, 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
+nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 0., 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
 nest.Simulate(100.)
 
 conns = nest.GetConnections([nrns[0]], [nrns[1]], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node

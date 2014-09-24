@@ -10,6 +10,7 @@ import simulation_parameters
 import MergeSpikefiles
 import scipy.stats as stats
 import random
+import string
 
 def draw_from_discrete_distribution(prob_dist, size=1):
     """
@@ -321,6 +322,21 @@ def get_spikes(spiketimes_fn_merged, n_cells=0, get_spiketrains=False, gid_idx=0
         return nspikes
 
 
+def get_connection_files(params, cell_type):
+    fn_list = []
+    pattern = params['mpn_bg%s_merged_conntracking_fn_base' % cell_type].rsplit('/')[-1]
+    iterations = []
+    for thing in os.listdir(params['connections_folder']):
+        if string.count(thing, pattern) != 0:
+            path = params['connections_folder'] + thing
+            fn_list.append(path)
+            m = re.match('(.*)it(\d+)\.txt$', thing)
+
+    fn_list.sort()
+    return fn_list 
+        
+
+
 def merge_spikes(params):
 
     merged_spike_fn = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
@@ -500,14 +516,15 @@ def extract_weight_from_connection_list(conn_list, pre_gid, post_gid):
     """
     Extract the weight that connects the pre_gid to the post_gid
     """
+#    print 'debug connlist', conn_list
+#    print 'debug', pre_gid, post_gid
+#    print 'debug', (conn_list[:, 0] == pre_gid).nonzero()
     pre_idx = set((conn_list[:, 0] == pre_gid).nonzero()[0])
     post_idx = set((conn_list[:, 1] == post_gid).nonzero()[0])
     valid_idx = list(pre_idx.intersection(post_idx))
-#    print 'debug', conn_list[valid_idx, 2]
     if len(valid_idx) == 0:
         return 0.
-    return conn_list[valid_idx, 2]
-
+    return float(conn_list[valid_idx, 2])
 
 
 
@@ -578,7 +595,6 @@ def get_xpos_log_distr(logscale, n_x, x_min=1e-6, x_max=.5):
     x_rho = np.zeros(n_x)
     x_rho[:n_x/2] = x_lower[:-1]
 
-    print 'debug', n_x, x_rho[n_x/2+1:].shape, x_upper[1:].shape
     if n_x % 2:
         x_rho[n_x/2+1:] = x_upper[1:]
     else:
@@ -629,12 +645,6 @@ def get_receptive_field_sizes_v(params, rf_v):
     dv_neg_half = np.zeros(neg_idx.size)
     dv_pos_half = rf_v[idx][pos_idx][1:] - rf_v[idx][pos_idx][:-1]
     dv_neg_half = np.abs(rf_v[idx][neg_idx][1:] - rf_v[idx][neg_idx][:-1])
-#    print 'rf_v[idx][pos_idx]', rf_v[idx][pos_idx]
-#    print 'rf_v[idx][neg_idx]', rf_v[idx][neg_idx]
-#    print 'dv_pos_half', dv_pos_half
-#    print 'dv_neg_half', dv_neg_half
-#    print 'pos_idx', pos_idx
-#    print 'idx', idx
     dv_neg_reverse = list(dv_neg_half)
     dv_neg_reverse.reverse()
     rf_size_v[:neg_idx.size-1] = dv_neg_reverse

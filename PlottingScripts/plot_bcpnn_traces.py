@@ -90,7 +90,7 @@ class TracePlotter(object):
 
 
     def plot_trace_with_spikes(self, bcpnn_traces, bcpnn_params, dt, output_fn=None, fig=None, \
-            color_pre='b', color_post='g', color_joint='r', style_joint='-'):
+            color_pre='b', color_post='g', color_joint='r', style_joint='-', K_vec=None):
         # unpack the bcpnn_traces
         wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
         t_axis = dt * np.arange(zi.size)
@@ -160,6 +160,8 @@ class TracePlotter(object):
         ax6.set_xlabel('Time [ms]')
         ax6.set_ylabel('Bias')
 
+        if K_vec != None:
+            p1, = ax2.plot(t_axis, K_vec, c='k', lw=linewidth)
 
         if output_fn != None:
             print 'Saving traces to:', output_fn

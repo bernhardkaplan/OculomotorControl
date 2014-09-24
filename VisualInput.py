@@ -206,25 +206,25 @@ class VisualInput(object):
         return mp_training 
 
 
-    def compute_input(self, local_gids, action_code):
+    def compute_input(self, local_gids, v_eye):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
         Arguments:
         local_gids -- the GIDS for which the stimulus needs to be computed
-        action_code -- a tuple representing the action (direction of eye movement)
+        v_eye -- a tuple representing the action (direction of eye movement)
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-        print 'DEBUG VI compute_input action iteration %d current_motion_params' % self.iteration, self.current_motion_params, ' action:', action_code
-#        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code)
-        self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(action_code)
+#        print 'DEBUG VI compute_input action iteration %d current_motion_params' % self.iteration, self.current_motion_params, ' action:', v_eye
+#        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(v_eye)
+        self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(v_eye)
         self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
         # stimulus parameter update is done in update_stimulus_trajectory_static
-#        self.current_motion_params[0] += (self.current_motion_params[2] + action_code[0]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
-#        self.current_motion_params[1] += (self.current_motion_params[3] + action_code[1]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
+#        self.current_motion_params[0] += (self.current_motion_params[2] + v_eye[0]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
+#        self.current_motion_params[1] += (self.current_motion_params[3] + v_eye[1]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
         self.iteration += 1
         return self.stim, supervisor_state
 
@@ -433,14 +433,14 @@ class VisualInput(object):
         n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
 
-        print 'DEBUG VI update_stimulus_trajectory_static beginning', self.current_motion_params
-        x_stim = self.current_motion_params[0] - (v_eye[0] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[2]) / self.params['t_cross_visual_field']
-        y_stim = self.current_motion_params[1] - (v_eye[1] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[3]) / self.params['t_cross_visual_field']
+#        print 'DEBUG VI update_stimulus_trajectory_static beginning', self.current_motion_params
+        x_stim = self.current_motion_params[0] + (v_eye[0] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[2]) / self.params['t_cross_visual_field']
+        y_stim = self.current_motion_params[1] + (v_eye[1] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[3]) / self.params['t_cross_visual_field']
 
         trajectory = (x_stim, y_stim)
         self.current_motion_params[0] = deepcopy(x_stim[-1])
         self.current_motion_params[1] = deepcopy(y_stim[-1])
-        print 'DEBUG VI update_stimulus_trajectory_static end', self.current_motion_params
+#        print 'DEBUG VI update_stimulus_trajectory_static end', self.current_motion_params
         # compute the supervisor signal taking into account:
         # - the trajectory position at the end of the iteration
         # - the knowledge about the motion (current_motion_params

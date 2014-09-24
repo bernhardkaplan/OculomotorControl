@@ -30,6 +30,8 @@ class BasalGanglia(object):
         self.gid_to_action_D2 = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.gid_to_action_via_spikerecorder= {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.efference_copy = {}
+        self.efference_copy_d1 = {}
+        self.efference_copy_d2 = {}
         self.supervisor = {}
         # Recording devices
         self.recorder_d1 = {}
@@ -70,7 +72,8 @@ class BasalGanglia(object):
                 if self.params['with_d2']:
                     self.connect_d2_population()
 
-            self.connect_noise()
+            if self.params['connect_noise_to_bg']:
+                self.connect_noise()
 
 
 
@@ -164,8 +167,13 @@ class BasalGanglia(object):
         # create efference copy (for RBL, activates BOTH D1 and D2 actions at the same time)
         for nactions in xrange(self.params['n_actions']):
             self.efference_copy[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
+            self.efference_copy_d1[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
+            self.efference_copy_d2[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
             nest.DivergentConnect(self.efference_copy[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
             nest.DivergentConnect(self.efference_copy[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
+
+            nest.DivergentConnect(self.efference_copy_d1[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
+            nest.DivergentConnect(self.efference_copy_d2[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
 
 
          
@@ -258,17 +266,17 @@ class BasalGanglia(object):
         for naction in xrange(self.params['n_actions']):
             self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1']) 
             self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1'])
-            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc']})
-            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh']})
-            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc'], self.params['dt'])
-            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh'], self.params['dt'])
+            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc_bg']})
+            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh_bg']})
+            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc_bg'], self.params['dt'])
+            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh_bg'], self.params['dt'])
 
             self.noise_exc_actions[naction] = nest.Create('poisson_generator', self.params['num_actions_output']) 
             self.noise_inh_actions[naction] = nest.Create('poisson_generator', self.params['num_actions_output'])
-            nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc']})
-            nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh']})
-            nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc'], self.params['dt'])
-            nest.Connect(self.noise_inh_actions[naction], self.actions[naction], self.params['w_noise_inh'], self.params['dt'])
+            nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc_bg']})
+            nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh_bg']})
+            nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc_bg'], self.params['dt'])
+            nest.Connect(self.noise_inh_actions[naction], self.actions[naction], self.params['w_noise_inh_bg'], self.params['dt'])
 
         if self.params['with_d2']:
             self.noise_exc_d2 = {}
@@ -276,10 +284,10 @@ class BasalGanglia(object):
             for naction in xrange(self.params['n_actions']):
                 self.noise_exc_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2']) 
                 self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2'])
-                nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc']})
-                nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh']})
-                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc'], self.params['dt'])
-                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh'], self.params['dt'])
+                nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc_bg']})
+                nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh_bg']})
+                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc_bg'], self.params['dt'])
+                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh_bg'], self.params['dt'])
 
 
 
@@ -344,8 +352,9 @@ class BasalGanglia(object):
 #            cnt_u, bins = np.histogram(speed, binning)
 #            action_index = cnt_u.nonzero()[0][0]
 
-        if xy == 'x':
-            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : supervisor_speed=%.3f --> action: %d output_speed= %.3f' % (self.pc_id, self.iteration, speed, action_index, binning[action_index])
+#        if xy == 'x':
+#            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : supervisor_speed=%.3f --> action: %d output_speed= %.3f' % (self.pc_id, self.iteration, speed, action_index, binning[action_index])
+
         return action_index
 
 
@@ -492,6 +501,18 @@ class BasalGanglia(object):
             else:
                 nest.SetStatus(self.efference_copy[i_action], {'rate' : 0.})
 
+
+    def activate_efference_copy_d1_or_d2(self, action_idx, d1_or_d2):
+        if d1_or_d2 == 'd1':
+            for i_action in xrange(self.params['n_actions']):
+                nest.SetStatus(self.efference_copy_d1[i_action], {'rate' : self.params['inactive_efference_rate']})
+            nest.SetStatus(self.efference_copy_d1[action_idx], {'rate' : self.params['active_efference_rate']})
+        else:
+            for i_action in xrange(self.params['n_actions']):
+                nest.SetStatus(self.efference_copy_d2[i_action], {'rate' : self.params['inactive_efference_rate']})
+            nest.SetStatus(self.efference_copy_d2[action_idx], {'rate' : self.params['active_efference_rate']})
+
+
     def stop_efference_copy(self):
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.efference_copy[nactions], {'rate' : self.params['inactive_efference_rate']})
@@ -507,9 +528,9 @@ class BasalGanglia(object):
         """
         Returns the selected action. Calls a selection function e.g. softmax, hardmax, ...
         random_action   -- is only relevant if no spikes are found in this iteration
-                    False: do nothing
-                    True:  choose a random action
-                    int:   choose to do this action instead
+                False: do nothing
+                True:  choose a random action
+                int:   choose to do this action instead
         """
         
         print 'BG.get_action ...'
@@ -546,8 +567,6 @@ class BasalGanglia(object):
                 assert (type(random_action) == type(0)), 'random_action is either True, False or an integer representing the action to be taken as default when action layer is silent'
                 output_speed_x = self.action_bins_x[random_action]
                 return (output_speed_x, 0, random_action)
-
-
 
 
         # switch between WTA behavior and Vector-Averaging
@@ -618,9 +637,18 @@ class BasalGanglia(object):
 
         for i_action in xrange(self.params['n_actions']):
 #            dummy = nest.GetConnections(source_gids, D1_or_D2[i_action])
-#            print 'DEBUG dummy pc_id %d action %d' % (self.pc_id, i_action), dummy
+#            print 'DEBUG dummy pc_id %d iteration %d action %d' % (self.pc_id, self.iteration, i_action), dummy, '\nDEBUG D1_or_D2 kappa=%.3f:' % kappa, D1_or_D2[i_action]
 #            nest.SetStatus(dummy, {'K': float(kappa), 'gain': float(syn_gain)})
-            nest.SetStatus(nest.GetConnections(source_gids, D1_or_D2[i_action]), {'K': float(kappa), 'gain': float(syn_gain)})
+
+            nest.SetStatus(nest.GetConnections(source_gids, D1_or_D2[i_action]), {'K': float(kappa), 'gain': float(syn_gain), 't_k': nest.GetKernelStatus()['time']})
+
+            # verify that kappa is now non zero
+#            conns = nest.GetConnections(source_gids, D1_or_D2[i_action]) 
+#            for c in conns:
+#                cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+#                K_check = cp[0]['K']
+#                print 'DEBUG check K:', K_check, c[0], c[1]
+
 
         for i_action in xrange(self.params['n_actions']):
             nest.SetStatus(D1_or_D2[i_action], {'K': float(kappa), 'gain': float(bias_gain)})
@@ -651,6 +679,7 @@ class BasalGanglia(object):
         print 'Writing cell_gids to:', output_fn
         f = file(output_fn, 'w')
         json.dump(d, f, indent=2)
+        return d
 
 
     def advance_iteration(self):

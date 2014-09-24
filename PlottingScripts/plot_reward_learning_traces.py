@@ -17,9 +17,12 @@ import simulation_parameters
 #pylab.rcParams.update(FigureCreator.plot_params)
 
 
-def create_K_vector(params, it_range, dt=0.1):
+def create_K_vector(params, it_range, dt=0.1, tgt_cell_type='d1'):
 
     rewards = np.loadtxt(params['rewards_given_fn']) 
+    if it_range[1] > params['n_iterations']:
+        print 'Artificially extending the reward signal for computing longer traces'
+        rewards = np.r_[rewards, np.ones(it_range[1] - params['n_iterations'])]
     print 'rewards', rewards
     t_max = it_range[1] * params['t_iteration']
     n = np.int(t_max/ dt) + 1 # +1 because the length needs to be the same computed in the BCPNN module after convert_spiketrain_to_trace
@@ -27,7 +30,15 @@ def create_K_vector(params, it_range, dt=0.1):
     for it_ in xrange(it_range[0], it_range[1]):
         idx_1 = np.int(it_ * params['t_iteration'] / dt)
         idx_2 = np.int((it_ + 1) * params['t_iteration'] / dt)
-        K_vec[idx_1:idx_2] = np.abs(rewards[it_]) * np.ones(idx_2 - idx_1)
+        if (rewards[it_] < 0) and tgt_cell_type == 'd1':
+            R = 0
+        elif (rewards[it_] < 0) and tgt_cell_type == 'd2':
+            R = -rewards[it_]
+        elif (rewards[it_] > 0) and tgt_cell_type == 'd2':
+            R = 0
+        else:
+            R = rewards[it_]
+        K_vec[idx_1:idx_2] = R * np.ones(idx_2 - idx_1)
     return K_vec            
 
 

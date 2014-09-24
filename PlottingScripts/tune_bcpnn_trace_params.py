@@ -75,15 +75,21 @@ if __name__ == '__main__':
 
     # PARAMETERS
     it_range_pre_selection = (0, 1) # sets time frame for pre synaptic cell selection
-    it_range_bcpnn_computations = (0, params['n_iterations'])
+    it_range_bcpnn_computations = (0, 1 * params['n_iterations'])
     t_range_bcpnn_computations = np.array(it_range_bcpnn_computations) * params['t_iteration']
     dt = params['dt']
 
-    bcpnn_params['tau_p'] = float(sys.argv[5])
-    bcpnn_params['tau_e'] = float(sys.argv[4])
-    bcpnn_params['tau_j'] = float(sys.argv[3])
-    bcpnn_params['tau_i'] = float(sys.argv[2])
-    bcpnn_params['gain'] = 5.
+    bcpnn_params['fmax'] = 100.
+    try:
+        bcpnn_params['tau_p'] = float(sys.argv[5])
+        bcpnn_params['tau_e'] = float(sys.argv[4])
+        bcpnn_params['tau_j'] = float(sys.argv[3])
+        bcpnn_params['tau_i'] = float(sys.argv[2])
+        bcpnn_params['gain'] = 1.
+        show = False
+    except:
+        print '\n\tTaking BCPNN parameters from simulation_parameters!\n'
+        show = True
 
 #    bcpnn_params['tau_p'] = 2400 * 10
 #    bcpnn_params['tau_i'] = 50 # 50 
@@ -125,7 +131,8 @@ if __name__ == '__main__':
         s_pre = BCPNN.convert_spiketrain_to_trace(time_filtered_spikes_pre , t_range_bcpnn_computations[1])
         s_post = BCPNN.convert_spiketrain_to_trace(time_filtered_spikes_post , t_range_bcpnn_computations[1])
 
-        wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, params['params_synapse_%s_MT_BG' % cell_type_post], K_vec=K_vec)
+        wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, params['params_synapse_%s_MT_BG' % cell_type_post], \
+                K_vec=K_vec, w_init=1.)
         bcpnn_traces.append([wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, s_pre, s_post])
 
     # plotting 
@@ -134,16 +141,17 @@ if __name__ == '__main__':
     output_fn = None 
     for i_, traces in enumerate(bcpnn_traces):
 #        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
-        fig = TP.plot_trace_with_spikes(bcpnn_traces[i_], bcpnn_params, dt, output_fn=output_fn, fig=fig)
+        fig = TP.plot_trace_with_spikes(bcpnn_traces[i_], bcpnn_params, dt, output_fn=output_fn, fig=fig, K_vec=K_vec)
 
     ax_rp = fig.axes[1]
 #    plot_
 
-    output_fn = params['figures_folder'] + 'bcpnn_traces_RBL_action%d_tau_zi%04d_zj%04d_e%04d_p%04d_gain%.1f.png' % (action_idx, bcpnn_params['tau_i'], bcpnn_params['tau_j'], bcpnn_params['tau_e'], bcpnn_params['tau_p'], bcpnn_params['gain'])
+    output_fn = params['figures_folder'] + 'bcpnn_traces_RBL_%s_action%d_tau_zi%04d_zj%04d_e%04d_p%04d_gain%.1f.png' % (cell_type_post, action_idx, bcpnn_params['tau_i'], bcpnn_params['tau_j'], bcpnn_params['tau_e'], bcpnn_params['tau_p'], bcpnn_params['gain'])
     print 'Saving figure to:', output_fn
     pylab.savefig(output_fn, dpi=200)
 
-#    pylab.show()
+    if show:
+        pylab.show()
 
 
 #    bcpnn_params['K'] = 1.

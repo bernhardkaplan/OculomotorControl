@@ -39,7 +39,7 @@ class MotionPrediction(object):
         self.connect_noise()
         self.record_voltages(self.params['gids_to_record_mpn'])
 
-        print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
+#        print 'DEBUG pid %d has local_idx_exc:' % (self.pc_id), self.local_idx_exc
 #        print 'DEBUG pid %d has local_idx_inh:' % (self.pc_id), self.local_idx_inh
 
         self.t_current = 0
@@ -57,16 +57,15 @@ class MotionPrediction(object):
                 {'weight': self.params['w_input_exc_mpn'], 'receptor_type': 1})
         if (not 'bcpnn_synapse' in nest.Models('synapses')):
             if self.params['Cluster_Milner']:
-                print 'DEBUG installing pt_module MILNER'
                 nest.sr('(/cfs/milner/scratch/b/bkaplan/BCPNN-Module/share/nest/sli) addpath')
                 nest.Install('/cfs/milner/scratch/b/bkaplan/BCPNN-Module/lib/nest/pt_module')
             else:
-                print 'DEBUG installing pt_module LOCAL'
                 try:
                     nest.sr('(/home/bernhard/workspace/BCPNN-Module/module-100725/sli) addpath')
                     nest.Install('pt_module')
                 except:
                     nest.Install('pt_module')
+
                 #nest.sr('(/home/bernhard/workspace/BCPNN-Module/share/nest/sli) addpath')
 #                nest.Install('/home/bernhard/workspace/BCPNN-Module/build-module-100725/pt_module')
                 #nest.Install('/home/bernhard/Downloads/install-nest-2.2.2/lib/nest/pt_module')
@@ -203,7 +202,7 @@ class MotionPrediction(object):
         """
         self.perceived_states[self.iteration-1] = perceived_state
         punish_overshoot = .7
-        learning_rate = 10.
+        learning_rate = 20.
         if self.iteration < 2:
             return 0
         else:
