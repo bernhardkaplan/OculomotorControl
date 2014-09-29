@@ -27,15 +27,6 @@ except:
     print "MPI not used"
 
 
-def get_optimal_action_for_stimulus(params, stim_params, BG):
-
-    x_stim_end = stim_params[0] + stim_params[2] * params['t_iteration']
-    delta_x_end = (x_stim_end - .5)
-    delta_t = (params['t_iteration'] / params['t_cross_visual_field'])
-    required_v_eye = delta_x_end / delta_t + stim_params[2]
-    action_idx = BG.map_speed_to_action(required_v_eye, xy='x')
-    return (required_v_eye, 0, action_idx)
-
 
 def remap_actions(params, delta_idx):
     remapped_actions = np.zeros(params['n_actions'], dtype=np.int)
@@ -85,10 +76,10 @@ if __name__ == '__main__':
     conn_list_d1 = ''
     conn_list_d2 = ''
 
-    std_weight = 1.0
+    std_weight = 0.0
     delay = 1.0
     for i_ in xrange(n_cells):
-        optimal_action = get_optimal_action_for_stimulus(params, VI.tuning_prop_exc[i_, :], BG)
+        optimal_action = BG.get_optimal_action_for_stimulus(VI.tuning_prop_exc[i_, :])
 #        tgt_action_idx = initial_action_mapping[optimal_action[2]]
         tgt_action_idx = np.random.randint(0, params['n_actions'])
 #        print 'connection cell %d to tgt_idx:' % (i_), tgt_action_idx, optimal_action

@@ -34,6 +34,8 @@ class CreateConnections(object):
             if self.params['with_d2']:
                 nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
                 nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
+        if self.comm != None:
+            self.comm.Barrier()
 
 
 
@@ -116,9 +118,10 @@ class CreateConnections(object):
         Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
         based on the weights found in conn_folder
         """
-        self.merge_connection_files(training_params, test_params)
         if self.comm != None:
             self.comm.Barrier()
+
+        self.merge_connection_files(training_params, test_params)
         print 'Loading MPN - BG %s connections from: %s' % (target, training_params['mpn_bg%s_merged_conn_fn' % target])
         tgt_path = test_params['connections_folder'] + 'merged_mpn_bg_%s_connections_preTraining.txt' % target
         cmd = 'cp %s %s' % (training_params['mpn_bg%s_merged_conn_fn' % target], tgt_path)

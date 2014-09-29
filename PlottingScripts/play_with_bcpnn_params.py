@@ -106,14 +106,14 @@ def run_Xstim_1action(bcpnn_params, n_stim):
 def plot_bcpnn_traces(bcpnn_params, pre_spike_train, post_spike_train):
 
 #    t_sim = max(np.max(pre_spike_train), np.max(post_spike_train))
-    t_sim = 306.2
+    t_sim = 307.5
     s_pre = BCPNN.convert_spiketrain_to_trace(pre_spike_train, t_sim)
     s_post = BCPNN.convert_spiketrain_to_trace(post_spike_train, t_sim)
     K_vec = .0 * np.ones(s_pre.size)
 
     K_vec[1500:2000] = .7
     K_vec[2000:2500] = .3
-    K_vec[2500:] = .0
+    K_vec[2500:] = .1
     print 'K_vec:', K_vec
 
     wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, bcpnn_params, K_vec=K_vec, w_init=.0)
@@ -130,10 +130,12 @@ def plot_bcpnn_traces(bcpnn_params, pre_spike_train, post_spike_train):
 
     print 'Debug bcpnn_params:', bcpnn_params
     print 'Final weight:', wij[-1]
-#    fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
-    TP.plot_trace(bcpnn_traces_pre, bcpnn_params, dt, output_fn=output_fn, 
-            color_pre='b', color_post='k', color_joint='b', style_joint='--')
 
+#    TP.plot_trace(bcpnn_traces_pre, bcpnn_params, dt, output_fn=output_fn, 
+#            color_pre='b', color_post='k', color_joint='b', style_joint='--')
+
+    TP.plot_trace_with_spikes(bcpnn_traces_pre, bcpnn_params, dt, output_fn=output_fn, 
+            color_pre='b', color_post='k', color_joint='b', style_joint='--', K_vec=K_vec)
 
 
 if __name__ == '__main__':
@@ -152,6 +154,7 @@ if __name__ == '__main__':
     bcpnn_params['tau_e'] = 300.
     bcpnn_params['tau_p'] = 50000.
     bcpnn_params['gain'] = 1.
+    bcpnn_params['fmax'] = 200.
     try:
         bcpnn_params['tau_p'] = float(sys.argv[5])
         bcpnn_params['tau_e'] = float(sys.argv[4])

@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     
     # load spikes
-    cell_type_post = 'd2'
+    cell_type_post = 'd1'
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
     fn_spikes_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
     fn_spikes_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # load BG cell gids
     f = file(params['bg_gids_fn'], 'r')
     bg_gids = json.load(f) 
-    action_idx = 1
+    action_idx = 9
     post_gids = bg_gids[cell_type_post][action_idx]
     print 'Plotting post gids:', post_gids
     n_post = len(post_gids)
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     t_range_bcpnn_computations = np.array(it_range_bcpnn_computations) * params['t_iteration']
     dt = params['dt']
 
-    bcpnn_params['fmax'] = 100.
+    bcpnn_params['fmax'] = 200.
     try:
         bcpnn_params['tau_p'] = float(sys.argv[5])
         bcpnn_params['tau_e'] = float(sys.argv[4])
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     except:
         print '\n\tTaking BCPNN parameters from simulation_parameters!\n'
         show = True
-
+    print 'bcpnn_params:', bcpnn_params
 #    bcpnn_params['tau_p'] = 2400 * 10
 #    bcpnn_params['tau_i'] = 50 # 50 
 #    bcpnn_params['tau_j'] = 10 # 3
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     pre_gids = select_most_active_cells(params, all_spikes_pre, it_range_pre_selection)
     pre_gids = list(pre_gids)
     pre_gids.reverse()
-    print 'Plotting pre gids:', pre_gids
+    print 'Plotting %d pre gids:' % (len(pre_gids)), pre_gids
 
     
     # filter all_spikes for gids
@@ -117,8 +117,8 @@ if __name__ == '__main__':
 
 
     # create a vector controlling the weight update 
-    K_vec = create_K_vector(params, it_range_bcpnn_computations, dt=dt)
-    np.savetxt('delme_kvec', K_vec)
+    K_vec = create_K_vector(params, it_range_bcpnn_computations, dt=dt, tgt_cell_type=cell_type_post)
+#    np.savetxt('delme_kvec', K_vec)
 
     # compute 
     fig = None
@@ -139,9 +139,10 @@ if __name__ == '__main__':
     TP = TracePlotter(params, cell_type_post)
     fig = None
     output_fn = None 
+    extra_txt = 'Pre it %d-%d Target %s action %d' % (it_range_pre_selection[0], it_range_pre_selection[1], cell_type_post, action_idx)
     for i_, traces in enumerate(bcpnn_traces):
 #        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
-        fig = TP.plot_trace_with_spikes(bcpnn_traces[i_], bcpnn_params, dt, output_fn=output_fn, fig=fig, K_vec=K_vec)
+        fig = TP.plot_trace_with_spikes(bcpnn_traces[i_], bcpnn_params, dt, output_fn=output_fn, fig=fig, K_vec=K_vec, extra_txt=extra_txt)
 
     ax_rp = fig.axes[1]
 #    plot_

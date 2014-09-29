@@ -342,7 +342,6 @@ class BasalGanglia(object):
             binning = self.action_bins_x
         else:
             binning = self.action_bins_y
-        # select an action based on the supervisor state information
         if speed > np.max(binning):
             action_index = self.params['n_actions'] - 1
         elif (speed < np.min(binning)):
@@ -413,21 +412,46 @@ class BasalGanglia(object):
 
 
 
-
-    def get_reward_from_action(self, chosen_action, stim_params):
+    def get_optimal_action_for_stimulus(self, stim_params):
         action_bins = self.action_bins_x
         all_outcomes = np.zeros(len(action_bins))
         for i_, action in enumerate(action_bins):    
             all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
-        best_action = np.argmin(np.abs(all_outcomes - .5))
+        best_action_idx = np.argmin(np.abs(all_outcomes - .5))
+        best_speed = self.action_bins_x[best_action_idx ]
+        return (best_speed, 0, best_action_idx)
+
+
+    def get_non_optimal_action_for_stimulus(self, stim_params):
+        action_bins = self.action_bins_x
+        all_outcomes = np.zeros(len(action_bins))
+        for i_, action in enumerate(action_bins):    
+            all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
+        best_action_idx = np.argmin(np.abs(all_outcomes - .5))
+        all_action_idx = range(self.params['n_actions'])
+        all_action_idx.remove(best_action_idx)
+        non_optimal_action_idx = self.RNG.choice(all_action_idx)
+        speed = self.action_bins_x[non_optimal_action_idx]
+        return (speed, 0, non_optimal_action_idx)
+
+
+    def get_reward_from_action(self, chosen_action_idx, stim_params):
+        assert (chosen_action_idx == np.int(chosen_action_idx)), 'ERROR: get_reward_from_action requires an integer, i.e. the index of the action and NOT the speed it refers to!'
+        chosen_action_idx = np.int(chosen_action_idx)
+        action_bins = self.action_bins_x
+        all_outcomes = np.zeros(len(action_bins))
+        for i_, action in enumerate(action_bins):    
+            all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
+        best_action_idx = np.argmin(np.abs(all_outcomes - .5))
         # the reward is determined by the distance between the best_action and the chosen_action
-        best_speed = self.action_bins_x[best_action]
+        best_speed = self.action_bins_x[best_action_idx ]
+        chosen_speed = self.action_bins_x[chosen_action_idx]
 
-        reward = (self.params['K_max'] - self.params['shift_reward_distribution']) * np.exp( - (chosen_action - best_action)**2 / (2. * self.params['sigma_reward_distribution'])) + self.params['shift_reward_distribution']
+        reward = (self.params['K_max'] - self.params['shift_reward_distribution']) * np.exp( - float(chosen_action_idx - best_action_idx)**2 / (2. * self.params['sigma_reward_distribution'])) + self.params['shift_reward_distribution']
 
-        print 'debug get_reward_from_action: best_action:', best_action, 'best_speed', best_speed, 'chosen action', chosen_action, '\treward', reward
+#        print 'debug get_reward_from_action: best_action_idx :', best_action_idx , 'best_speed', best_speed, 'chosen action idx', chosen_action_idx, 'chosen speed', chosen_speed, '\treward', reward
         return reward
-#        if chosen_action != best_action:
+#        if chosen_action != best_action_dx:
 #            return -1.
 #        else:
 #            return 1.
@@ -462,16 +486,17 @@ class BasalGanglia(object):
         Activates poisson generator of the required, teached, action and inactivates those of the nondesirable actions.
         The supervisor_state --- (u, v) is mapped to discretized states
         """
+        print 'DEBUG supervised_training, supervisor_state:', supervisor_state
         (u, v) = supervisor_state 
         action_index_x = self.map_speed_to_action(u, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
         action_index_y = self.map_speed_to_action(v, xy='y')
-        if self.params['suboptimal_training'] != 0.:
-            action_index_x = self.map_suboptimal_action[action_index_x]
-            action_index_y = self.map_suboptimal_action[action_index_y]
+#        if self.params['suboptimal_training'] != 0.:
+#            action_index_x = self.map_suboptimal_action[action_index_x]
+#            action_index_y = self.map_suboptimal_action[action_index_y]
 #            action_index_x += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
 #            action_index_y += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
 
-        print 'Debug BG based on supervisor action choose action_index_x: %d ~ v_eye = %.2f ' % (action_index_x, self.action_bins_x[action_index_x])
+        print 'Debug BG iteration %d based on supervisor action choose action_index_x: %d ~ v_eye = %.2f, supervisor_state:' % (self.iteration, action_index_x, self.action_bins_x[action_index_x]), supervisor_state
         for nactions in xrange(self.params['n_actions']):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
         nest.SetStatus(self.supervisor[action_index_x], {'rate' : self.params['active_supervisor_rate']})

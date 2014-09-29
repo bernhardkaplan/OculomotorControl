@@ -102,6 +102,24 @@ class VisualInput(object):
         return mp_training 
 
 
+    def create_training_sequence_RBL(self):
+
+#        training_stimuli_sample = self.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
+#        training_stimuli_grid = self.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
+#        training_stimuli_center = self.create_training_sequence_around_center()   # sample more from the center in order to reduce risk of overtraining action 0 and v_x_max
+#        training_stimuli = np.zeros((self.params['n_stim_training'], 4))
+#        n_grid = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_from_grid']))
+#        n_center = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_center']))
+#        random.seed(self.params['visual_stim_seed'])
+#        np.random.seed(self.params['visual_stim_seed'])
+#        training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(self.params['n_stim_training']), n_grid), :]
+#        training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
+#        training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(self.params['n_stim_training']), self.params['n_stim_training'] - n_grid - n_center), :]
+#        np.savetxt(self.params['training_sequence_fn'], training_stimuli)
+
+        return training_stimuli
+
+
     def create_training_sequence_from_a_grid(self):
         """
         Training samples are generated in a grid-like manner, i.e. random points from a grid on the tuning property space
@@ -433,9 +451,8 @@ class VisualInput(object):
         n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
 
-#        print 'DEBUG VI update_stimulus_trajectory_static beginning', self.current_motion_params
-        x_stim = self.current_motion_params[0] + (v_eye[0] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[2]) / self.params['t_cross_visual_field']
-        y_stim = self.current_motion_params[1] + (v_eye[1] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[3]) / self.params['t_cross_visual_field']
+        x_stim = self.current_motion_params[0] + (time_axis * self.current_motion_params[2] - v_eye[0] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
+        y_stim = self.current_motion_params[1] + (time_axis * self.current_motion_params[3] - v_eye[1] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
 
         trajectory = (x_stim, y_stim)
         self.current_motion_params[0] = deepcopy(x_stim[-1])

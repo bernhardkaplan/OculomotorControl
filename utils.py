@@ -32,7 +32,7 @@ def get_next_stim(params, stim_params, v_eye):
     """
     Returns the stimulus parameters for a given action (v_eye) in x-direction
     """
-    x_stim = stim_params[0] - (stim_params[2] + v_eye) * params['t_iteration'] / params['t_cross_visual_field']
+    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
@@ -512,19 +512,22 @@ def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
 
 
 
-def extract_weight_from_connection_list(conn_list, pre_gid, post_gid):
+def extract_weight_from_connection_list(conn_list, pre_gid, post_gid, idx=None):
     """
     Extract the weight that connects the pre_gid to the post_gid
     """
 #    print 'debug connlist', conn_list
 #    print 'debug', pre_gid, post_gid
 #    print 'debug', (conn_list[:, 0] == pre_gid).nonzero()
+    if idx == None:
+        idx = 2
     pre_idx = set((conn_list[:, 0] == pre_gid).nonzero()[0])
     post_idx = set((conn_list[:, 1] == post_gid).nonzero()[0])
     valid_idx = list(pre_idx.intersection(post_idx))
     if len(valid_idx) == 0:
         return 0.
-    return float(conn_list[valid_idx, 2])
+#    print 'debug', valid_idx, idx, conn_list[valid_idx, idx], pre_gid, post_gid
+    return float(conn_list[valid_idx, idx])
 
 
 

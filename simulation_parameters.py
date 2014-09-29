@@ -54,10 +54,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
-        self.params['n_training_cycles'] = 1            # how often each stimulus is presented during training
-#        if self.params['reward_based_learning']:
-#            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
-#                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
+
+        self.params['n_training_cycles'] = 8 # how often each stimulus is presented during training
+        # should be two cycles because there is a test cycle at the end of the training in order
+        # to trigger an update of the weights that have been trained in the last training cycle
         """
          for normal training n_training_x/v is the number of training samples to cover the x-direction of the tuning space
          for reward based learning (RBL) two modes are possible:
@@ -67,7 +67,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 4 # for RBL: 1 test,  n_trainin_x - 2 training, 1 test  stimulus
+        self.params['n_training_x'] = 10 # for RBL: 1 test,  n_trainin_x - 2 training, 1 test  stimulus
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
@@ -134,11 +134,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['t_iter_training'] = 25
-        self.params['suboptimal_training'] = 0 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
+        self.params['suboptimal_training'] = 3
+        # if non-zero and reward_based_learning == False then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
+        # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             self.params['sim_id'] = 'RndWinit_%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
             if (self.params['reward_based_learning']):
-                self.params['sim_id'] = 'RBL_titer%d_' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_%d_titer%d_' % (self.params['suboptimal_training'], self.params['t_iteration'])
         else:
             self.params['sim_id'] = 'RndWInit_%d_' % (self.params['t_iteration'])
 
@@ -317,7 +319,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
         self.params['supervisor_amp_param'] = 1.
-        self.params['suboptimal_training'] = 2 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         self.params['sigma_reward_distribution'] = .5
         self.params['K_max'] = 1.
         self.params['shift_reward_distribution'] = -1.
@@ -386,9 +387,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.20
 
         #Connections Actions and States to RP
-        self.tau_i = 100.
+        self.tau_i = 10.
         self.tau_j = 5.
-        self.tau_e = 5.
+        self.tau_e = 50.
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
             self.tau_p = 50000.
@@ -416,8 +417,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['gain_MT_d1'] = 0.05
         self.params['gain_MT_d2'] = 0.05
         self.params['bias_gain'] = 0.
-        self.params['d1_gain_after_training'] = 5.
-        self.params['d2_gain_after_training'] = 5.
+        self.params['d1_gain_after_training'] = 10.
+        self.params['d2_gain_after_training'] = 10.
 
 
         # #####################################

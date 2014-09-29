@@ -125,6 +125,9 @@ class WeightPlotter(object):
         f = file(params['bg_gids_fn'], 'r')
         self.bg_gids = json.load(f) 
         self.w_ij_data = {} # w_ij_data[pre_gid][post_gid] = list of weights from pre -> post
+        self.p_ij_data = {} # w_ij_data[pre_gid][post_gid] = list of weights from pre -> post
+        self.p_i_data = {} # w_ij_data[pre_gid][post_gid] = list of weights from pre -> post
+        self.p_j_data = {} # w_ij_data[pre_gid][post_gid] = list of weights from pre -> post
 
     def load_weights(self, it, tgt_celltype='d1'):
         """
@@ -171,19 +174,41 @@ class WeightPlotter(object):
     def plot_weights(self, tgt_cell_type, it_range_plotting, it_range_for_pre_cell_selection, action_idx):
         pre_gids = self.select_presynaptic_cells(it_range=it_range_for_pre_cell_selection)
         gids_for_action = self.bg_gids[tgt_cell_type][action_idx]
+
         print 'Plotting post gids:', gids_for_action
+        print 'Plotting pre gids:', list(pre_gids)
         self.load_wij_data(pre_gids, gids_for_action, tgt_cell_type, it_range_plotting)
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
+
+        fig = pylab.figure()
+        ax_pi = fig.add_subplot(111)
+        fig = pylab.figure()
+        ax_pj = fig.add_subplot(111)
+        fig = pylab.figure()
+        ax_pij = fig.add_subplot(111)
         for pre_gid in pre_gids:
             for post_gid in gids_for_action:
                 y_ = self.w_ij_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
                 x_ = range(len(y_))
                 ax.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
+
+                y_ = self.p_ij_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
+                ax_pij.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
+
+                y_ = self.p_j_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
+                ax_pj.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
+
+                y_ = self.p_i_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
+                ax_pi.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
+
 #        pylab.legend()
         self.save_wij_data()
         ax.set_title('weight to %s - action %d' % (tgt_cell_type, action_idx))
+        ax_pij.set_title('p_ij to %s - action %d' % (tgt_cell_type, action_idx))
+        ax_pi.set_title('p_i to %s - action %d' % (tgt_cell_type, action_idx))
+        ax_pj.set_title('p_j to %s - action %d' % (tgt_cell_type, action_idx))
 
 
     def load_wij_data(self, pre_gids, post_gids, tgt_cell_type, it_range):
@@ -198,16 +223,51 @@ class WeightPlotter(object):
                 for it_ in xrange(params['n_iterations']):
                     if self.conn_data[tgt_cell_type][it_] != None:
                         w_ij_t = utils.extract_weight_from_connection_list(self.conn_data[tgt_cell_type][it_], pre_gid, post_gid)
+                        p_i_t = utils.extract_weight_from_connection_list(self.conn_data[tgt_cell_type][it_], pre_gid, post_gid, idx=3)
+                        p_j_t = utils.extract_weight_from_connection_list(self.conn_data[tgt_cell_type][it_], pre_gid, post_gid, idx=4)
+                        p_ij_t = utils.extract_weight_from_connection_list(self.conn_data[tgt_cell_type][it_], pre_gid, post_gid, idx=5)
                         if not self.w_ij_data.has_key(pre_gid):
                             self.w_ij_data[pre_gid] = {}
                             self.w_ij_data[pre_gid][post_gid] = []
                             self.w_ij_data[pre_gid][post_gid].append(w_ij_t)
-#                        else:
                         elif not self.w_ij_data[pre_gid].has_key(post_gid):
                             self.w_ij_data[pre_gid][post_gid] = []
                             self.w_ij_data[pre_gid][post_gid].append(w_ij_t)
                         else:
                             self.w_ij_data[pre_gid][post_gid].append(w_ij_t)
+
+                        if not self.p_ij_data.has_key(pre_gid):
+                            self.p_ij_data[pre_gid] = {}
+                            self.p_ij_data[pre_gid][post_gid] = []
+                            self.p_ij_data[pre_gid][post_gid].append(p_ij_t)
+                        elif not self.p_ij_data[pre_gid].has_key(post_gid):
+                            self.p_ij_data[pre_gid][post_gid] = []
+                            self.p_ij_data[pre_gid][post_gid].append(p_ij_t)
+                        else:
+                            self.p_ij_data[pre_gid][post_gid].append(p_ij_t)
+
+                        if not self.p_i_data.has_key(pre_gid):
+                            self.p_i_data[pre_gid] = {}
+                            self.p_i_data[pre_gid][post_gid] = []
+                            self.p_i_data[pre_gid][post_gid].append(p_i_t)
+                        elif not self.p_i_data[pre_gid].has_key(post_gid):
+                            self.p_i_data[pre_gid][post_gid] = []
+                            self.p_i_data[pre_gid][post_gid].append(p_i_t)
+                        else:
+                            self.p_i_data[pre_gid][post_gid].append(p_i_t)
+
+                        if not self.p_j_data.has_key(pre_gid):
+                            self.p_j_data[pre_gid] = {}
+                            self.p_j_data[pre_gid][post_gid] = []
+                            self.p_j_data[pre_gid][post_gid].append(p_j_t)
+                        elif not self.p_j_data[pre_gid].has_key(post_gid):
+                            self.p_j_data[pre_gid][post_gid] = []
+                            self.p_j_data[pre_gid][post_gid].append(p_j_t)
+                        else:
+                            self.p_j_data[pre_gid][post_gid].append(p_j_t)
+
+
+
 #        print 'debug WIJ', self.w_ij_data
 
 
@@ -646,7 +706,7 @@ if __name__ == '__main__':
 
     it_range_plotting = (0, params['n_iterations'])
     it_range_pre_cell_selection = (0, 1) # determines iteration range to determine the presynaptic cells
-    action_idx = 1
+    action_idx = 0
 
     WP = WeightPlotter(params)
     WP.plot_weights('d1', it_range_plotting, it_range_pre_cell_selection, action_idx)

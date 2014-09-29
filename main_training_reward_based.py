@@ -79,9 +79,7 @@ class RewardBasedLearning(object):
             2) A new stimulus with modified stimulus parameters is perceived and simulated
         Arguments:
             stim_params     --  (x, y, v_x, v_y)
-            action          --  (v_x, v_y)
-            K               --  Kappa
-            gain            --  float
+            action          --  (v_x, v_y) = the action to be done represented in speed "units"
             v_eye           --  the initial speed of the eye (influences the perceived stimulus speed in the first iteration)
         """
 
@@ -99,6 +97,7 @@ class RewardBasedLearning(object):
         # because the BG action-decision is based on the supervisor activity and the 
         # inherent activity forwarded from D1 and D2 driven by the stimulus
         # as long as BG.supervised_training is called, other actions != the chosen action will have zero activity
+        print 'DEBUG train_doing_action_with_supervisor: action=', action
         (action_index_x, action_index_y) = self.BG.supervised_training(action)
         if params['debug_mpn']:
             print 'Saving spike trains...'
@@ -121,7 +120,24 @@ class RewardBasedLearning(object):
         print 'DEBUG R = ', R
 
         #####
-        # 2 #   L E A R N I N G    P H A S E 
+        # 2 #   E M P T Y    I N P U T 
+        #####
+        self.BG.stop_efference_copy()
+        self.BG.stop_supervisor()
+        stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
+        self.MT.update_input(stim) 
+        nest.Simulate(self.params['t_iteration'])
+        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+        self.network_states[self.iteration_cnt, :] = state_
+        next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
+        self.actions_taken[self.iteration_cnt, :] = next_action
+        self.MT.advance_iteration()
+        self.rewards[self.iteration_cnt + 1] = R # + 1 because the reward will affect the next iteration
+        self.iteration_cnt += 1
+
+
+        #####
+        # 3 #   L E A R N I N G    P H A S E 
         #####
         # Now, switch on kappa, set gain to zero
         if R >= 0:
@@ -130,7 +146,8 @@ class RewardBasedLearning(object):
         else:
             self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., 0., 0.)
             self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, -R, 0., 0.)
-        self.BG.activate_efference_copy(self.iteration_cnt - 1, self.iteration_cnt)
+        self.BG.activate_efference_copy(self.iteration_cnt - 2, self.iteration_cnt - 1)
+        self.BG.stop_supervisor()
         for i_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations'] - 1): 
             stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
             self.MT.update_input(stim) 
@@ -148,14 +165,15 @@ class RewardBasedLearning(object):
             self.rewards[self.iteration_cnt] = R
             self.MT.advance_iteration()
             self.iteration_cnt += 1
-            self.CM.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
+        self.CM.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
+
 
         #####
-        # 3 #       E M P T Y    R U N 
+        # 4 #       E M P T Y    R U N 
         #####
         self.BG.stop_efference_copy()
         self.BG.stop_supervisor()
-        for it_ in xrange(self.params['n_silent_iterations']):
+        for it_ in xrange(self.params['n_silent_iterations'] - 1):
             stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
             self.MT.update_input(stim) 
             nest.Simulate(self.params['t_iteration'])
@@ -338,11 +356,18 @@ class RewardBasedLearning(object):
 #        self.training_stimuli = RBL.VI.create_training_sequence_iteratively()
         self.training_stimuli = np.zeros((params['n_stim'], 4))
 
-        for i_ in xrange(self.params['n_stim']):
-            self.training_stimuli[i_, :] = self.params['initial_state']
-#        self.training_stimuli = RBL.VI.create_training_sequence_RBL()
+#        for i_ in xrange(self.params['n_stim']):
+#            self.training_stimuli[i_, :] = self.params['initial_state']
+        self.training_stimuli = self.VI.create_training_sequence_RBL()
 
-        self.action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
+        supervisor_states, action_indices, motion_params_precomputed = self.VI.get_supervisor_actions(self.training_stimuli, self.BG)
+#        print 'supervisor_states:', supervisor_states
+#        print 'action_indices:', action_indices
+        np.savetxt(params['supervisor_states_fn'], supervisor_states)
+        np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
+        np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
+
+#        self.action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
 #        self.supervisor_states, self.action_indices, self.motion_params_precomputed = self.VI.get_supervisor_actions(self.training_stimuli, self.BG)
         self.rewards = np.zeros(params['n_iterations'] + 1) # + 1 because rewards are available after the iteration and will affect the next 
         print 'self.training_stimuli:', self.training_stimuli
@@ -358,7 +383,6 @@ class RewardBasedLearning(object):
             utils.remove_empty_files(self.params['spiketimes_folder'])
 #            np.savetxt(self.params['supervisor_states_fn'], self.supervisor_states)
 #            np.savetxt(self.params['motion_params_precomputed_fn'], self.motion_params_precomputed)
-            np.savetxt(self.params['action_indices_fn'], self.action_indices, fmt='%d')
             np.savetxt(self.params['actions_taken_fn'], self.actions_taken)
             np.savetxt(self.params['network_states_fn'], self.network_states)
             np.savetxt(self.params['rewards_given_fn'], self.rewards)
@@ -384,12 +408,13 @@ if __name__ == '__main__':
         params = utils.convert_to_NEST_conform_dict(testing_params_json)
         write_params = False
     
-    assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
-    training_folder = os.path.abspath(sys.argv[1]) 
-    print 'Training folder:', training_folder
-    training_params_json = utils.load_params(training_folder)
-    training_params = utils.convert_to_NEST_conform_dict(training_params_json)
-    params['training_folder'] = training_folder
+#    assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
+#    training_folder = os.path.abspath(sys.argv[1]) 
+#    print 'Training folder:', training_folder
+#    training_params_json = utils.load_params(training_folder)
+#    training_params = utils.convert_to_NEST_conform_dict(training_params_json)
+#    params['training_folder'] = training_folder
+
     if pc_id == 0 and write_params:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     if pc_id == 0:
@@ -413,35 +438,45 @@ if __name__ == '__main__':
     CC = CreateConnections.CreateConnections(params, comm)
     RBL.set_connection_module(CC)
     CC.set_pc_id(pc_id)
-    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d1', model='bcpnn_synapse')
-    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d2', model='bcpnn_synapse')
+#    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d1', model='bcpnn_synapse')
+#    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d2', model='bcpnn_synapse')
+    CC.connect_mt_to_bg(RBL.MT, RBL.BG)
 
 #    if params['connect_d1_after_training']:
 #        CC.connect_d1_after_training(BG, training_params, params)
 #    RBL.CC.connect_mt_to_bg(RBL.MT, RBL.BG)
 
     # simulate, do the given action and simulate again with the stimulus modified by the action
-    action_v = [+12., 0]
+
 
     CC.get_weights(RBL.MT, RBL.BG, iteration=RBL.iteration_cnt)
 
     stim_params = deepcopy(RBL.training_stimuli[0, :])
 
     # one full stimulus 'cycle'
-    R = RBL.run_test(stim_params)
+#    R = RBL.run_test(stim_params)
 
-    # one full stimulus 'cycle'
-    for iter_stim in xrange(params['n_stim'] - 2):
+    for i_cycle in xrange(params['n_training_cycles'] - 1):
+        # one full stimulus 'cycle'
+        for iter_stim in xrange(params['n_stim']):
+            # use the initial stimulus parameters 
+    #        stim_params = deepcopy(RBL.training_stimuli[iter_stim, :])
+            stim_params = deepcopy(RBL.training_stimuli[0, :])
+            (required_v_eye, v_y, action_idx) = RBL.BG.get_optimal_action_for_stimulus(stim_params)
+            action_v = [required_v_eye, 0.]
+            print 'DEBUG required_v_eye', required_v_eye
+            RBL.train_doing_action_with_supervisor(stim_params, action_v, v_eye=[0., 0.])
+
+    # TESTING
+    for iter_stim in xrange(params['n_stim']):
         # use the initial stimulus parameters 
         stim_params = deepcopy(RBL.training_stimuli[iter_stim, :])
+#        stim_params = deepcopy(RBL.training_stimuli[0, :])
+        (required_v_eye, v_y, action_idx) = RBL.BG.get_optimal_action_for_stimulus(stim_params)
+        action_v = [required_v_eye, 0.]
+        print 'DEBUG required_v_eye', required_v_eye
         RBL.train_doing_action_with_supervisor(stim_params, action_v, v_eye=[0., 0.])
 
-    stim_params = deepcopy(RBL.training_stimuli[0, :])
-
-    # one full stimulus 'cycle'
-    RBL.test_after_training(stim_params)
-
-    print 'DEBUG stim_params after everything', RBL.training_stimuli
     RBL.save_data_structures()
     CC.get_weights(RBL.MT, RBL.BG)
 

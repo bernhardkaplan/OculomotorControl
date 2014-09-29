@@ -15,7 +15,7 @@ except:
 
 
 t0 = time.time()
-argv_1 = 'Training_RBL_+10_titer25_nRF50_nV50_2_nStim1x3_taup600/'
+argv_1 = 'Training_RBL_titer25__2_nStim1x3_taup50000_gain0.05'
 cmd = 'python PlottingScripts/tune_bcpnn_trace_params.py'
 
 list_of_jobs = []
@@ -28,7 +28,7 @@ list_of_jobs = []
 for tau_zi in [5., 10., 20., 50., 100., 200.]:
     for tau_zj in [5., 10., 20., 50., 100., 200.]:
         for tau_e in [5., 50., 100., 500., 5000., 50000.]:
-            for tau_p in [500., 5000.]:
+            for tau_p in [10000., 50000.]:
                 run_cmd = cmd + ' %s %d %d %d %d' % (argv_1, tau_zi, tau_zj, tau_e, tau_p)
     #            print run_cmd
                 list_of_jobs.append(run_cmd)
