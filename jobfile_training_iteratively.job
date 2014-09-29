@@ -2,7 +2,7 @@
 # The -l above is required to get the full environment with modules
 
 # The name of the script is myjob
-#SBATCH -J subopt_3_long
+#SBATCH -J subopt_2_short
 
 # Only 1 hour wall-clock time will be given to this job
 #SBATCH -t 8:00:00
@@ -10,8 +10,8 @@
 # Number of cores per node to be allocated
 #SBATCH -n 120 
 
-#SBATCH -e error_file_training_s
-#SBATCH -o output_file_training_s
+#SBATCH -e error_file_training_2.e
+#SBATCH -o output_file_training_2.o
 
 # Run the executable named myexe 
 # and write the output into my_output_file
@@ -28,7 +28,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Modu
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
 #aprun -n 120 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_iteratively.py > delme_training  2>&1
-aprun -n 120 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_suboptimally_supervised.py > delme_training_subopt_3_long 2>&1
+aprun -n 120 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_suboptimally_supervised.py > delme_training_subopt_2 2>&1
 #aprun -n 960 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training.py $1 #2>&1
 
 echo "Stopping at `date`"
