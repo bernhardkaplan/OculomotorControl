@@ -102,7 +102,34 @@ class VisualInput(object):
         return mp_training 
 
 
-    def create_training_sequence_RBL(self):
+    def create_training_sequence_RBL(self, BG):
+
+        n_stim = self.params['n_training_stim_per_cycle'] * self.params['n_training_cycles']
+        all_mp = np.zeros((n_stim, 4))
+
+        stim_params = list(self.params['initial_state'])
+        i_stim = 0
+        for i_cycle in xrange(self.params['n_training_cycles']):
+            for i_ in xrange(self.params['n_training_stim_per_cycle']):
+                all_mp[i_stim, :] = deepcopy(stim_params)
+                if i_ % self.params['suboptimal_training'] == 1:
+                    (required_v_eye, v_y, action_idx) = BG.get_non_optimal_action_for_stimulus(stim_params)
+                else:
+                    (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
+                    action_v = [required_v_eye, 0.]
+                    stim_params = utils.get_next_stim(self.params, stim_params, required_v_eye)
+                    stim_params = list(stim_params)
+                i_stim += 1
+            # get start position some where in the periphery
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                stim_params[0] = self.RNG.uniform(.6, 1.)
+            else:
+                stim_params[0] = self.RNG.uniform(0, .4)
+            # sample stimulus speed from tuning properties
+            stim_params[2] = self.tuning_prop_exc[self.RNG.choice(self.tuning_prop_exc[:, 0].size), 2]
+
+        return all_mp
 
 #        training_stimuli_sample = self.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
 #        training_stimuli_grid = self.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
@@ -116,8 +143,7 @@ class VisualInput(object):
 #        training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
 #        training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(self.params['n_stim_training']), self.params['n_stim_training'] - n_grid - n_center), :]
 #        np.savetxt(self.params['training_sequence_fn'], training_stimuli)
-
-        return training_stimuli
+#        return training_stimuli
 
 
     def create_training_sequence_from_a_grid(self):

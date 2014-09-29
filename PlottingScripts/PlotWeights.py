@@ -182,33 +182,31 @@ class WeightPlotter(object):
         fig = pylab.figure()
         ax = fig.add_subplot(111)
 
-        fig = pylab.figure()
-        ax_pi = fig.add_subplot(111)
-        fig = pylab.figure()
-        ax_pj = fig.add_subplot(111)
-        fig = pylab.figure()
-        ax_pij = fig.add_subplot(111)
+#        fig = pylab.figure()
+#        ax_pi = fig.add_subplot(111)
+#        fig = pylab.figure()
+#        ax_pj = fig.add_subplot(111)
+#        fig = pylab.figure()
+#        ax_pij = fig.add_subplot(111)
         for pre_gid in pre_gids:
             for post_gid in gids_for_action:
                 y_ = self.w_ij_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
                 x_ = range(len(y_))
                 ax.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
 
-                y_ = self.p_ij_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
-                ax_pij.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
-
-                y_ = self.p_j_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
-                ax_pj.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
-
-                y_ = self.p_i_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
-                ax_pi.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
+#                y_ = self.p_ij_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
+#                ax_pij.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
+#                y_ = self.p_j_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
+#                ax_pj.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
+#                y_ = self.p_i_data[pre_gid][post_gid][it_range_plotting[0]:it_range_plotting[1]]
+#                ax_pi.plot(x_, y_, label='%d - %d' % (pre_gid, post_gid))
 
 #        pylab.legend()
         self.save_wij_data()
         ax.set_title('weight to %s - action %d' % (tgt_cell_type, action_idx))
-        ax_pij.set_title('p_ij to %s - action %d' % (tgt_cell_type, action_idx))
-        ax_pi.set_title('p_i to %s - action %d' % (tgt_cell_type, action_idx))
-        ax_pj.set_title('p_j to %s - action %d' % (tgt_cell_type, action_idx))
+#        ax_pij.set_title('p_ij to %s - action %d' % (tgt_cell_type, action_idx))
+#        ax_pi.set_title('p_i to %s - action %d' % (tgt_cell_type, action_idx))
+#        ax_pj.set_title('p_j to %s - action %d' % (tgt_cell_type, action_idx))
 
 
     def load_wij_data(self, pre_gids, post_gids, tgt_cell_type, it_range):

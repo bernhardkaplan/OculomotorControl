@@ -351,8 +351,8 @@ class BasalGanglia(object):
 #            cnt_u, bins = np.histogram(speed, binning)
 #            action_index = cnt_u.nonzero()[0][0]
 
-#        if xy == 'x':
-#            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : supervisor_speed=%.3f --> action: %d output_speed= %.3f' % (self.pc_id, self.iteration, speed, action_index, binning[action_index])
+        if xy == 'x':
+            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : supervisor_speed=%.3f --> action: %d output_speed= %.3f' % (self.pc_id, self.iteration, speed, action_index, binning[action_index])
 
         return action_index
 
@@ -435,17 +435,19 @@ class BasalGanglia(object):
         return (speed, 0, non_optimal_action_idx)
 
 
-    def get_reward_from_action(self, chosen_action_idx, stim_params):
-        assert (chosen_action_idx == np.int(chosen_action_idx)), 'ERROR: get_reward_from_action requires an integer, i.e. the index of the action and NOT the speed it refers to!'
-        chosen_action_idx = np.int(chosen_action_idx)
+    def get_reward_from_action(self, chosen_action_idx, stim_params, training=False):
+#        print 'debug get_reward_from_action chosen_action_idx:', chosen_action_idx , np.int(chosen_action_idx)
+#        if training:
+#            assert (chosen_action_idx == np.int(chosen_action_idx)), 'ERROR: get_reward_from_action requires an integer, i.e. the index of the action and NOT the speed it refers to! chosen_action_idx: %f' % chosen_action_idx
+#        chosen_action_idx = np.int(chosen_action_idx)
         action_bins = self.action_bins_x
         all_outcomes = np.zeros(len(action_bins))
         for i_, action in enumerate(action_bins):    
             all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
         best_action_idx = np.argmin(np.abs(all_outcomes - .5))
         # the reward is determined by the distance between the best_action and the chosen_action
-        best_speed = self.action_bins_x[best_action_idx ]
-        chosen_speed = self.action_bins_x[chosen_action_idx]
+#        best_speed = self.action_bins_x[best_action_idx ]
+#        chosen_speed = self.action_bins_x[chosen_action_idx]
 
         reward = (self.params['K_max'] - self.params['shift_reward_distribution']) * np.exp( - float(chosen_action_idx - best_action_idx)**2 / (2. * self.params['sigma_reward_distribution'])) + self.params['shift_reward_distribution']
 
@@ -489,7 +491,9 @@ class BasalGanglia(object):
         print 'DEBUG supervised_training, supervisor_state:', supervisor_state
         (u, v) = supervisor_state 
         action_index_x = self.map_speed_to_action(u, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
-        action_index_y = self.map_speed_to_action(v, xy='y')
+        action_index_y = 0
+#        action_index_y = self.map_speed_to_action(v, xy='y')
+
 #        if self.params['suboptimal_training'] != 0.:
 #            action_index_x = self.map_suboptimal_action[action_index_x]
 #            action_index_y = self.map_suboptimal_action[action_index_y]

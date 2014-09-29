@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 8 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         """
@@ -67,7 +67,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 10 # for RBL: 1 test,  n_trainin_x - 2 training, 1 test  stimulus
+        self.params['n_training_x'] = 3 # for RBL: 1 test,  n_trainin_x - 2 training, 1 test  stimulus
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
@@ -88,12 +88,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
-        self.params['n_silent_iterations'] = 2 # for 2 silent iterations this should be 3
+        self.params['n_silent_iterations'] = 2 # should be at least 2
         self.params['n_iterations_RBL_retraining'] = 4
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['n_iterations_per_stim'] = (self.params['n_silent_iterations'] + self.params['n_iterations_RBL_retraining'])  
-                # + 3 comes from: show, react, silence (then follows n_iterations_RBL_retraining and finally n_silent_iterations)
+                self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations'] + self.params['n_iterations_RBL_retraining'] 
+                # + 1 comes from the initial show (then one silent, then n_iterations_RBL_retraining, then the other silent iterations)
             else:
                 # 'open-loop': 
                 self.params['n_iterations_per_stim'] = 2 + self.params['n_silent_iterations'] 

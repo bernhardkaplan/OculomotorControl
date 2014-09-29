@@ -39,7 +39,6 @@ print 'initial motion_params', stim_params
 i_stim = 0
 
 stim_type = []
-
 d1_actions_trained = []
 d2_actions_trained = []
 all_actions_trained = []
@@ -50,6 +49,7 @@ for i_cycle in xrange(params['n_training_cycles']):
         all_mp[i_stim, :] = deepcopy(stim_params)
         if i_ % params['suboptimal_training'] == 1:
             (required_v_eye, v_y, action_idx) = BG.get_non_optimal_action_for_stimulus(stim_params)
+            action_v = [required_v_eye, 0.]
             stim_type.append(2)
             d2_actions_trained.append(action_idx)
         else:
@@ -113,6 +113,7 @@ n_bins = (np.max(d2_actions_trained) - np.min(d2_actions_trained))
 cnt, bins = np.histogram(d2_actions_trained, bins=n_bins, range=(np.min(d2_actions_trained), np.max(d2_actions_trained)))
 binwidth = .5 * (bins[1] - bins[0])
 ax1.bar(bins[:-1] + binwidth, cnt, width=binwidth, label='d2 trained', facecolor='r')
+pylab.legend()
 
 
 ax1.set_xlabel('Actions taken')
@@ -124,10 +125,10 @@ axv = fig.add_subplot(111)
 n_bins = 20
 cnt, bins = np.histogram(speeds_trained, bins=n_bins, range=(np.min(speeds_trained), np.max(speeds_trained)))
 binwidth = bins[1] - bins[0]
-axv.bar(bins[:-1], cnt, width=binwidth, label='speeds trained', facecolor='b')
+axv.bar(bins[:-1], cnt, width=binwidth, facecolor='b')
+axv.set_xlabel('Speeds trained')
 
 
-pylab.legend()
 pylab.show()
 
 
