@@ -89,6 +89,93 @@ class TracePlotter(object):
 
 
 
+    def plot_trace_with_spikes(self, bcpnn_traces, bcpnn_params, dt, output_fn=None, fig=None, \
+            color_pre='b', color_post='g', color_joint='r', style_joint='-', K_vec=None, \
+            extra_txt=None):
+        # unpack the bcpnn_traces
+        wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
+        t_axis = dt * np.arange(zi.size)
+        plots = []
+        pylab.rcParams.update({'figure.subplot.hspace': 0.50})
+        if fig == None:
+            fig = pylab.figure(figsize=FigureCreator.get_fig_size(1200, portrait=False))
+            ax1 = fig.add_subplot(321)
+            ax2 = fig.add_subplot(322)
+            ax3 = fig.add_subplot(323)
+            ax4 = fig.add_subplot(324)
+            ax5 = fig.add_subplot(325)
+            ax6 = fig.add_subplot(326)
+        else:
+            ax1, ax2, ax3, ax4, ax5, ax6 = fig.get_axes()
+        linewidth = 1
+        self.title_fontsize = 24
+        ax1.set_title('$\\tau_{z_i} = %d$ ms, $\\tau_{z_j} = %d$ ms' % \
+                (bcpnn_params['tau_i'], bcpnn_params['tau_j']), fontsize=self.title_fontsize)
+        ax1.plot(t_axis, pre_trace, c=color_pre, lw=linewidth, ls=':')
+        ax1.plot(t_axis, post_trace, c=color_post, lw=linewidth, ls=':')
+        p1, = ax1.plot(t_axis, zi, c=color_pre, label='$z_i$', lw=linewidth)
+        p2, = ax1.plot(t_axis, zj, c=color_post, label='$z_j$', lw=linewidth)
+        plots += [p1, p2]
+        labels_z = ['$z_i$', '$z_j$']
+        ax1.legend(plots, labels_z)
+        ax1.set_xlabel('Time [ms]')
+        ax1.set_ylabel('z-traces')
+
+        plots = []
+        p1, = ax5.plot(t_axis, pi, c=color_pre, lw=linewidth)
+        p2, = ax5.plot(t_axis, pj, c=color_post, lw=linewidth)
+        p3, = ax5.plot(t_axis, pij, c=color_joint, lw=linewidth, ls=style_joint)
+        plots += [p1, p2, p3]
+        labels_p = ['$p_i$', '$p_j$', '$p_{ij}$']
+        ax5.set_title('$\\tau_{p} = %d$ ms' % \
+                (bcpnn_params['tau_p']), fontsize=self.title_fontsize)
+        ax5.legend(plots, labels_p)
+        ax5.set_xlabel('Time [ms]')
+        ax5.set_ylabel('p-traces')
+
+        plots = []
+        p1, = ax3.plot(t_axis, ei, c=color_pre, lw=linewidth)
+        p2, = ax3.plot(t_axis, ej, c=color_post, lw=linewidth)
+        p3, = ax3.plot(t_axis, eij, c=color_joint, lw=linewidth, ls=style_joint)
+        plots += [p1, p2, p3]
+        labels_p = ['$e_i$', '$e_j$', '$e_{ij}$']
+        ax3.set_title('$\\tau_{e} = %d$ ms' % \
+                (bcpnn_params['tau_e']), fontsize=self.title_fontsize)
+        ax3.legend(plots, labels_p)
+        ax3.set_xlabel('Time [ms]')
+        ax3.set_ylabel('e-traces')
+
+        plots = []
+        p1, = ax4.plot(t_axis, wij, c=color_pre, lw=linewidth)
+        plots += [p1]
+        labels_w = ['$w_{ij}$']
+        ax4.legend(plots, labels_w)
+        ax4.set_xlabel('Time [ms]')
+        ax4.set_ylabel('Weight')
+
+        plots = []
+        p1, = ax6.plot(t_axis, bias, c=color_pre, lw=linewidth)
+        plots += [p1]
+        labels_ = ['bias']
+        ax6.legend(plots, labels_)
+        ax6.set_xlabel('Time [ms]')
+        ax6.set_ylabel('Bias')
+
+        if K_vec != None:
+            p1, = ax2.plot(t_axis, K_vec, c='k', lw=linewidth)
+            ax2.set_ylabel('Kappa')
+        if extra_txt != None:
+            ax2.set_title(extra_txt)
+
+        if output_fn != None:
+            print 'Saving traces to:', output_fn
+            pylab.savefig(output_fn)
+
+        return fig
+
+
+
+
     def plot_trace(self, bcpnn_traces, bcpnn_params, dt, output_fn=None, info_txt=None, fig=None, \
             color_pre='b', color_post='g', color_joint='r', style_joint='-'):
         # unpack the bcpnn_traces
@@ -203,8 +290,9 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    cell_type_post = 'd1'
+    cell_type_post = 'd2'
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
+    bcpnn_params['K'] = 1.
     dt = params['dt']
     fn_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
     fn_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
@@ -215,18 +303,20 @@ if __name__ == '__main__':
 #    it_range = (0, 3)
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
-    n_pre = 1
-    n_post = 1
-    pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post)
+    n_pre = 2
+    n_post = 2
+    pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range)
 #    pre_gids = [2238]
 #    pre_gids = [1158]
 #    post_gids = [5023]
 
+    plot_range = (0, 10)
     w = TP.get_weights(pre_gids, post_gids)
-    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, it_range)
+    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, plot_range)
     output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
     for i_, traces in enumerate(all_traces):
         output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
         info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
         TP.plot_trace(traces, bcpnn_params, dt, output_fn=output_fn, info_txt=info_txt)
     pylab.show()
+

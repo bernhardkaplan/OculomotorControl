@@ -26,7 +26,7 @@ class ActivityPlotter(object):
         self.n_bins_x = 30
         self.n_x_ticks = 10
         self.x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
-        self.rp_markersize = 3
+        self.rp_markersize = 2
 
     def plot_raster_simple(self):
         # first find files in Spikes folder 
@@ -37,7 +37,7 @@ class ActivityPlotter(object):
         gids = d[:, 0]
         fig = pylab.figure()
         ax = fig.add_subplot(111)
-        ax.plot(spikes, gids, 'o', markersize=3, color='k')
+        ax.plot(spikes, gids, 'o', markersize=2, color='k')
 
 
     def get_nspikes_interval(self, d, t0, t1):

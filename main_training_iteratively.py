@@ -102,7 +102,6 @@ if __name__ == '__main__':
     training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(params['n_stim_training']), params['n_stim_training'] - n_grid - n_center), :]
     np.savetxt(params['training_sequence_fn'], training_stimuli)
 
-
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
     print 'supervisor_states:', supervisor_states
     print 'action_indices:', action_indices

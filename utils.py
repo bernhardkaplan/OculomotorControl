@@ -9,6 +9,8 @@ import json
 import simulation_parameters
 import MergeSpikefiles
 import scipy.stats as stats
+import random
+import string
 
 def draw_from_discrete_distribution(prob_dist, size=1):
     """
@@ -30,7 +32,7 @@ def get_next_stim(params, stim_params, v_eye):
     """
     Returns the stimulus parameters for a given action (v_eye) in x-direction
     """
-    x_stim = stim_params[0] - (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
+    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
@@ -115,6 +117,7 @@ def convert_connlist_to_matrix(data, src_min=None, src_max=None, tgt_min=None, t
 
 def get_most_active_neurons(spike_data, n_cells=None):
     gids = np.unique(spike_data[:, 0])
+    gids = np.array(gids, dtype=np.int)
     if n_cells == None:
         n_cells = gids.size
     n_spikes = np.zeros(gids.size)
@@ -194,7 +197,7 @@ def get_min_max_gids_for_bg(params, cell_type):
     return gid_min, gid_max
 
 
-def get_colorlist():
+def get_colorlist(n_colors=17):
     colorlist = ['k', 'b', 'r', 'g', 'm', 'c', 'y', \
             '#00FF99', \
             #light green
@@ -217,6 +220,12 @@ def get_colorlist():
             '#7700ff', \
                     # dark violet
                     ]
+
+    if n_colors > 17:
+        r = lambda: random.randint(0,255)
+        for i_ in xrange(n_colors - 17):
+            colorlist.append('#%02X%02X%02X' % (r(),r(),r()))
+
     return colorlist
 
 
@@ -313,6 +322,21 @@ def get_spikes(spiketimes_fn_merged, n_cells=0, get_spiketrains=False, gid_idx=0
         return nspikes
 
 
+def get_connection_files(params, cell_type):
+    fn_list = []
+    pattern = params['mpn_bg%s_merged_conntracking_fn_base' % cell_type].rsplit('/')[-1]
+    iterations = []
+    for thing in os.listdir(params['connections_folder']):
+        if string.count(thing, pattern) != 0:
+            path = params['connections_folder'] + thing
+            fn_list.append(path)
+            m = re.match('(.*)it(\d+)\.txt$', thing)
+
+    fn_list.sort()
+    return fn_list 
+        
+
+
 def merge_spikes(params):
 
     merged_spike_fn = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
@@ -367,24 +391,27 @@ def merge_connection_files(params):
 
 
 
-def merge_and_sort_files(merge_pattern, fn_out, sort=True):
+def merge_and_sort_files(merge_pattern, fn_out, sort=True, verbose=True):
     rnd_nr1 = np.random.randint(0,10**8)
     # merge files from different processors
     tmp_file = "tmp_%d" % (rnd_nr1)
     cmd = "cat %s* > %s" % (merge_pattern, tmp_file)
-    print 'utils.merge_and_sort_files: ', cmd
+    if verbose:
+        print 'utils.merge_and_sort_files: ', cmd
     os.system(cmd)
     # sort according to cell id
     if sort:
         sort_cmd = "sort -gk 1 %s > %s" % (tmp_file, fn_out)
 #        print 'DEBUG utils.merge_and_sort_files:', sort_cmd
         os.system(sort_cmd)
+        os.system("rm %s" % (tmp_file))
     else:
         mv_cmd = 'mv %s %s' % (tmp_file, fn_out)
 #        print 'DEBUG utils.merge_and_sort_files:', mv_cmd
         os.system(mv_cmd)
-    os.system("rm %s" % (tmp_file))
-    print 'utils.merge_and_sort_files output: ', fn_out
+
+    if verbose:
+        print 'utils.merge_and_sort_files output: ', fn_out
 
 
 def find_files(folder, to_match):
@@ -484,15 +511,41 @@ def get_spiketimes(all_spikes, gid, gid_idx=0, time_idx=1):
     return spiketimes
 
 
+
+def extract_weight_from_connection_list(conn_list, pre_gid, post_gid, idx=None):
+    """
+    Extract the weight that connects the pre_gid to the post_gid
+    """
+#    print 'debug connlist', conn_list
+#    print 'debug', pre_gid, post_gid
+#    print 'debug', (conn_list[:, 0] == pre_gid).nonzero()
+    if idx == None:
+        idx = 2
+    pre_idx = set((conn_list[:, 0] == pre_gid).nonzero()[0])
+    post_idx = set((conn_list[:, 1] == post_gid).nonzero()[0])
+    valid_idx = list(pre_idx.intersection(post_idx))
+    if len(valid_idx) == 0:
+        return 0.
+#    print 'debug', valid_idx, idx, conn_list[valid_idx, idx], pre_gid, post_gid
+    return float(conn_list[valid_idx, idx])
+
+
+
 def get_spiketimes_within_interval(spike_data, t0, t1):
     """
     all_spikes: 2-dim array containing all spiketimes
     return those spike times which are between > t0 and <= t1
     """
-    t0_idx = set((spike_data[:, 1] > t0).nonzero()[0])
-    t1_idx = set((spike_data[:, 1] <= t1).nonzero()[0])
-    valid_idx = list(t0_idx.intersection(t1_idx))
-    return spike_data[valid_idx, :]
+    if spike_data.ndim == 2:
+        t0_idx = set((spike_data[:, 1] > t0).nonzero()[0])
+        t1_idx = set((spike_data[:, 1] <= t1).nonzero()[0])
+        valid_idx = list(t0_idx.intersection(t1_idx))
+        return spike_data[valid_idx, :]
+    else:
+        t0_idx = set((spike_data > t0).nonzero()[0])
+        t1_idx = set((spike_data <= t1).nonzero()[0])
+        valid_idx = list(t0_idx.intersection(t1_idx))
+        return spike_data[valid_idx]
 
 
 def communicate_local_spikes(gids, comm):
@@ -545,7 +598,6 @@ def get_xpos_log_distr(logscale, n_x, x_min=1e-6, x_max=.5):
     x_rho = np.zeros(n_x)
     x_rho[:n_x/2] = x_lower[:-1]
 
-    print 'debug', n_x, x_rho[n_x/2+1:].shape, x_upper[1:].shape
     if n_x % 2:
         x_rho[n_x/2+1:] = x_upper[1:]
     else:
@@ -596,12 +648,6 @@ def get_receptive_field_sizes_v(params, rf_v):
     dv_neg_half = np.zeros(neg_idx.size)
     dv_pos_half = rf_v[idx][pos_idx][1:] - rf_v[idx][pos_idx][:-1]
     dv_neg_half = np.abs(rf_v[idx][neg_idx][1:] - rf_v[idx][neg_idx][:-1])
-#    print 'rf_v[idx][pos_idx]', rf_v[idx][pos_idx]
-#    print 'rf_v[idx][neg_idx]', rf_v[idx][neg_idx]
-#    print 'dv_pos_half', dv_pos_half
-#    print 'dv_neg_half', dv_neg_half
-#    print 'pos_idx', pos_idx
-#    print 'idx', idx
     dv_neg_reverse = list(dv_neg_half)
     dv_neg_reverse.reverse()
     rf_size_v[:neg_idx.size-1] = dv_neg_reverse

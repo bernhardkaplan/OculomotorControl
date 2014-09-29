@@ -39,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
@@ -50,14 +50,25 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_v'] = 30
 
         self.params['training'] = True
-        self.params['reward_based_learning'] = False
+        self.params['reward_based_learning'] = True
+#        self.params['training'] = False
+#        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
-        self.params['n_training_cycles'] = 4            # how often each stimulus is presented during training
-#        if self.params['reward_based_learning']:
-#            assert (self.params['n_training_cycles'] % 2) == 0, 'Each stimulus needs to be presented twice (once with plasiticity off to get the reward signal, \
-#                    once with plasticity on when reward signal has arrived and the efference copy re-activating stimulus and D1/D2 activity'
-        self.params['n_training_x'] = 30 # number of training samples to cover the x-direction of the tuning space
-        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space
+
+        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
+        # should be two cycles because there is a test cycle at the end of the training in order
+        # to trigger an update of the weights that have been trained in the last training cycle
+        """
+         for normal training n_training_x/v is the number of training samples to cover the x-direction of the tuning space
+         for reward based learning (RBL) two modes are possible:
+           - verification mode: the retraining effect is tested immediately
+           - relearning mode: 
+                n_training_cycles is the number how often a stimulus is retrained
+                n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
+        """
+
+        self.params['n_training_x'] = 3 # for RBL: 1 test,  n_trainin_x - 2 training, 1 test  stimulus
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['frac_training_samples_from_grid'] = .4
@@ -77,22 +88,23 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
-        self.params['n_silent_iterations'] = 5 # for 2 silent iterations this should be 3
+        self.params['n_silent_iterations'] = 2 # should be at least 2
+        self.params['n_iterations_RBL_retraining'] = 4
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['n_iterations_per_stim'] = (2 + self.params['n_silent_iterations']) 
-                # must be larger or equal to 2  + n_silent_iterations
+                self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations'] + self.params['n_iterations_RBL_retraining'] 
+                # + 1 comes from the initial show (then one silent, then n_iterations_RBL_retraining, then the other silent iterations)
             else:
                 # 'open-loop': 
                 self.params['n_iterations_per_stim'] = 2 + self.params['n_silent_iterations'] 
 
             # else:
         else:
-            self.params['n_iterations_per_stim'] = 25 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 6 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
-        self.params['weight_tracking'] = True# if True weights will be written to file after each iteration --> use only for debugging / plotting
+        self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
-        self.params['connect_d1_after_training'] = True
+        self.params['connect_d1_after_training'] = False
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
         self.params['clip_weights_mpn_d2'] = self.params['clip_weights_mpn_d1']
         self.params['clip_weights_d1_d1'] = True # only for VisualLayer --> D1 weights
@@ -118,18 +130,19 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # the first stimulus parameters
         self.params['initial_state'] = (.8, .5, 0.7, .0)
-#        self.params['initial_state'] = (.631059, .5, 0.1996527, .0)
         assert (self.params['n_v'] % 2 == 0), 'Please choose even number of speeds for even distribution for left/right speed preference'
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['t_iter_training'] = 25
-        self.params['suboptimal_training'] = 3 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
+        self.params['suboptimal_training'] = 3
+        # if non-zero and reward_based_learning == False then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
+        # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
-            self.params['sim_id'] = 'SubOpt_%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
+            self.params['sim_id'] = 'RndWinit_%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
             if (self.params['reward_based_learning']):
-                self.params['sim_id'] = 'RBL_2_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
+                self.params['sim_id'] = 'RBL_%d_titer%d_' % (self.params['suboptimal_training'], self.params['t_iteration'])
         else:
-            self.params['sim_id'] = 'afterRBL_2_it%d_' % (self.params['t_iteration'])
+            self.params['sim_id'] = 'RndWInit_%d_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -192,7 +205,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
 #                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
         # input parameters
-        self.params['w_input_exc_mpn'] = 30. # [nS]
+        self.params['w_input_exc_mpn'] = 20. #30. # [nS]
         self.params['f_max_stim'] = 2000.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
@@ -200,8 +213,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['f_noise_exc'] = 1000.
         self.params['f_noise_inh'] = 1000.
-        self.params['w_noise_exc'] = .2
+        self.params['w_noise_exc'] = 0.2
         self.params['w_noise_inh'] = -.2
+
+        # for BG
+        self.params['connect_noise_to_bg'] = False
+        self.params['f_noise_exc_bg'] = 1.
+        self.params['f_noise_inh_bg'] = 1.
+        self.params['w_noise_exc_bg'] = 0.01
+        self.params['w_noise_inh_bg'] = -0.01
+
 
         # ##############################
         # EXCITATORY NETWORK PARAMETERS
@@ -216,7 +237,25 @@ class global_parameters(ParameterContainer.ParameterContainer):
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
         self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_bg'] = None
+        self.params['gids_to_record_bg'] = [10093, 10094, 10095, 10096, 10097]
+        self.params['gids_to_record_bg'] += [10173, 10174, 10175, 10176, 10177,
+                                        10178, 10179, 10180, 10181, 10182,
+                                        10183, 10184, 10185, 10186, 10187,
+                                        10188, 10189, 10190, 10191, 10192,
+                                        10193, 10194, 10195, 10196, 10197,
+                                        10198, 10199, 10200, 10201, 10202,
+                                        10203, 10204, 10205, 10206, 10207,
+                                        10208, 10209, 10210, 10211, 10212,
+                                        10213, 10214, 10215, 10216, 10217,
+                                        10218, 10219, 10220, 10221, 10222,
+                                        10223, 10224, 10225, 10226, 10227,
+                                        10228, 10229, 10230, 10231, 10232,
+                                        10233, 10234, 10235, 10236, 10237,
+                                        10238, 10239, 10240, 10241, 10242,
+                                        10243, 10244, 10245, 10246, 10247,
+                                        10248, 10249, 10250, 10251, 10252,
+                                        10253, 10254, 10255, 10256, 10257]
+
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
@@ -280,10 +319,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # during training a supervisor signal is generated based on displacement and perceived speed, using this parameter
         self.params['supervisor_amp_param'] = 1.
-        self.params['suboptimal_training'] = 2 # if non-zero, then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         self.params['sigma_reward_distribution'] = .5
-        self.params['K_max'] = 10.
-        self.params['shift_reward_distribution'] = -20.0
+        self.params['K_max'] = 1.
+        self.params['shift_reward_distribution'] = -1.
 
         # ##############################
         # INHIBITOTY NETWORK PARAMETERS
@@ -349,27 +387,38 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.20
 
         #Connections Actions and States to RP
-        self.tau_i = 5.
+        self.tau_i = 10.
         self.tau_j = 5.
-        self.tau_e = 5.
+        self.tau_e = 50.
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
-            self.tau_p = .3 * self.params['t_sim']
+            self.tau_p = 50000.
+            # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
-        self.params['fmax'] = 150.
+        self.params['fmax'] = 200.
         self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
         if self.params['training']:# and not self.params['reward_based_learning']:
             self.params['gain'] = 0.
             if self.params['reward_based_learning']:
                 self.K = 0. # will be set to 1 during the main learning script
-                self.params['gain'] = 1.
+                self.params['gain'] = 1.0
             else:
                 self.K = 1.
+                self.params['gain'] = 0.
         else:
-            self.params['gain'] = 1.
             self.K = 0.
+            self.params['gain'] = 1.
         self.params['kappa'] = self.K
+
+        # gain parameters
+        self.params['gain_d1_d1'] = 0.
+        self.params['gain_d2_d2'] = 0.
+        self.params['gain_MT_d1'] = 0.05
+        self.params['gain_MT_d2'] = 0.05
+        self.params['bias_gain'] = 0.
+        self.params['d1_gain_after_training'] = 10.
+        self.params['d2_gain_after_training'] = 10.
 
 
         # #####################################
@@ -377,15 +426,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
-        self.params['weight_threshold'] = 0.05
-        self.params['mpn_d1_weight_amplification'] = 4.8
-        self.params['mpn_d2_weight_amplification'] = 8.0
+        self.params['weight_threshold'] = 0.0
+        self.params['mpn_d1_weight_amplification'] = self.params['gain_MT_d1']
+        self.params['mpn_d2_weight_amplification'] = self.params['gain_MT_d2']
 #        if self.params['reward_based_learning']:
 #            self.params['mpn_d1_weight_amplification'] = 0.0
 #            self.params['mpn_d2_weight_amplification'] = 0.0
-        self.params['mpn_bg_bias_amplification'] = 1.0
-        self.params['d1_d1_weight_amplification_neg'] = 10.0
-        self.params['d1_d1_weight_amplification_pos'] = 0.0
+        self.params['mpn_bg_bias_amplification_d1'] = self.params['bias_gain']
+        self.params['mpn_bg_bias_amplification_d2'] = self.params['bias_gain']
+        self.params['d1_d1_weight_amplification_neg'] = self.params['gain_d1_d1']
+        self.params['d1_d1_weight_amplification_pos'] = self.params['gain_d1_d1']
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
         self.params['delay_d1_d1'] = 1.
@@ -406,10 +456,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['param_msn_d1'] = { 't_ref': 2.0, 'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5.,  \
 #                'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70.}
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
-                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, 'gain': self.params['gain'], \
-                'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., 
+                'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, \
+                'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., \
                 'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70., \
-                'K': self.K, 'gain': self.params['gain']}
+                'K': self.K, 'gain': self.params['bias_gain']}
 #                'g_L': 50., 'C_m':250., 'E_L':-70., 'E_in': -70., \
         self.params['param_msn_d2'] = self.params['param_msn_d1'].copy()
         # old params for alpha shaped synapses
@@ -455,19 +505,19 @@ class global_parameters(ParameterContainer.ParameterContainer):
         bcpnn_init = 0.01
         self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
-        self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
-        self.params['params_synapse_d2_d2'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d2_d2'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d2_d2'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d2_d2'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
 
 
-        self.params['actions_rp'] = 'bcpnn_synapse'
-        self.params['param_actions_rp'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
-        self.params['states_rp'] = 'bcpnn_synapse'
-        self.params['param_states_rp'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+#        self.params['actions_rp'] = 'bcpnn_synapse'
+#        self.params['param_actions_rp'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+#        self.params['states_rp'] = 'bcpnn_synapse'
+#        self.params['param_states_rp'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         self.params['bcpnn'] = 'bcpnn_synapse'
         self.params['param_bcpnn'] =  {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
@@ -476,11 +526,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         #Connections States Actions
         self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d1_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d1_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_MT_d1'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
         self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
-        self.params['params_synapse_d2_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K, \
+        self.params['params_synapse_d2_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_MT_d2'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
@@ -508,8 +558,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 8.
-        self.params['str_to_output_inh_w'] = -8.
+        self.params['str_to_output_exc_w'] = 6.
+        self.params['str_to_output_inh_w'] = -6.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
@@ -518,34 +568,28 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['with_d2'] = True
         self.params['num_neuron_poisson_supervisor'] = 1
         self.params['num_neuron_poisson_input_BG'] = 10
-        self.params['active_supervisor_rate'] = 3000.
+        self.params['active_supervisor_rate'] = 1000.
         self.params['inactive_supervisor_rate'] = 0.
-        self.params['active_poisson_input_rate'] = 20.
-        self.params['inactive_poisson_input_rate'] = 2.
         self.params['param_poisson_pop_input_BG'] = {}
         self.params['param_poisson_supervisor'] = {}
-        self.params['weight_supervisor_strd1'] = 7.
-        self.params['weight_supervisor_strd2'] = 7.
+        self.params['weight_supervisor_strd1'] = 5.
+        self.params['weight_supervisor_strd2'] = 5.
         self.params['delay_supervisor_strd1'] = .1
         self.params['delay_supervisor_strd2'] = .1
-        self.params['weight_poisson_input'] = 10.
-        self.params['delay_poisson_input'] = 1.
         self.params['are_MT_BG_connected'] = True
         self.params['num_neuron_states'] = 30
         self.params['param_states_pop'] = {} 
 
-        # Reinforcement Learning
-        self.params['num_neuron_poisson_efference'] = 40
-        self.params['active_full_efference_rate'] = 40.
+        # Reinforcement Learning: efference copy activates both D1 and D2 for one action at the same time (same parameters as supervisor)
+        self.params['num_neuron_poisson_efference'] = 1
+        self.params['active_efference_rate'] = 3000.
         self.params['inactive_efference_rate'] = 0.
-        self.params['active_poisson_input_rate'] = 50.
-        self.params['inactive_poisson_input_rate'] = 0.5
         self.params['supervisor_off'] = 0.
         self.params['active_poisson_rew_rate'] = 70.
         self.params['inactive_poisson_rew_rate'] = 1.
         self.params['param_poisson_efference'] = {}
-        self.params['weight_efference_strd1'] = 15.
-        self.params['weight_efference_strd2'] = 15.
+        self.params['weight_efference_strd1'] = 8.
+        self.params['weight_efference_strd2'] = 8.
         self.params['delay_efference_strd1'] = 1.
         self.params['delay_efference_strd2'] = 1.
 
@@ -565,7 +609,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_inh_volt_fn'] = 'mpn_inh_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['training_sequence_fn'] = self.params['parameters_folder'] + 'training_stimuli_parameters.txt'
+        self.params['training_sequence_fn'] = self.params['data_folder'] + 'training_stimuli_parameters.txt'
 
         # bg files:
         self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
@@ -628,11 +672,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # storage for actions (BG), network states (MPN) and motion parameters (on Retina)
         self.params['rewards_given_fn'] = self.params['data_folder'] + 'rewards_given.txt' # contains (vx, vy, action_index)
         self.params['actions_taken_fn'] = self.params['data_folder'] + 'actions_taken.txt' # contains (vx, vy, action_index)
+        self.params['activity_memory_fn'] = self.params['data_folder'] + 'activity_memory.txt' # contains (vx, vy, action_index)
         self.params['bg_action_bins_fn'] = self.params['data_folder'] + 'bg_actions_bins.txt'
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
         self.params['motion_params_fn'] = self.params['data_folder'] + 'motion_params.txt'
         self.params['supervisor_states_fn'] = self.params['data_folder'] + 'supervisor_states.txt'
         self.params['action_indices_fn'] = self.params['data_folder'] + 'action_indices.txt'
+        self.params['nspikes_action_fn'] = self.params['data_folder'] + 'action_activity.txt'
         self.params['motion_params_precomputed_fn'] = self.params['data_folder'] + 'motion_params_precomputed.txt'
         self.params['bg_suboptimal_action_mapping_fn'] = self.params['parameters_folder'] + 'suboptimal_action_mapping.json'
 
@@ -643,6 +689,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connections.txt'
         self.params['d1_d1_conn_fn_base'] = self.params['connections_folder'] + 'd1_d1_connections'
         self.params['d1_d1_merged_conn_fn'] = self.params['connections_folder'] + 'merged_d1_d1_connections.txt'
+
+        self.params['initial_weight_matrix_d1'] = self.params['connections_folder'] + 'w_init_d1.txt'
+        self.params['initial_weight_matrix_d2'] = self.params['connections_folder'] + 'w_init_d2.txt'
 
         # connection development / tracking 
         self.params['mpn_bgd1_conntracking_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d1_connection_dev_'
@@ -663,16 +712,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_%d_nStim%dx%d_taup%d/' % (self.params['sim_id'], \
+                folder_name = 'Training_%s_%d_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
                         self.params['suboptimal_training'], \
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                        self.params['params_synapse_d1_MT_BG']['tau_p'])
+                        self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
             else:
                 folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
                 folder_name += '_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e/' % \
                         (self.params['t_iteration'], \
                                 self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
-                                self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], self.params['mpn_bg_bias_amplification'])
+                                self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], self.params['bias_gain'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

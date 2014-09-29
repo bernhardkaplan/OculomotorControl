@@ -82,8 +82,7 @@ def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
 
     ax = plot_matrix(conn_mat, clim=clim)
     print 'connmat min max', np.min(conn_mat), np.max(conn_mat)
-#    ax.set_xlabel('Target: %s' % tgt_cell_type)
-#    ax.set_ylabel('Sources: %s' % src_cell_type)
+    ax.set_title(conn_list_fn.rsplit("/")[-1])
     if params != None:
         output_fn = params['figures_folder'] + conn_list_fn.rsplit("/")[-1].rsplit(".txt")[0] + "_cmap.png"
         title = output_fn.rsplit('/')[-1]
@@ -161,6 +160,7 @@ if __name__ == '__main__':
     fns = sys.argv[1:] # 
     clim = None
 #    clim = (-5., 5.)
+#    clim = (-200., 200.)
 
     xv = 'v'
 

@@ -262,7 +262,7 @@ class ActivityPlotter(object):
         print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
         d = np.loadtxt(self.params['motion_params_fn'])
         it_min = stim_range[0] * self.params['n_iterations_per_stim']
-        it_max = (stim_range[-1]) * self.params['n_iterations_per_stim']
+        it_max = (stim_range[-1] + 1) * self.params['n_iterations_per_stim']
         print 'debug stim_range:', stim_range, 'it min max', it_min, it_max
         t_axis = d[it_min:it_max, 4]
         t_axis += .5 * self.params['t_iteration']
@@ -513,6 +513,10 @@ class ActivityPlotter(object):
 
 
 class MetaAnalysisClass(object):
+    """
+    Depening on the arguments passed to the constructor,
+    different plot functions are called
+    """
 
     def __init__(self, argv, plot_training_folder=None):
         print 'Argv:', len(argv), argv
@@ -523,11 +527,11 @@ class MetaAnalysisClass(object):
             training_params = utils.load_params(plot_training_folder)
 
         if len(argv) == 1: # plot current parameters
+            print '\nPlotting the default parameters given in simulation_parameters.py\n'
             print '\nPlotting only stim 1!\n\n'
             network_params = simulation_parameters.global_parameters()  
             params = network_params.params
             utils.merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged'])
-            print '\nPlotting the default parameters give in simulation_parameters.py\n'
             self.run_single_folder_analysis(params, stim_range)
             (x_data, y_data) = self.run_xdisplacement_analysis(params, stim_range)
         elif len(argv) == 2: # PlotMPNActivity [FOLDER]

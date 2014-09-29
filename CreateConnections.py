@@ -34,6 +34,8 @@ class CreateConnections(object):
             if self.params['with_d2']:
                 nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
                 nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
+        if self.comm != None:
+            self.comm.Barrier()
 
 
 
@@ -116,9 +118,10 @@ class CreateConnections(object):
         Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
         based on the weights found in conn_folder
         """
-        self.merge_connection_files(training_params, test_params)
         if self.comm != None:
             self.comm.Barrier()
+
+        self.merge_connection_files(training_params, test_params)
         print 'Loading MPN - BG %s connections from: %s' % (target, training_params['mpn_bg%s_merged_conn_fn' % target])
         tgt_path = test_params['connections_folder'] + 'merged_mpn_bg_%s_connections_preTraining.txt' % target
         cmd = 'cp %s %s' % (training_params['mpn_bg%s_merged_conn_fn' % target], tgt_path)
@@ -129,13 +132,15 @@ class CreateConnections(object):
         w = mpn_bg_conn_list[:, 2]
         pi = test_params['bcpnn_init_pi']
         pj = test_params['bcpnn_init_pi']
-        w *= self.params['mpn_%s_weight_amplification' % target]
+        w *= self.params['gain_MT_%s' % target]
+#        w *= self.params['mpn_%s_weight_amplification' % target]
 #        pij = pi * pj * np.exp(w)
         valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
         srcs = list(mpn_bg_conn_list[valid_idx, 0].astype(np.int))
         tgts = list(mpn_bg_conn_list[valid_idx, 1].astype(np.int))
         weights = list(w[valid_idx])
         pij = pi * pj * np.exp(w[valid_idx])
+
         delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
         param_dict_list = [test_params['params_synapse_%s_MT_BG' % target] for i_ in xrange(valid_idx.size)]
         for i_ in xrange(valid_idx.size):
@@ -205,6 +210,11 @@ class CreateConnections(object):
 
 
     def clip_weight(self, w, clip_weights, thresh_and_abs):
+        """
+        clip_weights -- boolean; if False, do nothing and return w
+        thresh_and_abs -- (float, boolean), float gives the threshold, and the boolean decides if the absolute value should be taken
+                        i.e. if boolean == True: negative weights are allowed
+        """
         if not clip_weights:
             return w
         else:
@@ -239,20 +249,20 @@ class CreateConnections(object):
             if conns != None:
                 for i_, c in enumerate(conns):
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
-                    if (cp[0]['synapse_model'] == 'bcpnn_synapse'):
-                        pi = cp[0]['p_i']
-                        pj = cp[0]['p_j']
-                        pij = cp[0]['p_ij']
-                        w = np.log(pij / (pi * pj))
-                        w_ = self.clip_weight(w, self.params['clip_weights_mpn_d1'], self.params['weight_threshold_abstract_mpn_d1'])
-                        if w_:
-                            D1_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
-                            bias_d1[cp[0]['target']] = cp[0]['bias']
+                    pi = cp[0]['p_i']
+                    pj = cp[0]['p_j']
+                    pij = cp[0]['p_ij']
+                    w = np.log(pij / (pi * pj))
+                    D1_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w, pi, pj, pij)
+#                        w_ = self.clip_weight(w, self.params['clip_weights_mpn_d1'], self.params['weight_threshold_abstract_mpn_d1'])
+#                        if w_:
+#                    D1_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
+                    bias_d1[cp[0]['target']] = cp[0]['bias']
 
         if iteration == None:
             fn_out = self.params['mpn_bgd1_conn_fn_base'] + '%d.txt' % (self.pc_id)
         else:
-            fn_out = self.params['mpn_bgd1_conntracking_fn_base'] + 'it%d_%d.txt' % (iteration, self.pc_id)
+            fn_out = self.params['mpn_bgd1_conntracking_fn_base'] + 'it%04d_%d.txt' % (iteration, self.pc_id)
         bias_d1_f = file(self.params['bias_d1_fn_base'] + 'pc%d.json' % self.pc_id, 'w')
         json.dump(bias_d1, bias_d1_f, indent=0)
         print 'Writing MPN - D1 connections to:', fn_out
@@ -268,22 +278,22 @@ class CreateConnections(object):
                 if conns != None:
                     for c in conns:
                         cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
-                        if (cp[0]['synapse_model'] == 'bcpnn_synapse'):
-                            pi = cp[0]['p_i']
-                            pj = cp[0]['p_j']
-                            pij = cp[0]['p_ij']
-                            w = np.log(pij / (pi * pj))
-                            w_ = self.clip_weight(w, self.params['clip_weights_mpn_d2'], self.params['weight_threshold_abstract_mpn_d2'])
-                            if w_:
-                                D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
-                                bias_d2[cp[0]['target']] = cp[0]['bias']
+                        pi = cp[0]['p_i']
+                        pj = cp[0]['p_j']
+                        pij = cp[0]['p_ij']
+                        w = np.log(pij / (pi * pj))
+                        D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w, pi, pj, pij)
+#                            w_ = self.clip_weight(w, self.params['clip_weights_mpn_d2'], self.params['weight_threshold_abstract_mpn_d2'])
+#                            if w_:
+#                                D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
+#                                bias_d2[cp[0]['target']] = cp[0]['bias']
 
             bias_d2_f = file(self.params['bias_d2_fn_base'] + 'pc%d.json' % self.pc_id, 'w')
             json.dump(bias_d2, bias_d2_f, indent=0)
             if iteration == None:
                 fn_out = self.params['mpn_bgd2_conn_fn_base'] + '%d.txt' % (self.pc_id)
             else:
-                fn_out = self.params['mpn_bgd2_conntracking_fn_base'] + 'it%d_%d.txt' % (iteration, self.pc_id)
+                fn_out = self.params['mpn_bgd2_conntracking_fn_base'] + 'it%04d_%d.txt' % (iteration, self.pc_id)
             print 'Writing MPN - D2 connections to:', fn_out
             D2_f = file(fn_out, 'w')
             D2_f.write(D2_conns)

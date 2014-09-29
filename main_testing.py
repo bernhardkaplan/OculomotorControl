@@ -69,7 +69,6 @@ if __name__ == '__main__':
 #    training_stimuli.reshape((training_params['n_stim_training'], 4))
 
     training_params['training_params'] = training_params # double check
-    motion_params = np.loadtxt(training_params['motion_params_fn'])
 
     if pc_id == 0:
         remove_files_from_folder(testing_params['spiketimes_folder'])

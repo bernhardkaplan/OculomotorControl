@@ -19,7 +19,7 @@ def convert_spiketrain_to_trace(st, t_max, dt=0.1, spike_width=1):
     return trace
 
 
-def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_vec=None):
+def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_vec=None, w_init=0.):
     """
     Arguments:
         pre_trace, post_trace: pre-synaptic activity (0 means no spike, 1 means spike) (not spike trains!)
@@ -42,12 +42,13 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_ve
     ej = np.ones(n) * initial_value
     pi = np.ones(n) * initial_value
     pj = np.ones(n) * initial_value
-    pij = np.ones(n) * initial_value**2
-    wij = np.ones(n)  *  np.log(pij[0] / (pi[0] * pj[0]))
+    pij = pi * pj * np.exp(w_init)
+    wij = np.ones(n)  * w_init #np.log(pij[0] / (pi[0] * pj[0]))
     bias = np.ones(n) * np.log(initial_value)
     spike_height = 1000. / (bcpnn_params['fmax'] * dt)
     eps = bcpnn_params['epsilon']
     K = bcpnn_params['K']
+    gain = bcpnn_params['gain']
     if K_vec == None:
         K_vec = np.ones(n) * K
 
@@ -86,13 +87,14 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_ve
         pij[i] = pij[i-1] + dpij
 
     # weights
-    wij = np.log(pij / (pi * pj))
+    wij = gain * np.log(pij / (pi * pj))
 
     # bias
-    bias = np.log(pj)
+    bias = gain * np.log(pj)
 
     return [wij, bias, pi, pj, pij, ei, ej, eij, zi, zj]
-#    return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
+
+
 
 def compute_traces(si, tau_z=10, tau_e=100, tau_p=1000, dt=1., eps=1e-6, initial_value=None):
     n = si.size
@@ -296,11 +298,6 @@ def compute_bcpnn_in_place(st_pre, st_post, tau_dict, dt, fmax, tmax, save_inter
         bias[i] = np.log(pj[i])
 
     return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
-    return wij, bias, pi, pj, pij, ei, ej, eij, zi, zj
 
 
 
-#        bcpnn_params=None, dt=1., fmax=1000., initial_value=0.01, eps=1e-6):
-#def get_spiking_weight_and_bias(pre_trace, post_trace, bin_size=1, \
-#        bcpnn_params=None, dt=1., fmax=1000., initial_value=0.01, eps=1e-6):
-#        bcpnn_params=None, dt=1., fmax=1000.):

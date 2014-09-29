@@ -17,17 +17,28 @@ import simulation_parameters
 #pylab.rcParams.update(FigureCreator.plot_params)
 
 
-def create_K_vector(params, it_range, dt=0.1):
+def create_K_vector(params, it_range, dt=0.1, tgt_cell_type='d1'):
 
     rewards = np.loadtxt(params['rewards_given_fn']) 
+    if it_range[1] > params['n_iterations']:
+        print 'Artificially extending the reward signal for computing longer traces'
+        rewards = np.r_[rewards, np.ones(it_range[1] - params['n_iterations'])]
     print 'rewards', rewards
     t_max = it_range[1] * params['t_iteration']
     n = np.int(t_max/ dt) + 1 # +1 because the length needs to be the same computed in the BCPNN module after convert_spiketrain_to_trace
     K_vec = np.zeros(n)
     for it_ in xrange(it_range[0], it_range[1]):
-        idx_1 = np.int(it_ * params['t_iteration'])
-        idx_2 = np.int((it_ + 1) * params['t_iteration'])
-        K_vec[idx_1:idx_2] = rewards[it_]
+        idx_1 = np.int(it_ * params['t_iteration'] / dt)
+        idx_2 = np.int((it_ + 1) * params['t_iteration'] / dt)
+        if (rewards[it_] < 0) and tgt_cell_type == 'd1':
+            R = 0
+        elif (rewards[it_] < 0) and tgt_cell_type == 'd2':
+            R = -rewards[it_]
+        elif (rewards[it_] > 0) and tgt_cell_type == 'd2':
+            R = 0
+        else:
+            R = rewards[it_]
+        K_vec[idx_1:idx_2] = R * np.ones(idx_2 - idx_1)
     return K_vec            
 
 
@@ -36,8 +47,8 @@ if __name__ == '__main__':
 
     n_pre = 3
     n_post = 3
-    it_range_cell_selection = (1, 2)
-    it_range_plotting = (0, 4)
+    it_range_cell_selection = (0, 2)
+#    it_range_plotting = (0, 24)
     output_fn = None 
     info_txt = None
 
@@ -48,6 +59,10 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
+    # checks:
+    it_range_plotting = (0, params['n_iterations'])
+    assert (it_range_plotting[1] <= params['n_iterations']) and (it_range_cell_selection[1] <= it_range_plotting[1]), 'Given iteration ranges are larger than simulated data'
+
     # merge spike files if needed
     cell_type_post = 'd2'
     dt = params['dt']
@@ -57,12 +72,9 @@ if __name__ == '__main__':
         utils.merge_spikes(params)
 
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
-    bcpnn_params['tau_p'] = 1500.
+#    bcpnn_params['tau_p'] = 5.
 
     K_vec = create_K_vector(params, it_range_plotting, dt=0.1)
-#    print 'debug K_vec', K_vec
-#    print 'debug K_vec', K_vec.nonzero()[0], len(K_vec)
-#    exit(1)
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
     pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range_cell_selection)
@@ -75,7 +87,12 @@ if __name__ == '__main__':
 #        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
         info_txt = 'Pre: %d  Post: %d' % (gid_pairs[i_][0], gid_pairs[i_][1])
         fig = TP.plot_trace(traces, bcpnn_params, dt, output_fn=output_fn, info_txt=info_txt, fig=fig)
+
+    output_fn = params['figures_folder'] + 'bcpnn_trace_RBL_taup%d.png' % bcpnn_params['tau_p']
+    pylab.savefig(output_fn, dpi=200)
+
     pylab.show()
+
     
 #     load spike files 
 #    print 'Loading spike data from:', fn_pre, '\n', fn_post

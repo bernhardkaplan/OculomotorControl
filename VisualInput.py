@@ -2,6 +2,7 @@ import numpy as np
 import json
 import utils
 import random
+from copy import deepcopy
 
 class VisualInput(object):
 
@@ -12,7 +13,6 @@ class VisualInput(object):
         """
         self.params = params
         self.trajectories = []
-        self.t_axis = np.arange(0, self.params['t_iteration'], self.params['dt'])
         self.iteration = 0
         self.t_current = 0 # stores the 'current' time
         if visual_stim_seed == None:
@@ -48,7 +48,6 @@ class VisualInput(object):
 
 
         self.x0_stim = np.zeros(self.params['n_iterations'])
-        self.perceived_states = np.zeros((self.params['n_iterations'], 4))
 
         self.current_motion_params = list(self.params['initial_state'])
         # store the motion parameters seen on the retina
@@ -101,6 +100,50 @@ class VisualInput(object):
 
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
+
+
+    def create_training_sequence_RBL(self, BG):
+
+        n_stim = self.params['n_training_stim_per_cycle'] * self.params['n_training_cycles']
+        all_mp = np.zeros((n_stim, 4))
+
+        stim_params = list(self.params['initial_state'])
+        i_stim = 0
+        for i_cycle in xrange(self.params['n_training_cycles']):
+            for i_ in xrange(self.params['n_training_stim_per_cycle']):
+                all_mp[i_stim, :] = deepcopy(stim_params)
+                if i_ % self.params['suboptimal_training'] == 1:
+                    (required_v_eye, v_y, action_idx) = BG.get_non_optimal_action_for_stimulus(stim_params)
+                else:
+                    (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
+                    action_v = [required_v_eye, 0.]
+                    stim_params = utils.get_next_stim(self.params, stim_params, required_v_eye)
+                    stim_params = list(stim_params)
+                i_stim += 1
+            # get start position some where in the periphery
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                stim_params[0] = self.RNG.uniform(.6, 1.)
+            else:
+                stim_params[0] = self.RNG.uniform(0, .4)
+            # sample stimulus speed from tuning properties
+            stim_params[2] = self.tuning_prop_exc[self.RNG.choice(self.tuning_prop_exc[:, 0].size), 2]
+
+        return all_mp
+
+#        training_stimuli_sample = self.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
+#        training_stimuli_grid = self.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
+#        training_stimuli_center = self.create_training_sequence_around_center()   # sample more from the center in order to reduce risk of overtraining action 0 and v_x_max
+#        training_stimuli = np.zeros((self.params['n_stim_training'], 4))
+#        n_grid = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_from_grid']))
+#        n_center = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_center']))
+#        random.seed(self.params['visual_stim_seed'])
+#        np.random.seed(self.params['visual_stim_seed'])
+#        training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(self.params['n_stim_training']), n_grid), :]
+#        training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
+#        training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(self.params['n_stim_training']), self.params['n_stim_training'] - n_grid - n_center), :]
+#        np.savetxt(self.params['training_sequence_fn'], training_stimuli)
+#        return training_stimuli
 
 
     def create_training_sequence_from_a_grid(self):
@@ -207,73 +250,29 @@ class VisualInput(object):
         return mp_training 
 
 
-    def compute_input(self, local_gids, action_code):
+    def compute_input(self, local_gids, v_eye):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
         Arguments:
         local_gids -- the GIDS for which the stimulus needs to be computed
-        action_code -- a tuple representing the action (direction of eye movement)
+        v_eye -- a tuple representing the action (direction of eye movement)
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-#        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(action_code)
-        self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(action_code)
+#        print 'DEBUG VI compute_input action iteration %d current_motion_params' % self.iteration, self.current_motion_params, ' action:', v_eye
+#        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(v_eye)
+        self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(v_eye)
         self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
-        # update the position of the stimulus regardless of the action
-        self.current_motion_params[0] += (self.current_motion_params[2] + action_code[0]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
-        self.current_motion_params[1] += (self.current_motion_params[3] + action_code[1]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
+        # stimulus parameter update is done in update_stimulus_trajectory_static
+#        self.current_motion_params[0] += (self.current_motion_params[2] + v_eye[0]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
+#        self.current_motion_params[1] += (self.current_motion_params[3] + v_eye[1]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
         self.iteration += 1
         return self.stim, supervisor_state
 
 
-    def get_reward_from_perceived_stim(self, perceived_state):
-        """
-        Computes the reward based on the internal states of the MPN (motion-perception / prediction network).
-        Must be called after a simulation step.
-        Also, compute_input increase self.iteration to + 1 (hence an addition -1 is used here)
-        perceived_state -- is a 4-element list of the vector-average resembling [x, y, u, v]
-        """
-        self.perceived_states[self.iteration-1] = perceived_state
-        punish_overshoot = .7
-        learning_rate = 10.
-        if self.iteration < 2:
-            return 0
-        else:
-            x, y, v, u = perceived_state
-            dx_i = self.perceived_states[self.iteration - 2][0] - .5 # -2 and -1 because self.iteration is + 1 (because compute_input has been called before)
-            dx_j = self.perceived_states[self.iteration - 1][0] - .5
-            dx_i_abs = np.abs(dx_i)
-            dx_j_abs = np.abs(dx_j)
-            diff_dx_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement
-            R = -1 * learning_rate * diff_dx_abs
-            if np.sign(dx_i) != np.sign(dx_j): # 'overshoot'
-                R *= punish_overshoot
-        return R
-
-
-    def get_reward_from_real_stim_pos(self):
-        """
-        Computes the reward based on the REAL WORLD coordinates of the stimulus.
-        Should be called after compute_input.
-        Hence self.iteration in this function is always + 1.
-        """
-        punish_overshoot = .7
-        learning_rate = 30.
-        if self.iteration < 2:
-            return 0
-        else:
-            dx_i = self.x0_stim[self.iteration - 2] - .5 # -2 and -1 because self.iteration is + 1 (because compute_input has been called before)
-            dx_j = self.x0_stim[self.iteration - 1] - .5
-            dx_i_abs = np.abs(dx_i)
-            dx_j_abs = np.abs(dx_j)
-            diff_dx_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement
-            R = -1 * learning_rate * diff_dx_abs
-            if np.sign(dx_i) != np.sign(dx_j): # 'overshoot'
-                R *= punish_overshoot
-        return R
 
 
     def get_supervisor_actions(self, training_stimuli, BG):
@@ -477,12 +476,14 @@ class VisualInput(object):
         """
         n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
-        x_stim = self.current_motion_params[0] - (v_eye[0] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[2]) / self.params['t_cross_visual_field']
-        y_stim = self.current_motion_params[1] - (v_eye[1] * self.params['t_iteration'] * np.ones(n_steps) + time_axis * self.current_motion_params[3]) / self.params['t_cross_visual_field']
+
+        x_stim = self.current_motion_params[0] + (time_axis * self.current_motion_params[2] - v_eye[0] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
+        y_stim = self.current_motion_params[1] + (time_axis * self.current_motion_params[3] - v_eye[1] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
 
         trajectory = (x_stim, y_stim)
-        self.current_motion_params[0] = x_stim[0]
-        self.current_motion_params[1] = y_stim[0]
+        self.current_motion_params[0] = deepcopy(x_stim[-1])
+        self.current_motion_params[1] = deepcopy(y_stim[-1])
+#        print 'DEBUG VI update_stimulus_trajectory_static end', self.current_motion_params
         # compute the supervisor signal taking into account:
         # - the trajectory position at the end of the iteration
         # - the knowledge about the motion (current_motion_params
@@ -519,12 +520,10 @@ class VisualInput(object):
         # update the current motion parameters based on the action that was selected for this iteration
         self.current_motion_params[0] = x_stim[-1]
         self.current_motion_params[1] = y_stim[-1]
-        # TODO: try this in addition
 
         # compute the supervisor signal taking into account:
         # - the trajectory position at the end of the iteration
         # - the knowledge about the motion (current_motion_params
-        # - and / or the 
         delta_x_end = (x_stim[-1] - .5)
         delta_y_end = (y_stim[-1] - .5)
         delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
