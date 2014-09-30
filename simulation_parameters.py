@@ -39,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 20 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         """
@@ -67,7 +67,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 3 # for RBL: 1 test,  n_trainin_x - 2 training, 1 test  stimulus
+        self.params['n_training_x'] = 7 # for RBL
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
@@ -89,7 +89,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         self.params['n_silent_iterations'] = 2 # should be at least 2
-        self.params['n_iterations_RBL_retraining'] = 4
+        self.params['n_iterations_RBL_retraining'] = 5
         if self.params['training']:
             if self.params['reward_based_learning']:
                 self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations'] + self.params['n_iterations_RBL_retraining'] 
@@ -387,7 +387,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.20
 
         #Connections Actions and States to RP
-        self.tau_i = 10.
+        self.tau_i = 100.
         self.tau_j = 5.
         self.tau_e = 50.
 #        self.au_p = max(1000., self.params['t_sim'])
@@ -414,11 +414,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # gain parameters
         self.params['gain_d1_d1'] = 0.
         self.params['gain_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 0.05
-        self.params['gain_MT_d2'] = 0.05
+        self.params['gain_MT_d1'] = 1.0
+        self.params['gain_MT_d2'] = 1.0
         self.params['bias_gain'] = 0.
-        self.params['d1_gain_after_training'] = 10.
-        self.params['d2_gain_after_training'] = 10.
+        self.params['d1_gain_after_training'] = 1.
+        self.params['d2_gain_after_training'] = 1.
 
 
         # #####################################
