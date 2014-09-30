@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # load BG cell gids
     f = file(params['bg_gids_fn'], 'r')
     bg_gids = json.load(f) 
-    action_idx = 9
+    action_idx = 16
     post_gids = bg_gids[cell_type_post][action_idx]
     print 'Plotting post gids:', post_gids
     n_post = len(post_gids)
@@ -81,10 +81,10 @@ if __name__ == '__main__':
 
     bcpnn_params['fmax'] = 200.
     try:
-        bcpnn_params['tau_p'] = float(sys.argv[5])
-        bcpnn_params['tau_e'] = float(sys.argv[4])
-        bcpnn_params['tau_j'] = float(sys.argv[3])
         bcpnn_params['tau_i'] = float(sys.argv[2])
+        bcpnn_params['tau_j'] = float(sys.argv[3])
+        bcpnn_params['tau_e'] = float(sys.argv[4])
+        bcpnn_params['tau_p'] = float(sys.argv[5])
         bcpnn_params['gain'] = 1.
         show = False
     except:
@@ -100,6 +100,7 @@ if __name__ == '__main__':
     pre_gids = list(pre_gids)
     pre_gids.reverse()
     print 'Plotting %d pre gids:' % (len(pre_gids)), pre_gids
+    print 'Plotting %d post gids (action_idx: %d):' % (len(post_gids), action_idx), post_gids
 
     
     # filter all_spikes for gids
@@ -132,7 +133,7 @@ if __name__ == '__main__':
         s_post = BCPNN.convert_spiketrain_to_trace(time_filtered_spikes_post , t_range_bcpnn_computations[1])
 
         wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, params['params_synapse_%s_MT_BG' % cell_type_post], \
-                K_vec=K_vec, w_init=1.)
+                K_vec=K_vec, w_init=.0)
         bcpnn_traces.append([wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, s_pre, s_post])
 
     # plotting 

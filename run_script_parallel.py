@@ -15,7 +15,7 @@ except:
 
 
 t0 = time.time()
-argv_1 = 'Training_RBL_titer25__2_nStim1x3_taup50000_gain0.05'
+argv_1 = 'Training_RBL_3_titer25__3_nStim2x3_taup50000_gain0.05'
 cmd = 'python PlottingScripts/tune_bcpnn_trace_params.py'
 
 list_of_jobs = []

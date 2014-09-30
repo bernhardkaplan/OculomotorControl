@@ -49,13 +49,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-        self.params['training'] = True
-        self.params['reward_based_learning'] = True
-#        self.params['training'] = False
-#        self.params['reward_based_learning'] = False
+#        self.params['training'] = True
+#        self.params['reward_based_learning'] = True
+        self.params['training'] = False
+        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         """
@@ -120,10 +120,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if self.params['training']:
             self.params['n_stim'] = self.params['n_stim_training']
+            if self.params['reward_based_learning']:
+                self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim'] + 1 # + 1 extra iteration to trigger pre-synaptic spikes in all cells
+            else:
+                self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
         else:
             self.params['n_stim'] = self.params['n_stim_testing']
-        self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
-        self.params['t_sim'] = (self.params['n_iterations_per_stim']) * self.params['t_iteration'] * self.params['n_stim'] # [ms] total simulation time 
+            self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
+        self.params['t_sim'] = (self.params['n_iterations']) * self.params['t_iteration'] # [ms] total simulation time 
         self.params['dt'] = 0.1            # [ms] simulation time step
         self.params['dt_input_mpn'] = 0.1  # [ms] time step for the inhomogenous Poisson process for input spike train generation
         self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
@@ -387,7 +391,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['random_connect_voltmeter'] = 0.20
 
         #Connections Actions and States to RP
-        self.tau_i = 10.
+        self.tau_i = 100.
         self.tau_j = 5.
         self.tau_e = 50.
 #        self.au_p = max(1000., self.params['t_sim'])
@@ -414,8 +418,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # gain parameters
         self.params['gain_d1_d1'] = 0.
         self.params['gain_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 0.05
-        self.params['gain_MT_d2'] = 0.05
+        self.params['gain_MT_d1'] = 1.0
+        self.params['gain_MT_d2'] = 1.0
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 10.
         self.params['d2_gain_after_training'] = 10.
@@ -558,7 +562,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 6.
+        self.params['str_to_output_exc_w'] = 7.
         self.params['str_to_output_inh_w'] = -6.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.

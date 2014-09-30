@@ -290,6 +290,22 @@ class RewardBasedLearning(object):
             self.iteration_cnt += 1
 
 
+    def trigger_pre_spikes(self):
+        # -------------------------------
+        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., 0., 0.)
+        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, 0., 0., 0.)
+        self.VI.current_motion_params = deepcopy(stim_params)
+
+        self.BG.stop_supervisor()
+        self.BG.stop_efference_copy()
+        stim = self.VI.spikes_for_all(self.MT.local_idx_exc)
+        self.MT.update_input(stim) 
+        if params['debug_mpn']:
+            print 'Saving spike trains...'
+            utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
+        nest.Simulate(self.params['t_iteration'])
+        self.iteration_cnt += 1
+
 
     def set_up_data_structures(self):
         """
@@ -409,7 +425,7 @@ if __name__ == '__main__':
 
     stim_cnt = 0
     stim_params = list(params['initial_state'])
-    for i_cycle in xrange(params['n_training_cycles'] - 1):
+    for i_cycle in xrange(params['n_training_cycles']):
         # one full stimulus 'cycle'
         for iter_stim in xrange(params['n_training_stim_per_cycle']):
             RBL.motion_params[stim_cnt, :4] = deepcopy(stim_params)
@@ -429,36 +445,29 @@ if __name__ == '__main__':
             RBL.train_doing_action_with_supervisor(RBL.motion_params[stim_cnt, :4], action_v, v_eye=[0., 0.])
             stim_cnt += 1
             
-
-            # use the initial stimulus parameters 
-    #        stim_params = deepcopy(RBL.training_stimuli[iter_stim, :])
-#            stim_params = deepcopy(RBL.training_stimuli[0, :])
-#            (required_v_eye, v_y, action_idx) = RBL.BG.get_optimal_action_for_stimulus(stim_params)
-#            action_v = [required_v_eye, 0.]
-#            print 'DEBUG required_v_eye', required_v_eye
-#            RBL.train_doing_action_with_supervisor(stim_params, action_v, v_eye=[0., 0.])
-
     print 'DEBUG stim_type:', stim_type
     print 'DEBUG d1_actions_trained', d1_actions_trained
     print 'DEBUG d2_actions_trained', d2_actions_trained
     print 'DEBUG all_actions_trained', all_actions_trained
 
+    # in order to update the weights, switch off kappa and trigger pre-synaptic spikes in ALL cells
     # TESTING: one cycle
-    for iter_stim in xrange(params['n_training_stim_per_cycle']):
-        # use the initial stimulus parameters 
-        stim_params = deepcopy(RBL.training_stimuli[iter_stim, :])
-#        stim_params = deepcopy(RBL.training_stimuli[0, :])
-#        (required_v_eye, v_y, action_idx) = RBL.BG.get_optimal_action_for_stimulus(stim_params)
-#        action_v = [required_v_eye, 0.]
-#        print 'DEBUG required_v_eye', required_v_eye
-        RBL.run_test(stim_params)
+    RBL.trigger_pre_spikes()
+
+#    for iter_stim in xrange(params['n_training_stim_per_cycle']):
+#        stim_params = deepcopy(RBL.training_stimuli[iter_stim, :])
+#        RBL.run_test(stim_params)
 
     RBL.save_data_structures()
     CC.get_weights(RBL.MT, RBL.BG)
 
     if pc_id == 0:
-        run_plot_bg(params, (0, params['n_stim']))
-        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(params['n_stim'])])
+        if params['n_stim'] > 20:
+            n_stim = 20
+        else:
+            n_stim = params['n_stim']
+        run_plot_bg(params, (0, n_stim))
+        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(n_stim)])
         MAC = MetaAnalysisClass([params['folder_name']])
         run_plot_bg(params, None)
 
