@@ -98,7 +98,7 @@ class RewardBasedLearning(object):
         # inherent activity forwarded from D1 and D2 driven by the stimulus
         # as long as BG.supervised_training is called, other actions != the chosen action will have zero activity
         (action_index_x, action_index_y) = self.BG.supervised_training(action_v)
-        print 'DEBUG train_doing_action_with_supervisor: action=', action_v, ' has been mapped to action_idx:', action_index_x
+        #print 'DEBUG train_doing_action_with_supervisor: action=', action_v, ' has been mapped to action_idx:', action_index_x
         if params['debug_mpn']:
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
@@ -116,7 +116,7 @@ class RewardBasedLearning(object):
         R = self.BG.get_reward_from_action(action_index_x, self.motion_params[self.iteration_cnt, :4], training=True)
         self.rewards[self.iteration_cnt + 1] = R # + 1 because the reward will affect the next iteration
         self.iteration_cnt += 1
-        print 'DEBUG R = ', R
+        #print 'DEBUG R = ', R
 
         #####
         # 2 #   E M P T Y    I N P U T 

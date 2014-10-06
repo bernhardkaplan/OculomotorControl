@@ -39,18 +39,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 120
+            self.params['total_num_virtual_procs'] = 40
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-#        self.params['training'] = True
-#        self.params['reward_based_learning'] = True
+        #self.params['training'] = True
+        #self.params['reward_based_learning'] = True
         self.params['training'] = False
         self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
@@ -67,7 +67,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 3 # for RBL: 1 test,  n_trainin_x - 2 training, 1 test  stimulus
+        self.params['n_training_x'] = 7 # for RBL
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
@@ -89,7 +89,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         self.params['n_silent_iterations'] = 2 # should be at least 2
-        self.params['n_iterations_RBL_retraining'] = 4
+        self.params['n_iterations_RBL_retraining'] = 5
         if self.params['training']:
             if self.params['reward_based_learning']:
                 self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations'] + self.params['n_iterations_RBL_retraining'] 

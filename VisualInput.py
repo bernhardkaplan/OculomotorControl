@@ -903,7 +903,7 @@ class VisualInput(object):
             self.stim[i_] = []
             for i_spike in xrange(n_spikes_trigger):
                 self.stim[i_].append(self.t_current + i_spike * self.params['dt'])
-            print 'DEBUG self.stim[%d]: ' % (i_), self.stim[i_]
+            #print 'DEBUG self.stim[%d]: ' % (i_), self.stim[i_]
         self.t_current += self.params['t_iteration']
         self.iteration += 1
         return self.stim
