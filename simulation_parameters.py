@@ -43,21 +43,22 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 40
+            self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-        #self.params['training'] = True
-        #self.params['reward_based_learning'] = True
-        self.params['training'] = False
-        self.params['reward_based_learning'] = False
+        self.params['training'] = True
+        self.params['reward_based_learning'] = True
+        #self.params['training'] = False
+        #self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 30 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
+        # for RBL n_training_cycles stands for the number of different stimuli presented
         """
          for normal training n_training_x/v is the number of training samples to cover the x-direction of the tuning space
          for reward based learning (RBL) two modes are possible:
@@ -79,7 +80,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 2)
+        self.params['test_stim_range'] = range(0, 5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -418,7 +419,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['kappa'] = self.K
 
         # gain parameters
-        self.params['gain_d1_d1'] = 0.
+        self.params['gain_d1_d1'] = 1.
         self.params['gain_d2_d2'] = 0.
         self.params['gain_MT_d1'] = 1.5
         self.params['gain_MT_d2'] = 1.0
