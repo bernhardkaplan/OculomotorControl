@@ -894,6 +894,21 @@ class VisualInput(object):
         self.pc_id = pc_id
 
 
+
+    def spikes_for_all(self, local_gids):
+        local_gids = np.array(local_gids)
+        n_spikes_trigger = np.int(100. / self.params['w_input_exc_mpn'])
+
+        for i_ in xrange(len(local_gids)):
+            self.stim[i_] = []
+            for i_spike in xrange(n_spikes_trigger):
+                self.stim[i_].append(self.t_current + i_spike * self.params['dt'])
+            #print 'DEBUG self.stim[%d]: ' % (i_), self.stim[i_]
+        self.t_current += self.params['t_iteration']
+        self.iteration += 1
+        return self.stim
+
+
     def create_dummy_stim(self, local_gids, action_code=0):
         """
         Keyword arguments:

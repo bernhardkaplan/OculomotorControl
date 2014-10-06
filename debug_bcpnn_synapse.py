@@ -23,9 +23,9 @@ nest.ConvergentConnect(nrns, exc_spike_recorder)
 
 source_0 = nest.Create('spike_generator', 1)
 # pre synaptic spikes
-spike_times_0 = np.array([50., 100., 300., 350., 400.])
+spike_times_0 = np.array([50., 70., 100., 300., 350., 400.])
 # post synaptic spikes 
-spike_times_1 = np.array([51., 101., 201., 221., 231., 241., 300., 350., 400.])
+spike_times_1 = np.array([51., 71., 101., 201., 221., 231., 241., 300., 350., 400.])
 nest.SetStatus(source_0, {'spike_times' : spike_times_0})
 
 delta_t = 3.
@@ -70,7 +70,7 @@ nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': .7, 'gain': 0., 
 
 nest.Simulate(50.)
 t_sim_total += 50.
-nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': .3, 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
+nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': .6, 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
 nest.Simulate(50.)
 t_sim_total += 50.
 #nest.Simulate(80.)
@@ -78,8 +78,8 @@ t_sim_total += 50.
 # 250 - 350
 # Kappa OFF + correlated activity
 #nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 1., 'gain': 0.})
-nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 0.1, 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
-t_sim = 100. - 42.5
+nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 0.0, 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
+t_sim = 100.# - 42.5
 t_sim_total += t_sim
 nest.Simulate(t_sim)
 print 't_sim_total:', t_sim_total

@@ -58,7 +58,7 @@ if __name__ == '__main__':
     folder_name += '_wout%d-%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e/' % \
             (testing_params['str_to_output_exc_w'], testing_params['str_to_output_inh_w'], \
             testing_params['d1_d1_weight_amplification_pos'], testing_params['d1_d1_weight_amplification_neg'], \
-                    testing_params['mpn_d1_weight_amplification'], testing_params['mpn_d2_weight_amplification'], testing_params['mpn_bg_bias_amplification'])
+                    testing_params['mpn_d1_weight_amplification'], testing_params['mpn_d2_weight_amplification'], testing_params['bias_gain'])
     GP.set_filenames(folder_name)
     testing_params['folder_name'] = folder_name
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
 #                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], network_states_net[iteration_cnt, :])
 
             if testing_params['debug_mpn']:
-                print 'Iteration %d: Saving spike trains...' % iteration_cnt
+                #print 'Iteration %d: Saving spike trains...' % iteration_cnt
                 save_spike_trains(testing_params, iteration_cnt, stim, MT.local_idx_exc)
             MT.update_input(stim)
             if comm != None:
@@ -161,11 +161,11 @@ if __name__ == '__main__':
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 
             network_states_net[iteration_cnt, :] = state_
-            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
+            #print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
 
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
             actions[iteration_cnt + 1, :] = next_action
-            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
+            #print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             iteration_cnt += 1
             if comm != None:
                 comm.Barrier()
