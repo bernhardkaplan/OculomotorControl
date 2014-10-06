@@ -326,6 +326,30 @@ class CreateConnections(object):
 
 
 
+    def get_d2_d2_weights(self, BG):
+        D2_conns = ''
+        for i_ in xrange(self.params['n_actions']):
+            for j_ in xrange(self.params['n_actions']):
+                print 'CreateConnections.get_d2_d2_weights action %d - %d '% (i_, j_)
+                conns = nest.GetConnections(BG.strD2[i_], BG.strD2[j_], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
+#                print 'DEBUG conns:', conns
+                for c in conns:
+                    cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                    if (cp[0]['synapse_model'] == 'bcpnn_synapse'):
+                        pi = cp[0]['p_i']
+                        pj = cp[0]['p_j']
+                        pij = cp[0]['p_ij']
+                        w = np.log(pij / (pi * pj))
+                        w_ = self.clip_weight(w, self.params['clip_weights_d2_d2'], self.params['weight_threshold_abstract_d2_d2'])
+                        if w_: # ignore the positive weights between d2 neurons
+                            D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_)
+
+        fn_out = self.params['d2_d2_conn_fn_base'] + '%d.txt' % (self.pc_id)
+        D2_f = file(fn_out, 'w')
+        D2_f.write(D2_conns)
+        D2_f.close()
+
+
 
     def set_pc_id(self, pc_id):
         self.pc_id = pc_id

@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         """
@@ -79,7 +79,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['test_stim_range'] = range(0, 2)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -107,12 +107,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['connect_d1_after_training'] = False
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
         self.params['clip_weights_mpn_d2'] = self.params['clip_weights_mpn_d1']
-        self.params['clip_weights_d1_d1'] = True # only for VisualLayer --> D1 weights
+        self.params['clip_weights_d1_d1'] = False # only for VisualLayer --> D1 weights
+        self.params['clip_weights_d2_d2'] = False # only for VisualLayer --> D1 weights
         self.params['weight_threshold_abstract_mpn_d1'] = (.05, False)  # (value for thresholding, absolute_values considered for thresholding)
         # if (THRESH, True) --> (abs(x)>thresh, -x) after thresholding abstract weights can contain also negative weights abs(w) > THRESH
         # if (THRESH, False) --> (x > thresh, x) x > 0 after thresholding abstract weights are all positive and > THRESH
         self.params['weight_threshold_abstract_mpn_d2'] = self.params['weight_threshold_abstract_mpn_d1']
         self.params['weight_threshold_abstract_d1_d1'] = (.05, True)  # (value for thresholding, absolute_values considered for thresholding)
+        self.params['weight_threshold_abstract_d2_d2'] = (.05, True)  # (value for thresholding, absolute_values considered for thresholding)
 
         # For reward-based learning:
 #        self.params['load_mpn_d1_weights'] = False
@@ -142,11 +144,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if non-zero and reward_based_learning == False then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
-            self.params['sim_id'] = 'RndWinit_%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
+            self.params['sim_id'] = '%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
             if (self.params['reward_based_learning']):
                 self.params['sim_id'] = 'RBL_%d_titer%d_' % (self.params['suboptimal_training'], self.params['t_iteration'])
         else:
-            self.params['sim_id'] = 'RndWInit_%d_' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -418,11 +420,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # gain parameters
         self.params['gain_d1_d1'] = 0.
         self.params['gain_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 1.0
+        self.params['gain_MT_d1'] = 1.5
         self.params['gain_MT_d2'] = 1.0
         self.params['bias_gain'] = 0.
-        self.params['d1_gain_after_training'] = 10.
-        self.params['d2_gain_after_training'] = 10.
+        self.params['d1_gain_after_training'] = 1.
+        self.params['d2_gain_after_training'] = 1.
 
 
         # #####################################
@@ -562,7 +564,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 7.
+        self.params['str_to_output_exc_w'] = 8.
         self.params['str_to_output_inh_w'] = -6.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
@@ -693,6 +695,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connections.txt'
         self.params['d1_d1_conn_fn_base'] = self.params['connections_folder'] + 'd1_d1_connections'
         self.params['d1_d1_merged_conn_fn'] = self.params['connections_folder'] + 'merged_d1_d1_connections.txt'
+        self.params['d2_d2_conn_fn_base'] = self.params['connections_folder'] + 'd2_d2_connections'
+        self.params['d2_d2_merged_conn_fn'] = self.params['connections_folder'] + 'merged_d2_d2_connections.txt'
 
         self.params['initial_weight_matrix_d1'] = self.params['connections_folder'] + 'w_init_d1.txt'
         self.params['initial_weight_matrix_d2'] = self.params['connections_folder'] + 'w_init_d2.txt'

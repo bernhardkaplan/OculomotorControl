@@ -431,16 +431,15 @@ if __name__ == '__main__':
             RBL.motion_params[stim_cnt, :4] = deepcopy(stim_params)
             if iter_stim % params['suboptimal_training'] == 1:
                 (required_v_eye, v_y, action_idx) = RBL.BG.get_non_optimal_action_for_stimulus(stim_params)
-                action_v = [required_v_eye, 0.]
                 stim_type.append(2)
                 d2_actions_trained.append(action_idx)
             else:
                 (required_v_eye, v_y, action_idx) = RBL.BG.get_optimal_action_for_stimulus(stim_params)
                 stim_type.append(1)
-                action_v = [required_v_eye, 0.]
                 stim_params = utils.get_next_stim(params, stim_params, required_v_eye)
                 stim_params = list(stim_params)
                 d1_actions_trained.append(action_idx)
+            action_v = [required_v_eye, 0.]
             all_actions_trained.append(action_idx)
             RBL.train_doing_action_with_supervisor(RBL.motion_params[stim_cnt, :4], action_v, v_eye=[0., 0.])
             stim_cnt += 1
@@ -460,6 +459,8 @@ if __name__ == '__main__':
 
     RBL.save_data_structures()
     CC.get_weights(RBL.MT, RBL.BG)
+    CC.get_d1_d1_weights(RBL.BG)
+    CC.get_d2_d2_weights(RBL.BG)
 
     if pc_id == 0:
         if params['n_stim'] > 20:
