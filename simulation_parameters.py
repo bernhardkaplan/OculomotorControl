@@ -43,7 +43,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 40
+            self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 60
         self.params['n_v'] = 60
 #        self.params['n_rf'] = 40
@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         """

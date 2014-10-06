@@ -107,14 +107,14 @@ class VisualInput(object):
         training_stimuli_sample = self.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
         training_stimuli_grid = self.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
         training_stimuli_center = self.create_training_sequence_around_center()   # sample more from the center in order to reduce risk of overtraining action 0 and v_x_max
-        training_stimuli = np.zeros((self.params['n_stim_training'], 4))
+        self.training_stimuli = np.zeros((self.params['n_stim_training'], 4))
         n_grid = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_from_grid']))
         n_center = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_center']))
         random.seed(self.params['visual_stim_seed'])
         np.random.seed(self.params['visual_stim_seed'])
-        training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(self.params['n_stim_training']), n_grid), :]
-        training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
-        training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(self.params['n_stim_training']), self.params['n_stim_training'] - n_grid - n_center), :]
+        self.training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(self.params['n_stim_training']), n_grid), :]
+        self.training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
+        self.training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(self.params['n_stim_training']), self.params['n_stim_training'] - n_grid - n_center), :]
 
         n_stim = self.params['n_training_stim_per_cycle'] * self.params['n_training_cycles']
         all_mp = np.zeros((n_stim, 4))
@@ -132,7 +132,7 @@ class VisualInput(object):
                 else:
                     stim_params[0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
                 # take the new stimulus from the mixed distribution as derived above
-                stim_params[2] = training_stimuli[v_stim_cnt, 2]
+                stim_params[2] = self.training_stimuli[v_stim_cnt, 2]
 
                 for i_x in xrange(self.params['n_training_x']):
                     for i_neg in xrange(self.params['suboptimal_training']):
