@@ -104,49 +104,56 @@ class VisualInput(object):
 
     def create_training_sequence_RBL(self, BG):
 
+        training_stimuli_sample = self.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
+        training_stimuli_grid = self.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
+        training_stimuli_center = self.create_training_sequence_around_center()   # sample more from the center in order to reduce risk of overtraining action 0 and v_x_max
+        training_stimuli = np.zeros((self.params['n_stim_training'], 4))
+        n_grid = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_from_grid']))
+        n_center = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_center']))
+        random.seed(self.params['visual_stim_seed'])
+        np.random.seed(self.params['visual_stim_seed'])
+        training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(self.params['n_stim_training']), n_grid), :]
+        training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
+        training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(self.params['n_stim_training']), self.params['n_stim_training'] - n_grid - n_center), :]
+
         n_stim = self.params['n_training_stim_per_cycle'] * self.params['n_training_cycles']
         all_mp = np.zeros((n_stim, 4))
 
-        stim_params = list(self.params['initial_state'])
         i_stim = 0
+        v_stim_cnt = 0
         for i_cycle in xrange(self.params['n_training_cycles']):
-            for i_ in xrange(self.params['n_training_stim_per_cycle']):
-                all_mp[i_stim, :] = deepcopy(stim_params)
-                if i_ % self.params['suboptimal_training'] == 1:
-                    (required_v_eye, v_y, action_idx) = BG.get_non_optimal_action_for_stimulus(stim_params)
-                else:
-                    (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
-                    action_v = [required_v_eye, 0.]
-                    stim_params = utils.get_next_stim(self.params, stim_params, required_v_eye)
-                    stim_params = list(stim_params)
-                i_stim += 1
-            # get start position some where in the periphery
-            pm = utils.get_plus_minus(self.RNG)
-            if pm > 0:
-                stim_params[0] = self.RNG.uniform(.6, 1.)
-            else:
-                stim_params[0] = self.RNG.uniform(0, .4)
-            # sample stimulus speed from tuning properties
-            stim_params[2] = self.tuning_prop_exc[self.RNG.choice(self.tuning_prop_exc[:, 0].size), 2]
+            for i_v in xrange(self.params['n_training_v']):
 
+                stim_params = [0., 0.5, 0., 0.]
+                # get start position some where in the periphery
+                pm = utils.get_plus_minus(np.random)
+                if pm > 0:
+                    stim_params[0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+                else:
+                    stim_params[0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+                # take the new stimulus from the mixed distribution as derived above
+                stim_params[2] = training_stimuli[v_stim_cnt, 2]
+
+                for i_x in xrange(self.params['n_training_x']):
+                    for i_neg in xrange(self.params['suboptimal_training']):
+                        (required_v_eye, v_y, action_idx) = BG.get_non_optimal_action_for_stimulus(stim_params)
+                        all_mp[i_stim, :] = stim_params
+                        i_stim += 1
+
+                    # one training with the correct / optimal action
+                    (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
+                    all_mp[i_stim, :] = deepcopy(stim_params)
+                    stim_params = utils.get_next_stim(self.params, stim_params, required_v_eye) # follow the stimulus to the center and update the stim params with the new ones
+                    stim_params = list(stim_params)
+                    i_stim += 1
+                v_stim_cnt += 1
+
+        print 'Saving training sequence parameters to:', self.params['training_sequence_fn']
+        np.savetxt(self.params['training_sequence_fn'], all_mp)
         return all_mp
 
-#        training_stimuli_sample = self.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
-#        training_stimuli_grid = self.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
-#        training_stimuli_center = self.create_training_sequence_around_center()   # sample more from the center in order to reduce risk of overtraining action 0 and v_x_max
-#        training_stimuli = np.zeros((self.params['n_stim_training'], 4))
-#        n_grid = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_from_grid']))
-#        n_center = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_center']))
-#        random.seed(self.params['visual_stim_seed'])
-#        np.random.seed(self.params['visual_stim_seed'])
-#        training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(self.params['n_stim_training']), n_grid), :]
-#        training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
-#        training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(self.params['n_stim_training']), self.params['n_stim_training'] - n_grid - n_center), :]
-#        np.savetxt(self.params['training_sequence_fn'], training_stimuli)
-#        return training_stimuli
 
-
-    def create_training_sequence_from_a_grid(self):
+    def create_training_sequence_from_a_grid(self, n_stim=None):
         """
         Training samples are generated in a grid-like manner, i.e. random points from a grid on the tuning property space
         are drawn
@@ -154,7 +161,9 @@ class VisualInput(object):
         Returns n_cycles of state vectors, each cycle containing a set of n_training_stim_per_cycle states.
         The set of states is shuffled for each cycle.
         """
-        mp_training = np.zeros((self.params['n_stim_training'], 4))
+        if n_stim == None:
+            n_stim = self.params['n_stim_training']
+        mp_training = np.zeros((n_stim, 4))
 
         x_lim_frac = .9
         v_lim_frac = .8
@@ -165,9 +174,11 @@ class VisualInput(object):
         x_lim = ((1. - x_lim_frac) * (np.max(self.tuning_prop_exc[:, 0]) - np.min(self.tuning_prop_exc[:, 0])), x_lim_frac * np.max(self.tuning_prop_exc[:, 0]))
         v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
 
-        x_grid = np.linspace(x_lim[0], x_lim[1], self.params['n_training_x'])
+        if self.params['reward_based_learning']:
+            n_training_x = self.params['n_training_x'] * (self.params['suboptimal_training'] + 1)
+        x_grid = np.linspace(x_lim[0], x_lim[1], n_training_x)
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
-        training_states_x = range(0, self.params['n_training_x'])
+        training_states_x = range(0, n_training_x)
         training_states_v = range(0, self.params['n_training_v'])
         training_states = []
         for i_, x in enumerate(training_states_x):
@@ -192,7 +203,7 @@ class VisualInput(object):
                     plus_minus = utils.get_plus_minus(self.RNG)
                     mp_training[i_stim + i_, 2] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
                     mp_training[i_stim + i_, 3] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
-        print 'VisualInput saves training sequence parameters to:', self.params['training_sequence_fn']
+#        print 'VisualInput saves training sequence parameters to:', self.params['training_sequence_fn']
         np.savetxt(self.params['training_sequence_fn'], mp_training)
         return mp_training 
 
@@ -690,6 +701,8 @@ class VisualInput(object):
 
 
 #        print '------------------------------\nDEBUG'
+#        print 'v_rho:', v_rho
+#        print 'v_rho_half:', v_rho_half
 #        print 'n_rf_x: ', n_rf_x
 #        print 'n_rf_x_log: ', n_rf_x_log
 #        print 'n_rf_x_fovea: ', self.params['n_rf_x_fovea']
@@ -710,7 +723,8 @@ class VisualInput(object):
                     tuning_prop[index, 0] += self.RNG.normal(.0, self.params['sigma_rf_pos'] / 2) # add some extra noise to the neurons representing the fovea (because if their noise is only a percentage of their distance from the center, it's too small
                     tuning_prop[index, 0] = tuning_prop[index, 0] % 1.0
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
-                    tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
+#                    tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
+                    tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
                     self.rf_sizes[index, 0] = rf_sizes_x[i_RF]
                     self.rf_sizes[index, 2] = rf_sizes_v[i_v_rho]

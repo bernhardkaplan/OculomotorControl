@@ -41,11 +41,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = True
         self.params['Cluster_Milner'] = True
-        self.params['total_num_virtual_procs'] = 8
+        self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
-        self.params['n_rf'] = 50
-        self.params['n_v'] = 50
+        self.params['n_rf'] = 60
+        self.params['n_v'] = 60
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 30 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 3 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
@@ -68,15 +68,20 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 7 # for RBL
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
-        self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
+        self.params['n_training_x'] = 4 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
+        # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
+        self.params['n_training_v'] = 10 # number of training samples to cover the v-direction of the tuning space
+        self.params['suboptimal_training'] = 1
+        if self.params['reward_based_learning']:
+            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
+        else:
+            self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-        self.params['frac_training_samples_from_grid'] = .4
-        self.params['frac_training_samples_center'] = .4 # fraction of training samples drawn from the center
-        self.params['center_stim_width'] = .15 # width from which the center training samples are drawn
-        assert (1.0 > self.params['frac_training_samples_center'] + self.params['frac_training_samples_from_grid'])
-        # to generate the training samples, two methods are used: 1) sampling from the tuning properties, 2) sampling from a grid
+        self.params['frac_training_samples_from_grid'] = .0
+        self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
+        self.params['center_stim_width'] = .2 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
+        assert (1.0 >= self.params['frac_training_samples_center'] + self.params['frac_training_samples_from_grid'])
+        # to generate the training samples, three methods are used: 1) sampling from the tuning properties, 2) sampling from a grid  3) sampling nearby the center (as these stimuli occur more frequently)
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
@@ -141,7 +146,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['t_iter_training'] = 25
-        self.params['suboptimal_training'] = 3
         # if non-zero and reward_based_learning == False then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
