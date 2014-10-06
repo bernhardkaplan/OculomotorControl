@@ -92,7 +92,7 @@ class Plotter(object):
         n_dots = 100 # min(100, n_cells) # for one curve
 #        n_rnd = n_cells
 #        rnd_gids = np.random.randint(0, self.params['n_exc_mpn'], n_rnd)
-        rnd_gids = range(0, n_cells)
+        rnd_gids = np.random.choice(xrange(0, self.params['n_exc_mpn']), n_cells)
 
         color_code = self.tp[rnd_gids, idx]
         norm = matplotlib.colors.Normalize(vmin=color_code.min(), vmax=color_code.max())
@@ -220,8 +220,8 @@ if __name__ == '__main__':
     Plotter = Plotter(params)#, it_max=1)
     Plotter.plot_tuning_prop()
     Plotter.plot_tuning_space()
-    Plotter.plot_tuning_curves(0)
-    Plotter.plot_tuning_curves(2)
+#    Plotter.plot_tuning_curves(0)
+#    Plotter.plot_tuning_curves(2)
     Plotter.plot_tuning_width_distribution()
 
     Plotter.plot_relative_pos_error()

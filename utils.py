@@ -260,12 +260,12 @@ def get_linestyles():
     return linestyles
 
 
-def get_plus_minus(rnd):
+def get_plus_minus(rnd, n=1):
     """
     Returns either -1., or +1. as float.
     rnd -- should be your numpy.random RNG
     """
-    return (rnd.randint(-1, 1) + .5) * 2
+    return (rnd.randint(-1, 1, n) + .5) * 2
 
 
 def extract_trace(d, gid):
