@@ -433,7 +433,8 @@ class BasalGanglia(object):
         for i_, action in enumerate(action_bins):    
             all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
         best_action_idx = np.argmin(np.abs(all_outcomes - .5))
-        self.all_action_idx.remove(best_action_idx)
+        if best_action_idx in self.all_action_idx:
+            self.all_action_idx.remove(best_action_idx)
         non_optimal_action_idx = self.RNG.choice(self.all_action_idx)
         self.all_action_idx.remove(non_optimal_action_idx)
         speed = self.action_bins_x[non_optimal_action_idx]
