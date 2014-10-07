@@ -44,8 +44,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
-        self.params['n_rf'] = 60
-        self.params['n_v'] = 60
+        self.params['n_rf'] = 50
+        self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 3 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 5 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
@@ -70,8 +70,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['n_training_x'] = 4 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 10 # number of training samples to cover the v-direction of the tuning space
-        self.params['suboptimal_training'] = 1
+        self.params['n_training_v'] = 12 # number of training samples to cover the v-direction of the tuning space
+        self.params['suboptimal_training'] = 2
         if self.params['reward_based_learning']:
             self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
         else:
@@ -151,7 +151,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['sim_id'] = '%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
             if (self.params['reward_based_learning']):
-                self.params['sim_id'] = 'RBL_%d_titer%d_' % (self.params['suboptimal_training'], self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_%d_titer%d_%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'] * self.params['n_v'])
         else:
             self.params['sim_id'] = '%d_' % (self.params['t_iteration'])
 
@@ -248,25 +248,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
         self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_bg'] = [10093, 10094, 10095, 10096, 10097]
-        self.params['gids_to_record_bg'] += [10173, 10174, 10175, 10176, 10177,
-                                        10178, 10179, 10180, 10181, 10182,
-                                        10183, 10184, 10185, 10186, 10187,
-                                        10188, 10189, 10190, 10191, 10192,
-                                        10193, 10194, 10195, 10196, 10197,
-                                        10198, 10199, 10200, 10201, 10202,
-                                        10203, 10204, 10205, 10206, 10207,
-                                        10208, 10209, 10210, 10211, 10212,
-                                        10213, 10214, 10215, 10216, 10217,
-                                        10218, 10219, 10220, 10221, 10222,
-                                        10223, 10224, 10225, 10226, 10227,
-                                        10228, 10229, 10230, 10231, 10232,
-                                        10233, 10234, 10235, 10236, 10237,
-                                        10238, 10239, 10240, 10241, 10242,
-                                        10243, 10244, 10245, 10246, 10247,
-                                        10248, 10249, 10250, 10251, 10252,
-                                        10253, 10254, 10255, 10256, 10257]
-
+        self.params['gids_to_record_bg'] = [] #10093, 10094, 10095, 10096, 10097]
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]

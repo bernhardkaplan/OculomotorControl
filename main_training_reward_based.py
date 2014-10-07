@@ -417,37 +417,51 @@ if __name__ == '__main__':
 
 #    CC.get_weights(RBL.MT, RBL.BG, iteration=RBL.iteration_cnt)
 
-    stim_type = []
-    d1_actions_trained = []
-    d2_actions_trained = []
-    all_actions_trained = []
-    speeds_trained = []
+#    stim_type = []
+#    d1_actions_trained = []
+#    d2_actions_trained = []
+#    all_actions_trained = []
+#    speeds_trained = []
 
-    stim_cnt = 0
-    stim_params = list(params['initial_state'])
-    for i_cycle in xrange(params['n_training_cycles']):
-        # one full stimulus 'cycle'
-        for iter_stim in xrange(params['n_training_stim_per_cycle']):
-            RBL.motion_params[stim_cnt, :4] = deepcopy(stim_params)
-            if iter_stim % params['suboptimal_training'] == 1:
-                (required_v_eye, v_y, action_idx) = RBL.BG.get_non_optimal_action_for_stimulus(stim_params)
-                stim_type.append(2)
-                d2_actions_trained.append(action_idx)
+    i_stim = 0
+    v_stim_cnt = 0
+    for i_cycle in xrange(RBL.params['n_training_cycles']):
+        for i_v in xrange(RBL.params['n_training_v']):
+
+            stim_params = [0., 0.5, 0., 0.]
+            # get start position some where in the periphery
+            pm = utils.get_plus_minus(np.random)
+            if pm > 0:
+                stim_params[0] = np.random.uniform(.5 + RBL.params['center_stim_width'], 1.)
             else:
+                stim_params[0] = np.random.uniform(0, .5 - RBL.params['center_stim_width'])
+            # take the new stimulus from the mixed distribution as derived above
+            stim_params[2] = RBL.VI.training_stimuli[v_stim_cnt, 2]
+
+            for i_x in xrange(RBL.params['n_training_x']):
+                for i_neg in xrange(RBL.params['suboptimal_training']):
+                    # train D2
+                    (required_v_eye, v_y, action_idx) = RBL.BG.get_non_optimal_action_for_stimulus(stim_params)
+                    RBL.motion_params[i_stim, :4] = deepcopy(stim_params)
+                    action_v = [required_v_eye, 0.]
+                    RBL.train_doing_action_with_supervisor(RBL.motion_params[i_stim, :4], action_v, v_eye=[0., 0.])
+                    i_stim += 1
+
+                # one training with the correct / optimal action, train D1
                 (required_v_eye, v_y, action_idx) = RBL.BG.get_optimal_action_for_stimulus(stim_params)
-                stim_type.append(1)
-                stim_params = utils.get_next_stim(params, stim_params, required_v_eye)
+                action_v = [required_v_eye, 0.]
+                RBL.motion_params[i_stim, :4] = deepcopy(stim_params)
+                RBL.train_doing_action_with_supervisor(RBL.motion_params[i_stim, :4], action_v, v_eye=[0., 0.])
+                stim_params = utils.get_next_stim(RBL.params, stim_params, required_v_eye) # follow the stimulus to the center and update the stim params with the new ones
                 stim_params = list(stim_params)
-                d1_actions_trained.append(action_idx)
-            action_v = [required_v_eye, 0.]
-            all_actions_trained.append(action_idx)
-            RBL.train_doing_action_with_supervisor(RBL.motion_params[stim_cnt, :4], action_v, v_eye=[0., 0.])
-            stim_cnt += 1
-            
-    print 'DEBUG stim_type:', stim_type
-    print 'DEBUG d1_actions_trained', d1_actions_trained
-    print 'DEBUG d2_actions_trained', d2_actions_trained
-    print 'DEBUG all_actions_trained', all_actions_trained
+                i_stim += 1
+            v_stim_cnt += 1
+
+
+#    print 'DEBUG stim_type:', stim_type
+#    print 'DEBUG d1_actions_trained', d1_actions_trained
+#    print 'DEBUG d2_actions_trained', d2_actions_trained
+#    print 'DEBUG all_actions_trained', all_actions_trained
 
     # in order to update the weights, switch off kappa and trigger pre-synaptic spikes in ALL cells
     # TESTING: one cycle
