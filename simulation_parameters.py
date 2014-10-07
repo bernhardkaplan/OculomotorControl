@@ -49,10 +49,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-        self.params['training'] = True
-        self.params['reward_based_learning'] = True
-#        self.params['training'] = False
-#        self.params['reward_based_learning'] = False
+#        self.params['training'] = True
+#        self.params['reward_based_learning'] = True
+        self.params['training'] = False
+        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
         self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
@@ -69,6 +69,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['n_training_x'] = 2 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
+        # n_training_x = 4 should be 
         self.params['n_training_v'] = 3 # number of training samples to cover the v-direction of the tuning space
         self.params['suboptimal_training'] = 1
         if self.params['reward_based_learning']:

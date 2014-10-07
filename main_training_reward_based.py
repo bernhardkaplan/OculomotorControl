@@ -98,7 +98,8 @@ class RewardBasedLearning(object):
         # inherent activity forwarded from D1 and D2 driven by the stimulus
         # as long as BG.supervised_training is called, other actions != the chosen action will have zero activity
         (action_index_x, action_index_y) = self.BG.supervised_training(action_v)
-        #print 'DEBUG train_doing_action_with_supervisor: action=', action_v, ' has been mapped to action_idx:', action_index_x
+        self.action_indices.append(action_index_x)
+        print 'DEBUG train_doing_action_with_supervisor: action=', action_v, ' has been mapped to action_idx:', action_index_x, ' self.motion_params[%d, :]' % (self.iteration_cnt), self.motion_params[self.iteration_cnt, :]
         if params['debug_mpn']:
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
@@ -320,23 +321,28 @@ class RewardBasedLearning(object):
         self.network_states = np.zeros((params['n_iterations'], 4))  # readout from the visual layer
         self.actions_taken = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
 #        self.training_stimuli = RBL.VI.create_training_sequence_iteratively()
-        self.training_stimuli = np.zeros((params['n_stim'], 4))
+#        self.training_stimuli = np.zeros((params['n_stim'], 4))
 
 #        for i_ in xrange(self.params['n_stim']):
 #            self.training_stimuli[i_, :] = self.params['initial_state']
-        self.training_stimuli = self.VI.create_training_sequence_RBL(self.BG)
-
-        supervisor_states, action_indices, motion_params_precomputed = self.VI.get_supervisor_actions(self.training_stimuli, self.BG)
+        self.VI.create_training_sequence_RBL(self.BG)
+#        if pc_id == 0:
+#            np.savetxt(params['training_sequence_fn'], self.training_stimuli)
+        if self.comm != None:
+            self.comm.Barrier()
+        self.action_indices = []
+        supervisor_states, action_indices, motion_params_precomputed = self.VI.get_supervisor_actions(self.VI.training_stimuli, self.BG)
 #        print 'supervisor_states:', supervisor_states
 #        print 'action_indices:', action_indices
+
         np.savetxt(params['supervisor_states_fn'], supervisor_states)
-        np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
+#        np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
         np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
 #        self.action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
 #        self.supervisor_states, self.action_indices, self.motion_params_precomputed = self.VI.get_supervisor_actions(self.training_stimuli, self.BG)
         self.rewards = np.zeros(params['n_iterations'] + 1) # + 1 because rewards are available after the iteration and will affect the next 
-        print 'self.training_stimuli:', self.training_stimuli
+#        print 'self.training_stimuli:', self.training_stimuli
 #        print 'self.training_stimuli.shape', self.training_stimuli.shape
 #        print 'self.supervisor_states', self.supervisor_states
         # unnecessary as it will be overwritten
@@ -353,8 +359,8 @@ class RewardBasedLearning(object):
             np.savetxt(self.params['network_states_fn'], self.network_states)
             np.savetxt(self.params['rewards_given_fn'], self.rewards)
             np.savetxt(params['motion_params_fn'], self.motion_params)
-            np.savetxt(params['training_sequence_fn'], self.training_stimuli)
             np.savetxt(params['activity_memory_fn'], self.BG.activity_memory)
+            np.savetxt(params['action_indices_fn'], np.array(self.action_indices))
 
 
     if comm != None:
@@ -428,15 +434,10 @@ if __name__ == '__main__':
     for i_cycle in xrange(RBL.params['n_training_cycles']):
         for i_v in xrange(RBL.params['n_training_v']):
 
-            stim_params = [0., 0.5, 0., 0.]
-            # get start position some where in the periphery
-            pm = utils.get_plus_minus(np.random)
-            if pm > 0:
-                stim_params[0] = np.random.uniform(.5 + RBL.params['center_stim_width'], 1.)
-            else:
-                stim_params[0] = np.random.uniform(0, .5 - RBL.params['center_stim_width'])
             # take the new stimulus from the mixed distribution as derived above
-            stim_params[2] = RBL.VI.training_stimuli[v_stim_cnt, 2]
+            stim_params = RBL.VI.training_stimuli[v_stim_cnt, :]
+#            stim_params[2] = RBL.VI.training_stimuli[v_stim_cnt, 2]
+            print 'DEBUG i_stim %d v_stim_cnt %d stim_params:' % (i_stim, v_stim_cnt), stim_params
 
             for i_x in xrange(RBL.params['n_training_x']):
                 for i_neg in xrange(RBL.params['suboptimal_training']):
@@ -446,7 +447,7 @@ if __name__ == '__main__':
                     action_v = [required_v_eye, 0.]
                     RBL.train_doing_action_with_supervisor(RBL.motion_params[i_stim, :4], action_v, v_eye=[0., 0.])
                     i_stim += 1
-
+                RBL.BG.reset_pool_of_possible_actions()
                 # one training with the correct / optimal action, train D1
                 (required_v_eye, v_y, action_idx) = RBL.BG.get_optimal_action_for_stimulus(stim_params)
                 action_v = [required_v_eye, 0.]
