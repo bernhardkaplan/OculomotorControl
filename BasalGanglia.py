@@ -62,6 +62,7 @@ class BasalGanglia(object):
         self.bg_offset['d2'] = np.infty
         self.bg_offset['actions'] = np.infty
 
+        self.reset_pool_of_possible_actions()
         if not dummy:
             self.create_populations()
             if self.params['gids_to_record_bg']:
@@ -75,6 +76,10 @@ class BasalGanglia(object):
             if self.params['connect_noise_to_bg']:
                 self.connect_noise()
 
+
+    def reset_pool_of_possible_actions(self):
+        # for non optimal action selection
+        self.all_action_idx = range(self.params['n_actions'])
 
 
     def record_extra_cells(self):
@@ -231,7 +236,7 @@ class BasalGanglia(object):
         self.gids['actions'] = self.get_cell_gids('actions')
         self.gids['d1'] = self.get_cell_gids('actions')
         self.gids['d2'] = self.get_cell_gids('actions')
-        print "BG model completed"
+#        print "BG model completed"
 
 
     def connect_d1_population(self):
@@ -428,9 +433,9 @@ class BasalGanglia(object):
         for i_, action in enumerate(action_bins):    
             all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
         best_action_idx = np.argmin(np.abs(all_outcomes - .5))
-        all_action_idx = range(self.params['n_actions'])
-        all_action_idx.remove(best_action_idx)
-        non_optimal_action_idx = self.RNG.choice(all_action_idx)
+        self.all_action_idx.remove(best_action_idx)
+        non_optimal_action_idx = self.RNG.choice(self.all_action_idx)
+        self.all_action_idx.remove(non_optimal_action_idx)
         speed = self.action_bins_x[non_optimal_action_idx]
         return (speed, 0, non_optimal_action_idx)
 

@@ -140,6 +140,7 @@ class VisualInput(object):
                         all_mp[i_stim, :] = stim_params
                         i_stim += 1
 
+                    BG.reset_pool_of_possible_actions()
                     # one training with the correct / optimal action
                     (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
                     all_mp[i_stim, :] = deepcopy(stim_params)
@@ -148,8 +149,13 @@ class VisualInput(object):
                     i_stim += 1
                 v_stim_cnt += 1
 
-        print 'Saving training sequence parameters to:', self.params['training_sequence_fn']
-        np.savetxt(self.params['training_sequence_fn'], all_mp)
+        # self.training_stimuli is the 
+#        print 'Saving training sequence parameters to:', self.params['training_sequence_fn']
+        np.savetxt(self.params['training_sequence_fn'], self.training_stimuli) 
+#        np.savetxt(self.params['training_sequence_fn'], all_mp)
+
+#        print 'DEBUGGGGG training_stimuli', self.training_stimuli
+#        print 'DEBUGGGGG all_mp', all_mp
         return all_mp
 
 
@@ -273,13 +279,10 @@ class VisualInput(object):
 
 #        print 'DEBUG VI compute_input action iteration %d current_motion_params' % self.iteration, self.current_motion_params, ' action:', v_eye
 #        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(v_eye)
-        self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(v_eye)
+        self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(v_eye) # motion_params update is done in update_stimulus_trajectory_static
         self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
-        # stimulus parameter update is done in update_stimulus_trajectory_static
-#        self.current_motion_params[0] += (self.current_motion_params[2] + v_eye[0]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
-#        self.current_motion_params[1] += (self.current_motion_params[3] + v_eye[1]) * self.params['t_iteration'] / self.params['t_cross_visual_field'] 
         self.iteration += 1
         return self.stim, supervisor_state
 
@@ -485,6 +488,8 @@ class VisualInput(object):
         During one iteration the stimulus is perceived as static, except for the movement given by the 
         difference between eye (= v_eye) and the stimulus
         """
+        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
+        self.motion_params[self.iteration, -1] = self.t_current
         n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
 
@@ -492,6 +497,7 @@ class VisualInput(object):
         y_stim = self.current_motion_params[1] + (time_axis * self.current_motion_params[3] - v_eye[1] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
 
         trajectory = (x_stim, y_stim)
+        # update the 'current_motion_params'
         self.current_motion_params[0] = deepcopy(x_stim[-1])
         self.current_motion_params[1] = deepcopy(y_stim[-1])
 #        print 'DEBUG VI update_stimulus_trajectory_static end', self.current_motion_params
@@ -507,8 +513,6 @@ class VisualInput(object):
         self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
         self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
 
-        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
-        self.motion_params[self.iteration, -1] = self.t_current
 
         return trajectory, self.supervisor_state
 

@@ -100,6 +100,7 @@ for i_cycle in xrange(params['n_training_cycles']):
                 all_mp[i_stim, :] = stim_params
                 i_stim += 1
 
+            BG.reset_pool_of_possible_actions()
             # one training with the correct / optimal action
             (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
 #            training_stimuli[i_stim, :] = stim_params
