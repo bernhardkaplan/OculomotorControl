@@ -70,7 +70,7 @@ class BasalGanglia(object):
 
             if self.params['training']:
                 self.connect_d1_population()
-                if self.params['with_d2']:
+                if self.params['connect_d2_d2'] and self.params['with_d2']:
                     self.connect_d2_population()
 
             if self.params['connect_noise_to_bg']:
@@ -138,6 +138,7 @@ class BasalGanglia(object):
             if self.params['with_d2']: 
                 nest.ConvergentConnect(self.strD2[nactions], self.recorder_d2[nactions])
 
+            # connect D1 to the output action layer
             for neuron in self.actions[nactions]:
                 nest.ConvergentConnect(self.strD1[nactions], [neuron], weight=self.params['str_to_output_exc_w'], delay=self.params['str_to_output_exc_delay']) 
 
@@ -240,6 +241,7 @@ class BasalGanglia(object):
 
 
     def connect_d1_population(self):
+        D1_conns = ''
         for i_ in xrange(self.params['n_actions']):
             src_pop = self.strD1[i_]
             for j_ in xrange(self.params['n_actions']):
@@ -255,9 +257,8 @@ class BasalGanglia(object):
             src_pop = self.strD2[i_]
             for j_ in xrange(self.params['n_actions']):
                 tgt_pop = self.strD2[j_]
-                if self.params['synapse_d2_d2'] == 'bcpnn_synapse':
-                    nest.SetDefaults(self.params['synapse_d2_d2'], params=self.params['params_synapse_d2_d2'])
-                    nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d2_d2'])
+                nest.SetDefaults(self.params['synapse_d2_d2'], params=self.params['params_synapse_d2_d2'])
+                nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d2_d2'])
 #                else:
 #                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d2_d2'], self.params['delay_d2_d2'])
 
