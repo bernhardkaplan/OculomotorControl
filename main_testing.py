@@ -97,7 +97,7 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time5: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
-    CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params)
+    CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params, debug=True)
     if testing_params['connect_d1_after_training']:
         CC.connect_d1_after_training(BG, training_params, testing_params)
     t1 = time.time() - t0
@@ -154,6 +154,17 @@ if __name__ == '__main__':
             iteration_cnt += 1
             if comm != None:
                 comm.Barrier()
+
+    # DEEEEEEEEEBUG
+    CC.get_weights(MT, BG, model='static_synapse')
+    debug_txt_d1 = CC.debug_connections(BG.strD1)
+    f = file('delme_conn_d1_%.1f_%d.txt' % (testing_params['gain_MT_d1'], pc_id), 'w')
+    f.write(debug_txt_d1)
+
+    CC.get_weights(MT, BG, model='static_synapse')
+    debug_txt_d2 = CC.debug_connections(BG.strD2)
+    f = file('delme_conn_d2_%.1f_%d.txt' % (testing_params['gain_MT_d1'], pc_id), 'w')
+    f.write(debug_txt_d2)
 
     t1 = time.time() - t0
     print 'Time8: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
