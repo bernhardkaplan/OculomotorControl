@@ -307,7 +307,6 @@ class CreateConnections(object):
             for j_ in xrange(self.params['n_actions']):
                 print 'CreateConnections.get_d1_d1_weights action %d - %d '% (i_, j_)
                 conns = nest.GetConnections(BG.strD1[i_], BG.strD1[j_], synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
-#                print 'DEBUG conns:', conns
                 for c in conns:
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
                     if (cp[0]['synapse_model'] == 'bcpnn_synapse'):

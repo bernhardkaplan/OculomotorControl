@@ -48,20 +48,19 @@ if __name__ == '__main__':
         print "MPI not used"
 
 #    USE_MPI = False
-#    training_folder = 'Training_OpenLoop_titer25_nRF50_nV50_vmin0.10_vmax12.00_nStim3x400_nactions17_blurX0.05_V0.10_taup120000/'
-    training_folder = 'Training_OpenLoop_titer25_nRF50_nV50_vmin0.10_vmax12.00_nStim4x900_nactions17_blurX0.05_V0.10_taup360000/'
+    training_folder = 'Training_RBL_2_titer25_2500_2_nStim5x240_taup50000_gain1.00'
 
     ps = simulation_parameters.global_parameters()
-    param_range_1 = np.arange(0.2, 0.6, 0.1)
-    param_range_2 = np.arange(0.2, 0.6, 0.1)
-    param_range_3 = [30.]
+    param_range_1 = [1.0, 1.5, 2.0, 2.5, 3.0]
+    param_range_2 = [1.0, 1.5, 2.0, 2.5, 3.0]
+    param_range_3 = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
     param_range_4 = [0.]
 #    param_range_4 = [0.0001, 0.1, 0.5, 1., 10.]
 
-    param_name_1 = 'mpn_d2_weight_amplification'
-    param_name_2 = 'mpn_d1_weight_amplification'
-    param_name_3 = 'd1_d1_weight_amplification_neg'
-    param_name_4 = 'd1_d1_weight_amplification_pos'
+    param_name_1 = 'gain_MT_d1'
+    param_name_2 = 'gain_MT_d2'
+    param_name_3 = 'gain_d1_d1'
+    param_name_4 = 'gain_d2_d2'
 #    param_name_1 = 'mpn_bg_bias_amplification'
     for l_, p4 in enumerate(param_range_4):
         for k_, p3 in enumerate(param_range_3):
@@ -75,8 +74,8 @@ if __name__ == '__main__':
                     folder_name = 'Test_%s_%d-%d' % (params['sim_id'], params['test_stim_range'][0], params['test_stim_range'][-1])
                     folder_name += '_nStim%dx%d_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_d1d1wan%.2e/' % \
                             (params['n_training_cycles'], params['n_training_stim_per_cycle'], \
-                             params['mpn_d1_weight_amplification'], params['mpn_d2_weight_amplification'], \
-                             params['d1_d1_weight_amplification_pos'], params['d1_d1_weight_amplification_neg'])
+                             params['gain_MT_d1'], params['gain_MT_d2'], \
+                             params['gain_d1_d1'], params['gain_d1_d1'])
 
 
                     params['folder_name'] = folder_name
