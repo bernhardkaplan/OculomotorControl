@@ -11,7 +11,11 @@ class CreateConnections(object):
         
         self.params = params
 
-        nest.SetDefaults(self.params['bcpnn'], params=self.params['param_bcpnn'])
+        print nest.Models()
+#        nest.CopyModel('bcpnn_synapse', 'adfadsf', params=self.params['params_synapse_d1_MT_BG'])
+        nest.CopyModel('bcpnn_synapse', self.params['synapse_d1_MT_BG'], params=self.params['params_synapse_d1_MT_BG'])
+        nest.CopyModel('bcpnn_synapse', self.params['synapse_d2_MT_BG'], params=self.params['params_synapse_d2_MT_BG'])
+
         self.comm = comm
         if comm != None:
             self.pc_id = comm.rank
@@ -29,10 +33,10 @@ class CreateConnections(object):
         src_net, tgt_net -- the source and the target network
         """
         for nactions in xrange(self.params['n_actions']):
-            nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d1_MT_BG'])
+            nest.SetDefaults(self.params['synapse_d1_MT_BG'], params=self.params['params_synapse_d1_MT_BG'])
             nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD1[nactions], model=self.params['synapse_d1_MT_BG'])
             if self.params['with_d2']:
-                nest.SetDefaults(self.params['bcpnn'], params=self.params['params_synapse_d2_MT_BG'])
+                nest.SetDefaults(self.params['synapse_d2_MT_BG'], params=self.params['params_synapse_d2_MT_BG'])
                 nest.ConvergentConnect(src_net.exc_pop, tgt_net.strD2[nactions], model=self.params['synapse_d2_MT_BG'])
         if self.comm != None:
             self.comm.Barrier()
@@ -233,14 +237,31 @@ class CreateConnections(object):
         debug_txt = ''
         for i_action in xrange(self.params['n_actions']):
             conns = nest.GetConnections(target=tgt_pop[i_action])
-            if conns != None and model == 'static_synapse':
+            if conns != None:# and model == 'static_synapse':
                 for i_, c in enumerate(conns):
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
                     debug_txt += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], cp[0]['weight'])
-            elif conns != None and model != 'static_synapse':
-                print '\n\nWTF\n\n'
-                exit(1)
+#            elif conns != None and model != 'static_synapse':
+#                print '\n\nWTF\n\n'
+#                exit(1)
         return debug_txt
+
+
+    def debug_mpn_connections(self, pop): 
+        debug_txt = ''
+        output_fn = 'delme_mpn_as_source_wD1_%.1f_wD2_%.1f_%d.txt' % (self.params['gain_MT_d1'], self.params['gain_MT_d2'], self.pc_id)
+
+        conns = nest.GetConnections(source=pop)
+        if conns != None:
+            for i_, c in enumerate(conns):
+                cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                debug_txt += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], cp[0]['weight'])
+#                print 'debug c', c, cp
+        f = file(output_fn, 'w')
+        f.write(debug_txt)
+        f.flush()
+        f.close()
+
 
 
     def get_weights(self, src_pop, tgt_pop, iteration=None, model='bcpnn_synapse'):
@@ -253,12 +274,13 @@ class CreateConnections(object):
         bias_d1 = {}
         for nactions in xrange(self.params['n_actions']):
             print 'CreateConnections.get_weights action %d' % nactions, 'iteration:', iteration
-            conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions], synapse_model=model) # get the list of connections stored on the current MPI node
+            conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions], synapse_model=self.params['synapse_d1_MT_BG']) # get the list of connections stored on the current MPI node
 #            print 'DEBUG src_pop.exc_pop:', src_pop.exc_pop
 #            print 'DEBUG tgt_pop:', tgt_pop.strD1[nactions]
 #            print 'DEBUG %d n_conns: %d' % (self.pc_id, len(conns))
 #            exit(1)
-            if conns != None and model=='bcpnn_synapse':
+#            print 'DEBUG conns', conns
+            if conns != None and model != 'static_synapse':
                 for i_, c in enumerate(conns):
                     cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
                     pi = cp[0]['p_i']
@@ -290,8 +312,8 @@ class CreateConnections(object):
             D2_conns = ''
             bias_d2 = {}
             for nactions in xrange(self.params['n_actions']):
-                conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions], synapse_model=model) # get the list of connections stored on the current MPI node
-                if conns != None and model=='bcpnn_synapse':
+                conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions], synapse_model=self.params['synapse_d2_MT_BG']) # get the list of connections stored on the current MPI node
+                if conns != None and model != 'static_synapse':
                     for c in conns:
                         cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
                         pi = cp[0]['p_i']
@@ -369,6 +391,3 @@ class CreateConnections(object):
         D2_f.close()
 
 
-
-    def set_pc_id(self, pc_id):
-        self.pc_id = pc_id

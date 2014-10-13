@@ -29,8 +29,8 @@ class BasalGanglia(object):
         self.gid_to_action_D2 = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.gid_to_action_via_spikerecorder= {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.efference_copy = {}
-        self.efference_copy_d1 = {}
-        self.efference_copy_d2 = {}
+#        self.efference_copy_d1 = {}
+#        self.efference_copy_d2 = {}
         self.supervisor = {}
         # Recording devices
         self.recorder_d1 = {}
@@ -166,13 +166,13 @@ class BasalGanglia(object):
             # create efference copy (for RBL, activates BOTH D1 and D2 actions at the same time)
             for nactions in xrange(self.params['n_actions']):
                 self.efference_copy[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
-                self.efference_copy_d1[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
-                self.efference_copy_d2[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
+#                self.efference_copy_d1[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
+#                self.efference_copy_d2[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
                 nest.DivergentConnect(self.efference_copy[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
                 nest.DivergentConnect(self.efference_copy[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
 
-                nest.DivergentConnect(self.efference_copy_d1[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
-                nest.DivergentConnect(self.efference_copy_d2[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
+#                nest.DivergentConnect(self.efference_copy_d1[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
+#                nest.DivergentConnect(self.efference_copy_d2[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
 
                 nest.SetStatus(self.efference_copy[nactions], {'rate' : self.params['inactive_efference_rate']})
 
@@ -492,16 +492,6 @@ class BasalGanglia(object):
                 nest.SetStatus(self.efference_copy[i_action], {'rate' : 0.})
 
 
-    def activate_efference_copy_d1_or_d2(self, action_idx, d1_or_d2):
-        if d1_or_d2 == 'd1':
-            for i_action in xrange(self.params['n_actions']):
-                nest.SetStatus(self.efference_copy_d1[i_action], {'rate' : self.params['inactive_efference_rate']})
-            nest.SetStatus(self.efference_copy_d1[action_idx], {'rate' : self.params['active_efference_rate']})
-        else:
-            for i_action in xrange(self.params['n_actions']):
-                nest.SetStatus(self.efference_copy_d2[i_action], {'rate' : self.params['inactive_efference_rate']})
-            nest.SetStatus(self.efference_copy_d2[action_idx], {'rate' : self.params['active_efference_rate']})
-
 
     def stop_efference_copy(self):
         for nactions in xrange(self.params['n_actions']):
@@ -676,16 +666,13 @@ class BasalGanglia(object):
         self.iteration += 1
 
 
-    def get_eye_direction(self):
-        """
-        Returns the efference copy, i.e. an internal copy of an outgoing (movement) signal.
-        """
-        pass
-    
 
-    def move_eye(self):
-        """
-        Select an action based on the current state and policy
-        update the state
-        """
-        pass
+#    def activate_efference_copy_d1_or_d2(self, action_idx, d1_or_d2):
+#        if d1_or_d2 == 'd1':
+#            for i_action in xrange(self.params['n_actions']):
+#                nest.SetStatus(self.efference_copy_d1[i_action], {'rate' : self.params['inactive_efference_rate']})
+#            nest.SetStatus(self.efference_copy_d1[action_idx], {'rate' : self.params['active_efference_rate']})
+#        else:
+#            for i_action in xrange(self.params['n_actions']):
+#                nest.SetStatus(self.efference_copy_d2[i_action], {'rate' : self.params['inactive_efference_rate']})
+#            nest.SetStatus(self.efference_copy_d2[action_idx], {'rate' : self.params['active_efference_rate']})

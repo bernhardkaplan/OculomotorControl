@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
@@ -68,10 +68,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 3 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
+        self.params['n_training_x'] = 2 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 6 # number of training samples to cover the v-direction of the tuning space
-        self.params['suboptimal_training'] = 2
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
+        self.params['suboptimal_training'] = 1
         if self.params['reward_based_learning']:
             self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
         else:
@@ -248,8 +248,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-        self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_bg'] = [] #10093, 10094, 10095, 10096, 10097]
+        self.params['gids_to_record_mpn'] = [12, 13, 14, 60, 62, 210]
+        self.params['gids_to_record_bg'] = [10088, 10115, 10149, 10152]
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
@@ -416,8 +416,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 2.0
-        self.params['gain_MT_d2'] = 1.0
+        self.params['gain_MT_d1'] = 0.0
+        self.params['gain_MT_d2'] = 0.5
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 1.
         self.params['d2_gain_after_training'] = 1.
@@ -523,11 +523,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # after learning: gain == 1. K = .0
 
         #Connections States Actions
-        self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
+        self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse_MT_d1'
         self.params['params_synapse_d1_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_MT_d1'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
-        self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
+        self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse_MT_d2'
         self.params['params_synapse_d2_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_MT_d2'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
@@ -712,15 +712,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_%d_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
+                folder_name = 'Training_DEBUG_%s_%d_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
                         self.params['suboptimal_training'], \
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
                         self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
             else:
                 folder_name = 'Test_DEBUG_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_d1d1wan%.2e_seed%d/' % \
+                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_seed%d/' % \
                         ( self.params['gain_MT_d1'], self.params['gain_MT_d2'], \
-                         self.params['gain_d1_d1'], self.params['gain_d1_d1'], self.params['master_seed'])
+                         self.params['gain_d1_d1'], self.params['master_seed'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

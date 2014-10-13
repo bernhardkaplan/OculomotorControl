@@ -64,8 +64,8 @@ if __name__ == '__main__':
     training_stimuli = np.zeros((training_params['n_stim_training'], 4))
     training_stimuli_= np.loadtxt(training_params['training_sequence_fn'])
     training_stimuli = training_stimuli_
-    print 'debug', training_stimuli.shape
-    print 'debug', training_params['training_sequence_fn']
+#    print 'debug', training_stimuli.shape
+#    print 'debug', training_params['training_sequence_fn']
 #    training_stimuli.reshape((training_params['n_stim_training'], 4))
 
     training_params['training_params'] = training_params # double check
@@ -82,14 +82,12 @@ if __name__ == '__main__':
     MT = MotionPrediction.MotionPrediction(testing_params, VI, comm)
     t1 = time.time() - t0
     print 'Time3: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
-    VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(testing_params, comm)
     t1 = time.time() - t0
     print 'Time4: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     BG.write_cell_gids_to_file()
 
     CC = CreateConnections.CreateConnections(testing_params, comm)
-    CC.set_pc_id(pc_id)
 
     if comm != None:
         comm.Barrier()
@@ -156,15 +154,16 @@ if __name__ == '__main__':
                 comm.Barrier()
 
     # DEEEEEEEEEBUG
-    CC.get_weights(MT, BG, model='static_synapse')
-    debug_txt_d1 = CC.debug_connections(BG.strD1)
-    f = file('delme_conn_d1_%.1f_%d.txt' % (testing_params['gain_MT_d1'], pc_id), 'w')
-    f.write(debug_txt_d1)
+#    CC.debug_mpn_connections(MT.exc_pop)
+#    CC.get_weights(MT, BG, model='static_synapse')
+#    debug_txt_d1 = CC.debug_connections(BG.strD1)
+#    f = file('delme_conn_d1_%.1f_%d.txt' % (testing_params['gain_MT_d1'], pc_id), 'w')
+#    f.write(debug_txt_d1)
 
-    CC.get_weights(MT, BG, model='static_synapse')
-    debug_txt_d2 = CC.debug_connections(BG.strD2)
-    f = file('delme_conn_d2_%.1f_%d.txt' % (testing_params['gain_MT_d1'], pc_id), 'w')
-    f.write(debug_txt_d2)
+#    CC.get_weights(MT, BG, model='static_synapse')
+#    debug_txt_d2 = CC.debug_connections(BG.strD2)
+#    f = file('delme_conn_d2_%.1f_%d.txt' % (testing_params['gain_MT_d1'], pc_id), 'w')
+#    f.write(debug_txt_d2)
 
     t1 = time.time() - t0
     print 'Time8: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
