@@ -110,7 +110,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
-        self.params['connect_d1_after_training'] = False
+        self.params['connect_d1_after_training'] = True
         self.params['connect_d2_d2'] = False
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
         self.params['clip_weights_mpn_d2'] = self.params['clip_weights_mpn_d1']
@@ -412,12 +412,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 1.
             self.params['kappa_d2_d2'] = 0.
         else:
-            self.params['gain_d1_d1'] = 2.
+            self.params['gain_d1_d1_pos'] = 1.
+            self.params['gain_d1_d1_neg'] = 2.
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 0.0
-        self.params['gain_MT_d2'] = 0.5
+        self.params['gain_MT_d1'] = 2.0
+        self.params['gain_MT_d2'] = 1.0
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 1.
         self.params['d2_gain_after_training'] = 1.
@@ -498,7 +499,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         bcpnn_init = 0.01
         self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
-        self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1'], 'K': self.params['kappa_d1_d1'], \
+        self.params['params_synapse_d1_d1_pos'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1_pos'], 'K': self.params['kappa_d1_d1'], \
+                'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
+                'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
+
+        self.params['params_synapse_d1_d1_neg'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1_neg'], 'K': self.params['kappa_d1_d1'], \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
@@ -717,10 +722,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
                         self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
             else:
-                folder_name = 'Test_DEBUG_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_seed%d/' % \
+                folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
+                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.1f_d1d1wan%.1fseed%d/' % \
                         ( self.params['gain_MT_d1'], self.params['gain_MT_d2'], \
-                         self.params['gain_d1_d1'], self.params['master_seed'])
+                         self.params['gain_d1_d1_pos'], self.params['gain_d1_d1_neg'], self.params['master_seed'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
