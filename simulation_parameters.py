@@ -49,10 +49,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-        self.params['training'] = True
-        self.params['reward_based_learning'] = True
-#        self.params['training'] = False
-#        self.params['reward_based_learning'] = False
+#        self.params['training'] = True
+#        self.params['reward_based_learning'] = True
+        self.params['training'] = False
+        self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
         self.params['n_training_cycles'] = 5 # how often each stimulus is presented during training
@@ -85,7 +85,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 2)
+        self.params['test_stim_range'] = range(0, 5)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -110,7 +110,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
-        self.params['connect_d1_after_training'] = True
+        self.params['connect_d1_after_training'] = False
         self.params['connect_d2_d2'] = False
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
         self.params['clip_weights_mpn_d2'] = self.params['clip_weights_mpn_d1']
@@ -167,7 +167,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['master_seed'] = 12345  # 
+        self.params['master_seed'] = 321
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
         self.params['visual_stim_seed'] = 1234
@@ -248,8 +248,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-        self.params['gids_to_record_mpn'] = None
-        self.params['gids_to_record_bg'] = [] #10093, 10094, 10095, 10096, 10097]
+        self.params['gids_to_record_mpn'] = [12, 13, 14, 60, 62, 210]
+        self.params['gids_to_record_bg'] = [10088, 10115, 10149, 10152]
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
@@ -416,8 +416,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 1.5
-        self.params['gain_MT_d2'] = 1.0
+        self.params['gain_MT_d1'] = 0.0
+        self.params['gain_MT_d2'] = 0.5
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 1.
         self.params['d2_gain_after_training'] = 1.
@@ -429,15 +429,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         ## State to StrD1/D2 parameters
         self.params['mpn_bg_delay'] = 1.0
         self.params['weight_threshold'] = 0.0
-        self.params['mpn_d1_weight_amplification'] = self.params['gain_MT_d1']
-        self.params['mpn_d2_weight_amplification'] = self.params['gain_MT_d2']
-#        if self.params['reward_based_learning']:
-#            self.params['mpn_d1_weight_amplification'] = 0.0
-#            self.params['mpn_d2_weight_amplification'] = 0.0
-        self.params['mpn_bg_bias_amplification_d1'] = self.params['bias_gain']
-        self.params['mpn_bg_bias_amplification_d2'] = self.params['bias_gain']
-        self.params['d1_d1_weight_amplification_neg'] = self.params['gain_d1_d1']
-        self.params['d1_d1_weight_amplification_pos'] = self.params['gain_d1_d1']
         # if static synapses are used
         self.params['w_d1_d1'] = -5.
         self.params['delay_d1_d1'] = 1.
@@ -525,16 +516,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['param_states_rp'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         self.params['bcpnn'] = 'bcpnn_synapse'
-        self.params['param_bcpnn'] =  {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+        self.params['param_bcpnn'] =  {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, \
+                'gain': self.params['gain'], 'K': self.K, 'fmax': self.params['fmax'], 'epsilon': self.epsilon, \
+                'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         # during learning gain == 0. K = 1.0 : --> 'offline' learning
         # after learning: gain == 1. K = .0
 
         #Connections States Actions
-        self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse'
+        self.params['synapse_d1_MT_BG'] = 'bcpnn_synapse_MT_d1'
         self.params['params_synapse_d1_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_MT_d1'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
-        self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse'
+        self.params['synapse_d2_MT_BG'] = 'bcpnn_synapse_MT_d2'
         self.params['params_synapse_d2_MT_BG'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_MT_d2'], 'K': self.K, \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay':1.0, \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
@@ -719,16 +712,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_%d_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
+                folder_name = 'Training_DEBUG_%s_%d_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
                         self.params['suboptimal_training'], \
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
                         self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
             else:
-                folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_it%d_d1pos%.2e_d1neg%.2e_mpn-d1-%.2e_mpn-d2-%.2e_bias%.2e/' % \
-                        (self.params['t_iteration'], \
-                                self.params['d1_d1_weight_amplification_pos'], self.params['d1_d1_weight_amplification_neg'], \
-                                self.params['mpn_d1_weight_amplification'], self.params['mpn_d2_weight_amplification'], self.params['bias_gain'])
+                folder_name = 'Test_DEBUG_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
+                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_seed%d/' % \
+                        ( self.params['gain_MT_d1'], self.params['gain_MT_d2'], \
+                         self.params['gain_d1_d1'], self.params['master_seed'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

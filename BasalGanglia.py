@@ -23,15 +23,14 @@ class BasalGanglia(object):
         self.strD1 = {}
         self.strD2 = {}
         self.actions = {}
-        self.rp = {}
         self.recorder_output= {} # the actual NEST recorder object, indexed by naction
         self.gid_to_action = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.gid_to_action_D1 = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.gid_to_action_D2 = {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.gid_to_action_via_spikerecorder= {} # here the key is the GID of the spike-recorder and the key is the action --> allows mapping of spike-GID --> action
         self.efference_copy = {}
-        self.efference_copy_d1 = {}
-        self.efference_copy_d2 = {}
+#        self.efference_copy_d1 = {}
+#        self.efference_copy_d2 = {}
         self.supervisor = {}
         # Recording devices
         self.recorder_d1 = {}
@@ -39,15 +38,6 @@ class BasalGanglia(object):
         self.recorder_states = {}
         self.recorder_efference = {}
         self.recorder_supervisor = {}
-        if not self.params['supervised_on']:
-            self.recorder_rp = {}
-            self.recorder_rew = nest.Create("spike_detector", params= self.params['spike_detector_rew'])
-            nest.SetStatus(self.recorder_rew,[{"to_file": True, "withtime": True, 'label' : self.params['rew_spikes_fn']}])
-            self.voltmeter_rew = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval':self.params['dt_volt']})
-            nest.SetStatus(self.voltmeter_rew, [{"to_file": True, "withtime": True, 'label' : self.params['rew_volt_fn']}])
-
-        #self.recorder_test_rp = nest.Create("spike_detector", params= self.params['spike_detector_test_rp'])
-        #nest.SetStatus(self.recorder_test_rp, [{"to_file": True, "withtime": True, 'label' : self.params['test_rp_spikes_fn']}])
 
         self.voltmeter_d1 = {}
         self.voltmeter_d2 = {}
@@ -170,49 +160,24 @@ class BasalGanglia(object):
                      elif self.params['with_d2']: 
                          nest.DivergentConnect(self.supervisor[nactions], self.strD2[i], weight=self.params['weight_supervisor_strd2'], delay=self.params['delay_supervisor_strd2'])
 
-        # create efference copy (for RBL, activates BOTH D1 and D2 actions at the same time)
-        for nactions in xrange(self.params['n_actions']):
-            self.efference_copy[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
-            self.efference_copy_d1[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
-            self.efference_copy_d2[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
-            nest.DivergentConnect(self.efference_copy[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
-            nest.DivergentConnect(self.efference_copy[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
+            self.stop_supervisor()
 
-            nest.DivergentConnect(self.efference_copy_d1[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
-            nest.DivergentConnect(self.efference_copy_d2[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
+        if self.params['training']:
+            # create efference copy (for RBL, activates BOTH D1 and D2 actions at the same time)
+            for nactions in xrange(self.params['n_actions']):
+                self.efference_copy[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
+#                self.efference_copy_d1[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
+#                self.efference_copy_d2[nactions] = nest.Create('poisson_generator', self.params['num_neuron_poisson_efference'], params=self.params['param_poisson_efference'])
+                nest.DivergentConnect(self.efference_copy[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
+                nest.DivergentConnect(self.efference_copy[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
 
+#                nest.DivergentConnect(self.efference_copy_d1[nactions], self.strD1[nactions], weight=self.params['weight_efference_strd1'], delay=self.params['delay_efference_strd1'])
+#                nest.DivergentConnect(self.efference_copy_d2[nactions], self.strD2[nactions], weight=self.params['weight_efference_strd2'], delay=self.params['delay_efference_strd2'])
 
+                nest.SetStatus(self.efference_copy[nactions], {'rate' : self.params['inactive_efference_rate']})
+
+            self.stop_efference_copy()
          
-        if not self.params['supervised_on']:
-            # Creates the REWARD population and its poisson input and the RP population and then connects theses different populations.
-            self.rew = nest.Create( self.params['model_rew_neuron'], self.params['num_rew_neurons'], params= self.params['param_rew_neuron'] )
-            for index_rp in range(self.params['n_actions'] * self.params['n_states']):
-                self.rp[index_rp] = nest.Create(self.params['model_rp_neuron'], self.params['num_rp_neurons'], params= self.params['param_rp_neuron'] )
-                for nron_rp in self.rp[index_rp]:
-                    nest.DivergentConnect( [nron_rp], self.rew, weight=self.params['weight_rp_rew'], delay=self.params['delay_rp_rew']  )
-                #nest.ConvergentConnect(self.recorder_test_rp, self.rp[index_rp])
-                self.recorder_rp[index_rp] = nest.Create("spike_detector", params= self.params['spike_detector_rp'])
-                nest.SetStatus(self.recorder_rp[index_rp],[{"to_file": True, "withtime": True, 'label' : self.params['rp_spikes_fn']+ str(index_rp)}])
-                nest.ConvergentConnect(self.rp[index_rp],self.recorder_rp[index_rp])
-                self.voltmeter_rp[index_rp] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
-                nest.SetStatus(self.voltmeter_rp[index_rp], [{"to_file": True, "withtime": True, 'label' : self.params['rp_volt_fn']+ str(index_rp)}])
-                nest.ConvergentConnect(self.voltmeter_rp[index_rp], self.rp[index_rp])
-
-            self.poisson_rew = nest.Create( self.params['model_poisson_rew'], self.params['num_poisson_rew'], params=self.params['param_poisson_rew'] )
-            nest.RandomDivergentConnect(self.poisson_rew, self.rew, int(self.params['random_divconnect_poisson']*self.params['num_poisson_rew']), weight=self.params['weight_poisson_rew'], delay=self.params['delay_poisson_rew'])
-
-
-            # Connects reward population back to the STR D1 and D2 populations, and to the RP, to inform them about the outcome (positive or negative compared to the prediction)
-            for neur_rew in self.rew:
-                for i_action in range(self.params['n_actions']):
-                    nest.DivergentConnect([neur_rew], self.strD1[i_action], weight=self.params['weight_rew_d1'], delay=self.params['delay_rew_d1'] )
-                    nest.DivergentConnect([neur_rew], self.strD2[i_action], weight=self.params['weight_rew_d2'], delay=self.params['delay_rew_d2'] )
-                for i_rp in range(self.params['n_states'] * self.params['n_actions']):
-                    nest.DivergentConnect([neur_rew], self.rp[i_rp], weight=self.params['weight_rew_rp'], delay=self.params['delay_rew_rp'] )
-            nest.ConvergentConnect(self.rew, self.recorder_rew)
-            nest.ConvergentConnect(self.voltmeter_rew, self.rew)
-
-
 
         ###########################################################
         ############# Now we create bcpnn connections #############
@@ -221,17 +186,6 @@ class BasalGanglia(object):
         if not self.params['are_MT_BG_connected']:
             self.create_input_pop()
 
-        if not self.params['supervised_on']:
-            # Creates RP populations and the connections from states and actions to the corresponding RP populations
-            for istate in range(self.params['n_states']):
-                for iaction in range(self.params['n_actions']):
-                    nest.SetDefaults( self.params['bcpnn'], params= self.params['param_actions_rp'])
-                    for neuron_a in self.actions[iaction]:
-                        nest.DivergentConnect([neuron_a], self.rp[iaction+istate*self.params['n_actions']], model=self.params['actions_rp'])
-                    
-                    nest.SetDefaults( self.params['bcpnn'], params= self.params['param_states_rp'])
-                    for neuron_s in self.states[istate]:
-                        nest.DivergentConnect([neuron_s], self.rp[iaction + istate*self.params['n_actions']], model=self.params['states_rp'] )
         self.write_cell_gids_to_file()
         self.gids = {}
         self.gids['actions'] = self.get_cell_gids('actions')
@@ -538,16 +492,6 @@ class BasalGanglia(object):
                 nest.SetStatus(self.efference_copy[i_action], {'rate' : 0.})
 
 
-    def activate_efference_copy_d1_or_d2(self, action_idx, d1_or_d2):
-        if d1_or_d2 == 'd1':
-            for i_action in xrange(self.params['n_actions']):
-                nest.SetStatus(self.efference_copy_d1[i_action], {'rate' : self.params['inactive_efference_rate']})
-            nest.SetStatus(self.efference_copy_d1[action_idx], {'rate' : self.params['active_efference_rate']})
-        else:
-            for i_action in xrange(self.params['n_actions']):
-                nest.SetStatus(self.efference_copy_d2[i_action], {'rate' : self.params['inactive_efference_rate']})
-            nest.SetStatus(self.efference_copy_d2[action_idx], {'rate' : self.params['active_efference_rate']})
-
 
     def stop_efference_copy(self):
         for nactions in xrange(self.params['n_actions']):
@@ -658,7 +602,7 @@ class BasalGanglia(object):
             pop = self.strD2
 
         for gid in bias_values.keys(): 
-            bias_value = bias_values[gid] * self.params['mpn_bg_bias_amplification_%s' % cell_type]
+            bias_value = bias_values[gid] * self.params['bias_gain']
             nest.SetStatus([int(gid)], {'I_e' : bias_value})
 
 
@@ -722,16 +666,13 @@ class BasalGanglia(object):
         self.iteration += 1
 
 
-    def get_eye_direction(self):
-        """
-        Returns the efference copy, i.e. an internal copy of an outgoing (movement) signal.
-        """
-        pass
-    
 
-    def move_eye(self):
-        """
-        Select an action based on the current state and policy
-        update the state
-        """
-        pass
+#    def activate_efference_copy_d1_or_d2(self, action_idx, d1_or_d2):
+#        if d1_or_d2 == 'd1':
+#            for i_action in xrange(self.params['n_actions']):
+#                nest.SetStatus(self.efference_copy_d1[i_action], {'rate' : self.params['inactive_efference_rate']})
+#            nest.SetStatus(self.efference_copy_d1[action_idx], {'rate' : self.params['active_efference_rate']})
+#        else:
+#            for i_action in xrange(self.params['n_actions']):
+#                nest.SetStatus(self.efference_copy_d2[i_action], {'rate' : self.params['inactive_efference_rate']})
+#            nest.SetStatus(self.efference_copy_d2[action_idx], {'rate' : self.params['active_efference_rate']})

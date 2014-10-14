@@ -34,6 +34,12 @@ class RewardBasedLearning(object):
     def __init__(self, params, comm):
         self.params = params
         self.comm = comm
+        if comm != None:
+            self.pc_id = comm.rank
+            self.n_proc = comm.size
+        else:
+            self.pc_id = 0
+            self.n_proc = 1
         if params['reward_based_learning'] == False:
             print 'Set reward_based_learning = True'
             exit(1)
@@ -56,10 +62,8 @@ class RewardBasedLearning(object):
     def create_networks(self):
         self.VI = VisualInput.VisualInput(self.params, comm=self.comm)
         self.MT = MotionPrediction.MotionPrediction(self.params, self.VI, self.comm)
-        self.VI.set_pc_id(pc_id)
         self.BG = BasalGanglia.BasalGanglia(self.params, self.comm)
         self.CC = CreateConnections.CreateConnections(self.params, self.comm)
-
 
     def get_random_action(self):
         """
@@ -407,12 +411,12 @@ if __name__ == '__main__':
     #    C O N N E C T    M T ---> B G 
     #
     #######################################
-    CC = CreateConnections.CreateConnections(params, comm)
-    RBL.set_connection_module(CC)
-    CC.set_pc_id(pc_id)
-#    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d1', model='bcpnn_synapse')
-#    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d2', model='bcpnn_synapse')
-    CC.connect_mt_to_bg(RBL.MT, RBL.BG)
+#    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d1', model=params['synapse_d1_MT_BG'])
+#    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d2', model=params['synapse_d2_MT_BG'])
+    RBL.CC.connect_mt_to_bg(RBL.MT, RBL.BG)
+
+#    nest.PrintNetwork()
+#    exit(1)
 
 #    if params['connect_d1_after_training']:
 #        CC.connect_d1_after_training(BG, training_params, params)
@@ -431,6 +435,8 @@ if __name__ == '__main__':
 
     i_stim = 0
     v_stim_cnt = 0
+
+    times = []
     for i_cycle in xrange(RBL.params['n_training_cycles']):
         for i_v in xrange(RBL.params['n_training_v']):
 
@@ -445,20 +451,28 @@ if __name__ == '__main__':
                     (required_v_eye, v_y, action_idx) = RBL.BG.get_non_optimal_action_for_stimulus(stim_params)
                     RBL.motion_params[i_stim, :4] = deepcopy(stim_params)
                     action_v = [required_v_eye, 0.]
+                    t_ = time.time()
                     RBL.train_doing_action_with_supervisor(RBL.motion_params[i_stim, :4], action_v, v_eye=[0., 0.])
+                    times.append(time.time() - t_)
                     i_stim += 1
                 RBL.BG.reset_pool_of_possible_actions()
                 # one training with the correct / optimal action, train D1
                 (required_v_eye, v_y, action_idx) = RBL.BG.get_optimal_action_for_stimulus(stim_params)
                 action_v = [required_v_eye, 0.]
                 RBL.motion_params[i_stim, :4] = deepcopy(stim_params)
+                t_ = time.time()
                 RBL.train_doing_action_with_supervisor(RBL.motion_params[i_stim, :4], action_v, v_eye=[0., 0.])
+                times.append(time.time() - t_)
                 stim_params = utils.get_next_stim(RBL.params, stim_params, required_v_eye) # follow the stimulus to the center and update the stim params with the new ones
                 stim_params = list(stim_params)
                 i_stim += 1
             v_stim_cnt += 1
 
-
+    
+    f_time = file('%stimes_training_%d.json' % (params['tmp_folder'], pc_id), 'w')
+    json.dump(times, f_time, indent=2)
+    f_time.flush()
+    f_time.close()
 #    print 'DEBUG stim_type:', stim_type
 #    print 'DEBUG d1_actions_trained', d1_actions_trained
 #    print 'DEBUG d2_actions_trained', d2_actions_trained
@@ -466,6 +480,7 @@ if __name__ == '__main__':
 
     # in order to update the weights, switch off kappa and trigger pre-synaptic spikes in ALL cells
     # TESTING: one cycle
+    print 'trigger_pre_spikes'
     RBL.trigger_pre_spikes()
 
 #    for iter_stim in xrange(params['n_training_stim_per_cycle']):
@@ -473,13 +488,13 @@ if __name__ == '__main__':
 #        RBL.run_test(stim_params)
 
     RBL.save_data_structures()
-    CC.get_weights(RBL.MT, RBL.BG)
-    CC.get_d1_d1_weights(RBL.BG)
-    CC.get_d2_d2_weights(RBL.BG)
+    RBL.CC.get_weights(RBL.MT, RBL.BG)
+    RBL.CC.get_d1_d1_weights(RBL.BG)
+    RBL.CC.get_d2_d2_weights(RBL.BG)
 
     if pc_id == 0:
-        if params['n_stim'] > 20:
-            n_stim = 20
+        if params['n_stim'] > 6:
+            n_stim = 6 
         else:
             n_stim = params['n_stim']
         run_plot_bg(params, (0, n_stim))
@@ -489,3 +504,4 @@ if __name__ == '__main__':
 
     t1 = time.time()
     print 'Time pc_id %d: %d [sec] %.1f [min]' % (pc_id, t1 - t0, (t1 - t0)/60.)
+

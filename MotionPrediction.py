@@ -10,6 +10,7 @@ class MotionPrediction(object):
         self.VI = VI
         self.params = params
 
+        nest.ResetKernel()
         nest.SetKernelStatus({'data_path': self.params['spiketimes_folder'], 'overwrite_files': True, \
                 'resolution' : self.params['dt'], \
                 'total_num_virtual_procs': self.params['total_num_virtual_procs']})

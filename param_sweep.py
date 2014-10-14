@@ -48,7 +48,7 @@ if __name__ == '__main__':
         print "MPI not used"
 
 #    USE_MPI = False
-    training_folder = 'Training_RBL_2_titer25_2500_2_nStim5x240_taup50000_gain1.00'
+    training_folder = 'Training_RBL_2_titer25_2500_2_nStim2x54_taup50000_gain1.00'
 
     ps = simulation_parameters.global_parameters()
     param_range_1 = [1.0, 1.5, 2.0, 2.5, 3.0]
@@ -76,7 +76,12 @@ if __name__ == '__main__':
                             (params['n_training_cycles'], params['n_training_stim_per_cycle'], \
                              params['gain_MT_d1'], params['gain_MT_d2'], \
                              params['gain_d1_d1'], params['gain_d1_d1'])
-
+                    params['mpn_d1_weight_amplification'] = params['gain_MT_d1']
+                    params['mpn_d2_weight_amplification'] = params['gain_MT_d2']
+                    params['mpn_bg_bias_amplification_d1'] = params['bias_gain']
+                    params['mpn_bg_bias_amplification_d2'] = params['bias_gain']
+                    params['d1_d1_weight_amplification_neg'] = params['gain_d1_d1']
+                    params['d1_d1_weight_amplification_pos'] = params['gain_d1_d1']
 
                     params['folder_name'] = folder_name
                     prepare_simulation(ps, params)

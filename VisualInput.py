@@ -908,11 +908,6 @@ class VisualInput(object):
         return self.stim, self.supervisor_state
 
 
-    def set_pc_id(self, pc_id):
-        self.pc_id = pc_id
-
-
-
     def spikes_for_all(self, local_gids):
         local_gids = np.array(local_gids)
         n_spikes_trigger = np.int(100. / self.params['w_input_exc_mpn'])
