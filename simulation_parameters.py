@@ -41,7 +41,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 4
+        self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 50
@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
@@ -68,10 +68,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 2 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
+        self.params['n_training_x'] = 4 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space
-        self.params['suboptimal_training'] = 1
+        self.params['n_training_v'] = 5 # number of training samples to cover the v-direction of the tuning space
+        self.params['suboptimal_training'] = 2
         if self.params['reward_based_learning']:
             self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
         else:
@@ -85,7 +85,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 2)
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -93,7 +93,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
-            self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
+            self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         self.params['n_silent_iterations'] = 2 # should be at least 2
         self.params['n_iterations_RBL_retraining'] = 5
         if self.params['training']:
@@ -110,7 +110,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
-        self.params['connect_d1_after_training'] = False
+        self.params['connect_d1_after_training'] = True
         self.params['connect_d2_d2'] = False
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
         self.params['clip_weights_mpn_d2'] = self.params['clip_weights_mpn_d1']
@@ -416,7 +416,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 0.0
+        self.params['gain_MT_d1'] = 1.0
         self.params['gain_MT_d2'] = 0.5
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 1.
@@ -718,9 +718,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
             else:
                 folder_name = 'Test_DEBUG_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_seed%d/' % \
+                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_%d_seed%d/' % \
                         ( self.params['gain_MT_d1'], self.params['gain_MT_d2'], \
-                         self.params['gain_d1_d1'], self.params['master_seed'])
+                         self.params['gain_d1_d1'], self.params['connect_d1_after_training'], self.params['master_seed'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 
