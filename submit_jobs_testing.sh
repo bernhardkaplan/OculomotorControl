@@ -14,7 +14,7 @@ do
         for w_to_action_exc in 6. 8. # weight from striatum D1 to action
         do
             #for wa_d1_d1_neg in 1.0 5.0 10. 20. # weight amplification d1 -> d1 negative weights
-            for wa_d1_d1_neg in 1. 0.5 2. # weight amplification d1 -> d1 negative weights
+            for wa_d1_d1_neg in 1. 0.5 2. 0. # weight amplification d1 -> d1 negative weights
             do
                 for wa_d1 in 0.5 1.0 1.5 2.0 4.0 
                 do

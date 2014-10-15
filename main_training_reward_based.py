@@ -164,7 +164,7 @@ class RewardBasedLearning(object):
             self.rewards[self.iteration_cnt] = R
             self.MT.advance_iteration()
             self.iteration_cnt += 1
-#        self.CM.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
+        self.CM.get_weights(self.MT, self.BG, iteration=self.iteration_cnt)
 
         #####
         # 4 #       E M P T Y    R U N 

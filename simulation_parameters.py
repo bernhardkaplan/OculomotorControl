@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 5 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
@@ -412,7 +412,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 1.
             self.params['kappa_d2_d2'] = 0.
         else:
-            self.params['gain_d1_d1'] = 2.
+            self.params['gain_d1_d1_pos'] = 1.
+            self.params['gain_d1_d1_neg'] = 2.
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
@@ -498,7 +499,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         bcpnn_init = 0.01
         self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
-        self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1'], 'K': self.params['kappa_d1_d1'], \
+        self.params['params_synapse_d1_d1_pos'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1_pos'], 'K': self.params['kappa_d1_d1'], \
+                'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
+                'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
+
+        self.params['params_synapse_d1_d1_neg'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1_neg'], 'K': self.params['kappa_d1_d1'], \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
 
@@ -718,9 +723,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
             else:
                 folder_name = 'Test_DEBUG_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_%d_seed%d/' % \
+                folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.1f_d1d1wan%.1fseed%d/' % \
                         ( self.params['gain_MT_d1'], self.params['gain_MT_d2'], \
-                         self.params['gain_d1_d1'], self.params['connect_d1_after_training'], self.params['master_seed'])
+                         self.params['gain_d1_d1_pos'], self.params['gain_d1_d1_neg'], self.params['master_seed'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

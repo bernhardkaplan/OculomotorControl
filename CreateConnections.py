@@ -106,8 +106,8 @@ class CreateConnections(object):
         weights = np.zeros(d[:, 2].size)
         neg_idx = np.nonzero(d[:, 2] < 0)[0]
         pos_idx = np.nonzero(d[:, 2] > 0)[0]
-        weights[neg_idx] = d[neg_idx, 2] * testing_params['gain_d1_d1']
-        weights[pos_idx] = d[pos_idx, 2] * testing_params['gain_d1_d1']
+        weights[neg_idx] = d[neg_idx, 2] * testing_params['gain_d1_d1_neg']
+        weights[pos_idx] = d[pos_idx, 2] * testing_params['gain_d1_d1_pos']
         weights = list(weights)
         delays = list(np.ones(d[:, 0].size * testing_params['delay_d1_d1']))
         if bcpnn_params == None:

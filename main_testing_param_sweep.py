@@ -97,14 +97,12 @@ if __name__ == '__main__':
     MT = MotionPrediction.MotionPrediction(testing_params, VI, comm)
     t1 = time.time() - t0
     print 'Time3: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
-    VI.set_pc_id(pc_id)
     BG = BasalGanglia.BasalGanglia(testing_params, comm)
     t1 = time.time() - t0
     print 'Time4: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     BG.write_cell_gids_to_file()
 
     CC = CreateConnections.CreateConnections(testing_params, comm)
-    CC.set_pc_id(pc_id)
 
     if comm != None:
         comm.Barrier()
@@ -145,8 +143,7 @@ if __name__ == '__main__':
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
                 # and get the state information BEFORE MPN perceives anything
                 # in order to set a supervisor signal
-                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, action_code=actions[iteration_cnt, :])
-#                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], network_states_net[iteration_cnt, :])
+                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :])
 
             if testing_params['debug_mpn']:
                 #print 'Iteration %d: Saving spike trains...' % iteration_cnt
