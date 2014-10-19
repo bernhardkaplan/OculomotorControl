@@ -102,6 +102,26 @@ class VisualInput(object):
         return mp_training 
 
 
+    def create_test_stimuli(self):
+        """
+        This function provides 'real' test stimuli, i.e. stimuli which have not been trained.
+        """
+        test_stim_params = np.zeros((self.params['n_stim_testing'], 4))
+        test_stim_params[:, 1] = .5
+        for i_stim in xrange(self.params['n_stim_testing']):
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                test_stim_params[i_stim, 0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            else:
+                test_stim_params[i_stim, 0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+            test_stim_params[i_stim, 2] = self.RNG.uniform( -self.params['v_max_tp'], self.params['v_max_tp'])
+
+        output_fn = self.params['testing_sequence_fn']
+        print 'VisualInput saves testing stimulus parameters to:', output_fn
+        np.savetxt(output_fn, test_stim_params)
+        return test_stim_params
+
+
     def create_training_sequence_RBL(self, BG):
 
         training_stimuli_sample = self.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
@@ -182,6 +202,9 @@ class VisualInput(object):
 
         if self.params['reward_based_learning']:
             n_training_x = self.params['n_training_x'] * (self.params['suboptimal_training'] + 1)
+        else:
+            print 'Set params[reward_based_learning] = True!'
+            exit(1)
         x_grid = np.linspace(x_lim[0], x_lim[1], n_training_x)
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
         training_states_x = range(0, n_training_x)

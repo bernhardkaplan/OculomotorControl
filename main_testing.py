@@ -70,8 +70,6 @@ if __name__ == '__main__':
 #    print 'debug', training_params['training_sequence_fn']
 #    training_stimuli.reshape((training_params['n_stim_training'], 4))
 
-    training_params['training_params'] = training_params # double check
-
     if pc_id == 0:
         remove_files_from_folder(testing_params['spiketimes_folder'])
         remove_files_from_folder(testing_params['input_folder_mpn'])
@@ -79,6 +77,13 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time1: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     VI = VisualInput.VisualInput(testing_params, comm=comm)
+    training_params['training_params'] = training_params # double check
+    if testing_params['use_training_stim_for_testing']:
+        test_stim_params = np.zeros((self.params['n_stim_testing'], 4)) 
+        test_stim_params[:, 1] = .5
+    else:
+        test_stim_params = VI.create_test_stimuli()
+
     t1 = time.time() - t0
     print 'Time2: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     MT = MotionPrediction.MotionPrediction(testing_params, VI, comm)
@@ -100,6 +105,8 @@ if __name__ == '__main__':
     CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params, debug=True)
     if testing_params['connect_d1_after_training']:
         CC.connect_d1_after_training(BG, training_params, testing_params)
+    elif testing_params['connect_d1_static_cross_inhibition']:
+        BG.connect_d1_static_cross_inhibition()
     t1 = time.time() - t0
     print 'Time6: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     if comm != None:
@@ -119,10 +126,16 @@ if __name__ == '__main__':
     iteration_cnt = 0
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
 #        print 'DEBUG', training_stimuli, training_stimuli.shape, i_stim
-        if len(training_stimuli.shape) == 1:
-            VI.current_motion_params = training_stimuli
+
+        if testing_params['use_training_stim_for_testing']:
+            if len(training_stimuli.shape) == 1:
+                VI.current_motion_params = training_stimuli
+            else:
+                VI.current_motion_params = training_stimuli[i_stim, :]
+            test_stim_params[i_stim, :] = VI.current_motion_params
         else:
-            VI.current_motion_params = training_stimuli[i_stim, :]
+            VI.current_motion_params = test_stim_params[i_stim, :]
+
         for it in xrange(testing_params['n_iterations_per_stim']):
 
             if it >= (testing_params['n_iterations_per_stim'] - testing_params['n_silent_iterations']):
@@ -173,6 +186,7 @@ if __name__ == '__main__':
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
+        np.savetxt(testing_params['testing_sequence_fn'], test_stim_params)
         utils.remove_empty_files(testing_params['connections_folder'])
         utils.remove_empty_files(testing_params['spiketimes_folder'])
 #        if params['n_stim'] > 6:

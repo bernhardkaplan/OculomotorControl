@@ -1,5 +1,4 @@
-import numpy as np
-import simulation_parameters
+import numpy as np import simulation_parameters
 import os
 import subprocess
 import time
@@ -48,19 +47,21 @@ if __name__ == '__main__':
         print "MPI not used"
 
 #    USE_MPI = False
-    training_folder = 'Training_RBL_2_titer25_2500_2_nStim2x54_taup50000_gain1.00'
+    training_folder = 'Training_DEBUG_RBL_3_titer25_2500_3_nStim5x160_taup50000_gain1.00'
 
     ps = simulation_parameters.global_parameters()
-    param_range_1 = [1.0, 1.5, 2.0, 2.5, 3.0]
-    param_range_2 = [1.0, 1.5, 2.0, 2.5, 3.0]
-    param_range_3 = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+    param_range_1 = [1.0, 1.5, 2.0]
+    param_range_2 = [1.0, 1.5, 2.0]
+    param_range_3 = [-30.]
     param_range_4 = [0.]
 #    param_range_4 = [0.0001, 0.1, 0.5, 1., 10.]
 
     param_name_1 = 'gain_MT_d1'
     param_name_2 = 'gain_MT_d2'
-    param_name_3 = 'gain_d1_d1'
+    param_name_3 = 'w_d1_d1_inh'
     param_name_4 = 'gain_d2_d2'
+#    param_name_3 = 'gain_d1_d1'
+#    param_name_4 = 'gain_d2_d2'
 #    param_name_1 = 'mpn_bg_bias_amplification'
     for l_, p4 in enumerate(param_range_4):
         for k_, p3 in enumerate(param_range_3):
@@ -71,17 +72,23 @@ if __name__ == '__main__':
                     params[param_name_2] = p2  
                     params[param_name_3] = p3
                     params[param_name_4] = p4  
-                    folder_name = 'Test_%s_%d-%d' % (params['sim_id'], params['test_stim_range'][0], params['test_stim_range'][-1])
-                    folder_name += '_nStim%dx%d_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_d1d1wan%.2e/' % \
-                            (params['n_training_cycles'], params['n_training_stim_per_cycle'], \
-                             params['gain_MT_d1'], params['gain_MT_d2'], \
-                             params['gain_d1_d1'], params['gain_d1_d1'])
+                    folder_name = 'Test_DEBUG_%s_%d-%d' % (params['sim_id'], params['test_stim_range'][0], params['test_stim_range'][-1])
+                    folder_name += '_wampD1%.1f_wampD2%.1f_d1d1exc%.1f_d1d1inh%.1fseed%d/' % \
+                            ( params['gain_MT_d1'], params['gain_MT_d2'], \
+                             params['w_d1_d1_exc'], params['w_d1_d1_inh'], params['master_seed'])
+
+#                    folder_name = 'Test_%s_%d-%d' % (params['sim_id'], params['test_stim_range'][0], params['test_stim_range'][-1])
+#                    folder_name += '_nStim%dx%d_wampD1%.1f_wampD2%.1f_d1d1wap%.2e_d1d1wan%.2e/' % \
+#                            (params['n_training_cycles'], params['n_training_stim_per_cycle'], \
+#                             params['gain_MT_d1'], params['gain_MT_d2'], \
+#                             params['gain_d1_d1'], params['gain_d1_d1'])
                     params['mpn_d1_weight_amplification'] = params['gain_MT_d1']
                     params['mpn_d2_weight_amplification'] = params['gain_MT_d2']
                     params['mpn_bg_bias_amplification_d1'] = params['bias_gain']
                     params['mpn_bg_bias_amplification_d2'] = params['bias_gain']
-                    params['d1_d1_weight_amplification_neg'] = params['gain_d1_d1']
-                    params['d1_d1_weight_amplification_pos'] = params['gain_d1_d1']
+                    params['d1_d1_weight_amplification_neg'] = params['gain_d1_d1_neg']
+                    params['d1_d1_weight_amplification_pos'] = params['gain_d1_d1_pos']
+
 
                     params['folder_name'] = folder_name
                     prepare_simulation(ps, params)

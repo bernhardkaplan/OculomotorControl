@@ -1,4 +1,3 @@
-
 import sys
 import os
 import VisualInput
@@ -48,6 +47,7 @@ all_actions_trained = []
 speeds_trained = []
 positions_trained = []
 
+#d1_training_stim_and_actions = np.zeros((params['n_stim_training'], 3)) # x, v, action_idx
 
 training_stimuli = np.zeros((params['n_stim_training'], 4))
 #v_lim_frac = .7
@@ -118,6 +118,7 @@ for i_cycle in xrange(params['n_training_cycles']):
 
 print 'Saving training sequence parameters to:', params['training_sequence_fn']
 np.savetxt(params['training_sequence_fn'], all_mp)
+np.savetxt(params['action_indices_fn'], d1_actions_trained)
 
 #    for i_ in xrange(params['n_training_stim_per_cycle']):
 #        all_mp[i_stim, :] = deepcopy(stim_params)

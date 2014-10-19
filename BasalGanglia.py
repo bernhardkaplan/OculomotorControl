@@ -194,17 +194,44 @@ class BasalGanglia(object):
 #        print "BG model completed"
 
 
-    def connect_d1_population(self):
-        D1_conns = ''
+    def connect_d1_static_cross_inhibition(self):
         for i_ in xrange(self.params['n_actions']):
             src_pop = self.strD1[i_]
             for j_ in xrange(self.params['n_actions']):
                 tgt_pop = self.strD1[j_]
-                if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
-                    nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1'])
-                    nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
+                if i_ != j_:
+                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1_inh'], self.params['delay_d1_d1'])
                 else:
-                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1'], self.params['delay_d1_d1'])
+                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1_exc'], self.params['delay_d1_d1'])
+
+
+    def connect_d1_population(self):
+#        if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
+        for i_ in xrange(self.params['n_actions']):
+            src_pop = self.strD1[i_]
+            for j_ in xrange(self.params['n_actions']):
+                tgt_pop = self.strD1[j_]
+                if j_ != i_:
+                    self.params['params_synapse_d1_d1_neg']['p_i'] = self.params['bcpnn_init_pi']
+                    self.params['params_synapse_d1_d1_neg']['p_j'] = self.params['bcpnn_init_pi']
+                    self.params['params_synapse_d1_d1_neg']['p_ij'] = np.exp( self.params['w_d1_d1_inh']) * \
+                    self.params['params_synapse_d1_d1_neg']['p_i'] * self.params['params_synapse_d1_d1_neg']['p_j']
+                    if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
+                        nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1_neg'])
+                        nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
+                    else:
+                        nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1_inh'], self.params['delay_d1_d1'])
+                else:
+                    self.params['params_synapse_d1_d1_neg']['p_i'] = self.params['bcpnn_init_pi']
+                    self.params['params_synapse_d1_d1_neg']['p_j'] = self.params['bcpnn_init_pi']
+                    self.params['params_synapse_d1_d1_neg']['p_ij'] = np.exp( self.params['w_d1_d1_exc']) * \
+                    self.params['params_synapse_d1_d1_neg']['p_i'] * self.params['params_synapse_d1_d1_neg']['p_j']
+                    if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
+                        nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1_pos'])
+                        nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
+                    else:
+                        nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1_pos'], self.params['delay_d1_d1'])
+
 
     def connect_d2_population(self):
         for i_ in xrange(self.params['n_actions']):
