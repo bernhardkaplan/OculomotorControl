@@ -1,5 +1,6 @@
 import numpy as np
 import pylab
+import utils
 
 
 def plot_reward_schedule(x, R):
@@ -8,7 +9,7 @@ def plot_reward_schedule(x, R):
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
     ax2 = ax1.twinx()
-    N = x.size
+    N = len(x)
     for i_ in xrange(N):
         ax1.plot(i_, x[i_], 'o', markersize=10, c='k')
     ax1.plot(range(N), x, '-', ls='-', c='k', lw=2)
@@ -42,7 +43,7 @@ def plot_reward_schedule(x, R):
 def get_reward(dx, dx_abs, dj_di_abs):
     n_it = dx.size
     R = np.zeros(n_it - 1)
-    A = 2# amplify the improvement / worsening linearly
+    A = 1# amplify the improvement / worsening linearly
     B = .7  # punish overshoot, 0 <= B <= 1.
     for i_ in xrange(1, n_it):
         print 'i_ R, dj_di_abs', i_, R.size, dj_di_abs.size, i_ - 1
@@ -53,27 +54,33 @@ def get_reward(dx, dx_abs, dj_di_abs):
     return R
 
 
-np.random.seed(0)
-n_iterations = 50
+if __name__ == '__main__':
 
-x = np.zeros(n_iterations)
+    np.random.seed(0)
+    n_iterations = 50
 
-for i_ in xrange(n_iterations):
-    x[i_] = np.random.rand()
+    x = np.zeros(n_iterations)
 
-dx = x - .5
-dx_abs = np.abs(dx)
+    for i_ in xrange(n_iterations):
+        x[i_] = np.random.rand()
 
-dj_di_abs = dx_abs[1:] - dx_abs[:-1]
-R = get_reward(dx, dx_abs, dj_di_abs)
+    dx = x - .5
+    dx_abs = np.abs(dx)
 
-print 'Iteration x\tdx\tdx_abs\tdj_di_abs\tReward'
-for i_ in xrange(1, n_iterations):
-    print '%2d\t%.2f\t%.2f\t%.2f' % (i_-1, x[i_-1], dx[i_-1], dx_abs[i_-1])
-    print '%2d\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f' % (i_, x[i_], dx[i_], dx_abs[i_], dj_di_abs[i_-1], R[i_-1])
-    print '\n'
-    
-plot_reward_schedule(x, R)
-pylab.savefig('Reward_schedule_with_random_positions_and_random_actions.png', dpi=200)
-pylab.show()
-#    print '%2d\t%.2f\t%.2f\t%.2f\t%.2f' % (i_, x[i_], dx[i_], dx_abs[i_], dj_di_abs[i_])
+    dj_di_abs = dx_abs[1:] - dx_abs[:-1]
+
+    #R = get_reward(dx, dx_abs, dj_di_abs)
+    R = np.zeros(n_iterations)
+    for i_ in xrange(n_iterations-1):
+        R[i_] = utils.get_reward_from_perceived_states(x[i_], x[i_+1])
+
+    print 'Iteration x\tdx\tdx_abs\tdj_di_abs\tReward'
+    for i_ in xrange(1, n_iterations):
+        print '%2d\t%.2f\t%.2f\t%.2f' % (i_-1, x[i_-1], dx[i_-1], dx_abs[i_-1])
+        print '%2d\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f' % (i_, x[i_], dx[i_], dx_abs[i_], dj_di_abs[i_-1], R[i_-1])
+        print '\n'
+        
+    plot_reward_schedule(x, R)
+    pylab.savefig('Reward_schedule_with_random_positions_and_random_actions.png', dpi=200)
+    pylab.show()
+    #    print '%2d\t%.2f\t%.2f\t%.2f\t%.2f' % (i_, x[i_], dx[i_], dx_abs[i_], dj_di_abs[i_])

@@ -56,7 +56,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['use_training_stim_for_testing'] = False
         self.params['softmax_temperature'] = 10.
 
-        self.params['n_training_cycles'] = 5 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
@@ -69,10 +69,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 6 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
+        self.params['n_training_x'] = 1 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 5 # number of training samples to cover the v-direction of the tuning space
-        self.params['suboptimal_training'] = 4
+        self.params['n_training_v'] = 2 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['suboptimal_training'] = 1
         if self.params['reward_based_learning']:
             self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
         else:
@@ -149,6 +149,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_min_out'] = 0.1  # min velocity for eye movements
         self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['t_iter_training'] = 25
+
+        self.params['punish_overshoot'] = .7
+
         # if non-zero and reward_based_learning == False then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
@@ -228,14 +231,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['f_noise_exc'] = 1000.
         self.params['f_noise_inh'] = 1000.
         self.params['w_noise_exc'] = 0.2
-        self.params['w_noise_inh'] = -.2
+        self.params['w_noise_inh'] = -0.2
 
         # for BG
-        self.params['connect_noise_to_bg'] = False
-        self.params['f_noise_exc_bg'] = 1.
-        self.params['f_noise_inh_bg'] = 1.
-        self.params['w_noise_exc_bg'] = 0.01
-        self.params['w_noise_inh_bg'] = -0.01
+        self.params['connect_noise_to_bg'] = True
+        self.params['f_noise_exc_bg'] = 1000.
+        self.params['f_noise_inh_bg'] = 1000.
+        self.params['w_noise_exc_bg'] = 1.5
+        self.params['w_noise_inh_bg'] = -1.0
 
 
         # ##############################
@@ -250,8 +253,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-        self.params['gids_to_record_mpn'] = [12, 13, 14, 60, 62, 210]
-        self.params['gids_to_record_bg'] = [10088, 10115, 10149, 10152]
+        self.params['gids_to_record_mpn'] = None # [12, 13, 14, 60, 62, 210]
+#        self.params['gids_to_record_bg'] = [10088, 10115, 10149, 10152]
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
@@ -271,6 +274,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['x_min_tp'] = 0.1  # [a.u.] all cells with abs(rf_x - .5) < x_min_tp are considered to be in the center and will have constant, minimum RF size (--> see n_rf_x_fovea)
         self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
+
+        self.params['v_lim_training'] = (-self.params['v_max_tp'] * 0.7, self.params['v_max_tp'] * 0.7)
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['blur_X'], self.params['blur_V'] = .25, .25
         self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
@@ -381,6 +386,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_states'] = 12
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.20
+        self.params['gids_to_record_bg'] = [10173 + i * 5 for i in xrange(self.params['n_actions'])]
 
         #Connections Actions and States to RP
         self.tau_i = 10.
@@ -472,7 +478,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['num_actions_output'] = 5
         self.params['param_bg_output'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -80.0, 'V_th': -50.0, \
-                'g_L': 25.0, 't_ref': 1.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
+                'g_L': 16.667, 't_ref': 1.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
         #{'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
 
         

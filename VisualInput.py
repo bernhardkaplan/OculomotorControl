@@ -918,12 +918,9 @@ class VisualInput(object):
 
     def set_empty_input(self, local_gids):
         """
-        At the last iteration for each stimulus return an empty spike train
+        Return empty input spike trains for all local cells
         """
-
-        local_gids = np.array(local_gids)
-        for i_ in xrange(len(local_gids)):
-            self.stim[i_] = []
+        self.stim = [ [] for gid in xrange(len(local_gids))]
         self.motion_params[self.iteration, -1] = self.t_current
         self.t_current += self.params['t_iteration']
         self.iteration += 1
@@ -935,8 +932,8 @@ class VisualInput(object):
         local_gids = np.array(local_gids)
         n_spikes_trigger = np.int(100. / self.params['w_input_exc_mpn'])
 
+        self.stim = [ [] for gid in xrange(len(local_gids))]
         for i_ in xrange(len(local_gids)):
-            self.stim[i_] = []
             for i_spike in xrange(n_spikes_trigger):
                 self.stim[i_].append(self.t_current + i_spike * self.params['dt'])
             #print 'DEBUG self.stim[%d]: ' % (i_), self.stim[i_]

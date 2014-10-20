@@ -36,6 +36,24 @@ def get_next_stim(params, stim_params, v_eye):
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
+def get_reward_from_perceived_states(old_pos, new_pos, punish_overshoot=1.):
+    """
+    Computes the reward based on the two consecutive positions
+    """
+
+    dx_i = old_pos - .5 # -2 and -1 because self.iteration is + 1 (because compute_input has been called before)
+    dx_j = new_pos - .5
+    dx_i_abs = np.abs(dx_i)
+    dx_j_abs = np.abs(dx_j)
+    delta_x_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement
+    R = - delta_x_abs / .5
+#    R = -1. * diff_dx_abs
+    if np.sign(dx_i) != np.sign(dx_j): # 'overshoot'
+        R *= punish_overshoot
+    return R
+
+
+
 def distance(x,y):   
     # alternative: np.linalg.norm(a-b)
     return np.sqrt(np.sum((x - y)**2))

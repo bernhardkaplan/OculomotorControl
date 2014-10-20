@@ -12,6 +12,7 @@ import time
 import os
 import utils
 from copy import deepcopy
+import pylab
 
 
 GP = simulation_parameters.global_parameters()
@@ -25,117 +26,94 @@ VI = VisualInput.VisualInput(params)
 
 tp = VI.set_tuning_prop_1D_with_const_fovea(cell_type='exc')
 
-#stim_params = list(params['initial_state'])
-stim_params = [0., 0.5, 0., 0.]
-
-#(required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
-#action_v = [required_v_eye, 0.]
-#print 'action_v', action_v
-#stim_params = utils.get_next_stim(params, stim_params, required_v_eye)
-#print 'next mp:', stim_params
-
-
-n_stim = params['n_training_stim_per_cycle'] * params['n_training_cycles']
-all_mp = np.zeros((n_stim, 4))
-print 'initial motion_params', stim_params
-i_stim = 0
-
 stim_type = []
 d1_actions_trained = []
 d2_actions_trained = []
 all_actions_trained = []
 speeds_trained = []
 positions_trained = []
+x_stim_only = []
+
 
 #d1_training_stim_and_actions = np.zeros((params['n_stim_training'], 3)) # x, v, action_idx
 
-training_stimuli = np.zeros((params['n_stim_training'], 4))
-#v_lim_frac = .7
-#v_lim = (v_lim_frac * np.min(tp[:, 2]), v_lim_frac * np.max(tp[:, 2]))
+v_lim_frac = .7
+v_lim = (v_lim_frac * np.min(tp[:, 2]), v_lim_frac * np.max(tp[:, 2]))
 #v_grid = np.linspace(v_lim[0], v_lim[1], params['n_training_v'])
 #VI.RNG.shuffle(v_training)
 
 training_stimuli = np.zeros((params['n_stim_training'], 4))
-training_stimuli_sample = VI.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
-training_stimuli_grid = VI.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
-training_stimuli_center = VI.create_training_sequence_around_center()   # sample more from the center in order to reduce risk of overtraining action 0 and v_x_max
-n_grid = int(np.round(params['n_stim_training'] * params['frac_training_samples_from_grid']))
-n_center = int(np.round(params['n_stim_training'] * params['frac_training_samples_center']))
-n_training_stim_from_tp_sampling = params['n_stim_training'] - n_grid - n_center
-training_stimuli[:n_grid, :] = training_stimuli_grid[np.random.choice(range(params['n_stim_training']), n_grid), :]
-training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
-training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[np.random.choice(range(params['n_stim_training']), n_training_stim_from_tp_sampling), :]
-#VI.RNG.shuffle(v_training)
+training_speeds = np.arange(params['v_lim_training'][0], params['v_lim_training'][1], params['n_training_v'])
 
 v_stim_cnt = 0
+
+stim_params = [0., 0.5, 0., 0.]
+
+rewards_bg = []
+rewards = []
+stim_pos = []
+stim_v = []
+
+n_stim = 0
+all_mp = []
 for i_cycle in xrange(params['n_training_cycles']):
     for i_v in xrange(params['n_training_v']):
+        stim_params[2] = training_speeds[i_v]
 
-#        stim_params = training_stimuli[i_stim, :]
-#        stim_params = training_stimuli[i_stim, :]
-
-        # sample stimulus speed from tuning properties
-#        stim_params[2] = tp[np.random.choice(tp[:, 0].size), 2]
-        stim_params = [0., 0.5, 0., 0.]
-        # get start position some where in the periphery
-        pm = utils.get_plus_minus(np.random)
-        if pm > 0:
-            stim_params[0] = np.random.uniform(.5 + params['center_stim_width'], 1.)
-        else:
-            stim_params[0] = np.random.uniform(0, .5 - params['center_stim_width'])
-#        stim_params[2] = np.random.choice(v_grid, 1) + utils.get_plus_minus(VI.RNG) * VI.RNG.uniform(0, params['training_stim_noise_v'])
-        stim_params[2] = training_stimuli[v_stim_cnt, 2]
-
+        BG.reset_pool_of_possible_actions(v_stim=stim_params[2])
         for i_x in xrange(params['n_training_x']):
-            for i_neg in xrange(params['suboptimal_training']):
-                (required_v_eye, v_y, action_idx) = BG.get_non_optimal_action_for_stimulus(stim_params)
-                action_v = [required_v_eye, 0.]
-                stim_type.append(2)
-                d2_actions_trained.append(action_idx)
-                all_actions_trained.append(action_idx)
-                speeds_trained.append(stim_params[2])
-                positions_trained.append(stim_params[0])
-                # sim
-#                training_stimuli[i_stim, :] = stim_params
-                all_mp[i_stim, :] = stim_params
-                i_stim += 1
 
-            BG.reset_pool_of_possible_actions()
-            # one training with the correct / optimal action
-            (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
-#            training_stimuli[i_stim, :] = stim_params
-            all_mp[i_stim, :] = deepcopy(stim_params)
-            stim_type.append(1)
-            action_v = [required_v_eye, 0.]
-            stim_params = utils.get_next_stim(params, stim_params, required_v_eye)
-            stim_params = list(stim_params)
-            d1_actions_trained.append(action_idx)
-            all_actions_trained.append(action_idx)
-            speeds_trained.append(stim_params[2])
-            positions_trained.append(stim_params[0])
-            i_stim += 1
-        v_stim_cnt += 1
+            # get a new starting position somewhere in the periphery
+            pm = utils.get_plus_minus(np.random)
+            if pm > 0:
+                stim_params[0] = np.random.uniform(.5 + params['center_stim_width'], 1.)
+            else:
+                stim_params[0] = np.random.uniform(0, .5 - params['center_stim_width'])
 
-print 'Saving training sequence parameters to:', params['training_sequence_fn']
-np.savetxt(params['training_sequence_fn'], all_mp)
-np.savetxt(params['action_indices_fn'], d1_actions_trained)
+            while True:
+                # select a random action taking only the direction of the speed into account
+                print 'BG possible actions:', BG.all_action_idx
+                rnd_action = BG.get_random_action(stim_params[2])
+                if rnd_action == False:
+                    # reinitialize the stimulus
+                    break
+                else:
+                    rnd_action_idx, v_rnd = rnd_action
+            
+                # here would be a stimulus representation
+                n_stim += 1
+                all_actions_trained.append(rnd_action_idx)
 
-#    for i_ in xrange(params['n_training_stim_per_cycle']):
-#        all_mp[i_stim, :] = deepcopy(stim_params)
-#        if i_ < params['suboptimal_training']:
-#        else:
-#            (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
-#            stim_type.append(1)
-#            action_v = [required_v_eye, 0.]
-#            stim_params = utils.get_next_stim(params, stim_params, required_v_eye)
-#            stim_params = list(stim_params)
-#            d1_actions_trained.append(action_idx)
-#        all_actions_trained.append(action_idx)
-#        speeds_trained.append(stim_params[2])
-#        i_stim += 1
-#        print 'action_v', action_v, action_idx, stim_params
+                all_mp.append(stim_params)
+                # evaluation of previous action
+                x_old = stim_params[0]
+                stim_pos.append(stim_params[0])
+                stim_v.append(stim_params[2])
+                R_BG = BG.get_reward_from_action(rnd_action_idx, stim_params)
+                rewards_bg.append(R_BG)
+                stim_params = utils.get_next_stim(params, stim_params, v_rnd)
+                x_stim_only.append(utils.get_next_stim(params, stim_params, 0.)
+                stim_params = list(stim_params)
+                R = utils.get_reward_from_perceived_states(x_old, stim_params[0])
+                rewards.append(R)
+                print 'cycle %d i_v %d v_stim=%.2f action (%d, v=%.2f) i_x %d x = (before action) %.2f (after action %.2f)\tR_BG=%.2f R = %.2f' % (i_cycle, i_v, stim_params[2], rnd_action_idx, v_rnd, i_x, x_old, stim_params[0], R_BG, R)
 
-#    stim_params[2] = np.random.uniform(-params['v_max_tp'], params['v_min_tp'])
+
+from test_reward_schedule import plot_reward_schedule
+plot_reward_schedule(stim_pos, rewards)
+
+fig1 = pylab.figure()
+ax = fig1.add_subplot(211)
+ax2 = fig1.add_subplot(212)
+
+#pylab.show()
+
+#exit(1)
+
+all_mp = np.array(all_mp)
+#print 'Saving training sequence parameters to:', params['training_sequence_fn']
+#np.savetxt(params['training_sequence_fn'], all_mp)
+#np.savetxt(params['action_indices_fn'], d1_actions_trained)
 
 
 #print 'all_mp', all_mp
@@ -143,24 +121,23 @@ np.savetxt(params['action_indices_fn'], d1_actions_trained)
 #print 'all_actions_trained', all_actions_trained
 #print 'positions_trained:', positions_trained
 
-import pylab
 
-fig1 = pylab.figure()
-ax = fig1.add_subplot(211)
-ax2 = fig1.add_subplot(212)
-n_stim = i_stim 
 ax.plot(range(n_stim), all_mp[:, 0])
 ax2.plot(range(n_stim), all_mp[:, 2])
 ax.set_ylabel('Retinal displacement')
 ax2.set_ylabel('Stimulus speed')
-for i_ in xrange(i_stim):
-    if stim_type[i_] == 2:
-        ax.scatter(i_, all_mp[i_, 0], marker='v', c='r', s=100)
-    else:
-        ax.scatter(i_, all_mp[i_, 0], marker='o', c='b', s=100)
+for i_ in xrange(n_stim):
+#    if stim_type[i_] == 2:
+#        ax.scatter(i_, all_mp[i_, 0], marker='v', c='r', s=100)
+#    else:
+#        ax.scatter(i_, all_mp[i_, 0], marker='o', c='b', s=100)
     ax.text(i_, all_mp[i_, 0] + 0.1, '%d' % all_actions_trained[i_])
 ax.set_xlim((0, n_stim))
 ax2.set_xlim((0, n_stim))
+
+
+pylab.show()
+exit(1)
 
 fig2 = pylab.figure()
 ax1 = fig2.add_subplot(111)
