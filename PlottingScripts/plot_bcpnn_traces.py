@@ -117,7 +117,7 @@ class TracePlotter(object):
         p2, = ax1.plot(t_axis, zj, c=color_post, label='$z_j$', lw=linewidth)
         plots += [p1, p2]
         labels_z = ['$z_i$', '$z_j$']
-        ax1.legend(plots, labels_z)
+        ax1.legend(plots, labels_z, loc='upper left')
         ax1.set_xlabel('Time [ms]')
         ax1.set_ylabel('z-traces')
 
@@ -129,7 +129,7 @@ class TracePlotter(object):
         labels_p = ['$p_i$', '$p_j$', '$p_{ij}$']
         ax5.set_title('$\\tau_{p} = %d$ ms' % \
                 (bcpnn_params['tau_p']), fontsize=self.title_fontsize)
-        ax5.legend(plots, labels_p)
+        ax5.legend(plots, labels_p, loc='upper left')
         ax5.set_xlabel('Time [ms]')
         ax5.set_ylabel('p-traces')
 
@@ -141,7 +141,7 @@ class TracePlotter(object):
         labels_p = ['$e_i$', '$e_j$', '$e_{ij}$']
         ax3.set_title('$\\tau_{e} = %d$ ms' % \
                 (bcpnn_params['tau_e']), fontsize=self.title_fontsize)
-        ax3.legend(plots, labels_p)
+        ax3.legend(plots, labels_p, loc='upper left')
         ax3.set_xlabel('Time [ms]')
         ax3.set_ylabel('e-traces')
 
@@ -149,7 +149,7 @@ class TracePlotter(object):
         p1, = ax4.plot(t_axis, wij, c=color_pre, lw=linewidth)
         plots += [p1]
         labels_w = ['$w_{ij}$']
-        ax4.legend(plots, labels_w)
+        ax4.legend(plots, labels_w, loc='upper left')
         ax4.set_xlabel('Time [ms]')
         ax4.set_ylabel('Weight')
 
@@ -157,7 +157,7 @@ class TracePlotter(object):
         p1, = ax6.plot(t_axis, bias, c=color_pre, lw=linewidth)
         plots += [p1]
         labels_ = ['bias']
-        ax6.legend(plots, labels_)
+        ax6.legend(plots, labels_, loc='upper left')
         ax6.set_xlabel('Time [ms]')
         ax6.set_ylabel('Bias')
 
@@ -203,7 +203,7 @@ class TracePlotter(object):
         p2, = ax1.plot(t_axis, zj, c=color_post, label='$z_j$', lw=linewidth)
         plots += [p1, p2]
         labels_z = ['$z_i$', '$z_j$']
-        ax1.legend(plots, labels_z)
+        ax1.legend(plots, labels_z, loc='upper left')
         ax1.set_xlabel('Time [ms]')
         ax1.set_ylabel('z-traces')
 
@@ -215,7 +215,7 @@ class TracePlotter(object):
         labels_p = ['$p_i$', '$p_j$', '$p_{ij}$']
         ax2.set_title('$\\tau_{p} = %d$ ms' % \
                 (bcpnn_params['tau_p']), fontsize=self.title_fontsize)
-        ax2.legend(plots, labels_p)
+        ax2.legend(plots, labels_p, loc='upper left')
         ax2.set_xlabel('Time [ms]')
         ax2.set_ylabel('p-traces')
 
@@ -227,7 +227,7 @@ class TracePlotter(object):
         labels_p = ['$e_i$', '$e_j$', '$e_{ij}$']
         ax3.set_title('$\\tau_{e} = %d$ ms' % \
                 (bcpnn_params['tau_e']), fontsize=self.title_fontsize)
-        ax3.legend(plots, labels_p)
+        ax3.legend(plots, labels_p, loc='upper left')
         ax3.set_xlabel('Time [ms]')
         ax3.set_ylabel('e-traces')
 
@@ -235,7 +235,7 @@ class TracePlotter(object):
         p1, = ax4.plot(t_axis, wij, c=color_pre, lw=linewidth)
         plots += [p1]
         labels_w = ['$w_{ij}$']
-        ax4.legend(plots, labels_w)
+        ax4.legend(plots, labels_w, loc='upper left')
         ax4.set_xlabel('Time [ms]')
         ax4.set_ylabel('Weight')
 
@@ -243,7 +243,7 @@ class TracePlotter(object):
         p1, = ax6.plot(t_axis, bias, c=color_pre, lw=linewidth)
         plots += [p1]
         labels_ = ['bias']
-        ax6.legend(plots, labels_)
+        ax6.legend(plots, labels_, loc='upper left')
         ax6.set_xlabel('Time [ms]')
         ax6.set_ylabel('Bias')
 
