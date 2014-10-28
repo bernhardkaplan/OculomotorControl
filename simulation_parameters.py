@@ -69,14 +69,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 1 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
+        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 2 # number of training samples to cover the v-direction of the tuning space, should be an even number
-        self.params['suboptimal_training'] = 1
-        if self.params['reward_based_learning']:
-            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
-        else:
-            self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
+#        self.params['suboptimal_training'] = 1
+#        if self.params['reward_based_learning']:
+#            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
+#            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
+#        else:
+        self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['frac_training_samples_from_grid'] = .0
         self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
@@ -86,7 +88,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 3)
+        self.params['test_stim_range'] = range(0, 1)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -95,12 +97,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
-        self.params['n_silent_iterations'] = 2 # should be at least 2
-        self.params['n_iterations_RBL_retraining'] = 5
+        self.params['n_silent_iterations'] = 4 # should be at least 2, 4 is now a sum of main_training_reward_based_new: 3xnoise + 1xtrigger_spikes
+        self.params['n_iterations_RBL_retraining'] = 2
         if self.params['training']:
             if self.params['reward_based_learning']:
                 self.params['n_iterations_per_stim'] = 1 + self.params['n_silent_iterations'] + self.params['n_iterations_RBL_retraining'] 
-                # + 1 comes from the initial show (then one silent, then n_iterations_RBL_retraining, then the other silent iterations)
+                # + 1 is the actual stimulus presentation
+                # noise, stim, noise, training, trigger spikes, noise
+                # noise
+                # testing
             else:
                 # 'open-loop': 
                 self.params['n_iterations_per_stim'] = 2 + self.params['n_silent_iterations'] 
@@ -131,10 +136,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if self.params['training']:
             self.params['n_stim'] = self.params['n_stim_training']
-            if self.params['reward_based_learning']:
-                self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim'] + 1 # + 1 extra iteration to trigger pre-synaptic spikes in all cells
-            else:
-                self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
+            self.params['n_iterations'] = (self.params['n_stim'] + self.params['n_stim_testing']) * self.params['n_iterations_per_stim']
         else:
             self.params['n_stim'] = self.params['n_stim_testing']
             self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
@@ -155,9 +157,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if non-zero and reward_based_learning == False then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
-            self.params['sim_id'] = '%d_titer%d_nRF%d_nV%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
+            self.params['sim_id'] = '_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
             if (self.params['reward_based_learning']):
-                self.params['sim_id'] = 'RBL_%d_titer%d_%d' % (self.params['suboptimal_training'], self.params['t_iteration'], self.params['n_rf'] * self.params['n_v'])
+                self.params['sim_id'] = 'RBL_titer%d_%d' % (self.params['t_iteration'], self.params['n_rf'] * self.params['n_v'])
         else:
             self.params['sim_id'] = '%d_NewTest_' % (self.params['t_iteration'])
 
@@ -175,7 +177,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['master_seed'] = 321
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 1234
+        self.params['visual_stim_seed'] = 321
         self.params['tuning_prop_seed'] = 0
         self.params['basal_ganglia_seed'] = 5
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
@@ -279,7 +281,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['blur_X'], self.params['blur_V'] = .25, .25
         self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
-        self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['training_stim_noise_v'] = 0.01 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
         self.params['rf_size_x_multiplicator'] = 1.0 # receptive field sizes for x-position are multiplied with this factor (to increase / decrease overlap)
         self.params['rf_size_v_multiplicator'] = 1.0 # receptive field sizes for vx are multiplied with this factor (to increase / decrease overlap)
@@ -728,8 +730,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_DEBUG_%s_%d_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
-                        self.params['suboptimal_training'], \
+                folder_name = 'Training_DEBUG_%s_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
                         self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
             else:

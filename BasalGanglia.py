@@ -17,7 +17,7 @@ class BasalGanglia(object):
         self.activity_memory = np.zeros((self.params['n_iterations'], self.params['n_actions']))
         self.RNG = np.random
         self.RNG.seed(self.params['basal_ganglia_seed'])
-        self.create_suboptimal_action_mapping()
+#        self.create_suboptimal_action_mapping()
         self.iteration = 0
         self.set_action_speed_mapping_bins() 
         self.strD1 = {}
@@ -361,7 +361,6 @@ class BasalGanglia(object):
             elif rnd_action < 0:
                 rnd_action = self.RNG.choice(xrange(0, self.params['suboptimal_training']))
             self.map_suboptimal_action[action] = rnd_action
-#            self.map_suboptimal_action[action] = int(action + self.params['suboptimal_training'] * utils.get_plus_minus(self.RNG)) % self.params['n_actions']
         output_fn = self.params['bg_suboptimal_action_mapping_fn']
         output_file = file(output_fn, 'w')
         json.dump(self.map_suboptimal_action, output_file, indent=2)
@@ -391,8 +390,6 @@ class BasalGanglia(object):
             best_action = np.argmin(np.abs(all_outcomes - .5))
             output_speed_x = self.action_bins_x[best_action]
             print 'BG for trial %d says (it %d, pc_id %d): do action %d, output_speed:' % (i_trial, self.t_current / self.params['t_iteration'], self.pc_id, best_action), output_speed_x
-            self.t_current += self.params['t_iteration']
-            self.advance_iteration()
             print 'DEBUG BG sets supervisor for action %d' % (best_action)
             for nactions in xrange(self.params['n_actions']):
                 nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
@@ -598,8 +595,6 @@ class BasalGanglia(object):
 
         if len(nspikes) == 0:
             print 'No spikes found in iteration', self.t_current/self.params['t_iteration']
-            self.t_current += self.params['t_iteration']
-            self.advance_iteration()
             if random_action == False: # do nothing:
                 return (0, 0, np.int(self.params['n_actions'] / 2)) # maye use 0 instead of np.nan
             elif random_action == True:
@@ -632,9 +627,7 @@ class BasalGanglia(object):
             output_speed_x = vector_avg_speed
 
         print 'BG says (it %d, pc_id %d): do action %.1f, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
-        self.t_current += self.params['t_iteration']
 
-        self.advance_iteration()
         return (output_speed_x, 0, winning_action)
 
 
@@ -726,6 +719,7 @@ class BasalGanglia(object):
 
 
     def advance_iteration(self):
+        self.t_current += self.params['t_iteration']
         self.iteration += 1
 
 

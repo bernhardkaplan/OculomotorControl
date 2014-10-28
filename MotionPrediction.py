@@ -172,7 +172,6 @@ class MotionPrediction(object):
         
         # for all local gids: count occurence in new_event_gids
         stim_params_readout = self.readout_spiking_activity(tuning_prop_exc, gids_spiked, nspikes)
-        self.t_current += self.params['t_iteration']
         self.perceived_states[self.iteration, :] = stim_params_readout
         return stim_params_readout
 
@@ -194,6 +193,7 @@ class MotionPrediction(object):
 
         
     def advance_iteration(self):
+        self.t_current += self.params['t_iteration']
         self.iteration += 1
 
 

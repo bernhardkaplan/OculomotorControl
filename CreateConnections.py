@@ -11,7 +11,7 @@ class CreateConnections(object):
         
         self.params = params
 
-        print nest.Models()
+#        print nest.Models()
 #        nest.CopyModel('bcpnn_synapse', 'adfadsf', params=self.params['params_synapse_d1_MT_BG'])
         nest.CopyModel('bcpnn_synapse', self.params['synapse_d1_MT_BG'], params=self.params['params_synapse_d1_MT_BG'])
         nest.CopyModel('bcpnn_synapse', self.params['synapse_d2_MT_BG'], params=self.params['params_synapse_d2_MT_BG'])
@@ -164,6 +164,8 @@ class CreateConnections(object):
         Connect the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
         based on the weights found in w_init_fn
         """
+        raise NotImplementedError('Loading the weight matrix is not yet implemented')
+        
         if self.comm != None:
             self.comm.Barrier()
 
