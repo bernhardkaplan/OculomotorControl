@@ -56,6 +56,14 @@ class RewardBasedLearning(object):
         self.iteration_cnt = 0
         self.retrained_actions = []
         
+    def prepare_training(self, w_init_fn=None): 
+        self.create_networks()
+        self.set_up_data_structures()
+        if w_init_fn != None:
+            # TODO: load a weight matrix in order to continue training
+            self.CC.
+            
+    RBL.CC.connect_mt_to_bg(RBL.MT, RBL.BG)
 
     def create_networks(self):
         self.VI = VisualInput.VisualInput(self.params, comm=self.comm)
@@ -381,21 +389,18 @@ if __name__ == '__main__':
         comm.Barrier()
     t0 = time.time()
 
+
+    ###################
+    #    S E T   U P 
+    ###################
     RBL = RewardBasedLearning(params, comm)
+    RBL.prepare_training()
 
-    RBL.create_networks()
-    RBL.set_up_data_structures()
 
-    ######################################
-    #
-    #    C O N N E C T    M T ---> B G 
-    #
-    #######################################
-
-    # TODO: load a weight matrix in order to continue training
-#    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d1', model=params['synapse_d1_MT_BG'])
-#    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d2', model=params['synapse_d2_MT_BG'])
-    RBL.CC.connect_mt_to_bg(RBL.MT, RBL.BG)
+    ####################################
+    #   T R A I N   A   S T I M U L U S 
+    ####################################
+    RBL.present_stimulus_and_train()
 
     ######################################
     #    N O I S E    R U N S

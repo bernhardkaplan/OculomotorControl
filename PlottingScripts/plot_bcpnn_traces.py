@@ -95,6 +95,7 @@ class TracePlotter(object):
         # unpack the bcpnn_traces
         wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
         t_axis = dt * np.arange(zi.size)
+        print 'debug t_axis.size', len(t_axis)
         plots = []
         pylab.rcParams.update({'figure.subplot.hspace': 0.50})
         if fig == None:
@@ -162,8 +163,13 @@ class TracePlotter(object):
         ax6.set_ylabel('Bias')
 
         if K_vec != None:
+            print 'debug t_axis K_vec sizes', len(t_axis), len(K_vec)
             p1, = ax2.plot(t_axis, K_vec, c='k', lw=linewidth)
             ax2.set_ylabel('Kappa')
+            ylim = ax2.get_ylim()
+            y0 = ylim[0] - ylim[1] * 0.05
+            y1 = ylim[1] * 1.1
+            ax2.set_ylim((y0, y1))
         if extra_txt != None:
             ax2.set_title(extra_txt)
 

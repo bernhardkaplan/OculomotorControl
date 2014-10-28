@@ -159,6 +159,48 @@ class CreateConnections(object):
 #        nest.SetStatus(nest.GetConnections(srcs, tgts, 
 
 
+    def connect_and_load_mt_to_bg(self, mpn_net, bg_net, w_init_fn):
+        """
+        Connect the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
+        based on the weights found in w_init_fn
+        """
+        if self.comm != None:
+            self.comm.Barrier()
+
+        self.merge_connection_files(training_params, test_params)
+        print 'Loading MPN - BG %s connections from: %s' % (target, training_params['mpn_bg%s_merged_conn_fn' % target])
+        tgt_path = test_params['connections_folder'] + 'merged_mpn_bg_%s_connections_preTraining.txt' % target
+        cmd = 'cp %s %s' % (training_params['mpn_bg%s_merged_conn_fn' % target], tgt_path)
+        if self.pc_id == 0:
+            os.system(cmd)
+        mpn_bg_conn_list = np.loadtxt(training_params['mpn_bg%s_merged_conn_fn' % target])
+        n_lines = mpn_bg_conn_list[:, 0].size 
+        w = mpn_bg_conn_list[:, 2]
+        pi = test_params['bcpnn_init_pi']
+        pj = test_params['bcpnn_init_pi']
+        w *= self.params['gain_MT_%s' % target]
+#        pij = pi * pj * np.exp(w)
+        valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
+        srcs = list(mpn_bg_conn_list[valid_idx, 0].astype(np.int))
+        tgts = list(mpn_bg_conn_list[valid_idx, 1].astype(np.int))
+        weights = list(w[valid_idx])
+        pij = pi * pj * np.exp(w[valid_idx])
+
+        delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
+        param_dict_list = [test_params['params_synapse_%s_MT_BG' % target] for i_ in xrange(valid_idx.size)]
+        for i_ in xrange(valid_idx.size):
+#            print 'debug',param_dict_list[i_], param_dict_list[i_]['p_i']
+            param_dict_list[i_]['p_i'] = pi
+            param_dict_list[i_]['p_j'] = pj
+            param_dict_list[i_]['p_ij'] = pij[i_]
+#        param_dict = [ {'p_i' : pi[i_], 'p_j': pj[i_], 'p_ij': pij[i_], 'weight': weights[i_], 'delay': delays[i_]} for i_ in xrange(valid_idx.size)]
+            nest.Connect([srcs[i_]], [tgts[i_]], param_dict_list[i_], model=model)
+#        nest.Connect(srcs, tgts, weights, delays, model=model)
+
+        # set the pi, pj, traces
+#        nest.SetStatus(nest.GetConnections(srcs, tgts, 
+
+
 
 
 

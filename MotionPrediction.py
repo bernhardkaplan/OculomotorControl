@@ -16,7 +16,6 @@ class MotionPrediction(object):
                 'total_num_virtual_procs': self.params['total_num_virtual_procs']})
         N_vp = nest.GetKernelStatus(['total_num_virtual_procs'])[0]
         msd = self.params['master_seed']
-        pyrngs = [np.random.RandomState(s) for s in range(msd, msd+N_vp)]
         nest.SetKernelStatus({'grng_seed' : msd+N_vp})
         nest.SetKernelStatus({'rng_seeds' : range(msd+N_vp+1, msd+2*N_vp+1)})
         self.pc_id, self.n_proc = nest.Rank(), nest.NumProcesses()
