@@ -217,8 +217,8 @@ if __name__ == '__main__':
 
 
     it_range_plotting = (0, params['n_iterations'])
-    it_range_pre_cell_selection = (0, 1) # determines iteration range to determine the presynaptic cells
-    action_idx = 16
+    it_range_pre_cell_selection = (1, 2) # determines iteration range to determine the presynaptic cells
+    action_idx = 6
 
     WP = WeightPlotter(params)
     WP.plot_weights('d1', it_range_plotting, it_range_pre_cell_selection, action_idx)

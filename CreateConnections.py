@@ -276,6 +276,7 @@ class CreateConnections(object):
                 else:
                     return None
 
+
     def debug_connections(self, tgt_pop, model='static_synapse'):
 
         debug_txt = ''
@@ -311,6 +312,7 @@ class CreateConnections(object):
     def get_weights(self, src_pop, tgt_pop, iteration=None, model='bcpnn_synapse'):
         """
         After training get the weights between the MPN state layer and the BG action layer
+        src_pop and tgt_pop are the populations (i.e. list of GIDs)
         """
 
         print 'Writing weights to files...'

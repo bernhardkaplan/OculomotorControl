@@ -708,3 +708,18 @@ def distribute_n(n, n_proc, pid):
 #    """
 
 
+
+def linear_transformation(x, y_min, y_max):
+    """
+    x : the range to be transformed
+    y_min, y_max : lower and upper boundaries for the range into which x
+                   is transformed to
+    Returns y = f(x), f(x) = m * x + b
+    """
+    x_min = np.min(x)
+    x_max = np.max(x)
+    if x_min == x_max:
+        x_max = x_min * 1.0001
+    return (y_min + (y_max - y_min) / (x_max - x_min) * (x - x_min))
+
+

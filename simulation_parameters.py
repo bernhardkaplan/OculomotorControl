@@ -97,7 +97,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
-        self.params['n_silent_iterations'] = 4 # should be at least 2, 4 is now a sum of main_training_reward_based_new: 3xnoise + 1xtrigger_spikes
+        self.params['n_silent_iterations'] = 5 # should be at least 2, 5 is now a sum of main_training_reward_based_new: 3 x noise + 1 x trigger_spikes
         self.params['n_iterations_RBL_retraining'] = 2
         if self.params['training']:
             if self.params['reward_based_learning']:
@@ -225,6 +225,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
         # input parameters
         self.params['w_input_exc_mpn'] = 20. #30. # [nS]
+        self.params['w_trigger_spikes_mpn'] = 30.
         self.params['f_max_stim'] = 2000.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
@@ -255,7 +256,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
         print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
-        self.params['gids_to_record_mpn'] = None # [12, 13, 14, 60, 62, 210]
+#        self.params['gids_to_record_mpn'] = None # [12, 13, 14, 60, 62, 210]
+        self.params['gids_to_record_mpn'] = [2174, 2223, 2224, 2273, 25, 22, 2474, 2375, 2374, 2122, 2123, 2221, 2122, 24, 2272, 2073, 1672]
 #        self.params['gids_to_record_bg'] = [10088, 10115, 10149, 10152]
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
@@ -405,8 +407,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:# and not self.params['reward_based_learning']:
             self.params['gain'] = 0.
             if self.params['reward_based_learning']:
-                self.K = 0. # will be set to 1 during the main learning script
-                self.params['gain'] = 1.0
+                self.K = 1.
+                self.params['gain'] = 0.0
             else:
                 self.K = 1.
                 self.params['gain'] = 0.
@@ -428,8 +430,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 20.0
-        self.params['gain_MT_d2'] = 20.0
+        self.params['gain_MT_d1'] = 0.0
+        self.params['gain_MT_d2'] = 0.0
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 1.
         self.params['d2_gain_after_training'] = 1.

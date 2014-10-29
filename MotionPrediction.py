@@ -53,8 +53,11 @@ class MotionPrediction(object):
 
         nest.CopyModel('static_synapse', 'input_exc_0', \
                 {'weight': self.params['w_input_exc_mpn'], 'receptor_type': 0})  # numbers must be consistent with cell_params_exc
-        nest.CopyModel('static_synapse', 'input_exc_1', \
-                {'weight': self.params['w_input_exc_mpn'], 'receptor_type': 1})
+
+        nest.CopyModel('static_synapse', 'trigger_synapse', \
+                {'weight': self.params['w_trigger_spikes_mpn'], 'receptor_type': 0})  # numbers must be consistent with cell_params_exc
+#        nest.CopyModel('static_synapse', 'input_exc_1', \ # not used at the moment
+#                {'weight': self.params['w_input_exc_mpn'], 'receptor_type': 1})
         if (not 'bcpnn_synapse' in nest.Models('synapses')):
             if self.params['Cluster_Milner']:
                 nest.sr('(/cfs/milner/scratch/b/bkaplan/BCPNN-Module/share/nest/sli) addpath')
@@ -73,11 +76,21 @@ class MotionPrediction(object):
 
     def update_input(self, stim):
         """
-        Keyword arguments:
+        Arguments:
         stim -- list of spike trains with length = self.params['n_exc_mpn']
         """
         for i_, gid in enumerate(self.local_idx_exc):
             nest.SetStatus([self.stimulus[gid - 1]], {'spike_times' : stim[i_]})
+
+
+    def update_trigger_spikes(self, stim):
+        """
+        Arguments:
+        stim -- list of spike trains with length = self.params['n_exc_mpn']
+        """
+        for i_, gid in enumerate(self.local_idx_exc):
+            nest.SetStatus([self.trigger_spikes[gid - 1]], {'spike_times' : stim[i_]})
+
 
 
     def create_exc_network(self):
@@ -90,6 +103,7 @@ class MotionPrediction(object):
         self.local_idx_exc += self.get_local_indices(self.exc_pop) # get the GIDS of the neurons that are local to the process
 
         self.stimulus = nest.Create('spike_generator', self.params['n_exc_mpn'])
+        self.trigger_spikes = nest.Create('spike_generator', self.params['n_exc_mpn'])
 
         # old
 #        self.stimulus = nest.Create('spike_generator', len(self.local_idx_exc))
@@ -99,6 +113,8 @@ class MotionPrediction(object):
 #        for i_, gid in enumerate(self.local_idx_exc):
 #            nest.Connect([self.stimulus[i_]], [self.exc_pop[gid - 1]], model='input_exc_0')
         nest.Connect(self.stimulus, self.exc_pop, model='input_exc_0')
+        nest.Connect(self.trigger_spikes, self.exc_pop, model='trigger_synapse')
+
         # new
 #        for gid in xrange(self.params['n_exc_mpn']):
 #            nest.Connect([self.stimulus[gid]], [self.exc_pop[gid]], model='input_exc_0')

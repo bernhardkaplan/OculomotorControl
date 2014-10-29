@@ -34,6 +34,7 @@ speeds_trained = []
 positions_trained = []
 x_stim_only = []
 
+training_stimuli = VI.create_training_sequence_RBL()
 
 #d1_training_stim_and_actions = np.zeros((params['n_stim_training'], 3)) # x, v, action_idx
 
@@ -42,8 +43,6 @@ v_lim = (v_lim_frac * np.min(tp[:, 2]), v_lim_frac * np.max(tp[:, 2]))
 #v_grid = np.linspace(v_lim[0], v_lim[1], params['n_training_v'])
 #VI.RNG.shuffle(v_training)
 
-training_stimuli = np.zeros((params['n_stim_training'], 4))
-training_speeds = np.arange(params['v_lim_training'][0], params['v_lim_training'][1], params['n_training_v'])
 
 v_stim_cnt = 0
 
@@ -56,6 +55,7 @@ stim_v = []
 
 n_stim = 0
 all_mp = []
+
 for i_cycle in xrange(params['n_training_cycles']):
     for i_v in xrange(params['n_training_v']):
         stim_params[2] = training_speeds[i_v]
@@ -139,22 +139,22 @@ ax2.set_xlim((0, n_stim))
 pylab.show()
 exit(1)
 
-fig2 = pylab.figure()
-ax1 = fig2.add_subplot(111)
-n_bins = (np.max(d1_actions_trained) - np.min(d1_actions_trained))
-cnt, bins = np.histogram(d1_actions_trained, bins=n_bins, range=(np.min(d1_actions_trained), np.max(d1_actions_trained)))
-binwidth = .5 * (bins[1] - bins[0])
-ax1.bar(bins[:-1], cnt, width=binwidth, label='d1 trained', facecolor='b')
+#fig2 = pylab.figure()
+#ax1 = fig2.add_subplot(111)
+#n_bins = (np.max(d1_actions_trained) - np.min(d1_actions_trained))
+#cnt, bins = np.histogram(d1_actions_trained, bins=n_bins, range=(np.min(d1_actions_trained), np.max(d1_actions_trained)))
+#binwidth = .5 * (bins[1] - bins[0])
+#ax1.bar(bins[:-1], cnt, width=binwidth, label='d1 trained', facecolor='b')
 
-n_bins = (np.max(d2_actions_trained) - np.min(d2_actions_trained))
-cnt, bins = np.histogram(d2_actions_trained, bins=n_bins, range=(np.min(d2_actions_trained), np.max(d2_actions_trained)))
-binwidth = .5 * (bins[1] - bins[0])
-ax1.bar(bins[:-1] + binwidth, cnt, width=binwidth, label='d2 trained', facecolor='r')
-pylab.legend()
+#n_bins = (np.max(d2_actions_trained) - np.min(d2_actions_trained))
+#cnt, bins = np.histogram(d2_actions_trained, bins=n_bins, range=(np.min(d2_actions_trained), np.max(d2_actions_trained)))
+#binwidth = .5 * (bins[1] - bins[0])
+#ax1.bar(bins[:-1] + binwidth, cnt, width=binwidth, label='d2 trained', facecolor='r')
+#pylab.legend()
 
+#ax1.set_xlabel('Actions taken')
+#ax1.set_ylabel('Count')
 
-ax1.set_xlabel('Actions taken')
-ax1.set_ylabel('Count')
 #    ax1.set_xlim((0, params['n_actions']))
 
 fig3 = pylab.figure()

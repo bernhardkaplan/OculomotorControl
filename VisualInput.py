@@ -278,7 +278,6 @@ class VisualInput(object):
         self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
-        self.iteration += 1
         return self.stim, supervisor_state
 
 
@@ -382,7 +381,6 @@ class VisualInput(object):
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
 
-        self.iteration += 1
         return self.stim, self.supervisor_state
 
 
@@ -424,7 +422,6 @@ class VisualInput(object):
             input_nspikes[i_, :] = (gid, len(st))
             self.stim[i_] = st
 
-        self.t_current += self.params['t_iteration']
 #        if self.params['debug_mpn']:
 #            np.savetxt(self.params['input_nspikes_fn_mpn'] + 'it%d_%d.dat' % (self.iteration, self.pc_id), input_nspikes, fmt='%d\t%d')
         return self.stim
@@ -872,6 +869,10 @@ class VisualInput(object):
 
         return tuning_prop
 
+    def advance_iteration(self):
+        self.t_current += self.params['t_iteration']
+        self.iteration += 1
+
 
     def get_gids_near_stim_trajectory(self, verbose=False):
 
@@ -884,7 +885,6 @@ class VisualInput(object):
                 gid = self.gids_to_record_exc[i]
                 print gid, '\t', distances[i], self.tuning_prop_exc[gid, :]
 
-
         return self.gids_to_record_exc
 
 
@@ -894,23 +894,20 @@ class VisualInput(object):
         """
         self.stim = [ [] for gid in xrange(len(local_gids))]
         self.motion_params[self.iteration, -1] = self.t_current
-        self.t_current += self.params['t_iteration']
-        self.iteration += 1
         self.supervisor_state = [0., 0.]
         return self.stim, self.supervisor_state
 
 
     def spikes_for_all(self, local_gids):
         local_gids = np.array(local_gids)
-        n_spikes_trigger = np.int(100. / self.params['w_input_exc_mpn'])
+#        n_spikes_trigger = np.int(40. / self.params['w_input_exc_mpn'])
+        n_spikes_trigger = 1
 
         self.stim = [ [] for gid in xrange(len(local_gids))]
         for i_ in xrange(len(local_gids)):
             for i_spike in xrange(n_spikes_trigger):
-                self.stim[i_].append(self.t_current + i_spike * self.params['dt'])
+                self.stim[i_].append(self.t_current + i_spike * self.params['dt'] + self.params['t_iteration'] / 10.)
             #print 'DEBUG self.stim[%d]: ' % (i_), self.stim[i_]
-        self.t_current += self.params['t_iteration']
-        self.iteration += 1
         return self.stim
 
 
@@ -932,7 +929,5 @@ class VisualInput(object):
                 n_spikes = np.random.randint(20, 50)
                 stim[i_] = np.around(np.random.rand(n_spikes) * t_integrate + self.t_current, decimals=1)
                 stim[i_] = np.sort(stim[i_])
-        self.t_current += t_integrate
-        self.iteration += 1
         return stim
 

@@ -77,48 +77,15 @@ class RewardBasedLearning(object):
         if self.comm != None:
             self.comm.Barrier()
 
-#        self.network_states = np.zeros((params['n_iterations'], 4))  # readout from the visual layer
-#        self.actions_taken = np.zeros((params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
-
-#        self.training_stimuli = RBL.VI.create_training_sequence_iteratively()
-#        self.training_stimuli = np.zeros((params['n_stim'], 4))
-
-#        for i_ in xrange(self.params['n_stim']):
-#            self.training_stimuli[i_, :] = self.params['initial_state']
-#        if pc_id == 0:
-#            np.savetxt(params['training_sequence_fn'], self.training_stimuli)
-#        self.action_indices = []
-#        supervisor_states, action_indices, motion_params_precomputed = self.VI.get_supervisor_actions(self.VI.training_stimuli, self.BG)
-#        print 'supervisor_states:', supervisor_states
-#        print 'action_indices:', action_indices
-
-#        np.savetxt(params['supervisor_states_fn'], supervisor_states)
-#        np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
-#        np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
-
-#        self.action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
-#        self.supervisor_states, self.action_indices, self.motion_params_precomputed = self.VI.get_supervisor_actions(self.training_stimuli, self.BG)
-#        self.rewards = np.zeros(params['n_iterations'] + 1) # + 1 because rewards are available after the iteration and will affect the next 
-#        print 'self.training_stimuli:', self.training_stimuli
-#        print 'self.training_stimuli.shape', self.training_stimuli.shape
-#        print 'self.supervisor_states', self.supervisor_states
-        # unnecessary as it will be overwritten
-#        self.motion_params[:, 4] = np.arange(0, self.params['n_iterations'] * self.params['t_iteration'], self.params['t_iteration'])
-
 
     def save_data_structures(self):
         if pc_id == 0:
             utils.remove_empty_files(self.params['connections_folder'])
             utils.remove_empty_files(self.params['spiketimes_folder'])
-#            np.savetxt(self.params['supervisor_states_fn'], self.supervisor_states)
-#            np.savetxt(self.params['motion_params_precomputed_fn'], self.motion_params_precomputed)
-            np.savetxt(self.params['actions_taken_fn'], self.actions_taken)
-            np.savetxt(self.params['network_states_fn'], self.network_states)
-            np.savetxt(self.params['rewards_given_fn'], self.rewards)
-            np.savetxt(params['motion_params_fn'], self.motion_params)
-            np.savetxt(params['activity_memory_fn'], self.BG.activity_memory)
-            np.savetxt(params['action_indices_fn'], np.array(self.action_indices))
-
+            np.savetxt(self.params['actions_taken_fn'], np.array(self.actions_taken))
+            np.savetxt(self.params['network_states_fn'], np.array(self.network_states))
+            np.savetxt(self.params['rewards_given_fn'], np.array(self.rewards))
+            np.savetxt(params['motion_params_fn'], np.array(self.motion_params))
 
 
     def prepare_training(self, w_init_fn=None): 
@@ -175,8 +142,8 @@ class RewardBasedLearning(object):
         new_stim = utils.get_next_stim(params, stim_params, next_action[0])
         R = utils.get_reward_from_perceived_states(x_old, new_stim[0])
         self.rewards.append(R)
-        self.actions_taken.append([next_action, R])
-        print 'Reward:', R
+        self.actions_taken.append([next_action[0], next_action[1], next_action[2], R])
+#        print 'Reward:', R
 
         #######################################
         #    S I L E N T / N O I S E    R U N 
@@ -201,6 +168,19 @@ class RewardBasedLearning(object):
         nest.Simulate(self.params['n_iterations_RBL_retraining'] * params['t_iteration']) 
         for i_ in xrange(self.params['n_iterations_RBL_retraining']):
             self.advance_iteration()
+
+
+        #######################################
+        #    S I L E N T / N O I S E    R U N 
+        #######################################
+        self.BG.stop_efference_copy()
+        self.BG.stop_supervisor()
+        stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
+        self.MT.update_input(stim) 
+        nest.Simulate(self.params['t_iteration'])
+        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+        self.network_states.append(state_)
+        self.advance_iteration()
 
 
         ######################################
@@ -250,6 +230,7 @@ class RewardBasedLearning(object):
             if params['debug_mpn']:
                 print 'Saving spike trains...'
                 utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
+            print 'DEBUG, pc_id %d time %.2f stim' % (self.pc_id, nest.GetKernelStatus()['time']), stim
             self.motion_params.append(self.VI.current_motion_params)
             nest.Simulate(self.params['t_iteration'])
             state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
@@ -258,13 +239,10 @@ class RewardBasedLearning(object):
             next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
             R = utils.get_reward_from_perceived_states(stim_params[0], state_[0])
             self.rewards.append(R)
-            self.actions_taken.append([next_action, R])
+            self.actions_taken.append([next_action[0], next_action[1], next_action[2], R])
             self.advance_iteration()
 
         # run 'silent iterations'
-#        self.BG.stop_supervisor()
-#        self.BG.stop_efference_copy()
-#        for it_ in xrange(self.params['n_silent_iterations']):
         stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
         self.MT.update_input(stim) 
         nest.Simulate(self.params['t_iteration'])
@@ -298,45 +276,6 @@ class RewardBasedLearning(object):
         
 
 
-    def run_test(self, stim_params):
-        # -------------------------------
-        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., self.params['params_synapse_d1_MT_BG']['gain'], self.params['param_msn_d1']['gain'])
-        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, 0., self.params['params_synapse_d2_MT_BG']['gain'], self.params['param_msn_d2']['gain'])
-        self.VI.current_motion_params = deepcopy(stim_params)
-
-        self.BG.stop_supervisor()
-        self.BG.stop_efference_copy()
-        for it_ in xrange(self.params['n_iterations_per_stim'] - self.params['n_silent_iterations']):
-            stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.])
-            self.MT.update_input(stim) 
-            if params['debug_mpn']:
-                print 'Saving spike trains...'
-                utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
-            self.motion_params[self.iteration_cnt, :4] = self.VI.current_motion_params # store the current motion parameters before they get updated
-            nest.Simulate(self.params['t_iteration'])
-            state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-            self.network_states[self.iteration_cnt, :] = state_
-            next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
-            self.actions_taken[self.iteration_cnt, :] = next_action
-            self.MT.advance_iteration()
-            R = self.BG.get_reward_from_action(next_action[2], self.motion_params[self.iteration_cnt, :4], training=False)
-            self.rewards[self.iteration_cnt + 1] = R # + 1 because the reward will affect the next iteration
-            self.iteration_cnt += 1
-            
-        # run 'silent iterations'
-        for it_ in xrange(self.params['n_silent_iterations']):
-            stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
-            self.MT.update_input(stim) 
-            nest.Simulate(self.params['t_iteration'])
-            state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-            self.network_states[self.iteration_cnt, :] = state_
-            next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
-            self.actions_taken[self.iteration_cnt, :] = next_action
-            self.MT.advance_iteration()
-            R = self.BG.get_reward_from_action(next_action[2], self.motion_params[self.iteration_cnt, :4], training=False)
-            self.rewards[self.iteration_cnt + 1] = R # + 1 because the reward will affect the next iteration
-            self.iteration_cnt += 1
-
 
     def trigger_pre_spikes(self):
         # -------------------------------
@@ -346,7 +285,8 @@ class RewardBasedLearning(object):
         self.BG.stop_supervisor()
         self.BG.stop_efference_copy()
         stim = self.VI.spikes_for_all(self.MT.local_idx_exc)
-        self.MT.update_input(stim) 
+#        self.MT.update_input(stim) 
+        self.MT.update_trigger_spikes(stim)
         if params['debug_mpn']:
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
@@ -357,8 +297,8 @@ class RewardBasedLearning(object):
     def advance_iteration(self):
         self.MT.advance_iteration()
         self.BG.advance_iteration()
+        self.VI.advance_iteration()
         self.iteration_cnt += 1
-
 
 
 
@@ -393,7 +333,6 @@ if __name__ == '__main__':
     ####################################
     #   T R A I N   A   S T I M U L U S 
     ####################################
-
     #TODO:
     i_stim  = 0
     for i_cycle in xrange(params['n_training_cycles']):
@@ -412,11 +351,11 @@ if __name__ == '__main__':
     ####################################
     #   R U N   E M P T Y    I N P U T 
     ####################################
-    RBL.run_without_stimulus()
+#    RBL.run_without_stimulus()
 
     ################################
     #   T E S T    S T I M U L U S 
     ################################
     RBL.test_after_training(stim_params)
 
-    print 'Iteration Count:', RBL.iteration_cnt
+    RBL.save_data_structures()

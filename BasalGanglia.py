@@ -6,6 +6,10 @@ import json
 class BasalGanglia(object):
 
     def __init__(self, params, comm=None, dummy=False):
+        """
+        If dummy, an instance of this class does not try to write into any folder, but creates
+        the data structures to play with, e.g. action_bins_x
+        """
 
         self.params = params
         self.pc_id, self.n_proc = nest.Rank(), nest.NumProcesses()
@@ -13,6 +17,7 @@ class BasalGanglia(object):
         if comm != None:
             assert (comm.rank == self.pc_id), 'mpi4py and NEST tell me different PIDs!'
             assert (comm.size == self.n_proc), 'mpi4py and NEST tell me different PIDs!'
+        self.dummy = dummy 
 
         self.activity_memory = np.zeros((self.params['n_iterations'], self.params['n_actions']))
         self.RNG = np.random
@@ -327,7 +332,8 @@ class BasalGanglia(object):
 #        header = '# first row: action_x, 2nd row: action_y'
         output_array[:, 0] = self.action_bins_x
         output_array[:, 1] = self.action_bins_y
-        np.savetxt(self.params['bg_action_bins_fn'], output_array)#, header=header)
+        if not self.dummy:
+            np.savetxt(self.params['bg_action_bins_fn'], output_array)#, header=header)
 
 
 
