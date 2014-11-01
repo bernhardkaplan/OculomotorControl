@@ -62,9 +62,9 @@ if __name__ == '__main__':
 #    training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
     training_params = utils.load_params(training_folder)
     actions = np.zeros((testing_params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
-    network_states_net= np.zeros((testing_params['n_iterations'], 4))
+    network_states_net = np.zeros((testing_params['n_iterations'], 4))
     training_stimuli = np.zeros((training_params['n_stim_training'], 4))
-    training_stimuli_= np.loadtxt(training_params['training_sequence_fn'])
+    training_stimuli_= np.loadtxt(training_params['motion_params_training_fn'])
     training_stimuli = training_stimuli_
 #    print 'debug', training_stimuli.shape
 #    print 'debug', training_params['training_sequence_fn']
@@ -185,8 +185,8 @@ if __name__ == '__main__':
     if pc_id == 0:
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
-        np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
-        np.savetxt(testing_params['testing_sequence_fn'], test_stim_params)
+        np.savetxt(testing_params['motion_params_testing_fn'], VI.motion_params)
+        np.savetxt(testing_params['motion_params_training_fn'], test_stim_params)
         utils.remove_empty_files(testing_params['connections_folder'])
         utils.remove_empty_files(testing_params['spiketimes_folder'])
 #        if params['n_stim'] > 6:

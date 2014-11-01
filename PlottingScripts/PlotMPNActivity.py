@@ -245,6 +245,9 @@ class ActivityPlotter(object):
 
 
     def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
+        pass
+        
+    """
         print 'DEBUG plot_retinal_displacement stim_range:', stim_range
         if stim_range == None:
             if self.params['n_stim'] == 1:
@@ -259,8 +262,12 @@ class ActivityPlotter(object):
         else:
             stim_range_label = [stim_range[0], stim_range[1]]
         n_stim = stim_range[-1] - stim_range[0]
-        print 'plot_retinal_displacement loads:', self.params['motion_params_fn']
-        d = np.loadtxt(self.params['motion_params_fn'])
+        if self.params['training']:
+            fn = self.params['motion_params_training_fn']
+        else:
+            fn = self.params['motion_params_testing_fn']
+        print 'plot_retinal_displacement loads:', fn
+        d = np.loadtxt(fn)
         it_min = stim_range[0] * self.params['n_iterations_per_stim']
         it_max = (stim_range[-1] + 1) * self.params['n_iterations_per_stim']
         print 'debug stim_range:', stim_range, 'it min max', it_min, it_max
@@ -324,6 +331,7 @@ class ActivityPlotter(object):
         print 'Saving figure to:', output_fig
         pylab.savefig(output_fig, dpi=200)
         return (t_axis, x_displacement)
+    """
 
 
     def plot_reward(self, ax):

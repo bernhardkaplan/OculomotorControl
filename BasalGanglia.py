@@ -263,30 +263,30 @@ class BasalGanglia(object):
         self.noise_exc_actions = {}
         self.noise_inh_actions = {}
         for naction in xrange(self.params['n_actions']):
-#            self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1']) 
-#            self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1'])
-#            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc_bg']})
-#            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh_bg']})
-#            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc_bg'], self.params['dt'])
-#            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh_bg'], self.params['dt'])
+            self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1']) 
+            self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1'])
+            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc_d1']})
+            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh_d1']})
+            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc_d1'], self.params['dt'])
+            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh_d1'], self.params['dt'])
 
             self.noise_exc_actions[naction] = nest.Create('poisson_generator', self.params['num_actions_output']) 
             self.noise_inh_actions[naction] = nest.Create('poisson_generator', self.params['num_actions_output'])
-            nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc_bg']})
-            nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh_bg']})
-            nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc_bg'], self.params['dt'])
-            nest.Connect(self.noise_inh_actions[naction], self.actions[naction], self.params['w_noise_inh_bg'], self.params['dt'])
+            nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc_output']})
+            nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh_output']})
+            nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc_output'], self.params['dt'])
+            nest.Connect(self.noise_inh_actions[naction], self.actions[naction], self.params['w_noise_inh_output'], self.params['dt'])
 
-#        if self.params['with_d2']:
-#            self.noise_exc_d2 = {}
-#            self.noise_inh_d2 = {}
-#            for naction in xrange(self.params['n_actions']):
-#                self.noise_exc_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2']) 
-#                self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2'])
-#                nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc_bg']})
-#                nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh_bg']})
-#                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc_bg'], self.params['dt'])
-#                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh_bg'], self.params['dt'])
+        if self.params['with_d2']:
+            self.noise_exc_d2 = {}
+            self.noise_inh_d2 = {}
+            for naction in xrange(self.params['n_actions']):
+                self.noise_exc_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2']) 
+                self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2'])
+                nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc_d2']})
+                nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh_d2']})
+                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc_d2'], self.params['dt'])
+                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh_d2'], self.params['dt'])
 
 
 

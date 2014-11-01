@@ -40,17 +40,35 @@ def get_reward_from_perceived_states(old_pos, new_pos, punish_overshoot=1.):
     """
     Computes the reward based on the two consecutive positions
     """
+    K_min = -1.
+    K_max = 1.
 
     dx_i = old_pos - .5 # -2 and -1 because self.iteration is + 1 (because compute_input has been called before)
     dx_j = new_pos - .5
     dx_i_abs = np.abs(dx_i)
     dx_j_abs = np.abs(dx_j)
-    delta_x_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement
-    R = - delta_x_abs / .5
-#    R = -1. * diff_dx_abs
-    if np.sign(dx_i) != np.sign(dx_j): # 'overshoot'
-        R *= punish_overshoot
+
+    relative_improvement = (dx_i_abs - dx_j_abs) / .5
+    R = (dx_i_abs - dx_j_abs ) / dx_i_abs
+    if R < -2.:
+        R = -2.
     return R
+#    return R
+#    if relative_improvement < 0.:
+#        R = K_min
+#    else:
+#        R = -K_min + (K_max - K_min) * relative_improvement
+#    return R
+    
+#    R = 1. - (dx_j_abs / dx_i_abs)**2
+#    return np.sign(R)
+#    return R
+
+#    delta_x_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement
+#    R = - delta_x_abs / .5
+#    if np.sign(dx_i) != np.sign(dx_j): # 'overshoot'
+#        R *= punish_overshoot
+#    return R
 
 
 

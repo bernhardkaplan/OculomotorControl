@@ -124,32 +124,90 @@ class VisualInput(object):
         return test_stim_params
 
 
-    def create_training_sequence_RBL(self):
+
+    def create_training_sequence_RBL_cycle_blocks(self):
+        """
+        S0, S0, S0 ... S1 S1 S1 
+        """
 
         v_lim_frac = .8
         v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
         self.training_stimuli = np.zeros((self.params['n_stim_training'], 4))
 
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_divide_training_space_v'])
+
+        x_pos = np.zeros(self.params['n_training_x'])
+        for i_x in xrange(self.params['n_training_x']):
+            # get start position some where in the periphery
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                x_pos[i_x] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            else:
+                x_pos[i_x] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+
+        print 'x_pos', x_pos
+        v_training = np.zeros(self.params['n_training_v'])
+        for i_v in xrange(self.params['n_training_v']):
+            plus_minus = utils.get_plus_minus(self.RNG)
+            v_training[i_v] = v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+
+        indices = range(self.params['n_training_x'])
         i_stim = 0
-        for i_cycle in xrange(self.params['n_training_cycles']):
-            np.random.shuffle(v_grid) # randomize the order of speeds for each cycle
-            for i_v in xrange(self.params['n_training_v']):
-                for i_trials_per_speed in xrange(self.params['n_training_x']):
-                    # get start position some where in the periphery
-                    pm = utils.get_plus_minus(np.random)
-                    if pm > 0:
-                        self.training_stimuli[i_stim, 0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
-                    else:
-                        self.training_stimuli[i_stim, 0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+        for i_v in xrange(self.params['n_training_v']):
+            for i_x in xrange(self.params['n_training_x']):
+                for i_cycle in xrange(self.params['n_training_cycles']):
+#            np.random.shuffle(v_grid) # randomize the order of speeds for each cycle
+#            self.RNG.shuffle(x_pos)
+#            self.RNG.shuffle(v_training)
+                    self.training_stimuli[i_stim, 0] = x_pos[i_x]
                     self.training_stimuli[i_stim, 1] = .5 # y-pos = center
-                    # Speed
-                    plus_minus = utils.get_plus_minus(self.RNG)
-                    self.training_stimuli[i_stim, 2] =  v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+                    self.training_stimuli[i_stim, 2] = v_training[i_v]
+
                     i_stim += 1
         return self.training_stimuli
 
                         
+    def create_training_sequence_RBL_mixed_within_a_cycle(self):
+        """
+        S0, S1, S2   S2 S1 S0   S1 S0 S2   S2 S0 S1
+        """
+
+        v_lim_frac = .8
+        v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
+        self.training_stimuli = np.zeros((self.params['n_stim_training'], 4))
+
+        v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_divide_training_space_v'])
+
+        x_pos = np.zeros(self.params['n_training_x'])
+        for i_x in xrange(self.params['n_training_x']):
+            # get start position some where in the periphery
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                x_pos[i_x] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            else:
+                x_pos[i_x] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+
+        print 'x_pos', x_pos
+        v_training = np.zeros(self.params['n_training_v'])
+        for i_v in xrange(self.params['n_training_v']):
+            plus_minus = utils.get_plus_minus(self.RNG)
+            v_training[i_v] = v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+
+        indices = range(self.params['n_training_x'])
+        i_stim = 0
+        for i_cycle in xrange(self.params['n_training_cycles']):
+#            np.random.shuffle(v_grid) # randomize the order of speeds for each cycle
+            self.RNG.shuffle(v_training)
+            for i_v in xrange(self.params['n_training_v']):
+                self.RNG.shuffle(x_pos)
+                for i_x in xrange(self.params['n_training_x']):
+                    self.training_stimuli[i_stim, 0] = x_pos[i_x]
+                    self.training_stimuli[i_stim, 1] = .5 # y-pos = center
+                    self.training_stimuli[i_stim, 2] = v_training[i_v]
+
+                    i_stim += 1
+        return self.training_stimuli
+
 
     def create_training_sequence_from_a_grid(self, n_stim=None):
         """

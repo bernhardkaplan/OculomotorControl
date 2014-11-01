@@ -72,8 +72,12 @@ class RewardBasedLearning(object):
         self.actions_taken = []         # BG action output
         self.rewards = []               # rewards given
         self.motion_params = []         # motion parameters for stimulus presentation
+        self.K_vec = []
 
-        self.training_stim_params = self.VI.create_training_sequence_RBL()
+        if self.params['mixed_training_cycles']:
+            self.training_stim_params = self.VI.create_training_sequence_RBL_mixed_within_a_cycle()
+        else:
+            self.training_stim_params = self.VI.create_training_sequence_RBL_cycle_blocks()
         if self.comm != None:
             self.comm.Barrier()
 
@@ -85,7 +89,8 @@ class RewardBasedLearning(object):
             np.savetxt(self.params['actions_taken_fn'], np.array(self.actions_taken))
             np.savetxt(self.params['network_states_fn'], np.array(self.network_states))
             np.savetxt(self.params['rewards_given_fn'], np.array(self.rewards))
-            np.savetxt(params['motion_params_fn'], np.array(self.motion_params))
+            np.savetxt(params['motion_params_training_fn'], np.array(self.motion_params))
+            np.savetxt(params['K_values_fn'], np.array(self.K_vec))
 
 
     def prepare_training(self, w_init_fn=None): 
@@ -107,46 +112,47 @@ class RewardBasedLearning(object):
 
     def present_stimulus_and_train(self, stim_params):
         #######################################
-        #    N O I S E    R U N 
+        # 1   N O I S E    R U N 
         #######################################
+        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., self.params['gain_MT_d1'], 0.)
+        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, 0., self.params['gain_MT_d2'], 0.)
         stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
         self.MT.update_input(stim) 
         nest.Simulate(self.params['t_iteration'])
         self.advance_iteration()
+        self.K_vec.append(0)
 
         ######################################
-        #
-        #    S T I M    P R E S E N T A T I O N 
-        #
+        # 2   S T I M    P R E S E N T A T I O N 
         #######################################
-        self.VI.current_motion_params = stim_params
+        self.VI.current_motion_params = deepcopy(stim_params)
         self.motion_params.append(self.VI.current_motion_params)
         stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.]) # assume a still eye with speed = [0., 0.]
         if params['debug_mpn']:
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
         self.MT.update_input(stim) 
-        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., 1., 0.)
-        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, 0., 1., 0.)
         nest.Simulate(params['t_iteration'])
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
         self.network_states.append(state_)
         next_action = self.BG.get_action(WTA=True) # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
         self.network_states.append(state_)
         self.advance_iteration()
+        self.K_vec.append(0)
 
-        #######################
-        #    ACTION READOUT 
-        #######################
+        ##############################################
+        #    A C T I O N    R E A D O U T 
+        ##############################################
         x_old = stim_params[0]
         new_stim = utils.get_next_stim(params, stim_params, next_action[0])
         R = utils.get_reward_from_perceived_states(x_old, new_stim[0])
         self.rewards.append(R)
         self.actions_taken.append([next_action[0], next_action[1], next_action[2], R])
 #        print 'Reward:', R
+        self.BG.activate_efference_copy(next_action[2])
 
         #######################################
-        #    S I L E N T / N O I S E    R U N 
+        # 3   S I L E N T / N O I S E    R U N: wait for the consequence of the previous action (next stimulus is not gated to perception)
         #######################################
         stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
         self.MT.update_input(stim) 
@@ -154,53 +160,39 @@ class RewardBasedLearning(object):
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
         self.network_states.append(state_)
         self.advance_iteration()
+        self.K_vec.append(0)
 
-        ######################################
-        #    LEARNING 
-        #######################################
+        #######################
+        #     L E A R N I N G 
+        # 4 + n_iterations_RBL_training 
+        #######################
         if R >= 0:
             self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, R, 0., 0.) # kappa, syn_gain, bias_gain
             self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, 0., 0., 0.) 
         else:
             self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., 0., 0.)
             self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, -R, 0., 0.)
-        self.BG.activate_efference_copy(next_action[2])
-        nest.Simulate(self.params['n_iterations_RBL_retraining'] * params['t_iteration']) 
-        for i_ in xrange(self.params['n_iterations_RBL_retraining']):
+        nest.Simulate(self.params['n_iterations_RBL_training'] * params['t_iteration']) 
+        for i_ in xrange(self.params['n_iterations_RBL_training']):
             self.advance_iteration()
-
+            self.K_vec.append(R)
 
         #######################################
         #    S I L E N T / N O I S E    R U N 
+        # 5 + n_iterations_RBL_training   
         #######################################
+        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., self.params['gain_MT_d1'], 0.)
+        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, 0., self.params['gain_MT_d2'], 0.)
         self.BG.stop_efference_copy()
         self.BG.stop_supervisor()
         stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
         self.MT.update_input(stim) 
         nest.Simulate(self.params['t_iteration'])
-        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-        self.network_states.append(state_)
+#        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+#        self.network_states.append(state_)
         self.advance_iteration()
+        self.K_vec.append(0)
 
-
-        ######################################
-        #    TRIGGER SPIKES
-        #######################################
-        print 'trigger_pre_spikes'
-        self.trigger_pre_spikes()
-
-
-        #######################################
-        #    S I L E N T / N O I S E    R U N 
-        #######################################
-        self.BG.stop_efference_copy()
-        self.BG.stop_supervisor()
-        stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
-        self.MT.update_input(stim) 
-        nest.Simulate(self.params['t_iteration'])
-        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-        self.network_states.append(state_)
-        self.advance_iteration()
 
 
     def run_without_stimulus(self):
@@ -292,6 +284,7 @@ class RewardBasedLearning(object):
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
         nest.Simulate(self.params['t_iteration'])
         self.advance_iteration()
+        self.K_vec.append(0)
 
 
     def advance_iteration(self):
@@ -305,6 +298,7 @@ class RewardBasedLearning(object):
 
 if __name__ == '__main__':
 
+    t0 = time.time()
     write_params = True
     GP = simulation_parameters.global_parameters()
     if len(sys.argv) < 3:
@@ -338,10 +332,17 @@ if __name__ == '__main__':
     for i_cycle in xrange(params['n_training_cycles']):
         for i_v in xrange(params['n_training_v']):
             for i_trials_per_speed in xrange(params['n_training_x']):
-                stim_params = RBL.training_stim_params[i_stim, :]
+#                stim_params = RBL.training_stim_params[i_stim, :]
+                stim_params = RBL.training_stim_params[0, :]
                 print 'stim_params for i_stim %d' % i_stim, stim_params
                 RBL.present_stimulus_and_train(stim_params)
                 i_stim += 1
+
+
+    ######################################
+    #    TRIGGER SPIKES
+    #######################################
+    RBL.trigger_pre_spikes()
 
     ####################################
     #   S A V E     W E I G H T S 
@@ -356,6 +357,26 @@ if __name__ == '__main__':
     ################################
     #   T E S T    S T I M U L U S 
     ################################
-    RBL.test_after_training(stim_params)
+#    RBL.test_after_training(RBL.training_stim_params[0, :])
+#    RBL.test_after_training(stim_params) 
 
     RBL.save_data_structures()
+
+    t1 = time.time() - t0
+    print 'TimeEND: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
+    print 'n_iterations: RBL', RBL.iteration_cnt
+    print 'n_iterations: MPN', RBL.MT.iteration
+    print 'n_iterations: BG', RBL.BG.iteration
+    print 'n_iterations: VI', RBL.VI.iteration
+
+    #####################
+    #   P L O T T I N G 
+    #####################
+    if pc_id == 0:
+        n_stim = 1
+        print 'Running analysis...'
+        run_plot_bg(params, None)
+#        run_plot_bg(params, (0, n_stim))
+        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(n_stim)])
+        MAC = MetaAnalysisClass([params['folder_name']])
+
