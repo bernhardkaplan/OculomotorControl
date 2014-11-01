@@ -49,10 +49,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
 
-#        self.params['training'] = True
-#        self.params['reward_based_learning'] = True
-        self.params['training'] = False
-        self.params['reward_based_learning'] = False
+        self.params['training'] = True
+        self.params['reward_based_learning'] = True
+        #self.params['training'] = False
+        #self.params['reward_based_learning'] = False
         self.params['softmax_temperature'] = 10.
 
         self.params['n_training_cycles'] = 5 # how often each stimulus is presented during training
@@ -71,7 +71,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_x'] = 4 # for RBL: this tells how often each stimulus is replaced (based on the good action) before a stimulus with a different speed is presented
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 10 # number of training samples to cover the v-direction of the tuning space
-        self.params['suboptimal_training'] = 2
+        self.params['suboptimal_training'] = 3
         if self.params['reward_based_learning']:
             self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
         else:
@@ -407,7 +407,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         # gain parameters
         if self.params['training']:
-            self.params['gain_d1_d1'] = 0.
+            self.params['gain_d1_d1_pos'] = 0.
+            self.params['gain_d1_d1_neg'] = 0.
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 1.
             self.params['kappa_d2_d2'] = 0.
@@ -499,6 +500,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         bcpnn_init = 0.01
         self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
+        self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1_pos'], 'K': self.params['kappa_d1_d1'], \
+                'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
+                'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}
+
         self.params['params_synapse_d1_d1_pos'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1_pos'], 'K': self.params['kappa_d1_d1'], \
                 'fmax': self.params['fmax'], 'epsilon': self.epsilon, 'delay': self.params['delay_d1_d1'], \
                 'tau_i': self.tau_i, 'tau_j': self.tau_j, 'tau_e': self.tau_e, 'tau_p': self.tau_p}

@@ -23,7 +23,7 @@ export CRAY_ROOTFS=DSL
 
 #. /opt/modules/default/etc/modules.sh
 module swap PrgEnv-cray PrgEnv-gnu
-module add nest
+module add nest/2.2.2
 module add python
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
