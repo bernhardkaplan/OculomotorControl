@@ -16,7 +16,8 @@ except:
 
 
 t0 = time.time()
-argv_1 = 'Training_DEBUG_RBL_titer25_2500_nStim6x1_taup50000_gain1.00/'
+#argv_1 = 'Training_DEBUG_RBL_titer25_2500_nStim6x1_taup50000_gain1.00/'
+argv_1 = 'Training_RBL_mixed_titer25_2500_nStim3x8_taup50000_gain1.00/'
 cmd = 'python PlottingScripts/plot_bcpnn_traces.py'
 
 

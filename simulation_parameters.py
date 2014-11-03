@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
         self.params['mixed_training_cycles'] = True
-        self.params['n_training_cycles'] = 3 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 4 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
@@ -68,9 +68,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 2 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
 #        self.params['suboptimal_training'] = 1
 #        if self.params['reward_based_learning']:
@@ -150,7 +150,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['sim_id'] = '_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
             if (self.params['reward_based_learning']):
-                self.params['sim_id'] = 'RBL_titer%d_%d' % (self.params['t_iteration'], self.params['n_rf'] * self.params['n_v'])
+                self.params['sim_id'] = 'RBL_nonoise_titer%d_%d' % (self.params['t_iteration'], self.params['n_rf'] * self.params['n_v'])
         else:
             self.params['sim_id'] = '%d_NewTest_' % (self.params['t_iteration'])
 
@@ -222,10 +222,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # for blur_x, v = 0.1, 0.1      4000    50
         #                  .05  .05     5000    100
 
+        # for MPN
         self.params['f_noise_exc'] = 1000.
         self.params['f_noise_inh'] = 1000.
-        self.params['w_noise_exc'] = 1.4 
-        self.params['w_noise_inh'] = -1.0
+        self.params['w_noise_exc'] = 0.2
+        self.params['w_noise_inh'] = -0.2
 
         # for BG
         self.params['connect_noise_to_bg'] = True
@@ -233,6 +234,26 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['f_noise_inh_output'] = 1000.
         self.params['w_noise_exc_output'] = 1.5
         self.params['w_noise_inh_output'] = -1.0
+
+        self.params['f_noise_exc_d1'] = 1.
+        self.params['f_noise_inh_d1'] = 1.
+        self.params['w_noise_exc_d1'] = 0.
+        self.params['w_noise_inh_d1'] = 0.
+
+        self.params['f_noise_exc_d2'] = 1.
+        self.params['f_noise_inh_d2'] = 1.
+        self.params['w_noise_exc_d2'] = 0.
+        self.params['w_noise_inh_d2'] = 0.
+
+        """
+        # for MPN
+        self.params['f_noise_exc'] = 1000.
+        self.params['f_noise_inh'] = 1000.
+        self.params['w_noise_exc'] = 1.4 
+        self.params['w_noise_inh'] = -1.0
+
+        # for BG
+        self.params['connect_noise_to_bg'] = True
 
         self.params['f_noise_exc_d1'] = 1000.
         self.params['f_noise_inh_d1'] = 1000.
@@ -243,6 +264,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['f_noise_inh_d2'] = 1000.
         self.params['w_noise_exc_d2'] = 1.5
         self.params['w_noise_inh_d2'] = -1.0
+        """
 
 
 
@@ -256,7 +278,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_per_state'] = 1
         self.params['n_exc_per_mc'] = self.params['n_exc_per_state']
         self.params['n_exc_mpn'] = self.params['n_mc'] * self.params['n_exc_per_mc']
-        print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
+#        print 'n_hc: %d\tn_mc_per_hc: %d\tn_mc: %d\tn_exc_per_mc: %d' % (self.params['n_hc'], self.params['n_mc_per_hc'], self.params['n_mc'], self.params['n_exc_per_mc'])
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
 #        self.params['gids_to_record_mpn'] = None # [12, 13, 14, 60, 62, 210]
         self.params['gids_to_record_mpn'] = [2174, 2223, 2224, 2273, 25, 22, 2474, 2375, 2374, 2122, 2123, 2221, 2122, 24, 2272, 2073, 1672]
@@ -343,9 +365,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_rf_y_inh'] = 1 # np.int(np.sqrt(self.params['n_rf_inh'])) 
         self.params['n_inh_mpn' ] = self.params['n_rf_x_inh'] * self.params['n_rf_y_inh'] * self.params['n_theta_inh'] * self.params['n_v_inh'] * self.params['n_exc_per_mc']
         self.params['n_cells_mpn'] = self.params['n_exc_mpn'] + self.params['n_inh_mpn']
-        print 'n_cells_mpn: %d\tn_exc_mpn: %d\tn_inh_mpn: %d\nn_inh_mpn / n_exc_mpn = %.3f\tn_inh_mpn / n_cells_mpn = %.3f' \
-                % (self.params['n_cells_mpn'], self.params['n_exc_mpn'], self.params['n_inh_mpn'], \
-                self.params['n_inh_mpn'] / float(self.params['n_exc_mpn']), self.params['n_inh_mpn'] / float(self.params['n_cells_mpn']))
+#        print 'n_cells_mpn: %d\tn_exc_mpn: %d\tn_inh_mpn: %d\nn_inh_mpn / n_exc_mpn = %.3f\tn_inh_mpn / n_cells_mpn = %.3f' \
+#                % (self.params['n_cells_mpn'], self.params['n_exc_mpn'], self.params['n_inh_mpn'], \
+#                self.params['n_inh_mpn'] / float(self.params['n_exc_mpn']), self.params['n_inh_mpn'] / float(self.params['n_cells_mpn']))
 
                     
         # ############################################################

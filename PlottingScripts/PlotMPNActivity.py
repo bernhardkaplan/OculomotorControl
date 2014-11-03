@@ -245,6 +245,7 @@ class ActivityPlotter(object):
 
 
     def plot_retinal_displacement(self, stim_range=None, ax=None, lw=3, c='b'):
+        return (None, None)
         pass
         
     """

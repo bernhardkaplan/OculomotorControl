@@ -377,6 +377,6 @@ if __name__ == '__main__':
         print 'Running analysis...'
         run_plot_bg(params, None)
 #        run_plot_bg(params, (0, n_stim))
-        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(n_stim)])
         MAC = MetaAnalysisClass([params['folder_name']])
+        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(n_stim)])
 
