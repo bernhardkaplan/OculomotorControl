@@ -757,9 +757,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_nStim%dx%d_taup%d_gain%.2f/' % (self.params['sim_id'], \
+                folder_name = 'Training_%s_nStim%dx%d_taup%d_gain%.2f_seed%d/' % (self.params['sim_id'], \
                         self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                        self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'])
+                        self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'], self.params['master_seed'])
             else:
                 if self.params['connect_d1_after_training']:
                     folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
