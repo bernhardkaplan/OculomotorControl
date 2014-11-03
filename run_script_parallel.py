@@ -14,23 +14,35 @@ except:
     print "MPI not used"
 
 
+
 t0 = time.time()
-argv_1 = 'Training_RBL_3_titer25__3_nStim2x3_taup50000_gain0.05'
-cmd = 'python PlottingScripts/tune_bcpnn_trace_params.py'
+argv_1 = 'Training_DEBUG_RBL_titer25_2500_nStim6x1_taup50000_gain1.00/'
+cmd = 'python PlottingScripts/plot_bcpnn_traces.py'
+
 
 list_of_jobs = []
 
-#for tau_zi in [5., 10., 20., 50., 100., 200., 400.]:
-#    for tau_zj in [5., 10., 20., 50., 100., 200., 400.]:
-#        for tau_e in [5., 50., 500., 5000., 50000., 250000.]:
-#            for tau_p in [5., 50., 500., 5000., 50000., 250000.]:
 
-for tau_zi in [5., 10., 20., 50., 100., 200.]:
-    for tau_zj in [5., 10., 20., 50., 100., 200.]:
-        for tau_e in [5., 50., 100., 500., 5000., 50000.]:
-            for tau_p in [10000., 50000.]:
-                run_cmd = cmd + ' %s %d %d %d %d' % (argv_1, tau_zi, tau_zj, tau_e, tau_p)
-    #            print run_cmd
+"""
+    For a parameter sweep, give two addition parameters to the plotting script:
+    1) the script count 
+        --> to let the plotting script write in its own output file
+    2) the parameter identifier
+        which is used to speed up the analysis, see analyse_bcpnn_traces.py
+
+"""
+script_cnt = 0
+for action_idx in [9, 10]:
+    param_set_id = 0
+#    for tau_p in [5000.]:
+#        for tau_e in [1., 2., 5., 10., 50.]:
+#            for tau_i in [1., 50., 100., 200.]:
+    for tau_p in [5000., 10000., 50000.]:
+        for tau_e in [1., 2., 5., 10., 50., 100., 200., 500., 5000., 15., 20., 30., 40., 75., 150.]:
+            for tau_i in [1., 2., 5., 10., 50., 100., 200., 500., 15., 20., 30., 40., 75., 150.]:
+                run_cmd = cmd + ' %s %d %d %d %d %d %d' % (argv_1, tau_i, tau_e, tau_p, action_idx, script_cnt, param_set_id)
+                script_cnt += 1
+                param_set_id += 1
                 list_of_jobs.append(run_cmd)
 
 # distribute the commands among processes

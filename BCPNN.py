@@ -28,13 +28,22 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_ve
     """
     assert (len(pre_trace) == len(post_trace)), "Bcpnn.get_spiking_weight_and_bias: pre and post activity have different lengths!"
     if K_vec != None:
-        assert (len(K_vec) == len(pre_trace)), "Bcpnn.get_spiking_weight_and_bias: pre-trace and Kappa-Vector have different lengths! %d K_vec %d" % \
+        assert (len(K_vec) == len(pre_trace)), "Bcpnn.get_spiking_weight_and_bias: pre-trace and Kappa-Vector have different lengths!\nlen pre_trace %d K_vec %d" % \
                 (len(pre_trace), len(K_vec))
 
     initial_value = bcpnn_params['p_i']
     n = len(pre_trace)
     si = pre_trace      # spiking activity (spikes have a width and a height)
     sj = post_trace
+
+#    zi = np.ones(n) * 0.01
+#    zj = np.ones(n) * 0.01
+#    eij = np.ones(n) * 0.0001
+#    ei = np.ones(n) * 0.01
+#    ej = np.ones(n) * 0.01
+#    pi = np.ones(n) * 0.01
+#    pj = np.ones(n) * 0.01
+
     zi = np.ones(n) * initial_value
     zj = np.ones(n) * initial_value
     eij = np.ones(n) * initial_value**2
@@ -42,11 +51,13 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_ve
     ej = np.ones(n) * initial_value
     pi = np.ones(n) * initial_value
     pj = np.ones(n) * initial_value
-    pij = pi * pj * np.exp(w_init)
+    pij = np.ones(n) * initial_value**2 
     wij = np.ones(n)  * w_init #np.log(pij[0] / (pi[0] * pj[0]))
     bias = np.ones(n) * np.log(initial_value)
     spike_height = 1000. / (bcpnn_params['fmax'] * dt)
-    eps = bcpnn_params['epsilon']
+#    spike_height = 1000. / bcpnn_params['fmax']
+#    eps = bcpnn_params['epsilon']
+    eps = 0.001
     K = bcpnn_params['K']
     gain = bcpnn_params['gain']
     if K_vec == None:
@@ -96,7 +107,7 @@ def get_spiking_weight_and_bias(pre_trace, post_trace, bcpnn_params, dt=.1, K_ve
 
 
 
-def compute_traces(si, tau_z=10, tau_e=100, tau_p=1000, dt=1., eps=1e-6, initial_value=None):
+def compute_traces(si, tau_z=10, tau_e=100, tau_p=1000, dt=1., eps=1e-6, initial_value=None, K_vec=None):
     n = si.size
     if initial_value == None:
         initial_value = (0.01, 0.01, 0.01)
@@ -104,6 +115,8 @@ def compute_traces(si, tau_z=10, tau_e=100, tau_p=1000, dt=1., eps=1e-6, initial
     zi = np.ones(n) * initial_value[0]
     ei = np.ones(n) * initial_value[1]
     pi = np.ones(n) * initial_value[2]
+    if K_vec == None:
+        K_vec = np.ones(n)
     for i in xrange(1, n):
         dzi = dt * (si[i] - zi[i-1] + eps) / tau_z
         zi[i] = zi[i-1] + dzi
@@ -114,7 +127,7 @@ def compute_traces(si, tau_z=10, tau_e=100, tau_p=1000, dt=1., eps=1e-6, initial
 
         # pre-synaptic probability pi follows zi
         dpi = dt * (ei[i] - pi[i-1]) / tau_p
-        pi[i] = pi[i-1] + dpi
+        pi[i] = pi[i-1] * K_vec[i] + dpi
 
     return zi, ei, pi
 

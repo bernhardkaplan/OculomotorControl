@@ -7,7 +7,7 @@ if cmd_subfolder not in sys.path:
 import json
 import numpy as np
 import utils
-from plot_bcpnn_traces import TracePlotter
+from plot_bcpnn_traces import TracePlotter, create_K_vectors
 from plot_voltages import VoltPlotter
 import pylab
 import FigureCreator
@@ -15,31 +15,6 @@ import simulation_parameters
 
 #FigureCreator.plot_params['figure.subplot.left'] = .17
 #pylab.rcParams.update(FigureCreator.plot_params)
-
-
-def create_K_vector(params, it_range, dt=0.1, tgt_cell_type='d1'):
-
-    rewards = np.loadtxt(params['rewards_given_fn']) 
-    if it_range[1] > params['n_iterations']:
-        print 'Artificially extending the reward signal for computing longer traces'
-        rewards = np.r_[rewards, np.ones(it_range[1] - params['n_iterations'])]
-    print 'rewards', rewards
-    t_max = it_range[1] * params['t_iteration']
-    n = np.int(t_max/ dt) + 1 # +1 because the length needs to be the same computed in the BCPNN module after convert_spiketrain_to_trace
-    K_vec = np.zeros(n)
-    for it_ in xrange(it_range[0], it_range[1]):
-        idx_1 = np.int(it_ * params['t_iteration'] / dt)
-        idx_2 = np.int((it_ + 1) * params['t_iteration'] / dt)
-        if (rewards[it_] < 0) and tgt_cell_type == 'd1':
-            R = 0
-        elif (rewards[it_] < 0) and tgt_cell_type == 'd2':
-            R = -rewards[it_]
-        elif (rewards[it_] > 0) and tgt_cell_type == 'd2':
-            R = 0
-        else:
-            R = rewards[it_]
-        K_vec[idx_1:idx_2] = R * np.ones(idx_2 - idx_1)
-    return K_vec            
 
 
 if __name__ == '__main__':
@@ -74,7 +49,11 @@ if __name__ == '__main__':
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
 #    bcpnn_params['tau_p'] = 5.
 
-    K_vec = create_K_vector(params, it_range_plotting, dt=0.1)
+    # TODO: update:
+    # new
+    K_vec_comp, K_vec = create_K_vector(params, it_range_plotting, dt=0.1)
+    # old:
+#    K_vec = create_K_vector(params, it_range_plotting, dt=0.1)
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
     pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range_cell_selection)

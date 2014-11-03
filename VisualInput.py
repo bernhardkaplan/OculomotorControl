@@ -57,6 +57,8 @@ class VisualInput(object):
 #        self.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])
 
 
+
+
     def create_training_sequence_iteratively(self):
         """
         Training samples are drawn from the tuning properties of the cells, i.e. follow the same distribution
@@ -102,61 +104,109 @@ class VisualInput(object):
         return mp_training 
 
 
-    def create_training_sequence_RBL(self, BG):
+    def create_test_stimuli(self):
+        """
+        This function provides 'real' test stimuli, i.e. stimuli which have not been trained.
+        """
+        test_stim_params = np.zeros((self.params['n_stim_testing'], 4))
+        test_stim_params[:, 1] = .5
+        for i_stim in xrange(self.params['n_stim_testing']):
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                test_stim_params[i_stim, 0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            else:
+                test_stim_params[i_stim, 0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+            test_stim_params[i_stim, 2] = self.RNG.uniform( -self.params['v_max_tp'], self.params['v_max_tp'])
 
-        training_stimuli_sample = self.create_training_sequence_iteratively()     # motion params drawn from the cells' tuning properties
-        training_stimuli_grid = self.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
-        training_stimuli_center = self.create_training_sequence_around_center()   # sample more from the center in order to reduce risk of overtraining action 0 and v_x_max
+        output_fn = self.params['testing_sequence_fn']
+        print 'VisualInput saves testing stimulus parameters to:', output_fn
+        np.savetxt(output_fn, test_stim_params)
+        return test_stim_params
+
+
+
+    def create_training_sequence_RBL_cycle_blocks(self):
+        """
+        S0, S0, S0 ... S1 S1 S1 
+        """
+
+        v_lim_frac = .8
+        v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
         self.training_stimuli = np.zeros((self.params['n_stim_training'], 4))
-        n_grid = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_from_grid']))
-        n_center = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_center']))
-        random.seed(self.params['visual_stim_seed'])
-        np.random.seed(self.params['visual_stim_seed'])
-        self.training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(self.params['n_stim_training']), n_grid), :]
-        self.training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
-        self.training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(self.params['n_stim_training']), self.params['n_stim_training'] - n_grid - n_center), :]
 
-        n_stim = self.params['n_training_stim_per_cycle'] * self.params['n_training_cycles']
-        all_mp = np.zeros((n_stim, 4))
+        v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_divide_training_space_v'])
 
+        x_pos = np.zeros(self.params['n_training_x'])
+        for i_x in xrange(self.params['n_training_x']):
+            # get start position some where in the periphery
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                x_pos[i_x] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            else:
+                x_pos[i_x] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+
+        print 'x_pos', x_pos
+        v_training = np.zeros(self.params['n_training_v'])
+        for i_v in xrange(self.params['n_training_v']):
+            plus_minus = utils.get_plus_minus(self.RNG)
+            v_training[i_v] = v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+
+        indices = range(self.params['n_training_x'])
         i_stim = 0
-        v_stim_cnt = 0
-        for i_cycle in xrange(self.params['n_training_cycles']):
-            for i_v in xrange(self.params['n_training_v']):
+        for i_v in xrange(self.params['n_training_v']):
+            for i_x in xrange(self.params['n_training_x']):
+                for i_cycle in xrange(self.params['n_training_cycles']):
+#            np.random.shuffle(v_grid) # randomize the order of speeds for each cycle
+#            self.RNG.shuffle(x_pos)
+#            self.RNG.shuffle(v_training)
+                    self.training_stimuli[i_stim, 0] = x_pos[i_x]
+                    self.training_stimuli[i_stim, 1] = .5 # y-pos = center
+                    self.training_stimuli[i_stim, 2] = v_training[i_v]
 
-                stim_params = [0., 0.5, 0., 0.]
-                # get start position some where in the periphery
-                pm = utils.get_plus_minus(np.random)
-                if pm > 0:
-                    stim_params[0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
-                else:
-                    stim_params[0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
-                # take the new stimulus from the mixed distribution as derived above
-                stim_params[2] = self.training_stimuli[v_stim_cnt, 2]
-
-                for i_x in xrange(self.params['n_training_x']):
-                    for i_neg in xrange(self.params['suboptimal_training']):
-                        (required_v_eye, v_y, action_idx) = BG.get_non_optimal_action_for_stimulus(stim_params)
-                        all_mp[i_stim, :] = stim_params
-                        i_stim += 1
-
-                    BG.reset_pool_of_possible_actions()
-                    # one training with the correct / optimal action
-                    (required_v_eye, v_y, action_idx) = BG.get_optimal_action_for_stimulus(stim_params)
-                    all_mp[i_stim, :] = deepcopy(stim_params)
-                    stim_params = utils.get_next_stim(self.params, stim_params, required_v_eye) # follow the stimulus to the center and update the stim params with the new ones
-                    stim_params = list(stim_params)
                     i_stim += 1
-                v_stim_cnt += 1
+        return self.training_stimuli
 
-        # self.training_stimuli is the 
-#        print 'Saving training sequence parameters to:', self.params['training_sequence_fn']
-        np.savetxt(self.params['training_sequence_fn'], self.training_stimuli) 
-#        np.savetxt(self.params['training_sequence_fn'], all_mp)
+                        
+    def create_training_sequence_RBL_mixed_within_a_cycle(self):
+        """
+        S0, S1, S2   S2 S1 S0   S1 S0 S2   S2 S0 S1
+        """
 
-#        print 'DEBUGGGGG training_stimuli', self.training_stimuli
-#        print 'DEBUGGGGG all_mp', all_mp
-        return all_mp
+        v_lim_frac = .8
+        v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
+        self.training_stimuli = np.zeros((self.params['n_stim_training'], 4))
+
+        v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_divide_training_space_v'])
+
+        x_pos = np.zeros(self.params['n_training_x'])
+        for i_x in xrange(self.params['n_training_x']):
+            # get start position some where in the periphery
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                x_pos[i_x] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            else:
+                x_pos[i_x] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+
+        print 'x_pos', x_pos
+        v_training = np.zeros(self.params['n_training_v'])
+        for i_v in xrange(self.params['n_training_v']):
+            plus_minus = utils.get_plus_minus(self.RNG)
+            v_training[i_v] = v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+
+        indices = range(self.params['n_training_x'])
+        i_stim = 0
+        for i_cycle in xrange(self.params['n_training_cycles']):
+#            np.random.shuffle(v_grid) # randomize the order of speeds for each cycle
+            self.RNG.shuffle(v_training)
+            for i_v in xrange(self.params['n_training_v']):
+                self.RNG.shuffle(x_pos)
+                for i_x in xrange(self.params['n_training_x']):
+                    self.training_stimuli[i_stim, 0] = x_pos[i_x]
+                    self.training_stimuli[i_stim, 1] = .5 # y-pos = center
+                    self.training_stimuli[i_stim, 2] = v_training[i_v]
+
+                    i_stim += 1
+        return self.training_stimuli
 
 
     def create_training_sequence_from_a_grid(self, n_stim=None):
@@ -182,6 +232,9 @@ class VisualInput(object):
 
         if self.params['reward_based_learning']:
             n_training_x = self.params['n_training_x'] * (self.params['suboptimal_training'] + 1)
+        else:
+            print 'Set params[reward_based_learning] = True!'
+            exit(1)
         x_grid = np.linspace(x_lim[0], x_lim[1], n_training_x)
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
         training_states_x = range(0, n_training_x)
@@ -283,7 +336,6 @@ class VisualInput(object):
         self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
-        self.iteration += 1
         return self.stim, supervisor_state
 
 
@@ -387,7 +439,6 @@ class VisualInput(object):
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
         self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
 
-        self.iteration += 1
         return self.stim, self.supervisor_state
 
 
@@ -429,7 +480,6 @@ class VisualInput(object):
             input_nspikes[i_, :] = (gid, len(st))
             self.stim[i_] = st
 
-        self.t_current += self.params['t_iteration']
 #        if self.params['debug_mpn']:
 #            np.savetxt(self.params['input_nspikes_fn_mpn'] + 'it%d_%d.dat' % (self.iteration, self.pc_id), input_nspikes, fmt='%d\t%d')
         return self.stim
@@ -877,6 +927,10 @@ class VisualInput(object):
 
         return tuning_prop
 
+    def advance_iteration(self):
+        self.t_current += self.params['t_iteration']
+        self.iteration += 1
+
 
     def get_gids_near_stim_trajectory(self, verbose=False):
 
@@ -889,36 +943,29 @@ class VisualInput(object):
                 gid = self.gids_to_record_exc[i]
                 print gid, '\t', distances[i], self.tuning_prop_exc[gid, :]
 
-
         return self.gids_to_record_exc
 
 
     def set_empty_input(self, local_gids):
         """
-        At the last iteration for each stimulus return an empty spike train
+        Return empty input spike trains for all local cells
         """
-
-        local_gids = np.array(local_gids)
-        for i_ in xrange(len(local_gids)):
-            self.stim[i_] = []
+        self.stim = [ [] for gid in xrange(len(local_gids))]
         self.motion_params[self.iteration, -1] = self.t_current
-        self.t_current += self.params['t_iteration']
-        self.iteration += 1
         self.supervisor_state = [0., 0.]
         return self.stim, self.supervisor_state
 
 
     def spikes_for_all(self, local_gids):
         local_gids = np.array(local_gids)
-        n_spikes_trigger = np.int(100. / self.params['w_input_exc_mpn'])
+#        n_spikes_trigger = np.int(40. / self.params['w_input_exc_mpn'])
+        n_spikes_trigger = 1
 
+        self.stim = [ [] for gid in xrange(len(local_gids))]
         for i_ in xrange(len(local_gids)):
-            self.stim[i_] = []
             for i_spike in xrange(n_spikes_trigger):
-                self.stim[i_].append(self.t_current + i_spike * self.params['dt'])
+                self.stim[i_].append(self.t_current + i_spike * self.params['dt'] + self.params['t_iteration'] / 10.)
             #print 'DEBUG self.stim[%d]: ' % (i_), self.stim[i_]
-        self.t_current += self.params['t_iteration']
-        self.iteration += 1
         return self.stim
 
 
@@ -940,7 +987,5 @@ class VisualInput(object):
                 n_spikes = np.random.randint(20, 50)
                 stim[i_] = np.around(np.random.rand(n_spikes) * t_integrate + self.t_current, decimals=1)
                 stim[i_] = np.sort(stim[i_])
-        self.t_current += t_integrate
-        self.iteration += 1
         return stim
 

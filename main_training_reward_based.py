@@ -384,13 +384,6 @@ if __name__ == '__main__':
         params = utils.convert_to_NEST_conform_dict(testing_params_json)
         write_params = False
     
-#    assert (len(sys.argv) > 1), 'Missing training folder as command line argument'
-#    training_folder = os.path.abspath(sys.argv[1]) 
-#    print 'Training folder:', training_folder
-#    training_params_json = utils.load_params(training_folder)
-#    training_params = utils.convert_to_NEST_conform_dict(training_params_json)
-#    params['training_folder'] = training_folder
-
     if pc_id == 0 and write_params:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     if pc_id == 0:
@@ -414,18 +407,6 @@ if __name__ == '__main__':
 #    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d1', model=params['synapse_d1_MT_BG'])
 #    CC.connect_mt_to_bg_RBL(RBL.MT, RBL.BG, training_params, params, target='d2', model=params['synapse_d2_MT_BG'])
     RBL.CC.connect_mt_to_bg(RBL.MT, RBL.BG)
-
-#    nest.PrintNetwork()
-#    exit(1)
-
-#    if params['connect_d1_after_training']:
-#        CC.connect_d1_after_training(BG, training_params, params)
-#    RBL.CC.connect_mt_to_bg(RBL.MT, RBL.BG)
-
-    # simulate, do the given action and simulate again with the stimulus modified by the action
-
-
-#    CC.get_weights(RBL.MT, RBL.BG, iteration=RBL.iteration_cnt)
 
 #    stim_type = []
 #    d1_actions_trained = []

@@ -6,6 +6,10 @@ import json
 class BasalGanglia(object):
 
     def __init__(self, params, comm=None, dummy=False):
+        """
+        If dummy, an instance of this class does not try to write into any folder, but creates
+        the data structures to play with, e.g. action_bins_x
+        """
 
         self.params = params
         self.pc_id, self.n_proc = nest.Rank(), nest.NumProcesses()
@@ -13,11 +17,12 @@ class BasalGanglia(object):
         if comm != None:
             assert (comm.rank == self.pc_id), 'mpi4py and NEST tell me different PIDs!'
             assert (comm.size == self.n_proc), 'mpi4py and NEST tell me different PIDs!'
+        self.dummy = dummy 
 
         self.activity_memory = np.zeros((self.params['n_iterations'], self.params['n_actions']))
         self.RNG = np.random
         self.RNG.seed(self.params['basal_ganglia_seed'])
-        self.create_suboptimal_action_mapping()
+#        self.create_suboptimal_action_mapping()
         self.iteration = 0
         self.set_action_speed_mapping_bins() 
         self.strD1 = {}
@@ -67,9 +72,16 @@ class BasalGanglia(object):
                 self.connect_noise()
 
 
-    def reset_pool_of_possible_actions(self):
-        # for non optimal action selection
-        self.all_action_idx = range(self.params['n_actions'])
+    def reset_pool_of_possible_actions(self, v_stim=None):
+        if v_stim == None:
+            self.all_action_idx = range(self.params['n_actions'])
+        else:
+            if np.sign(v_stim) == -1.0:
+                self.all_action_idx = range(self.params['n_actions'] / 2 + 1, self.params['n_actions'])
+            elif np.sign(v_stim) == 1.0:
+                self.all_action_idx = range(0, self.params['n_actions'] / 2)
+            else:
+                self.all_action_idx = [self.params['n_actions'] / 2]
 
 
     def record_extra_cells(self):
@@ -189,22 +201,49 @@ class BasalGanglia(object):
         self.write_cell_gids_to_file()
         self.gids = {}
         self.gids['actions'] = self.get_cell_gids('actions')
-        self.gids['d1'] = self.get_cell_gids('actions')
-        self.gids['d2'] = self.get_cell_gids('actions')
+        self.gids['d1'] = self.get_cell_gids('d1')
+        self.gids['d2'] = self.get_cell_gids('d2')
 #        print "BG model completed"
 
 
-    def connect_d1_population(self):
-        D1_conns = ''
+    def connect_d1_static_cross_inhibition(self):
         for i_ in xrange(self.params['n_actions']):
             src_pop = self.strD1[i_]
             for j_ in xrange(self.params['n_actions']):
                 tgt_pop = self.strD1[j_]
-                if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
-                    nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1'])
-                    nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
+                if i_ != j_:
+                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1_inh'], self.params['delay_d1_d1'])
                 else:
-                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1'], self.params['delay_d1_d1'])
+                    nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1_exc'], self.params['delay_d1_d1'])
+
+
+    def connect_d1_population(self):
+#        if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
+        for i_ in xrange(self.params['n_actions']):
+            src_pop = self.strD1[i_]
+            for j_ in xrange(self.params['n_actions']):
+                tgt_pop = self.strD1[j_]
+                if j_ != i_:
+                    self.params['params_synapse_d1_d1_neg']['p_i'] = self.params['bcpnn_init_pi']
+                    self.params['params_synapse_d1_d1_neg']['p_j'] = self.params['bcpnn_init_pi']
+                    self.params['params_synapse_d1_d1_neg']['p_ij'] = np.exp( self.params['w_d1_d1_inh']) * \
+                    self.params['params_synapse_d1_d1_neg']['p_i'] * self.params['params_synapse_d1_d1_neg']['p_j']
+                    if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
+                        nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1_neg'])
+                        nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
+                    else:
+                        nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1_inh'], self.params['delay_d1_d1'])
+                else:
+                    self.params['params_synapse_d1_d1_neg']['p_i'] = self.params['bcpnn_init_pi']
+                    self.params['params_synapse_d1_d1_neg']['p_j'] = self.params['bcpnn_init_pi']
+                    self.params['params_synapse_d1_d1_neg']['p_ij'] = np.exp( self.params['w_d1_d1_exc']) * \
+                    self.params['params_synapse_d1_d1_neg']['p_i'] * self.params['params_synapse_d1_d1_neg']['p_j']
+                    if self.params['synapse_d1_d1'] == 'bcpnn_synapse':
+                        nest.SetDefaults(self.params['synapse_d1_d1'], params=self.params['params_synapse_d1_d1_pos'])
+                        nest.ConvergentConnect(src_pop, tgt_pop, model=self.params['synapse_d1_d1'])
+                    else:
+                        nest.ConvergentConnect(src_pop, tgt_pop, self.params['w_d1_d1_pos'], self.params['delay_d1_d1'])
+
 
     def connect_d2_population(self):
         for i_ in xrange(self.params['n_actions']):
@@ -226,17 +265,17 @@ class BasalGanglia(object):
         for naction in xrange(self.params['n_actions']):
             self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1']) 
             self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1'])
-            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc_bg']})
-            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh_bg']})
-            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc_bg'], self.params['dt'])
-            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh_bg'], self.params['dt'])
+            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc_d1']})
+            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh_d1']})
+            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc_d1'], self.params['dt'])
+            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh_d1'], self.params['dt'])
 
             self.noise_exc_actions[naction] = nest.Create('poisson_generator', self.params['num_actions_output']) 
             self.noise_inh_actions[naction] = nest.Create('poisson_generator', self.params['num_actions_output'])
-            nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc_bg']})
-            nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh_bg']})
-            nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc_bg'], self.params['dt'])
-            nest.Connect(self.noise_inh_actions[naction], self.actions[naction], self.params['w_noise_inh_bg'], self.params['dt'])
+            nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc_output']})
+            nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh_output']})
+            nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc_output'], self.params['dt'])
+            nest.Connect(self.noise_inh_actions[naction], self.actions[naction], self.params['w_noise_inh_output'], self.params['dt'])
 
         if self.params['with_d2']:
             self.noise_exc_d2 = {}
@@ -244,10 +283,10 @@ class BasalGanglia(object):
             for naction in xrange(self.params['n_actions']):
                 self.noise_exc_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2']) 
                 self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2'])
-                nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc_bg']})
-                nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh_bg']})
-                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc_bg'], self.params['dt'])
-                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh_bg'], self.params['dt'])
+                nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc_d2']})
+                nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh_d2']})
+                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc_d2'], self.params['dt'])
+                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh_d2'], self.params['dt'])
 
 
 
@@ -293,7 +332,8 @@ class BasalGanglia(object):
 #        header = '# first row: action_x, 2nd row: action_y'
         output_array[:, 0] = self.action_bins_x
         output_array[:, 1] = self.action_bins_y
-        np.savetxt(self.params['bg_action_bins_fn'], output_array)#, header=header)
+        if not self.dummy:
+            np.savetxt(self.params['bg_action_bins_fn'], output_array)#, header=header)
 
 
 
@@ -327,7 +367,6 @@ class BasalGanglia(object):
             elif rnd_action < 0:
                 rnd_action = self.RNG.choice(xrange(0, self.params['suboptimal_training']))
             self.map_suboptimal_action[action] = rnd_action
-#            self.map_suboptimal_action[action] = int(action + self.params['suboptimal_training'] * utils.get_plus_minus(self.RNG)) % self.params['n_actions']
         output_fn = self.params['bg_suboptimal_action_mapping_fn']
         output_file = file(output_fn, 'w')
         json.dump(self.map_suboptimal_action, output_file, indent=2)
@@ -357,8 +396,6 @@ class BasalGanglia(object):
             best_action = np.argmin(np.abs(all_outcomes - .5))
             output_speed_x = self.action_bins_x[best_action]
             print 'BG for trial %d says (it %d, pc_id %d): do action %d, output_speed:' % (i_trial, self.t_current / self.params['t_iteration'], self.pc_id, best_action), output_speed_x
-            self.t_current += self.params['t_iteration']
-            self.advance_iteration()
             print 'DEBUG BG sets supervisor for action %d' % (best_action)
             for nactions in xrange(self.params['n_actions']):
                 nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
@@ -405,19 +442,43 @@ class BasalGanglia(object):
         all_outcomes = np.zeros(len(action_bins))
         for i_, action in enumerate(action_bins):    
             all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
+        print '\nDEBUG x_stim=%.2f v_stim=%.2f all_outcomes' % (stim_params[0], stim_params[2]), all_outcomes
         best_action_idx = np.argmin(np.abs(all_outcomes - .5))
         # the reward is determined by the distance between the best_action and the chosen_action
-#        best_speed = self.action_bins_x[best_action_idx ]
-#        chosen_speed = self.action_bins_x[chosen_action_idx]
+        best_speed = self.action_bins_x[best_action_idx ]
+        chosen_speed = self.action_bins_x[chosen_action_idx]
 
         reward = (self.params['K_max'] - self.params['shift_reward_distribution']) * np.exp( - float(chosen_action_idx - best_action_idx)**2 / (2. * self.params['sigma_reward_distribution'])) + self.params['shift_reward_distribution']
 
-#        print 'debug get_reward_from_action: best_action_idx :', best_action_idx , 'best_speed', best_speed, 'chosen action idx', chosen_action_idx, 'chosen speed', chosen_speed, '\treward', reward
+        print 'debug get_reward_from_action: best_action_idx (for v_stim=%.2f):' % (stim_params[2]), best_action_idx , 'best_speed', best_speed, 'chosen action idx', chosen_action_idx, 'chosen speed', chosen_speed, '\treward', reward
         return reward
 #        if chosen_action != best_action_dx:
 #            return -1.
 #        else:
 #            return 1.
+
+
+    def get_random_action(self, v_stim):
+        """
+        Based on the sign of v_stim (left / rightward movement), this function returns
+        a random action from the corresponding half of actions (left / rightward).
+        """
+#        if np.sign(v_stim) == -1.0:
+#            possible_actions_idx = range(0, self.params['n_actions'] / 2)
+#        elif np.sign(v_stim) == 1.0:
+#            possible_actions_idx = range(self.params['n_actions'] / 2 + 1, self.params['n_actions'])
+#        else:
+#            possible_actions_idx = [self.params['n_actions'] / 2]
+        
+        if (len(self.all_action_idx) > 0):
+            rnd_action_idx = self.RNG.choice(self.all_action_idx, 1)[0]
+            self.all_action_idx.remove(rnd_action_idx)
+            v_rnd = self.action_bins_x[rnd_action_idx]
+            return (rnd_action_idx, v_rnd)
+        else:
+            print 'BG.get_random_action: re-initialize stimulus!'
+            return False
+
 
 
     def softmax_action_selection(self, supervisor_state):
@@ -474,7 +535,7 @@ class BasalGanglia(object):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
 
 
-    def activate_efference_copy(self, it_0, it_1):
+    def activate_efference_copy_activity_based(self, it_0, it_1):
         print 'debug activity_memory ', self.iteration, self.activity_memory[it_0:it_1, :]
         recent_activity = self.activity_memory[it_0:it_1, :]
         mean_activity = np.zeros(self.params['n_actions'])
@@ -491,6 +552,11 @@ class BasalGanglia(object):
             else:
                 nest.SetStatus(self.efference_copy[i_action], {'rate' : 0.})
 
+
+    def activate_efference_copy(self, action_idx):
+        for i_action in xrange(self.params['n_actions']):
+            nest.SetStatus(self.efference_copy[i_action], {'rate' : self.params['inactive_efference_rate']})
+        nest.SetStatus(self.efference_copy[action_idx], {'rate' : self.params['active_efference_rate']})
 
 
     def stop_efference_copy(self):
@@ -535,8 +601,6 @@ class BasalGanglia(object):
 
         if len(nspikes) == 0:
             print 'No spikes found in iteration', self.t_current/self.params['t_iteration']
-            self.t_current += self.params['t_iteration']
-            self.advance_iteration()
             if random_action == False: # do nothing:
                 return (0, 0, np.int(self.params['n_actions'] / 2)) # maye use 0 instead of np.nan
             elif random_action == True:
@@ -553,8 +617,8 @@ class BasalGanglia(object):
         if WTA:
             winning_nspikes = np.argmax(nspikes)
             winning_gid = gids_spiked[winning_nspikes]
-#            print 'winning_gid', winning_gid
-            winning_action = self.gid_to_action_via_spikerecorder[winning_gid+1]
+#            print 'debug nspikes:', nspikes, 'winning_gid', winning_gid
+            winning_action = self.gid_to_action_via_spikerecorder[winning_gid]
             output_speed_x = self.action_bins_x[winning_action]
         else:
             vector_avg_action = 0.
@@ -568,10 +632,8 @@ class BasalGanglia(object):
             winning_action = vector_avg_action
             output_speed_x = vector_avg_speed
 
-        print 'BG says (it %d, pc_id %d): do action %d, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
-        self.t_current += self.params['t_iteration']
+        print 'BG says (it %d, pc_id %d): do action %.1f, output_speed:' % (self.t_current / self.params['t_iteration'], self.pc_id, winning_action), output_speed_x
 
-        self.advance_iteration()
         return (output_speed_x, 0, winning_action)
 
 
@@ -663,6 +725,7 @@ class BasalGanglia(object):
 
 
     def advance_iteration(self):
+        self.t_current += self.params['t_iteration']
         self.iteration += 1
 
 

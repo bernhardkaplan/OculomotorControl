@@ -36,6 +36,42 @@ def get_next_stim(params, stim_params, v_eye):
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
+def get_reward_from_perceived_states(old_pos, new_pos, punish_overshoot=1.):
+    """
+    Computes the reward based on the two consecutive positions
+    """
+    K_min = -1.
+    K_max = 1.
+
+    dx_i = old_pos - .5 # -2 and -1 because self.iteration is + 1 (because compute_input has been called before)
+    dx_j = new_pos - .5
+    dx_i_abs = np.abs(dx_i)
+    dx_j_abs = np.abs(dx_j)
+
+    relative_improvement = (dx_i_abs - dx_j_abs) / .5
+    R = (dx_i_abs - dx_j_abs ) / dx_i_abs
+    if R < -2.:
+        R = -2.
+    return R
+#    return R
+#    if relative_improvement < 0.:
+#        R = K_min
+#    else:
+#        R = -K_min + (K_max - K_min) * relative_improvement
+#    return R
+    
+#    R = 1. - (dx_j_abs / dx_i_abs)**2
+#    return np.sign(R)
+#    return R
+
+#    delta_x_abs = dx_j_abs - dx_i_abs # if diff_dx_abs < 0: # improvement
+#    R = - delta_x_abs / .5
+#    if np.sign(dx_i) != np.sign(dx_j): # 'overshoot'
+#        R *= punish_overshoot
+#    return R
+
+
+
 def distance(x,y):   
     # alternative: np.linalg.norm(a-b)
     return np.sqrt(np.sum((x - y)**2))
@@ -688,5 +724,20 @@ def distribute_n(n, n_proc, pid):
 #    stim    -- integer
 #    it      -- 'all' or an integer
 #    """
+
+
+
+def linear_transformation(x, y_min, y_max):
+    """
+    x : the range to be transformed
+    y_min, y_max : lower and upper boundaries for the range into which x
+                   is transformed to
+    Returns y = f(x), f(x) = m * x + b
+    """
+    x_min = np.min(x)
+    x_max = np.max(x)
+    if x_min == x_max:
+        x_max = x_min * 1.0001
+    return (y_min + (y_max - y_min) / (x_max - x_min) * (x - x_min))
 
 

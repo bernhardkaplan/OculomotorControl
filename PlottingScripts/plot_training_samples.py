@@ -96,7 +96,6 @@ class Plotter(object):
 
     def plot_precomputed_actions(self, plot_cells=True):
 
-        supervisor_states = np.loadtxt(self.params['supervisor_states_fn'])
         action_indices = np.loadtxt(self.params['action_indices_fn'])
 #        d = np.loadtxt(self.params['motion_params_precomputed_fn'])
         d = np.loadtxt(self.params['training_sequence_fn'])
@@ -131,16 +130,28 @@ class Plotter(object):
                 ax1.add_artist(ellipse)
 
         colors = m.to_rgba(action_indices)
-        for i_ in xrange(self.params['n_stim']):
+        print 'debug colors', colors, '\n\n', action_indices
 
-            mp = d[i_, :]
-            ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
-#            ax1.scatter(mp[0], mp[2], marker='*', s=10, c=color)
-#            ax1.plot(mp[0], mp[2], '*', markersize=10, color='y', markeredgewidth=1)
-            ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
-            ellipse.set_facecolor('r')
-            patches.append(ellipse)
-            ax1.add_artist(ellipse)
+        if self.params['reward_based_learning']:
+            for i_ in xrange(len(action_indices)):
+                stim_idx = (i_ + 1) * (self.params['suboptimal_training'] + 1) - 1
+                mp = d[stim_idx, :]
+                print 'stim_idx:', stim_idx, mp, action_indices[i_]
+                ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
+                ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
+                ellipse.set_facecolor('r')
+                patches.append(ellipse)
+                ax1.add_artist(ellipse)
+
+        else:
+            for i_ in xrange(self.params['n_stim']):
+                mp = d[i_, :]
+                ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
+                ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
+                ellipse.set_facecolor('r')
+                patches.append(ellipse)
+                ax1.add_artist(ellipse)
+
 
 #        ax2 = fig.add_axes([0.95, 0.1, 0.03, 0.8])
 #        cb = matplotlib.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')
@@ -186,7 +197,6 @@ class Plotter(object):
         ax2.set_xlabel('Speed of training stimuli')
         ax2.set_ylabel('Count')
 
-
         print 'Velocity histogram:'
         print 'First half:', bins_v[:n_bins/2]
         print 'Sum first half:', cnt_v[:n_bins/2].sum()
@@ -213,7 +223,7 @@ if __name__ == '__main__':
     
     Plotter = Plotter(params)#, it_max=1)
 #    Plotter.plot_training_sample_space(plot_process=True)
-    Plotter.plot_training_sample_space(plot_process=False)
-    Plotter.plot_precomputed_actions()
+#    Plotter.plot_training_sample_space(plot_process=False)
+    Plotter.plot_precomputed_actions(plot_cells=True)
     Plotter.plot_training_sample_histograms()
     pylab.show()
