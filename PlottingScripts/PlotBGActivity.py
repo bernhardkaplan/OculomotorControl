@@ -133,15 +133,9 @@ def run_plot_bg(params, stim_range):
     print 'Plotted the stim_range', stim_range
     print 'Merging spikes ...'
     if params['with_d2']:
-        if params['training']:
-            cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
-        else:
-            cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
+        cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
     else:
-        if params['training']:
-            cell_types = ['d1', 'actions']#, 'supervisor']
-        else:
-            cell_types = ['d1', 'actions']#, 'supervisor']
+        cell_types = ['d1', 'actions']#, 'supervisor']
 
     if stim_range == None:
         if params['training']:

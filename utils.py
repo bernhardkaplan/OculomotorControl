@@ -375,8 +375,14 @@ def get_connection_files(params, cell_type):
 
 def merge_spikes(params):
 
+#    if not os.path.exists(params['folder_name']):
+#        print 'ERRER Folder
+#    print 'debug',os.path.exists(params['folder_name'])
+#    exit(1)
+    assert os.path.exists(params['folder_name']), 'ERROR in utils.merge_spikes: Folder does not exist: %s' % (params['folder_name'])
     merged_spike_fn = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
-    merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], merged_spike_fn)
+    if not os.path.exists(merged_spike_fn):
+        merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], merged_spike_fn)
 
     cell_types = ['d1', 'd2', 'actions']
     MS = MergeSpikefiles.MergeSpikefiles(params)
