@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import MergeSpikefiles
 import FigureCreator
+import plot_bcpnn_traces
 
 class MetaAnalysisClass(object):
     def __init__(self, argv, verbose=False):
@@ -105,11 +106,13 @@ class PlotEverything(MetaAnalysisClass):
         self.fig = plt.figure(figsize=figsize)
         self.gs = gridspec.GridSpec(4, 1, height_ratios=(2, 2, 1, 1))
 
-        self.plot_bg_spikes(stim_range, t_range)
-        self.plot_mpn_spikes(stim_range, t_range)
+#        self.plot_bg_spikes(t_range)
+#        self.plot_mpn_spikes(t_range)
+        self.plot_retinal_displacement_and_reward(stim_range)
 
 
-    def plot_bg_spikes(self, stim_range, t_range):
+
+    def plot_bg_spikes(self, t_range):
 
         ax0 = plt.subplot(self.gs[0])
 
@@ -151,7 +154,7 @@ class PlotEverything(MetaAnalysisClass):
         self.gid_to_posgrid_mapping_vx = utils.get_grid_index_mapping(self.tuning_prop_exc[:, 2], self.y_grid_vx)
 
 
-    def plot_mpn_spikes(self, stim_range, t_range, sort_idx=0):
+    def plot_mpn_spikes(self, t_range, sort_idx=0):
 
         self.load_tuning_prop()
         tp_idx_sorted = self.tuning_prop_exc[:, sort_idx].argsort() # + 1 because nest indexing
@@ -176,6 +179,45 @@ class PlotEverything(MetaAnalysisClass):
             ax1.set_ylim((0., 1.))
         if sort_idx == 1:
             ax1.set_ylim((np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])))
+
+    def plot_retinal_displacement_and_reward(self, stim_range):
+        print 'stim_range', stim_range
+        if self.params['training']:
+            fn = self.params['motion_params_training_fn']
+        else:
+            fn = self.params['motion_params_testing_fn']
+        mp = np.loadtxt(fn)
+        actions = np.loadtxt(self.params['actions_taken_fn'])
+        rewards = np.loadtxt(self.params['rewards_given_fn'])
+        K_vec = np.loadtxt(self.params['K_values_fn']) 
+        ax2 = plt.subplot(self.gs[2])
+        ax3 = plt.subplot(self.gs[3])
+        color = 'k'
+        for i_stim in stim_range:
+            t0 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 1 * self.params['t_iteration'] # + 1 because stimulus appears in iteration 1 (not 0) within a stimulus
+            t1 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 2 * self.params['t_iteration'] # + 2 for the consequence of the action
+            x_stim = mp[i_stim, 0]
+            v_eye = actions[i_stim, 0]
+            x_after = utils.get_next_stim(self.params, mp[i_stim, :], actions[i_stim, 0])[0]
+            print t0, t1, x_stim, x_after, v_eye, mp[i_stim, :]
+            ax2.plot(np.array([t0, t1]), np.array([x_stim, x_after]), color=color, lw=3, marker='o')
+
+
+        for i_stim in stim_range:
+            idx0 = i_stim * self.params['n_iterations_per_stim']
+            idx1 = (i_stim + 1) * self.params['n_iterations_per_stim']
+            ax3.plot(range(idx0, idx1), K_vec[idx0:idx1])
+#            t0 = idx0 * self.params['t_iteration']
+
+#            for it_ in xrange(0, self.params['n_iterations_per_stim']):
+#                it_idx = i_stim * self.params['n_iterations_per_stim'] + it_
+#                print 'debug', K_vec[it_idx], rewards[i_stim], it_idx, i_stim
+#                assert (K_vec[it_idx] == rewards[i_stim]), 'ERROR in plot_retinal_displacement_and_reward: Mismatch between K_vec and rewards'
+#                t0 = (i_stim * self.params['n_iterations_per_stim'] + it_) * self.params['t_iteration']
+#                t1 = (i_stim * self.params['n_iterations_per_stim'] + it_ + 1) * self.params['t_iteration']
+#                ax3.plot([t0, t1], [K_vec[it_idx], K_vec[it_idx]])
+
+
 
 if __name__ == '__main__':
 

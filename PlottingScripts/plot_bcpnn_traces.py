@@ -17,14 +17,15 @@ import simulation_parameters
 import FigureCreator
 import json
 
-def create_K_vectors(params, n_stim, dt=0.1, tgt_cell_type='d1'):
+def create_K_vectors(params, stim_range, dt=0.1, tgt_cell_type='d1'):
     
     rewards = np.loadtxt(params['K_values_fn']) 
+    n_stim = stim_range[1] - stim_range[0]
     t_max = n_stim * params['n_iterations_per_stim'] * params['t_iteration']
     n = np.int(t_max/ dt) + 1 # +1 because the length needs to be the same computed in the BCPNN module after convert_spiketrain_to_trace
     K_vec_compute = np.zeros(n)
     K_vec_plot = np.zeros(n)
-    for it_ in xrange(n_stim * params['n_iterations_per_stim']):
+    for it_ in xrange(stim_range[0] * params['n_iterations_per_stim'], stim_range[1] * params['n_iterations_per_stim']):
         idx_1 = np.int(it_ * params['t_iteration'] / dt)
         idx_2 = np.int((it_ + 1) * params['t_iteration'] / dt)
         if (rewards[it_] < 0) and tgt_cell_type == 'd1':
@@ -384,10 +385,11 @@ if __name__ == '__main__':
 #    pre_gids = [2238]
 #    pre_gids = [1158]
 #    post_gids = [5023]
-    n_stim = params['n_stim']
+    stim_range = (0, params['n_stim'])
+    n_stim = stim_range[1] - stim_range[0]
     plot_range = (0, n_stim * params['n_iterations_per_stim'])
     K_values = np.loadtxt(params['K_values_fn'])
-    K_vec_compute, K_vec_plot = create_K_vectors(params, n_stim, dt, cell_type_post)
+    K_vec_compute, K_vec_plot = create_K_vectors(params, stim_range, dt, cell_type_post)
     all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, plot_range, gain=gain, K_vec=K_vec_compute)
     output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
     fig = None

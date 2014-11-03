@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
         self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 4 # how often each stimulus is presented during training
+        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
         # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
@@ -127,7 +127,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if self.params['training']:
             self.params['n_stim'] = self.params['n_stim_training']
-            self.params['n_iterations'] = (self.params['n_stim'] + self.params['n_stim_testing']) * self.params['n_iterations_per_stim']
+            self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
         else:
             self.params['n_stim'] = self.params['n_stim_testing']
             self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
@@ -168,7 +168,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['master_seed'] = 123
+        self.params['master_seed'] = 222
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
         self.params['visual_stim_seed'] = 321

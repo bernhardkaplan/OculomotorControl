@@ -215,12 +215,61 @@ def plot_reward_vs_relative_improvement(n_v):
     pass
 
 
+def plot_actions_and_rewards_for_single_stim(stim_params):
+
+    GP = simulation_parameters.global_parameters()
+    params = GP.params
+    BG = BasalGanglia.BasalGanglia(params, dummy=True)
+    speeds = BG.action_bins_x
+    x_old = stim_params[0]
+    x_post = np.zeros(params['n_actions'])
+    R = np.zeros(params['n_actions'])
+    for i_a in xrange(params['n_actions']):
+        x_new = utils.get_next_stim(params, stim_params, speeds[i_a])[0]
+        R[i_a] = utils.get_reward_from_perceived_states(x_old, x_new)
+        x_post[i_a] = x_new
+
+    min_val = np.min(R)
+    max_val = np.max(R)
+    norm = matplotlib.colors.Normalize(vmin=min_val, vmax=max_val)
+    cmap = matplotlib.cm.jet
+    m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
+    m.set_array(np.arange(min_val, max_val, 0.01))
+
+
+    fig = pylab.figure(figsize=(8, 10))
+    ax = fig.add_subplot(111)
+
+    xa = 2.05
+    for i_a in xrange(params['n_actions']):
+        c_s = m.to_rgba(R[i_a])
+        ax.plot([1., 2.], [x_old, x_post[i_a]], c=c_s, lw=2)
+        ypos_label = x_post[i_a]
+
+    for i_a in [0, 1, 2, 3, 4, 8, 12, 13, 14, 15, 16]:
+        c_s = m.to_rgba(R[i_a])
+        ypos_label = x_post[i_a]
+        ax.text(xa, ypos_label, 'R(%d, v_eye=%.2f)= %.2f' % (i_a, BG.action_bins_x[i_a], R[i_a]), color=c_s, fontsize=12)
+
+    ax.set_xlim((0.9, 3.1))
+    xlim = ax.get_xlim()
+    ax.plot([xlim[0], xlim[1]], [.5, .5], c='k', ls='--', lw=1)
+    ax.set_title('Rewards for all actions, mp= (%.2f, %.2f)' % (stim_params[0], stim_params[2]))
+    ax.set_ylabel('Retinal displacement')
+    cbar = fig.colorbar(m)
+
+
 if __name__ == '__main__':
 
-    test_random_placements()
-    all_data = get_rewards_for_all_stimuli_and_actions(n_pos=20, n_v=4)
-    plot_4d(all_data)  
+#    test_random_placements()
+#    all_data = get_rewards_for_all_stimuli_and_actions(n_pos=20, n_v=4)
+#    plot_4d(all_data)  
     v_stim = 1.0
-    plot_rewards_for_one_speed(v_stim, n_pos=100)
+#    plot_rewards_for_one_speed(v_stim, n_pos=100)
+
+    mp = (0.474, 0.5, -2.1605, 0.)
+    plot_actions_and_rewards_for_single_stim(mp)
+
     pylab.show()
+
     #    print '%2d\t%.2f\t%.2f\t%.2f\t%.2f' % (i_, x[i_], dx[i_], dx_abs[i_], dj_di_abs[i_])
