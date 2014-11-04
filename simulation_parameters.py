@@ -48,7 +48,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
-
+        self.params['softmax_action_selection_temperature'] = 1.0
         self.params['training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False

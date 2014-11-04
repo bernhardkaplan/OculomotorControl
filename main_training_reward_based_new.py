@@ -137,7 +137,7 @@ class RewardBasedLearning(object):
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
         self.network_states.append(state_)
 #        next_action = self.BG.get_action(WTA=True) # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
-        next_action = self.BG.get_action(WTA=False) # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
+        next_action = self.BG.get_action_softmax()
         self.network_states.append(state_)
         self.advance_iteration()
         self.K_vec.append(0)
