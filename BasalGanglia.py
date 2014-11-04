@@ -485,31 +485,6 @@ class BasalGanglia(object):
             return False
 
 
-
-    def softmax_action_selection(self, supervisor_state):
-        """
-        Will select the action corresponding to the supervisor_state 
-        by applying softmax to all actions, i.e. depending on the temperature the 'correct' action
-        is selected.
-        For temperature = 0 all actions are equally likely (softmax yields a flat distribution), 
-        and for temperature >= 10 the supervisor_state is basically mapped to the correct action (as in supervised_training).
-        """
-           
-        (u, v) = supervisor_state 
-        action_index_x = self.map_speed_to_action(u, xy='x')
-        action_index_y = self.map_speed_to_action(v, xy='y')
-        actions = np.zeros(self.params['n_actions'])
-        actions[action_index_x] = 1.
-        actions_softmax = utils.softmax(actions, self.params['softmax_action_selection_temperature'])
-        rnd_action = utils.draw_from_discrete_distribution(actions_softmax, size=1)[0]
-           
-        # set rate for all to inactive
-        for nactions in xrange(self.params['n_actions']):
-            nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
-        nest.SetStatus(self.supervisor[rnd_action], {'rate' : self.params['active_supervisor_rate']})
-        return (rnd_action, action_index_y)
-
-
     def supervised_training(self, supervisor_state):
         """
         Activates poisson generator of the required, teached, action and inactivates those of the nondesirable actions.
@@ -519,13 +494,6 @@ class BasalGanglia(object):
         (u, v) = supervisor_state 
         action_index_x = self.map_speed_to_action(u, xy='x') # would be interesting to test differences in x/y sensitivity here (as reported from Psychophysics)
         action_index_y = 0
-#        action_index_y = self.map_speed_to_action(v, xy='y')
-
-#        if self.params['suboptimal_training'] != 0.:
-#            action_index_x = self.map_suboptimal_action[action_index_x]
-#            action_index_y = self.map_suboptimal_action[action_index_y]
-#            action_index_x += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
-#            action_index_y += self.params['suboptimal_training'] * utils.plus_minus(self.RNG)
 
         print 'Debug BG iteration %d based on supervisor action choose action_index_x: %d ~ v_eye = %.2f, supervisor_state:' % (self.iteration, action_index_x, self.action_bins_x[action_index_x]), supervisor_state
         for nactions in xrange(self.params['n_actions']):
@@ -599,8 +567,24 @@ class BasalGanglia(object):
             action_idx = self.gid_to_action[int(gid_)]
             nspikes_by_action[action_idx] += nspikes[i_]
 
-        prob_distr = utils.softmax(nspikes_by_action, T=self.params['softmax_action_selection_temperature'])
-        sampled_action_idx = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
+#        print 'DEBUG BG.get_action_softmax: nspikes_by_action:', nspikes_by_action
+
+        if self.comm != None:
+            self.comm.Barrier()
+            if self.pc_id == 0:
+                prob_distr = utils.softmax(nspikes_by_action, T=self.params['softmax_action_selection_temperature'])
+                root_chosen_action = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
+                sampled_action_idx = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
+                for pid in xrange(self.n_proc):
+                    self.comm.send(sampled_action_idx, pid, tag=self.iteration)
+#                print 'DEBUG BG.get_action_softmax: prob_distr:', prob_distr, ' sampled action:', sampled_action_idx
+            else:
+                sampled_action_idx = self.comm.recv(source=0, tag=self.iteration)
+        else:
+            prob_distr = utils.softmax(nspikes_by_action, T=self.params['softmax_action_selection_temperature'])
+            sampled_action_idx = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
+#        print 'DEBUG iteration %d sampled action:' % (self.iteration), sampled_action_idx
+
         output_speed_x = self.action_bins_x[sampled_action_idx]
         return (output_speed_x, 0, sampled_action_idx)
 
