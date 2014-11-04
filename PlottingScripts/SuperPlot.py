@@ -13,70 +13,8 @@ import matplotlib.gridspec as gridspec
 import MergeSpikefiles
 import FigureCreator
 import plot_bcpnn_traces
-
-class MetaAnalysisClass(object):
-    def __init__(self, argv, verbose=False):
-        stim_range = None
-        if len(sys.argv) == 1:
-            if verbose:
-                print 'Case 1', sys.argv
-            network_params = simulation_parameters.global_parameters()  
-            params = network_params.params
-            self.run_super_plot(params, stim_range)
-
-        elif len(sys.argv) == 2:                                # plot_ [FOLDER]
-            if verbose:
-                print 'Case 2', sys.argv
-            folder_name = sys.argv[1]
-            params = utils.load_params(folder_name)
-            self.run_super_plot(params, stim_range)
-        elif len(sys.argv) == 3: 
-            if verbose:
-                print 'Case 3', sys.argv
-            if sys.argv[1].isdigit() and sys.argv[2].isdigit(): #  plot_ [STIM_1] [STIM_2]
-                stim_range = (int(sys.argv[1]), int(sys.argv[2]))
-                network_params = simulation_parameters.global_parameters()  
-                params = network_params.params
-                self.run_super_plot(params, stim_range)
-            else:
-                for fn in sys.argv[1:]:                         # plot_ [FOLDER] [FOLDER]
-                    params = utils.load_params(fn)
-                    self.run_super_plot(params, stim_range)
-        elif len(sys.argv) == 4:                                
-            if verbose:
-                print 'Case 4', sys.argv
-            folder_name = sys.argv[1]
-            if sys.argv[2].isdigit() and sys.argv[3].isdigit(): # plot_ [FOLDER] [STIM_1] [STIM_2]
-                stim_range = (int(sys.argv[2]), int(sys.argv[3]))
-                params = utils.load_params(folder_name)
-                # create one figure for the full stim range
-                self.run_super_plot(params, stim_range)
-
-                # create separate figures for each individual stimulus
-#                for i_stim in xrange(stim_range[0], stim_range[1]):
-#                    self.run_super_plot(params, (i_stim, i_stim + 1))
-            else:
-                # create separate figures for each individual folder
-                for fn in sys.argv[1:]:                         # plot_ [FOLDER_1] [FOLDER_2] [FOLDER_3]
-                    params = utils.load_params(fn)
-                    self.run_super_plot(params, stim_range)
-        elif len(sys.argv) > 4:                                 # plot_ [FOLDER_1] [FOLDER_2] .... [FOLDER_N]
-            # create separate figures for each individual folder
-            if verbose:
-                print 'Case 5', sys.argv
-            for fn in sys.argv[1:]:
-                params = utils.load_params(fn)
-                self.run_super_plot(params, stim_range)
-
-
-
-    def run_super_plot(self, params, stim_range):
-        """
-        if stim_range == None:
-            plot full range of iterations
-        """
-        raise NotImplementedError, 'To be implemented by sub class'
-            
+import json
+from MetaAnalysisClass import MetaAnalysisClass
 
 
 class PlotEverything(MetaAnalysisClass):
@@ -85,6 +23,8 @@ class PlotEverything(MetaAnalysisClass):
         self.verbose = verbose
         self.rp_markersize = 2
         MetaAnalysisClass.__init__(self, argv, verbose) # call the constructor of the super/mother class
+        # the constructer of the MetaAnalysisClass calls run_super_plot
+        # with params and stim_range retrieved from the command line arguments
 
 
     def run_super_plot(self, params, stim_range):
@@ -94,22 +34,28 @@ class PlotEverything(MetaAnalysisClass):
         print 'run_super_plot: folder %s, stim_range' % params['folder_name'], stim_range
 
         if stim_range == None:
-            stim_range = range(params['n_stim'])
+            stim_range = range(0, params['n_stim'])
 
         t_range = [0, 0]
         t_range[0] = stim_range[0] * self.params['t_iteration'] * self.params['n_iterations_per_stim']
-        t_range[1] = stim_range[1] * self.params['t_iteration'] * self.params['n_iterations_per_stim']
+        t_range[1] = (stim_range[-1] + 1) * self.params['t_iteration'] * self.params['n_iterations_per_stim']
+
+        self.it_range = [0, 0]
+        self.it_range[0] = stim_range[0] * self.params['n_iterations_per_stim']
+        self.it_range[1] = (stim_range[-1] + 1) * self.params['n_iterations_per_stim']
 
         print 'xlim:', t_range
 
-        figsize = FigureCreator.get_fig_size(800, portrait=True)
+        figsize = FigureCreator.get_fig_size(1000, portrait=True)
         self.fig = plt.figure(figsize=figsize)
         self.gs = gridspec.GridSpec(4, 1, height_ratios=(2, 2, 1, 1))
 
-#        self.plot_bg_spikes(t_range)
-#        self.plot_mpn_spikes(t_range)
-        self.plot_retinal_displacement_and_reward(stim_range)
-
+        self.plot_bg_spikes(t_range)
+        self.plot_mpn_spikes(t_range)
+        self.plot_retinal_displacement_and_reward(stim_range, t_range)
+        output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[1])
+        print 'Saving figure to:', output_fn
+        plt.savefig(output_fn)
 
 
     def plot_bg_spikes(self, t_range):
@@ -118,7 +64,8 @@ class PlotEverything(MetaAnalysisClass):
 
         marker = 'o'
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-        for z_, cell_type in enumerate(['d1', 'd2', 'actions']):
+        cell_types = ['d1', 'd2', 'actions']
+        for z_, cell_type in enumerate(cell_types):
 
             color = colors[z_ % len(colors)]
             for naction in xrange(self.params['n_actions']):
@@ -140,6 +87,24 @@ class PlotEverything(MetaAnalysisClass):
 
         if t_range != None:
             ax0.set_xlim(t_range)
+
+        # set ylim
+        gid_min, gid_max = np.infty, -np.infty
+        f = file(self.params['bg_gids_fn'], 'r')
+        gids = json.load(f)
+        for ct in cell_types:
+#            print np.min(gids[ct]), np.max(gids[ct])
+#            min(
+            gid_min = min(gid_min, np.min(gids[ct]))
+            gid_max = max(gid_max, np.max(gids[ct]))
+
+#            gid_min, gid_max = min(min(gids[ct], gid_min), max(max[ct]), gid_max)
+        print 'gid_min, gid_max:', gid_min, gid_max
+        ax0.set_ylim((gid_min, gid_max))
+        self.plot_vertical_lines(ax0)
+        self.set_xticks(ax0)
+
+        ax0.set_ylabel('BG cells')
 
 
     def load_tuning_prop(self):
@@ -166,29 +131,67 @@ class PlotEverything(MetaAnalysisClass):
         if t_range != None:
             spikes_unsrtd = utils.get_spiketimes_within_interval(spikes_unsrtd, t_range[0], t_range[1])
 
+        print 'Plotting MPN spikes sorted according to tuning properties'
         for i_, gid in enumerate(tp_idx_sorted):
             spikes = utils.get_spiketimes(spikes_unsrtd, gid + 1)
             nspikes = spikes.size
             y_ = np.ones(spikes.size) * self.tuning_prop_exc[gid, sort_idx]
             ax1.plot(spikes, y_, 'o', markersize=self.rp_markersize, color='k')
 
+        if self.params['debug_mpn']:
+            self.plot_input_spikes_sorted(ax1, sort_idx=0)
+
         if t_range != None:
             ax1.set_xlim(t_range)
 
         if sort_idx == 0:
             ax1.set_ylim((0., 1.))
+            ax1.set_ylabel('Receptive field position')
         if sort_idx == 1:
             ax1.set_ylim((np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])))
+            ax1.set_ylabel('Preferred speed')
 
-    def plot_retinal_displacement_and_reward(self, stim_range):
+        self.plot_vertical_lines(ax1)
+        self.set_xticks(ax1)
+
+
+    def plot_input_spikes_sorted(self, ax, sort_idx=0):
+        print 'Plotting input spikes...'
+
+        tp = self.tuning_prop_exc
+        tp_idx_sorted = tp[:, sort_idx].argsort()
+        for fn in os.listdir(self.params['input_folder_mpn']):
+            m = re.match('input_spikes_(\d+)_(\d+).dat', fn)
+            if m:
+                iteration = int(m.groups()[0])
+                gid = int(m.groups()[1])
+                y_pos_of_cell = tp[gid, sort_idx]
+                fn_ = self.params['input_folder_mpn'] + fn
+                d = np.loadtxt(fn_)
+                ax.plot(d, y_pos_of_cell * np.ones(d.size), 'o', markersize=self.rp_markersize, alpha=.1, color='b')
+
+
+
+
+    def plot_retinal_displacement_and_reward(self, stim_range, t_range):
         print 'stim_range', stim_range
         if self.params['training']:
             fn = self.params['motion_params_training_fn']
         else:
             fn = self.params['motion_params_testing_fn']
+
         mp = np.loadtxt(fn)
+        if len(mp.shape) == 1: # only one stimulus
+            mp = mp.reshape((1, 4))
+
         actions = np.loadtxt(self.params['actions_taken_fn'])
-        rewards = np.loadtxt(self.params['rewards_given_fn'])
+        if len(actions.shape) == 1: # only one stimulus
+            actions = actions.reshape((1, 4))
+
+        rewards = actions[:, 3] #np.loadtxt(self.params['rewards_given_fn'])
+#        print 'rewards', rewards.shape
+#        if len(rewards) == 1: # only one stimulus
+#            rewards = rewards.reshape((1, 1))
         K_vec = np.loadtxt(self.params['K_values_fn']) 
         ax2 = plt.subplot(self.gs[2])
         ax3 = plt.subplot(self.gs[3])
@@ -196,28 +199,53 @@ class PlotEverything(MetaAnalysisClass):
         for i_stim in stim_range:
             t0 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 1 * self.params['t_iteration'] # + 1 because stimulus appears in iteration 1 (not 0) within a stimulus
             t1 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 2 * self.params['t_iteration'] # + 2 for the consequence of the action
+            t0 += .5 * self.params['t_iteration'] # shift to the middle of the iteration
+            t1 += .5 * self.params['t_iteration']
             x_stim = mp[i_stim, 0]
             v_eye = actions[i_stim, 0]
             x_after = utils.get_next_stim(self.params, mp[i_stim, :], actions[i_stim, 0])[0]
-            print t0, t1, x_stim, x_after, v_eye, mp[i_stim, :]
+            r_test = utils.get_reward_from_perceived_states(x_stim, x_after)
+            print 'debug', rewards[i_stim], r_test
             ax2.plot(np.array([t0, t1]), np.array([x_stim, x_after]), color=color, lw=3, marker='o')
+        self.plot_vertical_lines(ax2)
+        self.set_xticks(ax2)
+
+#        for i_stim in stim_range:
+#            idx0 = i_stim * self.params['n_iterations_per_stim']
+#            idx1 = (i_stim + 1) * self.params['n_iterations_per_stim']
+#            ax3.plot(range(idx0, idx1), K_vec[idx0:idx1])
+        idx0 = stim_range[0] * self.params['n_iterations_per_stim']
+        idx1 = (stim_range[-1] + 1) * self.params['n_iterations_per_stim']
+        ax3.plot(range(idx0, idx1), K_vec[idx0:idx1])
+
+        ylim = ax3.get_ylim()
+        for it_ in xrange(self.it_range[0], self.it_range[1]):
+            ax3.plot((it_, it_), (ylim[0], ylim[1]), '--', lw=1, c='k')
 
 
-        for i_stim in stim_range:
-            idx0 = i_stim * self.params['n_iterations_per_stim']
-            idx1 = (i_stim + 1) * self.params['n_iterations_per_stim']
-            ax3.plot(range(idx0, idx1), K_vec[idx0:idx1])
-#            t0 = idx0 * self.params['t_iteration']
+        ax2.set_xlim(t_range)
+        ax3.set_xlim((self.it_range[0], self.it_range[1]))
 
-#            for it_ in xrange(0, self.params['n_iterations_per_stim']):
-#                it_idx = i_stim * self.params['n_iterations_per_stim'] + it_
-#                print 'debug', K_vec[it_idx], rewards[i_stim], it_idx, i_stim
-#                assert (K_vec[it_idx] == rewards[i_stim]), 'ERROR in plot_retinal_displacement_and_reward: Mismatch between K_vec and rewards'
-#                t0 = (i_stim * self.params['n_iterations_per_stim'] + it_) * self.params['t_iteration']
-#                t1 = (i_stim * self.params['n_iterations_per_stim'] + it_ + 1) * self.params['t_iteration']
-#                ax3.plot([t0, t1], [K_vec[it_idx], K_vec[it_idx]])
+        ax2.set_ylabel('Retinal\ndisplacement')
+        ax3.set_ylabel('Reward')
 
 
+
+    def plot_vertical_lines(self, ax):
+
+        (ymin, ymax) = ax.get_ylim()
+        for it_ in xrange(self.it_range[0], self.it_range[1]):
+            t0 = it_ * self.params['t_iteration']
+            ax.plot((t0, t0), (ymin, ymax), ls='--', lw=1, c='k')
+
+
+    def set_xticks(self, ax):
+        old_xticks = ax.get_xticks()
+        new_xticks = []
+        for it_ in xrange(self.it_range[0], self.it_range[1]):
+            t0 = it_ * self.params['t_iteration']
+            new_xticks.append(t0)
+        ax.set_xticks(new_xticks)
 
 if __name__ == '__main__':
 

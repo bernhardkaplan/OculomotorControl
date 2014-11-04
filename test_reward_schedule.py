@@ -244,12 +244,13 @@ def plot_actions_and_rewards_for_single_stim(stim_params):
     for i_a in xrange(params['n_actions']):
         c_s = m.to_rgba(R[i_a])
         ax.plot([1., 2.], [x_old, x_post[i_a]], c=c_s, lw=2)
+        print 'R(%d, v_eye=%.2f)= %.2f' % (i_a, BG.action_bins_x[i_a], R[i_a])
         ypos_label = x_post[i_a]
 
-    for i_a in [0, 1, 2, 3, 4, 8, 12, 13, 14, 15, 16]:
+    for i_a in [0, 1, 2, 3, 4, 6, 8, 10, 12, 13, 14, 15, 16]:
         c_s = m.to_rgba(R[i_a])
         ypos_label = x_post[i_a]
-        ax.text(xa, ypos_label, 'R(%d, v_eye=%.2f)= %.2f' % (i_a, BG.action_bins_x[i_a], R[i_a]), color=c_s, fontsize=12)
+        ax.text(xa, ypos_label, 'R(%d, v_eye=%.2f)= %.2f' % (i_a, BG.action_bins_x[i_a], R[i_a]), color=c_s, fontsize=8)
 
     ax.set_xlim((0.9, 3.1))
     xlim = ax.get_xlim()
@@ -267,7 +268,7 @@ if __name__ == '__main__':
     v_stim = 1.0
 #    plot_rewards_for_one_speed(v_stim, n_pos=100)
 
-    mp = (0.474, 0.5, -2.1605, 0.)
+    mp = (0.5275, 0.5, -2.1605, 0.)
     plot_actions_and_rewards_for_single_stim(mp)
 
     pylab.show()

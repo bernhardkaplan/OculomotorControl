@@ -55,8 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
         self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training
-        # should be two cycles because there is a test cycle at the end of the training in order
+        self.params['n_training_cycles'] = 3 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
         """

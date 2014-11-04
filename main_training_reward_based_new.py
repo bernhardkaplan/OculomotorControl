@@ -126,7 +126,7 @@ class RewardBasedLearning(object):
         # 2   S T I M    P R E S E N T A T I O N 
         #######################################
         self.VI.current_motion_params = deepcopy(stim_params)
-        self.motion_params.append(self.VI.current_motion_params)
+        self.motion_params.append(deepcopy(stim_params))
         stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.]) # assume a still eye with speed = [0., 0.]
         if params['debug_mpn']:
             print 'Saving spike trains...'
