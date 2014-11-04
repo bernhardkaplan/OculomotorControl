@@ -127,7 +127,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if self.params['training']:
             self.params['n_stim'] = self.params['n_stim_training']
-            self.params['n_iterations'] = (self.params['n_stim'] + self.params['n_stim_testing']) * self.params['n_iterations_per_stim']
+            self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
         else:
             self.params['n_stim'] = self.params['n_stim_testing']
             self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
