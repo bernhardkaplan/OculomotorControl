@@ -48,14 +48,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_v'] = 50
 #        self.params['n_rf'] = 40
 #        self.params['n_v'] = 30
-
+        self.params['softmax_action_selection_temperature'] = 1.0
         self.params['training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
         self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 5 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
+        self.params['n_training_cycles'] = 4 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
         """

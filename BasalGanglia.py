@@ -2,6 +2,7 @@ import numpy as np
 import nest
 import utils
 import json
+from scipy import stats
 
 class BasalGanglia(object):
 
@@ -474,13 +475,6 @@ class BasalGanglia(object):
         Based on the sign of v_stim (left / rightward movement), this function returns
         a random action from the corresponding half of actions (left / rightward).
         """
-#        if np.sign(v_stim) == -1.0:
-#            possible_actions_idx = range(0, self.params['n_actions'] / 2)
-#        elif np.sign(v_stim) == 1.0:
-#            possible_actions_idx = range(self.params['n_actions'] / 2 + 1, self.params['n_actions'])
-#        else:
-#            possible_actions_idx = [self.params['n_actions'] / 2]
-        
         if (len(self.all_action_idx) > 0):
             rnd_action_idx = self.RNG.choice(self.all_action_idx, 1)[0]
             self.all_action_idx.remove(rnd_action_idx)
@@ -506,7 +500,7 @@ class BasalGanglia(object):
         action_index_y = self.map_speed_to_action(v, xy='y')
         actions = np.zeros(self.params['n_actions'])
         actions[action_index_x] = 1.
-        actions_softmax = utils.softmax(actions, self.params['softmax_temperature'])
+        actions_softmax = utils.softmax(actions, self.params['softmax_action_selection_temperature'])
         rnd_action = utils.draw_from_discrete_distribution(actions_softmax, size=1)[0]
            
         # set rate for all to inactive
@@ -579,6 +573,36 @@ class BasalGanglia(object):
             nest.SetStatus(self.supervisor[nactions], {'rate' : self.params['inactive_supervisor_rate']})
 
 
+    def get_action_softmax(self):
+        print 'BG.get_action ...'
+        new_event_times = np.array([])
+        new_event_gids = np.array([])
+        t_new = self.t_current + self.params['t_iteration']
+        for i_, recorder in enumerate(self.recorder_output.values()):
+            all_events = nest.GetStatus(recorder)[0]['events']
+            recent_event_idx = all_events['times'] > self.t_current
+            if recent_event_idx.size > 0:
+                new_event_times = np.r_[new_event_times, all_events['times'][recent_event_idx]]
+                new_event_gids = np.r_[new_event_gids, all_events['senders'][recent_event_idx]]
+            nest.SetStatus(recorder, [{'start': t_new}])
+
+        if self.comm != None:
+            gids_spiked, nspikes = utils.communicate_local_spikes(new_event_gids, self.comm)
+        else:
+            gids_spiked = np.unique(new_event_gids) - 1 # maybe here should be a - 1 (if there is one in communicate_local_spikes)
+            nspikes = np.zeros(len(gids_spiked))
+            for i_, gid in enumerate(gids_spiked):
+                nspikes[i_] = (new_event_gids == gid + 1).nonzero()[0].size # + 1 because new_event gids holds the NEST gids, but there is a -1 in communicate_local_spikes 
+
+        nspikes_by_action = np.zeros(self.params['n_actions'])
+        for i_, gid_ in enumerate(gids_spiked):
+            action_idx = self.gid_to_action[int(gid_)]
+            nspikes_by_action[action_idx] += nspikes[i_]
+
+        prob_distr = utils.softmax(nspikes_by_action, T=self.params['softmax_action_selection_temperature'])
+        sampled_action_idx = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
+        output_speed_x = self.action_bins_x[sampled_action_idx]
+        return (output_speed_x, 0, sampled_action_idx)
 
 
     def get_action(self, WTA=False, random_action=False):

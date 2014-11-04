@@ -292,6 +292,7 @@ def softmax(a, T=1):
         a_new[i_] = np.exp(T * a[i_]) / exp_sum
     return a_new
 
+
 def get_linestyles():
     linestyles = ['-', ':', '--', '-.']
     return linestyles
