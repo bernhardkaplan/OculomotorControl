@@ -39,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 40
@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
         self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 7 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
+        self.params['n_training_cycles'] = 5 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
         """
@@ -167,7 +167,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['master_seed'] = 222
+        self.params['master_seed'] = 111
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
         self.params['visual_stim_seed'] = 321

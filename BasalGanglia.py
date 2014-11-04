@@ -408,6 +408,17 @@ class BasalGanglia(object):
 
 
 
+    def get_binary_reward(self, stim_params, selected_action):
+        all_outcomes = np.zeros(len(self.action_bins_x))
+        for i_, action in enumerate(self.action_bins_x):    
+            all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
+        best_action_idx = np.argmin(np.abs(all_outcomes - .5))
+        if selected_action != best_action_idx:
+            R = -1.
+        else:
+            R = 1.
+        return R
+
 
     def get_optimal_action_for_stimulus(self, stim_params):
         action_bins = self.action_bins_x
