@@ -53,6 +53,7 @@ def get_reward_from_perceived_states(old_pos, new_pos, punish_overshoot=1.):
     if R < -2.:
         R = -2.
     return R
+
 #    return R
 #    if relative_improvement < 0.:
 #        R = K_min

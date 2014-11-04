@@ -359,37 +359,31 @@ if __name__ == '__main__':
 #    action_idx = int(sys.argv[5])
 #    script_id = int(sys.argv[6]) # for identification of parameter set
 #    param_set_id = int(sys.argv[7])
-    action_idx = 10
+    action_idx = 8
     script_id = 0 
     param_set_id = 0
 
-    gain = 1.
     dt = params['dt']
+    stim_range = (0, params['n_stim'])
+    n_stim = stim_range[1] - stim_range[0]
+    plot_range = (0, n_stim * params['n_iterations_per_stim'])
+    K_values = np.loadtxt(params['K_values_fn'])
+    K_vec_compute, K_vec_plot = create_K_vectors(params, stim_range, dt, cell_type_post)
+
+    gain = 1.
     fn_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
     fn_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
     if (not os.path.exists(fn_pre)) or (not os.path.exists(fn_post)):
         utils.merge_spikes(params)
     
-
-#    it_range = (0, params['n_iterations'])
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
     n_pre = 5
     n_post = 1
     it_range_pre_cell_selection = (0, 3)
     pre_gids = TP.select_cells_most_active_neurons(TP.pre_spikes, n_pre, it_range_pre_cell_selection)
-    post_gids = TP.bg_gids[cell_type_post][action_idx]
 
-    it_range = (0, 3)
-#    pre_gids, post_gids = TP.select_cells(n_pre=n_pre, n_post=n_post, it_range=it_range)
-#    pre_gids = [2238]
-#    pre_gids = [1158]
-#    post_gids = [5023]
-    stim_range = (0, params['n_stim'])
-    n_stim = stim_range[1] - stim_range[0]
-    plot_range = (0, n_stim * params['n_iterations_per_stim'])
-    K_values = np.loadtxt(params['K_values_fn'])
-    K_vec_compute, K_vec_plot = create_K_vectors(params, stim_range, dt, cell_type_post)
+    post_gids = TP.bg_gids[cell_type_post][action_idx]
     all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, plot_range, gain=gain, K_vec=K_vec_compute)
     output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
     fig = None
@@ -398,14 +392,26 @@ if __name__ == '__main__':
     w_mean, w_std = np.mean(w_means), np.std(w_means)
     print 'w_mean:', w_mean, '+-', w_std
     for i_, traces in enumerate(all_traces):
-#        output_fn = output_fn_base + '%d_%d.png' % (gid_pairs[i_][0], gid_pairs[i_][1])
-#        info_txt = 'Pre: %d  Post: %d\naction_idx %d' % (gid_pairs[i_][0], gid_pairs[i_][1], action_idx)
-#        info_txt = 'Action_idx %d' % (action_idx)
         info_txt = 'Action idx: %d' % (action_idx)
         w_title = '$w_{mean}=%.2f \pm %.2f$' % (w_mean, w_std)
         fig = TP.plot_trace_with_spikes(traces, bcpnn_params, dt, output_fn=output_fn, fig=fig, \
             K_vec=K_vec_plot, extra_txt=info_txt, w_title=w_title)
     
+    # cell_type_post 
+    cell_type_post = 'd2'
+    post_gids = TP.bg_gids[cell_type_post][action_idx]
+    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, plot_range, gain=gain, K_vec=K_vec_compute)
+    output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
+    w_means = get_mean_weights(params, all_traces)
+    w_mean, w_std = np.mean(w_means), np.std(w_means)
+    print 'w_mean:', w_mean, '+-', w_std
+    for i_, traces in enumerate(all_traces):
+        info_txt = 'Action idx: %d' % (action_idx)
+        w_title = '$w_{mean}=%.2f \pm %.2f$' % (w_mean, w_std)
+        fig = TP.plot_trace_with_spikes(traces, bcpnn_params, dt, output_fn=output_fn, fig=fig, \
+            K_vec=K_vec_plot, extra_txt=info_txt, w_title=w_title)
+    
+
 
             
 
@@ -418,7 +424,9 @@ if __name__ == '__main__':
     f_out = file(params['tmp_folder'] + 'w_mean_%d.json' % (script_id), 'w')
     json.dump(to_write, f_out, indent=2)
 
-    output_fn = params['figures_folder'] + 'bcpnn_trace_action_mpn_it%d-%d_piinit%.1e_tau_i%d_j%d_e%d_p%d_a%d.png' % (it_range[0], it_range[1], bcpnn_params['p_i'], bcpnn_params['tau_i'], bcpnn_params['tau_j'], bcpnn_params['tau_e'], bcpnn_params['tau_p'], action_idx)
+    output_fn = params['figures_folder'] + 'bcpnn_trace_action_mpn_%s_it%d-%d_piinit%.1e_tau_i%d_j%d_e%d_p%d_a%d.png' % \
+            (cell_type_post, stim_range[0], stim_range[1], bcpnn_params['p_i'], bcpnn_params['tau_i'], bcpnn_params['tau_j'], bcpnn_params['tau_e'], bcpnn_params['tau_p'], action_idx)
     print 'Saving to:', output_fn
     fig.savefig(output_fn)
-#    pylab.show()
+    if len(sys.argv) < 2:
+        pylab.show()

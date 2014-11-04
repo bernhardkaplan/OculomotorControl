@@ -55,7 +55,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
         self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 3 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
+        self.params['n_training_cycles'] = 7 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
         """
@@ -147,7 +147,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if non-zero and reward_based_learning == False then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
-            self.params['sim_id'] = '_titer%d_nRF%d_nV%d' % (self.params['t_iteration'], self.params['n_rf'], self.params['n_v'])
+            self.params['sim_id'] = '_titer%d_VA_' % (self.params['t_iteration'])
             if (self.params['reward_based_learning']):
                 if self.params['mixed_training_cycles']:
                     self.params['sim_id'] = 'RBL_NoNoise_mixed_titer%d' % (self.params['t_iteration'])
@@ -428,7 +428,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
-        self.params['fmax'] = 200.
+        self.params['fmax'] = 300.
         self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
         if self.params['training']:# and not self.params['reward_based_learning']:
             self.params['gain'] = 0.
@@ -506,9 +506,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         
         ## RP and REWARD
-        self.params['model_rp_neuron'] = 'iaf_cond_alpha_bias'
-        self.params['num_rp_neurons'] = 15
-        self.params['param_rp_neuron'] = {'fmax': self.params['fmax'], 'tau_i':self.tau_i, 'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2., 'gain': 0.}
+#        self.params['model_rp_neuron'] = 'iaf_cond_alpha_bias'
+#        self.params['num_rp_neurons'] = 15
+#        self.params['param_rp_neuron'] = {'fmax': self.params['fmax'], 'tau_i':self.tau_i, 'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p':100000., 'epsilon': 0.01, 't_ref': 2., 'gain': 0.}
 
         self.params['model_rew_neuron'] = 'iaf_cond_alpha'
         self.params['num_rew_neurons'] = 20

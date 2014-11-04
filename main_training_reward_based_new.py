@@ -14,6 +14,7 @@ import utils
 from copy import deepcopy
 from PlottingScripts.PlotBGActivity import run_plot_bg
 from PlottingScripts.PlotMPNActivity import MetaAnalysisClass
+from PlottingScripts.SuperPlot import PlotEverything
 
 try: 
     from mpi4py import MPI
@@ -135,7 +136,8 @@ class RewardBasedLearning(object):
         nest.Simulate(params['t_iteration'])
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
         self.network_states.append(state_)
-        next_action = self.BG.get_action(WTA=True) # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
+#        next_action = self.BG.get_action(WTA=True) # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
+        next_action = self.BG.get_action(WTA=False) # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
         self.network_states.append(state_)
         self.advance_iteration()
         self.K_vec.append(0)
@@ -149,7 +151,7 @@ class RewardBasedLearning(object):
         self.rewards.append(R)
         self.actions_taken.append([next_action[0], next_action[1], next_action[2], R])
 #        print 'Reward:', R
-        self.BG.activate_efference_copy(next_action[2])
+        self.BG.activate_efference_copy(np.int(np.round(next_action[2])))
 
         #######################################
         # 3   S I L E N T / N O I S E    R U N: wait for the consequence of the previous action (next stimulus is not gated to perception)
@@ -192,6 +194,7 @@ class RewardBasedLearning(object):
 #        self.network_states.append(state_)
         self.advance_iteration()
         self.K_vec.append(0)
+        return next_action
 
 
 
@@ -335,7 +338,7 @@ if __name__ == '__main__':
 #                stim_params = RBL.training_stim_params[i_stim, :]
                 stim_params = RBL.training_stim_params[0, :]
                 print 'stim_params for i_stim %d' % i_stim, stim_params
-                RBL.present_stimulus_and_train(stim_params)
+                trained_action = RBL.present_stimulus_and_train(stim_params)
                 i_stim += 1
 
 
@@ -375,6 +378,7 @@ if __name__ == '__main__':
     if pc_id == 0:
         n_stim = 1
         print 'Running analysis...'
+        P = PlotEverything(sys.argv, verbose=True)
         run_plot_bg(params, None)
 #        run_plot_bg(params, (0, n_stim))
         MAC = MetaAnalysisClass([params['folder_name']])
