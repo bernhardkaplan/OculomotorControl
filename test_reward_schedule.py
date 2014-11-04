@@ -268,7 +268,7 @@ if __name__ == '__main__':
     v_stim = 1.0
     plot_rewards_for_one_speed(v_stim, n_pos=100)
 
-    mp = (0.6275, 0.5, -2.1605, 0.)
+    mp = (0.5275, 0.5, -2.1605, 0.)
     plot_actions_and_rewards_for_single_stim(mp)
 
     pylab.show()

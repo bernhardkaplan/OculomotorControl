@@ -147,7 +147,8 @@ class RewardBasedLearning(object):
         ##############################################
         x_old = stim_params[0]
         new_stim = utils.get_next_stim(params, stim_params, next_action[0])
-        R = utils.get_reward_from_perceived_states(x_old, new_stim[0])
+#        R = utils.get_reward_from_perceived_states(x_old, new_stim[0])
+        R = self.BG.get_binary_reward(stim_params, next_action[2])
         self.rewards.append(R)
         self.actions_taken.append([next_action[0], next_action[1], next_action[2], R])
 #        print 'Reward:', R

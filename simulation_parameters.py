@@ -167,7 +167,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['master_seed'] = 222
+        self.params['master_seed'] = 111
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
         self.params['visual_stim_seed'] = 321
