@@ -567,7 +567,7 @@ class BasalGanglia(object):
             action_idx = self.gid_to_action[int(gid_)]
             nspikes_by_action[action_idx] += nspikes[i_]
 
-        print 'DEBUG BG.get_action_softmax: nspikes_by_action:', nspikes_by_action
+#        print 'DEBUG BG.get_action_softmax: nspikes_by_action:', nspikes_by_action
 
         if self.comm != None:
             self.comm.Barrier()
@@ -577,13 +577,13 @@ class BasalGanglia(object):
                 sampled_action_idx = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
                 for pid in xrange(self.n_proc):
                     self.comm.send(sampled_action_idx, pid, tag=self.iteration)
-                print 'DEBUG BG.get_action_softmax: prob_distr:', prob_distr, ' sampled action:', sampled_action_idx
+#                print 'DEBUG BG.get_action_softmax: prob_distr:', prob_distr, ' sampled action:', sampled_action_idx
             else:
                 sampled_action_idx = self.comm.recv(source=0, tag=self.iteration)
         else:
             prob_distr = utils.softmax(nspikes_by_action, T=self.params['softmax_action_selection_temperature'])
             sampled_action_idx = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
-        print 'DEBUG iteration %d sampled action:' % (self.iteration), sampled_action_idx
+#        print 'DEBUG iteration %d sampled action:' % (self.iteration), sampled_action_idx
 
         output_speed_x = self.action_bins_x[sampled_action_idx]
         return (output_speed_x, 0, sampled_action_idx)
