@@ -32,9 +32,6 @@ tp = VI.set_tuning_prop_1D_with_const_fovea(cell_type='exc')
 #else:
 #    training_stimuli = VI.create_training_sequence_RBL_cycle_blocks()
 
-count_actions_trained_d1 = np.zeros(params['n_actions'])
-count_actions_trained_d2 = np.zeros(params['n_actions'])
-stimulus_action_lookup = {}
 
 training_stimuli = VI.get_training_stimuli()
 print 'different training_stimuli \n', training_stimuli
@@ -44,13 +41,18 @@ for i_cycle in xrange(params['n_training_cycles']):
     print '\n================ NEW CYCLE ======================'
     order_of_stim = range(params['n_training_stim_per_cycle'])
     np.random.shuffle(order_of_stim)
+    stimulus_action_lookup = {}
+    actions_per_stim = [{a: 0 for a in xrange(params['n_actions'])} for i in xrange(params['n_training_stim_per_cycle'])] 
     for i_ in xrange(params['n_training_stim_per_cycle']):
         i_stim = order_of_stim[i_]
         # stores the stim_id the number each action has been trained within that cycle
-        actions_per_stim = [{a: 0 for a in xrange(params['n_actions'])} for i in xrange(params['n_training_stim_per_cycle'])] 
         cnt_trial = 0  # counts the total number of trials for any action (including pos and neg reward trials)
+
+        count_actions_trained_d1 = np.zeros(params['n_actions'])
+        count_actions_trained_d2 = np.zeros(params['n_actions'])
+        actions_to_select = range(params['n_actions'])
+        stim_params = training_stimuli[i_stim, :]
         while (cnt_trial < params['n_max_trials_same_stim']): # independent of rewards
-            stim_params = training_stimuli[i_stim, :]
             print '\nDEBUG stim_params', stim_params, 'cnt_trial: %d\ti_stim %d\ti_cycle %d' % (cnt_trial, i_stim, i_cycle)
 
             # FAKE SIMULATION
@@ -60,10 +62,11 @@ for i_cycle in xrange(params['n_training_cycles']):
                 # get the history with previously selected actions, the given rewards and the number of trials 
                 prev_action, prev_reward = stimulus_action_lookup[(stim_params[0], stim_params[2])][-1] # only check the last action taken for that stimulus
                 if prev_reward < repeat_action_threshold:
-                    selected_action = np.random.randint(0, params['n_actions'])
+                    selected_action = actions_to_select[np.random.randint(0, len(actions_to_select))]
                     print ', but taking a NEW random action:', selected_action
                     R = BG.get_binary_reward(stim_params, selected_action)
                     stimulus_action_lookup[(stim_params[0], stim_params[2])].append((selected_action, R))
+                    actions_to_select.remove(selected_action)
                 else:
                     selected_action = prev_action
                     R = BG.get_binary_reward(stim_params, selected_action)
@@ -73,9 +76,9 @@ for i_cycle in xrange(params['n_training_cycles']):
                 print 'NEW stim, NEW rnd action:', selected_action
                 R = BG.get_binary_reward(stim_params, selected_action)
                 stimulus_action_lookup[(stim_params[0], stim_params[2])] = [(selected_action, R)]
+                actions_to_select.remove(selected_action)
 
             actions_per_stim[i_stim][selected_action] += 1
-            next_stim = utils.get_next_stim(params, stim_params, BG.action_bins_x[selected_action])
             print 'Reward for action %d: %.2f' % (selected_action, R)
 
             if R > 0:
@@ -84,9 +87,8 @@ for i_cycle in xrange(params['n_training_cycles']):
                 count_actions_trained_d2[selected_action] += 1
 
             cnt_trial += 1
-            if (actions_per_stim[i_stim][selected_action] >= params['n_max_trials_pos_rew'] and R > 0): 
+            if (actions_per_stim[i_stim][selected_action] >= params['n_max_trials_pos_rew']):# and R > 0): 
                 # new stimulus!
-                stimulus_action_lookup = {}
                 i_stim += 1
                 cnt_trial = 0
                 print 'Ending training for this stimulus for this stimulus'

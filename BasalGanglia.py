@@ -21,8 +21,7 @@ class BasalGanglia(object):
         self.dummy = dummy 
 
         self.activity_memory = np.zeros((self.params['n_iterations'], self.params['n_actions']))
-        self.RNG = np.random
-        self.RNG.seed(self.params['basal_ganglia_seed'])
+        self.RNG = np.random.RandomState(self.params['basal_ganglia_seed'])
 #        self.create_suboptimal_action_mapping()
         self.iteration = 0
         self.set_action_speed_mapping_bins() 

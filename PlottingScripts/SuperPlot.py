@@ -54,7 +54,7 @@ class PlotEverything(MetaAnalysisClass):
         self.plot_bg_spikes(t_range)
         self.plot_mpn_spikes(t_range)
         self.plot_retinal_displacement_and_reward(stim_range, t_range)
-        output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[1])
+        output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[-1])
         print 'Saving figure to:', output_fn
         plt.savefig(output_fn)
 

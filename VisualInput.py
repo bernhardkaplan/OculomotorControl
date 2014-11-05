@@ -17,10 +17,9 @@ class VisualInput(object):
         self.t_current = 0 # stores the 'current' time
         if visual_stim_seed == None:
             visual_stim_seed = self.params['visual_stim_seed']
-        np.random.seed(visual_stim_seed)
-        random.seed(visual_stim_seed)
-        self.RNG = np.random
-
+        print 'Setting seed to:', visual_stim_seed
+        self.RNG = np.random.RandomState(visual_stim_seed)
+        self.RNG_tp = np.random.RandomState(self.params['tuning_prop_seed'])
         self.supervisor_state = [0., 0.]
         self.tuning_prop_exc = self.set_tuning_prop('exc')
         if self.params['with_inh_mpn']:
@@ -45,14 +44,9 @@ class VisualInput(object):
                 np.savetxt(self.params['tuning_prop_inh_fn'], self.tuning_prop_inh)
         if self.comm != None:
             self.comm.Barrier()
-
-
-        self.x0_stim = np.zeros(self.params['n_iterations'])
-
         self.current_motion_params = list(self.params['initial_state'])
         # store the motion parameters seen on the retina
         self.n_stim_dim = len(self.params['initial_state'])
-        self.motion_params = np.zeros((self.params['n_iterations'], self.n_stim_dim + 1))  # + 1 dimension for the time axis
 
 #        self.get_gids_near_stim_trajectory(verbose=self.params['debug_mpn'])
 
@@ -139,14 +133,14 @@ class VisualInput(object):
             v_training[i_v] = v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
 
         x_pos = np.zeros(self.params['n_training_x'])
+
         for i_x in xrange(self.params['n_training_x']):
             # get start position some where in the periphery
             pm = utils.get_plus_minus(self.RNG)
             if pm > 0:
-                x_pos[i_x] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+                x_pos[i_x] = self.RNG.uniform(.5 + self.params['center_stim_width'], 1.)
             else:
-                x_pos[i_x] = np.random.uniform(0, .5 - self.params['center_stim_width'])
-
+                x_pos[i_x] = self.RNG.uniform(0, .5 - self.params['center_stim_width'])
 
         i_stim = 0
         for i_v in xrange(self.params['n_training_v']):
@@ -155,10 +149,11 @@ class VisualInput(object):
                 different_training_stim[i_stim, 1] = .5 # y-pos = center
                 different_training_stim[i_stim, 2] = v_training[i_v]
                 i_stim += 1
-        if self.params['mixed_training_cycles']:
-            idx = range(self.params['n_training_stim_per_cycle'])
-            np.random.shuffle(idx)
-            different_training_stim = different_training_stim[idx, :]
+
+#        if self.params['mixed_training_cycles']:
+#            idx = range(self.params['n_training_stim_per_cycle'])
+#            np.random.shuffle(idx)
+#            different_training_stim = different_training_stim[idx, :]
         return different_training_stim
 
     def create_training_sequence_RBL_cycle_blocks(self):
@@ -369,7 +364,6 @@ class VisualInput(object):
 #        print 'DEBUG VI compute_input action iteration %d current_motion_params' % self.iteration, self.current_motion_params, ' action:', v_eye
 #        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(v_eye)
         self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(v_eye) # motion_params update is done in update_stimulus_trajectory_static
-        self.x0_stim[self.iteration] = self.trajectory[0][0]
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
         return self.stim, supervisor_state
@@ -470,10 +464,7 @@ class VisualInput(object):
 
 
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
-#        print 'debug shape motion_params', self.motion_params.shape, self.iteration
-        self.motion_params[self.iteration, -1] = self.t_current
         self.create_spike_trains_for_trajectory(local_gids, trajectory)
-        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
 
         return self.stim, self.supervisor_state
 
@@ -574,8 +565,6 @@ class VisualInput(object):
         During one iteration the stimulus is perceived as static, except for the movement given by the 
         difference between eye (= v_eye) and the stimulus
         """
-        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
-        self.motion_params[self.iteration, -1] = self.t_current
         n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
         time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
 
@@ -634,8 +623,6 @@ class VisualInput(object):
         self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
         self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
 
-        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
-        self.motion_params[self.iteration, -1] = self.t_current
 
         return trajectory, self.supervisor_state
 
@@ -677,9 +664,6 @@ class VisualInput(object):
         self.supervisor_state[1] = k * np.abs(delta_y) / .5 * delta_y / delta_t + network_state[3] + self.current_motion_params[3]
         print 'Supervised_state[%d] = ' % (self.iteration), self.supervisor_state
 
-        print 'self.motion_params', self.motion_params[self.iteration, :]
-        self.motion_params[self.iteration, :self.n_stim_dim] = self.current_motion_params # store the current motion parameters before they get updated
-        self.motion_params[self.iteration, -1] = self.t_current
 #        self.trajectories.append(trajectory) # store for later save 
 
         return trajectory, self.supervisor_state
@@ -755,7 +739,6 @@ class VisualInput(object):
 
 
     def set_tuning_prop_1D_with_const_fovea(self, cell_type='exc'):
-        np.random.seed(self.params['tuning_prop_seed'])
         if cell_type == 'exc':
             n_cells = self.params['n_exc_mpn']
             n_v = self.params['n_v']
@@ -808,9 +791,9 @@ class VisualInput(object):
             for i_v_rho, rho in enumerate(v_rho):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
                     x = RF_x[i_RF]
-#                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
+#                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG_tp.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
                     tuning_prop[index, 0] = RF_x[i_RF]
-                    tuning_prop[index, 0] += self.RNG.normal(.0, self.params['sigma_rf_pos'] / 2) # add some extra noise to the neurons representing the fovea (because if their noise is only a percentage of their distance from the center, it's too small
+                    tuning_prop[index, 0] += self.RNG_tp.normal(.0, self.params['sigma_rf_pos'] / 2) # add some extra noise to the neurons representing the fovea (because if their noise is only a percentage of their distance from the center, it's too small
                     tuning_prop[index, 0] = tuning_prop[index, 0] % 1.0
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
 #                    tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
@@ -831,7 +814,6 @@ class VisualInput(object):
 
     def set_tuning_prop_1D(self, cell_type='exc'):
 
-        np.random.seed(self.params['tuning_prop_seed'])
         if cell_type == 'exc':
             n_cells = self.params['n_exc_mpn']
             n_v = self.params['n_v']
@@ -870,7 +852,7 @@ class VisualInput(object):
             for i_v_rho, rho in enumerate(v_rho):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
                     x = RF_x[i_RF]
-                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
+                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG_tp.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
                     tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
@@ -899,7 +881,6 @@ class VisualInput(object):
         All u, v values are in the range -params[v_max_tp] .. params['v_max_tp']
         """
 
-        np.random.seed(self.params['tuning_prop_seed'])
         if cell_type == 'exc':
             n_cells = self.params['n_exc_mpn']
             n_v = self.params['n_v']
@@ -987,7 +968,6 @@ class VisualInput(object):
         Return empty input spike trains for all local cells
         """
         self.stim = [ [] for gid in xrange(len(local_gids))]
-        self.motion_params[self.iteration, -1] = self.t_current
         self.supervisor_state = [0., 0.]
         return self.stim, self.supervisor_state
 
