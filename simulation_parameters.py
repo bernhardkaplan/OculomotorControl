@@ -39,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 120 
@@ -70,7 +70,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_v'] = 4 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 20 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
-        self.params['n_max_trials_pos_rew'] = 2 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
+        self.params['n_max_trials_pos_rew'] = 3 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
 #        self.params['suboptimal_training'] = 1
 #        if self.params['reward_based_learning']:
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus

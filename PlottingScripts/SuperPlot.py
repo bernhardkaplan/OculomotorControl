@@ -35,7 +35,9 @@ class PlotEverything(MetaAnalysisClass):
         print 'run_super_plot: folder %s, stim_range' % params['folder_name'], stim_range
 
         if stim_range == None:
-            stim_range = range(0, params['n_stim'])
+            actions = np.loadtxt(self.params['actions_taken_fn'])
+            n_stim = actions.shape[0]
+            stim_range = range(0, n_stim)
 
         t_range = [0, 0]
         t_range[0] = stim_range[0] * self.params['t_iteration'] * self.params['n_iterations_per_stim']
