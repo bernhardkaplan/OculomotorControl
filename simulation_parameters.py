@@ -43,19 +43,17 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 40
+            self.params['total_num_virtual_procs'] = 120 
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-#        self.params['n_rf'] = 40
-#        self.params['n_v'] = 30
         self.params['softmax_action_selection_temperature'] = 1.0
         self.params['training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
-        self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 17 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
+#        self.params['mixed_training_cycles'] = False
+        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
         """
@@ -67,10 +65,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 5 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 4 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
+        self.params['n_max_trials_same_stim'] = 20 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
+        self.params['n_max_trials_pos_rew'] = 2 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
 #        self.params['suboptimal_training'] = 1
 #        if self.params['reward_based_learning']:
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
@@ -95,7 +95,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
             self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
-        self.params['n_iterations_RBL_training'] = 3 # one noise at the beginning, one after stimulus, one after training
+        self.params['n_iterations_RBL_training'] = 2 # one noise at the beginning, one after stimulus, one after training
         self.params['n_silent_iterations'] = 2
         if self.params['training']:
             if self.params['reward_based_learning']:
@@ -130,6 +130,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         else:
             self.params['n_stim'] = self.params['n_stim_testing']
             self.params['n_iterations'] = self.params['n_stim'] * self.params['n_iterations_per_stim']
+        self.params['n_max_iterations'] = self.params['n_stim'] * self.params['n_max_trials_same_stim'] * self.params['n_iterations_per_stim']
         self.params['t_sim'] = (self.params['n_iterations']) * self.params['t_iteration'] # [ms] total simulation time 
         self.params['dt'] = 0.1            # [ms] simulation time step
         self.params['dt_input_mpn'] = 0.1  # [ms] time step for the inhomogenous Poisson process for input spike train generation
@@ -149,10 +150,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['sim_id'] = '_titer%d_VA_' % (self.params['t_iteration'])
             if (self.params['reward_based_learning']):
-                if self.params['mixed_training_cycles']:
-                    self.params['sim_id'] = 'RBL_NoNoise_mixed_titer%d' % (self.params['t_iteration'])
-                else:
-                    self.params['sim_id'] = 'RBL_NoNoise_block_titer%d' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_NoNoise_titer%d' % (self.params['t_iteration'])
+#                if self.params['mixed_training_cycles']:
+#                    self.params['sim_id'] = 'RBL_NoNoise_mixed_titer%d' % (self.params['t_iteration'])
+#                else:
+#                    self.params['sim_id'] = 'RBL_NoNoise_block_titer%d' % (self.params['t_iteration'])
         else:
             self.params['sim_id'] = '%d_NewTest_' % (self.params['t_iteration'])
 
@@ -170,7 +172,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['master_seed'] = 111
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 321
+        self.params['visual_stim_seed'] = 2
         self.params['tuning_prop_seed'] = 0
         self.params['basal_ganglia_seed'] = 5
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed

@@ -75,10 +75,11 @@ class RewardBasedLearning(object):
         self.motion_params = []         # motion parameters for stimulus presentation
         self.K_vec = []
 
-        if self.params['mixed_training_cycles']:
-            self.training_stim_params = self.VI.create_training_sequence_RBL_mixed_within_a_cycle()
-        else:
-            self.training_stim_params = self.VI.create_training_sequence_RBL_cycle_blocks()
+#        if self.params['mixed_training_cycles']:
+#            self.training_stim_params = self.VI.create_training_sequence_RBL_mixed_within_a_cycle()
+#        else:
+#            self.training_stim_params = self.VI.create_training_sequence_RBL_cycle_blocks()
+        self.training_stimuli = self.VI.get_training_stimuli()
         if self.comm != None:
             self.comm.Barrier()
 
@@ -195,7 +196,9 @@ class RewardBasedLearning(object):
 #        self.network_states.append(state_)
         self.advance_iteration()
         self.K_vec.append(0)
-        return next_action
+        return next_action, R
+        if self.comm != None:
+            self.comm.Barrier()
 
 
 
@@ -328,19 +331,43 @@ if __name__ == '__main__':
     RBL = RewardBasedLearning(params, comm)
     RBL.prepare_training()
 
+    # keep track of 
+
     ####################################
     #   T R A I N   A   S T I M U L U S 
     ####################################
     #TODO:
     i_stim  = 0
     for i_cycle in xrange(params['n_training_cycles']):
-        for i_v in xrange(params['n_training_v']):
-            for i_trials_per_speed in xrange(params['n_training_x']):
-#                stim_params = RBL.training_stim_params[i_stim, :]
-                stim_params = RBL.training_stim_params[0, :]
-                print 'stim_params for i_stim %d' % i_stim, stim_params
-                trained_action = RBL.present_stimulus_and_train(stim_params)
-                i_stim += 1
+        print '\n================ NEW CYCLE ======================'
+        # randomize order of stimuli within each cycle
+        order_of_stim = range(params['n_training_stim_per_cycle'])
+        np.random.shuffle(order_of_stim) 
+
+        actions_per_stim = [{a: 0 for a in xrange(params['n_actions'])} for i in xrange(params['n_training_stim_per_cycle'])] 
+
+        for i_ in xrange(params['n_training_stim_per_cycle']):
+            # pick a stimulus to train
+            i_stim = order_of_stim[i_]
+            stim_params = RBL.training_stimuli[i_stim, :]
+            print 'stim_params for i_stim %d' % i_stim, stim_params
+            # reinitialize the counters how often an action has been selected for each stimulus
+            cnt_trial = 0  # counts the total number of trials for any action (including pos and neg reward trials)
+            while (cnt_trial < params['n_max_trials_same_stim']): # independent of rewards
+
+                v_and_action, R = RBL.present_stimulus_and_train(stim_params)
+                trained_action = v_and_action[2]
+                actions_per_stim[i_stim][trained_action] += 1
+
+                cnt_trial += 1
+                if (actions_per_stim[i_stim][trained_action] >= params['n_max_trials_pos_rew'] and R > 0): 
+                    # new stimulus!
+                    i_stim += 1
+                    cnt_trial = 0
+                    print 'Ending training for this stimulus'
+                    break
+
+
 
 
     ######################################
@@ -361,7 +388,7 @@ if __name__ == '__main__':
     ################################
     #   T E S T    S T I M U L U S 
     ################################
-#    RBL.test_after_training(RBL.training_stim_params[0, :])
+#    RBL.test_after_training(RBL.training_stimuli[0, :])
 #    RBL.test_after_training(stim_params) 
 
     RBL.save_data_structures()

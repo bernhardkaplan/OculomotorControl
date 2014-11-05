@@ -44,7 +44,7 @@ class MotionPrediction(object):
 
         self.t_current = 0
         self.write_cell_gids_to_file()
-        self.perceived_states = np.zeros((self.params['n_iterations'], 4))
+        self.perceived_states = np.zeros((self.params['n_max_iterations'], 4))
         self.iteration = 0 
 
 

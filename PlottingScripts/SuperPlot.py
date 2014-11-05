@@ -22,6 +22,7 @@ class PlotEverything(MetaAnalysisClass):
     def __init__(self, argv, verbose=False):
         self.verbose = verbose
         self.rp_markersize = 2
+        self.tick_interval = 8
         MetaAnalysisClass.__init__(self, argv, verbose) # call the constructor of the super/mother class
         # the constructer of the MetaAnalysisClass calls run_super_plot
         # with params and stim_range retrieved from the command line arguments
@@ -46,14 +47,14 @@ class PlotEverything(MetaAnalysisClass):
 
         print 'xlim:', t_range
 
-        figsize = FigureCreator.get_fig_size(1000, portrait=True)
+        figsize = FigureCreator.get_fig_size(1400, portrait=False)
         self.fig = plt.figure(figsize=figsize)
         self.gs = gridspec.GridSpec(4, 1, height_ratios=(2, 2, 1, 1))
 
         self.plot_bg_spikes(t_range)
         self.plot_mpn_spikes(t_range)
         self.plot_retinal_displacement_and_reward(stim_range, t_range)
-        output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[1])
+        output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[-1])
         print 'Saving figure to:', output_fn
         plt.savefig(output_fn)
 
@@ -102,7 +103,7 @@ class PlotEverything(MetaAnalysisClass):
         print 'gid_min, gid_max:', gid_min, gid_max
         ax0.set_ylim((gid_min, gid_max))
         self.plot_vertical_lines(ax0)
-        self.set_xticks(ax0)
+        self.set_xticks(ax0, tick_interval=self.tick_interval)
 
         ax0.set_ylabel('BG cells')
 
@@ -152,7 +153,7 @@ class PlotEverything(MetaAnalysisClass):
             ax1.set_ylabel('Preferred speed')
 
         self.plot_vertical_lines(ax1)
-        self.set_xticks(ax1)
+        self.set_xticks(ax1, tick_interval=self.tick_interval)
 
 
     def plot_input_spikes_sorted(self, ax, sort_idx=0):
@@ -195,8 +196,8 @@ class PlotEverything(MetaAnalysisClass):
         K_vec = np.loadtxt(self.params['K_values_fn']) 
         ax2 = plt.subplot(self.gs[2])
         ax3 = plt.subplot(self.gs[3])
-        color = 'k'
-        for i_stim in stim_range:
+        color = 'b'
+        for i_stim in xrange(stim_range[0], stim_range[-1]):
             t0 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 1 * self.params['t_iteration'] # + 1 because stimulus appears in iteration 1 (not 0) within a stimulus
             t1 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 2 * self.params['t_iteration'] # + 2 for the consequence of the action
             t0 += .5 * self.params['t_iteration'] # shift to the middle of the iteration
@@ -205,30 +206,32 @@ class PlotEverything(MetaAnalysisClass):
             v_eye = actions[i_stim, 0]
             x_after = utils.get_next_stim(self.params, mp[i_stim, :], actions[i_stim, 0])[0]
             r_test = utils.get_reward_from_perceived_states(x_stim, x_after)
-            print 'debug', rewards[i_stim], r_test
-            ax2.plot(np.array([t0, t1]), np.array([x_stim, x_after]), color=color, lw=3, marker='o')
-        self.plot_vertical_lines(ax2)
-        self.set_xticks(ax2)
+            ax2.plot(np.array([t0, t1]), np.array([x_stim, x_after]), color=color, lw=3)
 
-#        for i_stim in stim_range:
-#            idx0 = i_stim * self.params['n_iterations_per_stim']
-#            idx1 = (i_stim + 1) * self.params['n_iterations_per_stim']
-#            ax3.plot(range(idx0, idx1), K_vec[idx0:idx1])
+        ax2.set_ylim((-.05, 1.05))
+        self.plot_vertical_lines(ax2)
+        self.set_xticks(ax2, tick_interval=self.tick_interval)
+
+
+        # plot the K_vec
         idx0 = stim_range[0] * self.params['n_iterations_per_stim']
         idx1 = (stim_range[-1] + 1) * self.params['n_iterations_per_stim']
         ax3.plot(range(idx0, idx1), K_vec[idx0:idx1])
 
+        ax2.set_xlim(t_range)
+        ax2.set_ylabel('Retinal\ndisplacement')
+
+        ax3.set_xlim((self.it_range[0], self.it_range[1]))
+        ax3.set_ylabel('Reward')
+
         ylim = ax3.get_ylim()
+        # plot vertical lines
         for it_ in xrange(self.it_range[0], self.it_range[1]):
             ax3.plot((it_, it_), (ylim[0], ylim[1]), '--', lw=1, c='k')
 
-
-        ax2.set_xlim(t_range)
-        ax3.set_xlim((self.it_range[0], self.it_range[1]))
-
-        ax2.set_ylabel('Retinal\ndisplacement')
-        ax3.set_ylabel('Reward')
-
+        # plot horizontal line for retinal displacement
+        xlim2 = ax2.get_xlim()
+        ax2.plot((xlim2[0], xlim2[1]), (.5, .5), ls='-', c='k')
 
 
     def plot_vertical_lines(self, ax):
@@ -239,10 +242,11 @@ class PlotEverything(MetaAnalysisClass):
             ax.plot((t0, t0), (ymin, ymax), ls='--', lw=1, c='k')
 
 
-    def set_xticks(self, ax):
+    def set_xticks(self, ax, tick_interval=1):
         old_xticks = ax.get_xticks()
         new_xticks = []
-        for it_ in xrange(self.it_range[0], self.it_range[1]):
+
+        for it_ in xrange(self.it_range[0], self.it_range[1], tick_interval):
             t0 = it_ * self.params['t_iteration']
             new_xticks.append(t0)
         ax.set_xticks(new_xticks)
