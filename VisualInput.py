@@ -125,6 +125,42 @@ class VisualInput(object):
 
 
 
+    def get_training_stimuli(self):
+        """
+        returns S0, S1, S2 
+        """
+        different_training_stim = np.zeros((self.params['n_training_stim_per_cycle'], 4))
+        v_lim_frac = .8
+        v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
+        v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
+        v_training = np.zeros(self.params['n_training_v'])
+        for i_v in xrange(self.params['n_training_v']):
+            plus_minus = utils.get_plus_minus(self.RNG)
+            v_training[i_v] = v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+
+        x_pos = np.zeros(self.params['n_training_x'])
+        for i_x in xrange(self.params['n_training_x']):
+            # get start position some where in the periphery
+            pm = utils.get_plus_minus(self.RNG)
+            if pm > 0:
+                x_pos[i_x] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            else:
+                x_pos[i_x] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+
+
+        i_stim = 0
+        for i_v in xrange(self.params['n_training_v']):
+            for i_x in xrange(self.params['n_training_x']):
+                different_training_stim[i_stim, 0] = x_pos[i_x]
+                different_training_stim[i_stim, 1] = .5 # y-pos = center
+                different_training_stim[i_stim, 2] = v_training[i_v]
+                i_stim += 1
+        if self.params['mixed_training_cycles']:
+            idx = range(self.params['n_training_stim_per_cycle'])
+            np.random.shuffle(idx)
+            different_training_stim = different_training_stim[idx, :]
+        return different_training_stim
+
     def create_training_sequence_RBL_cycle_blocks(self):
         """
         S0, S0, S0 ... S1 S1 S1 

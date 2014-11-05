@@ -54,8 +54,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
-        self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 4 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
+        self.params['mixed_training_cycles'] = True
+        self.params['n_training_cycles'] = 2 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
         """
@@ -67,10 +67,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 n_training_stim_per_cycle is the number how many different stimuli are retrained once before the new cycle starts (containing all stimuli in random order)
         """
 
-        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 5 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 4 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
+        self.params['n_max_trials_same_stim'] = 20 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
+        self.params['n_max_trials_pos_rew'] = 3 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
 #        self.params['suboptimal_training'] = 1
 #        if self.params['reward_based_learning']:
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
