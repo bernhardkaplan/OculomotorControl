@@ -345,7 +345,7 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    cell_type_post = 'd2'
+    cell_type_post = 'd1'
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
     bcpnn_params['K'] = 1.
 #    bcpnn_params['p_i'] = 0.01
@@ -359,12 +359,13 @@ if __name__ == '__main__':
 #    action_idx = int(sys.argv[5])
 #    script_id = int(sys.argv[6]) # for identification of parameter set
 #    param_set_id = int(sys.argv[7])
-    action_idx = 8
+    action_idx = 0
     script_id = 0 
     param_set_id = 0
 
     dt = params['dt']
-    stim_range = (0, params['n_stim'])
+    stim_range = (0, params['n_training_trials'])
+#    stim_range = (0, params['n_stim'])
     n_stim = stim_range[1] - stim_range[0]
     plot_range = (0, n_stim * params['n_iterations_per_stim'])
     K_values = np.loadtxt(params['K_values_fn'])
@@ -398,19 +399,19 @@ if __name__ == '__main__':
             K_vec=K_vec_plot, extra_txt=info_txt, w_title=w_title)
     
     # cell_type_post 
-    cell_type_post = 'd2'
-    post_gids = TP.bg_gids[cell_type_post][action_idx]
-    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, plot_range, gain=gain, K_vec=K_vec_compute)
-    output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
-    w_means = get_mean_weights(params, all_traces)
-    w_mean, w_std = np.mean(w_means), np.std(w_means)
-    print 'w_mean:', w_mean, '+-', w_std
-    for i_, traces in enumerate(all_traces):
-        info_txt = 'Action idx: %d' % (action_idx)
-        w_title = '$w_{mean}=%.2f \pm %.2f$' % (w_mean, w_std)
-        fig = TP.plot_trace_with_spikes(traces, bcpnn_params, dt, output_fn=output_fn, fig=fig, \
-            K_vec=K_vec_plot, extra_txt=info_txt, w_title=w_title)
-    
+#    cell_type_post = 'd2'
+#    post_gids = TP.bg_gids[cell_type_post][action_idx]
+#    all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, plot_range, gain=gain, K_vec=K_vec_compute)
+#    output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
+#    w_means = get_mean_weights(params, all_traces)
+#    w_mean, w_std = np.mean(w_means), np.std(w_means)
+#    print 'w_mean:', w_mean, '+-', w_std
+#    for i_, traces in enumerate(all_traces):
+#        info_txt = 'Action idx: %d' % (action_idx)
+#        w_title = '$w_{mean}=%.2f \pm %.2f$' % (w_mean, w_std)
+#        fig = TP.plot_trace_with_spikes(traces, bcpnn_params, dt, output_fn=output_fn, fig=fig, \
+#            K_vec=K_vec_plot, extra_txt=info_txt, w_title=w_title)
+#    
 
 
             

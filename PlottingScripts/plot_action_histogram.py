@@ -98,10 +98,10 @@ n_in_std = np.zeros(params['n_actions'])
 for i_a in xrange(params['n_actions']):
     action_gids = bg_cell_gids['d1'][i_a]
     w_in[i_a] = {}
-    w_in[i_a]['w_in_mean_cells'] = np.zeros(params['num_msn_d1'])
-    w_in[i_a]['w_in_std_cells'] = np.zeros(params['num_msn_d1'])
+    w_in[i_a]['w_in_mean_cells'] = np.zeros(params['n_cells_per_d1'])
+    w_in[i_a]['w_in_std_cells'] = np.zeros(params['n_cells_per_d1'])
 
-    n_in = np.zeros(params['num_msn_d1'])
+    n_in = np.zeros(params['n_cells_per_d1'])
     all_source_gids = []
     for i_cell, gid in enumerate(action_gids):
         sources = utils.get_sources(d_conn, gid)

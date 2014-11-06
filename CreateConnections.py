@@ -181,7 +181,15 @@ class CreateConnections(object):
         Connect the sensor layer (motion-prediction network, MPN) to the Basal Ganglia based on existing connection data.
         target -- either 'd1' or 'd2'
         """
-        self.merge_connection_files(old_params, self.params)
+        # get the merged connectivity file
+        for cell_type in ['d1', 'd2']:
+            if not os.path.exists(old_params['mpn_bg%s_merged_conn_fn' % cell_type]):
+                self.merge_connection_files(old_params, self.params)
+            else:
+                # copy the merged file to the new directory
+                cmd = 'cp %s %s' % (old_params['mpn_bg%s_merged_conn_fn' % cell_type], self.params['mpn_bg%s_merged_conn_fn' % cell_type])
+                os.system(cmd)
+
         if self.comm != None:
             self.comm.Barrier()
         print 'Loading MPN - BG %s connections from: %s' % (target, self.params['mpn_bg%s_merged_conn_fn' % target])

@@ -8,11 +8,11 @@ import simulation_parameters
 import utils
 import re
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import MergeSpikefiles
 import FigureCreator
-import plot_bcpnn_traces
 import json
 from MetaAnalysisClass import MetaAnalysisClass
 
@@ -56,6 +56,8 @@ class PlotEverything(MetaAnalysisClass):
     def run_super_plot(self, params, stim_range):
         self.params = params
         # load bg gids
+        f = file(self.params['bg_gids_fn'], 'r')
+        self.bg_gids = json.load(f)
 
         utils.merge_spikes(params)
         print 'run_super_plot: folder %s, stim_range' % params['folder_name'], stim_range
@@ -77,11 +79,13 @@ class PlotEverything(MetaAnalysisClass):
 
         figsize = FigureCreator.get_fig_size(1400, portrait=False)
         self.fig = plt.figure(figsize=figsize)
-        self.gs = gridspec.GridSpec(4, 1, height_ratios=(2, 1, 1, 1))
+        self.gs = gridspec.GridSpec(5, 1, height_ratios=(2, 1, 1, 1, 2))
 
         self.plot_bg_spikes(t_range)
-        self.plot_mpn_spikes(t_range)
+#        self.plot_mpn_spikes(t_range)
+        self.plot_bg_rates('action', t_range)
         self.plot_retinal_displacement_and_reward(stim_range, t_range)
+
         output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[-1])
         print 'Saving figure to:', output_fn
         plt.savefig(output_fn)
@@ -93,7 +97,7 @@ class PlotEverything(MetaAnalysisClass):
 
         marker = 'o'
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-        cell_types = ['d1', 'd2', 'actions']
+        cell_types = ['d1', 'd2', 'action']
         for z_, cell_type in enumerate(cell_types):
 
             color = colors[z_ % len(colors)]
@@ -219,8 +223,6 @@ class PlotEverything(MetaAnalysisClass):
         if len(actions.shape) == 1: # only one stimulus
             actions = actions.reshape((1, 4))
 
-        f = file(self.params['bg_gids_fn'], 'r')
-        self.bg_gids = json.load(f)
         rewards = actions[:, 3] #np.loadtxt(self.params['rewards_given_fn'])
 #        print 'rewards', rewards.shape
 #        if len(rewards) == 1: # only one stimulus
@@ -245,7 +247,7 @@ class PlotEverything(MetaAnalysisClass):
             if plot_action_idx:
                 text_pos_x = t0 - 0.1 * self.params['t_iteration']
                 ax2.text(text_pos_x, 0.95, '%d' % action_idx, color='k', fontsize=12)
-                print 'Action %d:' % action_idx, self.bg_gids['actions'][action_idx]
+                print 'Action %d:' % action_idx, self.bg_gids['action'][action_idx]
 
         ax3.set_ylim(ylim_ax3)
         ax2.set_ylim(ylim_ax2)
@@ -286,6 +288,43 @@ class PlotEverything(MetaAnalysisClass):
         # plot horizontal line for retinal displacement
         xlim2 = ax2.get_xlim()
         ax2.plot((xlim2[0], xlim2[1]), (.5, .5), ls='-', c='k')
+
+
+    def plot_bg_rates(self, cell_type, t_range):
+
+        binsize = 10.
+        n_cells_per_pop = self.params['n_cells_per_%s' % cell_type]
+        n_bins = np.int((t_range[1] - t_range[0]) / binsize)
+        ax0 = plt.subplot(self.gs[1])
+
+        # build a color scheme
+        # define the colormap
+        cmap = matplotlib.cm.jet
+        # extract all colors from the cmap
+        cmaplist = [cmap(i) for i in xrange(cmap.N)]
+        # force the first color entry to be grey #cmaplist[0] = (.5,.5,.5,1.0)
+        # create the new map
+        cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
+
+        bounds = range(self.params['n_actions'])
+        norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+        m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
+        m.set_array(np.arange(bounds[0], bounds[-1], 1.))
+        rgba_colors = m.to_rgba(bounds)
+        cb = self.fig.colorbar(m)
+        cb.set_label('Action indices')#, fontsize=24)
+
+        for i_action in xrange(self.params['n_actions']):
+            print 'Plotting %s action %d' % (cell_type, i_action)
+            print 'debug', self.params['spiketimes_folder'] + self.params['%s_spikes_fn_merged' % cell_type] + str(i_action) + '.dat'
+            data = np.loadtxt(self.params['spiketimes_folder'] + self.params['%s_spikes_fn_merged' % cell_type] + str(i_action) + '.dat')
+#            gids = self.bg_gids[cell_type][i_action]
+
+            hist, edges = np.histogram(data[:, 1], bins=n_bins, range=t_range)
+            ax0.plot(edges[:-1] + .5 * binsize,  hist * (1000. / binsize) / n_cells_per_pop, lw=2, c=rgba_colors[i_action], label='%d' % i_action)
+
+        plt.legend()
+        print 'finished'
 
 
     def plot_vertical_lines(self, ax):

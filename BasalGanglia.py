@@ -53,7 +53,7 @@ class BasalGanglia(object):
         self.bg_offset = {}
         self.bg_offset['d1'] = np.infty
         self.bg_offset['d2'] = np.infty
-        self.bg_offset['actions'] = np.infty
+        self.bg_offset['action'] = np.infty
 
         self.reset_pool_of_possible_actions()
         if not dummy:
@@ -93,14 +93,14 @@ class BasalGanglia(object):
     def create_populations(self):
         #Creates D1 and D2 populations in STRIATUM, connections are created later
         for nactions in range(self.params['n_actions']):
-            self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['num_msn_d1'], params=self.params['param_msn_d1'])
+            self.strD1[nactions] = nest.Create(self.params['model_exc_neuron'], self.params['n_cells_per_d1'], params=self.params['param_msn_d1'])
             for gid in self.strD1[nactions]:
                 self.gid_to_action_D1[gid] = nactions
                 self.bg_offset['d1'] = min(gid, self.bg_offset['d1'])
 
         if self.params['with_d2']:
             for nactions in range(self.params['n_actions']):
-                self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['num_msn_d2'], params=self.params['param_msn_d2'])
+                self.strD2[nactions] = nest.Create(self.params['model_inh_neuron'], self.params['n_cells_per_d2'], params=self.params['param_msn_d2'])
                 for gid in self.strD2[nactions]:
                     self.gid_to_action_D2[gid] = nactions
                     self.bg_offset['d2'] = min(gid, self.bg_offset['d2'])
@@ -114,22 +114,22 @@ class BasalGanglia(object):
 
         # Creates the different Populations, STR_D1, STR_D2 and Actions, and then create the Connections
         for nactions in range(self.params['n_actions']):
-            self.actions[nactions] = nest.Create(self.params['model_bg_output_neuron'], self.params['num_actions_output'], params= self.params['param_bg_output'])
+            self.actions[nactions] = nest.Create(self.params['model_bg_output_neuron'], self.params['n_cells_per_action'], params= self.params['param_bg_output'])
             for gid in self.actions[nactions]:
                 self.gid_to_action[gid] = nactions
 
         for nactions in range(self.params['n_actions']):
             self.voltmeter_action[nactions] = nest.Create('multimeter', params={'record_from': ['V_m'], 'interval' :self.params['dt_volt']})
             if self.params['record_bg_volt']:
-                nest.SetStatus(self.voltmeter_action[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_volt_fn']+ str(nactions)}])
+                nest.SetStatus(self.voltmeter_action[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['action_volt_fn']+ str(nactions)}])
             self.recorder_output[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_action'])
             self.recorder_d1[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_d1'])
             if self.params['with_d2']: 
                 self.recorder_d2[nactions] = nest.Create("spike_detector", params= self.params['spike_detector_d2'])
-            for ind in xrange(self.params['num_actions_output']):
+            for ind in xrange(self.params['n_cells_per_action']):
                 self.gid_to_action_via_spikerecorder[self.actions[nactions][ind]] = nactions
-                self.bg_offset['actions'] = min(gid, self.bg_offset['actions'])
-            nest.SetStatus(self.recorder_output[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['actions_spikes_fn']+ str(nactions)}])
+                self.bg_offset['action'] = min(gid, self.bg_offset['action'])
+            nest.SetStatus(self.recorder_output[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['action_spikes_fn']+ str(nactions)}])
             nest.SetStatus(self.recorder_d1[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d1_spikes_fn']+ str(nactions)}])
             if self.params['with_d2']: 
                 nest.SetStatus(self.recorder_d2[nactions],[{"to_file": True, "withtime": True, 'label' : self.params['d2_spikes_fn']+ str(nactions)}])
@@ -156,9 +156,9 @@ class BasalGanglia(object):
 
             if self.params['record_bg_volt']:
                 nest.ConvergentConnect(self.voltmeter_action[nactions], self.actions[nactions])
-                nest.RandomConvergentConnect(self.voltmeter_d1[nactions], self.strD1[nactions], int(self.params['random_connect_voltmeter']*self.params['num_msn_d1']))
+                nest.RandomConvergentConnect(self.voltmeter_d1[nactions], self.strD1[nactions], int(self.params['random_connect_voltmeter']*self.params['n_cells_per_d1']))
                 if self.params['with_d2']: 
-                    nest.RandomConvergentConnect(self.voltmeter_d2[nactions], self.strD2[nactions], int(self.params['random_connect_voltmeter']*self.params['num_msn_d2']))
+                    nest.RandomConvergentConnect(self.voltmeter_d2[nactions], self.strD2[nactions], int(self.params['random_connect_voltmeter']*self.params['n_cells_per_d2']))
 
         # create supervisor
         if (self.params['training'] and self.params['supervised_on']):
@@ -198,7 +198,7 @@ class BasalGanglia(object):
 
         self.write_cell_gids_to_file()
         self.gids = {}
-        self.gids['actions'] = self.get_cell_gids('actions')
+        self.gids['action'] = self.get_cell_gids('action')
         self.gids['d1'] = self.get_cell_gids('d1')
         self.gids['d2'] = self.get_cell_gids('d2')
 #        print "BG model completed"
@@ -261,15 +261,15 @@ class BasalGanglia(object):
         self.noise_exc_actions = {}
         self.noise_inh_actions = {}
         for naction in xrange(self.params['n_actions']):
-            self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1']) 
-            self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['num_msn_d1'])
+            self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d1']) 
+            self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d1'])
             nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc_d1']})
             nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh_d1']})
             nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc_d1'], self.params['dt'])
             nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh_d1'], self.params['dt'])
 
-            self.noise_exc_actions[naction] = nest.Create('poisson_generator', self.params['num_actions_output']) 
-            self.noise_inh_actions[naction] = nest.Create('poisson_generator', self.params['num_actions_output'])
+            self.noise_exc_actions[naction] = nest.Create('poisson_generator', self.params['n_cells_per_action']) 
+            self.noise_inh_actions[naction] = nest.Create('poisson_generator', self.params['n_cells_per_action'])
             nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc_output']})
             nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh_output']})
             nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc_output'], self.params['dt'])
@@ -279,8 +279,8 @@ class BasalGanglia(object):
             self.noise_exc_d2 = {}
             self.noise_inh_d2 = {}
             for naction in xrange(self.params['n_actions']):
-                self.noise_exc_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2']) 
-                self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['num_msn_d2'])
+                self.noise_exc_d2[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d2']) 
+                self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d2'])
                 nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc_d2']})
                 nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh_d2']})
                 nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc_d2'], self.params['dt'])
@@ -412,9 +412,9 @@ class BasalGanglia(object):
             all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
         best_action_idx = np.argmin(np.abs(all_outcomes - .5))
         if selected_action != best_action_idx:
-            R = -1.
+            R = self.params['neg_kappa']
         else:
-            R = 1.
+            R = self.params['pos_kappa']
         return R
 
 
@@ -720,7 +720,7 @@ class BasalGanglia(object):
         elif cell_type == 'd2' and self.params['with_d2']:
             for nactions in range(self.params['n_actions']):
                 cell_gids.append(self.strD2[nactions])
-        elif cell_type == 'actions':
+        elif cell_type == 'action':
             for nactions in range(self.params['n_actions']):
                 cell_gids.append(self.actions[nactions])
         return cell_gids

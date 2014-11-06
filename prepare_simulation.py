@@ -14,8 +14,8 @@ def clean_up_results_directory(params):
                 params['d1_volt_fn'], \
                 params['d2_spikes_fn'], \
                 params['d2_volt_fn'], \
-                params['actions_spikes_fn'], \
-                params['actions_volt_fn'], \
+                params['action_spikes_fn'], \
+                params['action_volt_fn'], \
                 params['efference_spikes_fn'], \
                 params['supervisor_spikes_fn'], \
                 params['rew_spikes_fn'], \
@@ -25,14 +25,14 @@ def clean_up_results_directory(params):
                 params['states_spikes_fn_merged'], \
                 params['d1_spikes_fn_merged'], \
                 params['d2_spikes_fn_merged'], \
-                params['actions_spikes_fn_merged'], \
+                params['action_spikes_fn_merged'], \
                 params['efference_spikes_fn_merged'], \
                 params['supervisor_spikes_fn_merged'], \
                 params['rew_spikes_fn_merged'], \
                 params['rp_spikes_fn_merged'], \
                 params['d1_volt_fn_merged'], \
                 params['d2_volt_fn_merged'], \
-                params['actions_volt_fn_merged'], \
+                params['action_volt_fn_merged'], \
                 params['rew_volt_fn_merged'], \
                 params['rp_volt_fn_merged'] ]
 
