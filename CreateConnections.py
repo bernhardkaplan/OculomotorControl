@@ -112,12 +112,13 @@ class CreateConnections(object):
         delays = list(np.ones(d[:, 0].size * testing_params['delay_d1_d1']))
         if bcpnn_params == None:
             nest.Connect(srcs, tgts, weights, delays, model=model)
+
 #        else:
 #            nest.Connect(srcs, tgts, weights, delays, params=[bcpnn_params for i in xrange(d[:, 2].size)], model=model )
     
 
 
-    def connect_mt_to_bg_RBL(self, mpn_net, bg_net, training_params, test_params, target='d1', model='static_synapse'):
+    def connect_mt_to_bg_RBL(self, mpn_net, bg_net, training_params, test_params=None, target='d1', model='static_synapse'):
         """
         Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
         based on the weights found in conn_folder
@@ -134,8 +135,8 @@ class CreateConnections(object):
         mpn_bg_conn_list = np.loadtxt(training_params['mpn_bg%s_merged_conn_fn' % target])
         n_lines = mpn_bg_conn_list[:, 0].size 
         w = mpn_bg_conn_list[:, 2]
-        pi = test_params['bcpnn_init_pi']
-        pj = test_params['bcpnn_init_pi']
+        pi = training_params['bcpnn_init_pi']
+        pj = training_params['bcpnn_init_pi']
         w *= self.params['gain_MT_%s' % target]
 #        pij = pi * pj * np.exp(w)
         valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
@@ -254,6 +255,57 @@ class CreateConnections(object):
                 mpn_d2_debug_fn = test_params['mpn_bgd2_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
                 print 'Saving the realized connections to %s' % mpn_d2_debug_fn
                 np.savetxt(mpn_d2_debug_fn, output_array_d2)
+
+    def connect_mt_to_bg_continue_training(self, mpn_net, bg_net, training_params, model='bcpnn_synapse', debug=False):
+        """
+        Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
+        based on the weights found in conn_folder
+        """
+        self.merge_connection_files(training_params, test_params)
+        if self.comm != None:
+            self.comm.Barrier()
+        print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
+        mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
+        n_lines = mpn_d1_conn_list[:, 0].size 
+
+        w = mpn_d1_conn_list[:, 2]
+        w *= self.params['gain_MT_d1']
+        valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
+        srcs = list(mpn_d1_conn_list[valid_idx, 0].astype(np.int))
+        tgts = list(mpn_d1_conn_list[valid_idx, 1].astype(np.int))
+        weights = list(w[valid_idx])
+        delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
+        nest.Connect(srcs, tgts, weights, delays, model=model)
+        if debug:
+            output_array_d1 = np.zeros((len(weights), 3))
+            output_array_d1[:, 0] = srcs
+            output_array_d1[:, 1] = tgts
+            output_array_d1[:, 2] = weights
+            mpn_d1_debug_fn = test_params['mpn_bgd1_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
+            print 'Saving the realized connections to %s' % mpn_d1_debug_fn
+            np.savetxt(mpn_d1_debug_fn, output_array_d1)
+
+        if training_params['with_d2'] and test_params['with_d2']:
+            print 'Loading MPN - BG D2 connections from:', training_params['mpn_bgd2_merged_conn_fn']
+            mpn_d2_conn_list = np.loadtxt(training_params['mpn_bgd2_merged_conn_fn'])
+            w = mpn_d2_conn_list[:, 2]
+            w *= self.params['gain_MT_d2']
+            valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
+            srcs = list(mpn_d2_conn_list[valid_idx, 0].astype(np.int))
+            tgts = list(mpn_d2_conn_list[valid_idx, 1].astype(np.int))
+            weights = list(w[valid_idx])
+            delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
+            nest.Connect(srcs, tgts, weights, delays, model=model)
+            if debug:
+                output_array_d2 = np.zeros((len(weights), 3))
+                output_array_d2[:, 0] = srcs
+                output_array_d2[:, 1] = tgts
+                output_array_d2[:, 2] = weights
+                mpn_d2_debug_fn = test_params['mpn_bgd2_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
+                print 'Saving the realized connections to %s' % mpn_d2_debug_fn
+                np.savetxt(mpn_d2_debug_fn, output_array_d2)
+
+
 
 
     def clip_weight(self, w, clip_weights, thresh_and_abs):

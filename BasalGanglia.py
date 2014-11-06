@@ -41,8 +41,6 @@ class BasalGanglia(object):
         self.recorder_d1 = {}
         self.recorder_d2 = {}
         self.recorder_states = {}
-        self.recorder_efference = {}
-        self.recorder_supervisor = {}
 
         self.voltmeter_d1 = {}
         self.voltmeter_d2 = {}

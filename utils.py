@@ -116,6 +116,16 @@ def map_gid_to_action(gid, bg_cell_gids, celltype='d1'):
     return 'GID could not be mapped to action\n Check parameters!'
 
 
+def get_bg_gid_ranges(params):
+    f = file(params['bg_gids_fn'], 'r')
+    gids = json.load(f)
+    cell_types = ['d1', 'd2', 'actions']
+    gid_ranges = {'%s' % ct : [] for ct in cell_types}
+
+    for ct in cell_types:
+        gid_ranges[ct] = (np.min(gids[ct]), np.max(gids[ct]))
+    return gid_ranges
+
 
 def get_sources(conn_list, target_gid):
     idx = (conn_list[:, 1] == target_gid).nonzero()[0]

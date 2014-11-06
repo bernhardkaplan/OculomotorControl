@@ -54,7 +54,6 @@ class RewardBasedLearning(object):
         self.motion_params = np.zeros((self.params['n_iterations'], 5))  # + 1 dimension for the time axis
         self.stim_cnt = 0
         self.iteration_cnt = 0
-        self.retrained_actions = []
         
     def set_connection_module(self, CM):
         self.CM = CM
@@ -386,12 +385,15 @@ if __name__ == '__main__':
     
     if pc_id == 0 and write_params:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
-    if pc_id == 0:
+
+    if pc_id == 0 and not write_params: # do not delete anything, when training is to be continued
         utils.remove_files_from_folder(params['spiketimes_folder'])
         utils.remove_files_from_folder(params['input_folder_mpn'])
         utils.remove_files_from_folder(params['connections_folder'])
+
     if comm != None:
         comm.Barrier()
+
     t0 = time.time()
 
     RBL = RewardBasedLearning(params, comm)

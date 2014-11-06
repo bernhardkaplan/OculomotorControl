@@ -55,7 +55,6 @@ class RewardBasedLearning(object):
         self.motion_params = np.zeros((self.params['n_iterations'], 5))  # + 1 dimension for the time axis
         self.stim_cnt = 0
         self.iteration_cnt = 0
-        self.retrained_actions = []
         
 
     def set_up_data_structures(self):
@@ -331,13 +330,15 @@ if __name__ == '__main__':
     RBL = RewardBasedLearning(params, comm)
     RBL.prepare_training()
 
-    # keep track of 
+    # keep track of trained stimuli and d1/d2 actions that have been trained
+    trained_stimuli = []
+    d1_actions_trained = { [] for i in xrange(params['n_stim'])}
+    d2_actions_trained = { [] for i in xrange(params['n_stim'])}
 
     ####################################
     #   T R A I N   A   S T I M U L U S 
     ####################################
     #TODO:
-    i_stim  = 0
     for i_cycle in xrange(params['n_training_cycles']):
         print '\n================ NEW CYCLE ======================'
         # randomize order of stimuli within each cycle
@@ -353,6 +354,7 @@ if __name__ == '__main__':
             print 'stim_params for i_stim %d' % i_stim, stim_params
             # reinitialize the counters how often an action has been selected for each stimulus
             cnt_trial = 0  # counts the total number of trials for any action (including pos and neg reward trials)
+            trained_stimuli.append(i_stim)
             while (cnt_trial < params['n_max_trials_same_stim']): # independent of rewards
 
                 v_and_action, R = RBL.present_stimulus_and_train(stim_params)
@@ -361,13 +363,22 @@ if __name__ == '__main__':
 
                 cnt_trial += 1
                 if (actions_per_stim[i_stim][trained_action] >= params['n_max_trials_pos_rew'] and R > 0): 
+                    d1_actions_trained[i_stim].append(trained_action)
                     # new stimulus!
                     i_stim += 1
                     cnt_trial = 0
                     print 'Ending training for this stimulus'
                     break
+                elif (R < 0):
+                    d2_actions_trained[i_stim].append(trained_action)
 
 
+    # update the trained_stimuli parameter in the Parameters/simulation_parameters.json file
+    params['trained_stimuli'] = trained_stimuli
+    params['d1_actions_trained'] = d1_actions_trained
+    params['d2_actions_trained'] = d2_actions_trained
+    if pc_id == 0:
+        GP.write_parameters_to_file(params['params_fn_json'], params)
 
 
     ######################################

@@ -50,12 +50,15 @@ plot_params_portrait = {'backend': 'png',
 
 class FigureCreator(object):
 
-    def __init__(self):
+    def __init__(self, your_plot_params=None):
         """
         Here, the standard parameters for a figure are set.
         """
         fig_width_pt = 800.0  
-        pylab.rcParams.update(plot_params)
+        if your_plot_params==None:
+            pylab.rcParams.update(plot_params)
+        else:
+            pylab.rcParams.update(your_plot_params)
 
 
     def create_fig(self):
@@ -72,6 +75,7 @@ class FigureCreator(object):
         Plots a standard 2-dimensional figure and returns the figure 
         Returns the 
         """
+        pass
 
 
 
