@@ -65,8 +65,8 @@ if __name__ == '__main__':
 
     n_cells = params['n_exc_mpn']
 #    n_cells = 10
-    M_init_d1 = np.zeros((n_cells, params['n_actions'] * params['num_msn_d1']))
-    M_init_d2 = np.zeros((n_cells, params['n_actions'] * params['num_msn_d2']))
+    M_init_d1 = np.zeros((n_cells, params['n_actions'] * params['n_cells_per_d1']))
+    M_init_d2 = np.zeros((n_cells, params['n_actions'] * params['n_cells_per_d2']))
     gid_offset_d1 = min(bg_gids['d1'][0])
     gid_offset_d2 = min(bg_gids['d2'][0])
 

@@ -61,8 +61,8 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
     params = param_tool.params
 
-    cell_types = ['d1', 'd2', 'actions', 'efference', 'states']
-    cell_types_volt = ['d1', 'd2', 'actions']
+    cell_types = ['d1', 'd2', 'action', 'efference', 'states']
+    cell_types_volt = ['d1', 'd2', 'action']
     MS = MergeSpikefiles(params)
     for cell_type in cell_types:
         print 'Merging spiketimes file for %s ' % (cell_type)

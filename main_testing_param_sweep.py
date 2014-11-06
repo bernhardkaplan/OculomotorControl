@@ -171,7 +171,7 @@ if __name__ == '__main__':
     print 'Time8: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     print 'Now plotting ...'
     if pc_id == 0:
-        np.savetxt(testing_params['actions_taken_fn'], actions)
+        np.savetxt(testing_params['action_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_fn'], VI.motion_params)
         run_plot_bg(testing_params, (testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1]))
