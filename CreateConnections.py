@@ -46,10 +46,13 @@ class CreateConnections(object):
     def merge_connection_files(self, training_params, test_params=None):
 
         def merge_for_tgt_cell_type(cell_type):
-            if not os.path.exists(training_params['mpn_bg%s_merged_conn_fn' % cell_type]):
-                # merge the connection files
-                merge_pattern = training_params['mpn_bg%s_conn_fn_base' % cell_type]
-                fn_out = training_params['mpn_bg%s_merged_conn_fn' % cell_type]
+            if test_params != None: 
+                p = test_params
+            else:
+                p = training_params
+            fn_out = p['mpn_bg%s_merged_conn_fn' % cell_type]
+            merge_pattern = training_params['mpn_bg%s_conn_fn_base' % cell_type]
+            if not os.path.exists(p['mpn_bg%s_merged_conn_fn' % cell_type]):
                 utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
 
             if test_params != None: 
@@ -65,7 +68,10 @@ class CreateConnections(object):
 
         def merge_for_weight_tracking(cell_type):
             for it in xrange(training_params['n_iterations']):
-                fn_merged = training_params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it)
+                if test_params != None: 
+                    fn_merged = test_params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it)
+                else:
+                    fn_merged = training_params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it)
                 if not os.path.exists(fn_merged):
                     # merge the connection files
                     merge_pattern = training_params['mpn_bg%s_conntracking_fn_base' % cell_type] + 'it%d_' % it
@@ -73,12 +79,22 @@ class CreateConnections(object):
 
         if self.pc_id == 0:
             merge_for_tgt_cell_type('d1')
+            merge_pattern = training_params['d1_d1_conn_fn_base']
+            if test_params != None: 
+                fn_out = test_params['d1_d1_merged_conn_fn']
+            else:
+                fn_out = training_params['d1_d1_merged_conn_fn']
+            utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
+
             if training_params['with_d2']:
                 merge_for_tgt_cell_type('d2')
+                merge_pattern = training_params['d2_d2_conn_fn_base']
+                if test_params != None: 
+                    fn_out = test_params['d2_d2_merged_conn_fn']
+                else:
+                    fn_out = training_params['d2_d2_merged_conn_fn']
+                utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
 
-            merge_pattern = training_params['d1_d1_conn_fn_base']
-            fn_out = training_params['d1_d1_merged_conn_fn']
-            utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
         if self.comm != None:
             self.comm.barrier()
 
@@ -160,27 +176,21 @@ class CreateConnections(object):
 #        nest.SetStatus(nest.GetConnections(srcs, tgts, 
 
 
-    def connect_and_load_mt_to_bg(self, mpn_net, bg_net, w_init_fn):
+    def connect_and_load_mt_to_bg(self, mpn_net, bg_net, target, old_params):
         """
-        Connect the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
-        based on the weights found in w_init_fn
+        Connect the sensor layer (motion-prediction network, MPN) to the Basal Ganglia based on existing connection data.
+        target -- either 'd1' or 'd2'
         """
-        raise NotImplementedError('Loading the weight matrix is not yet implemented')
-        
+        self.merge_connection_files(old_params, self.params)
         if self.comm != None:
             self.comm.Barrier()
-
-        self.merge_connection_files(training_params, test_params)
-        print 'Loading MPN - BG %s connections from: %s' % (target, training_params['mpn_bg%s_merged_conn_fn' % target])
-        tgt_path = test_params['connections_folder'] + 'merged_mpn_bg_%s_connections_preTraining.txt' % target
-        cmd = 'cp %s %s' % (training_params['mpn_bg%s_merged_conn_fn' % target], tgt_path)
-        if self.pc_id == 0:
-            os.system(cmd)
-        mpn_bg_conn_list = np.loadtxt(training_params['mpn_bg%s_merged_conn_fn' % target])
+        print 'Loading MPN - BG %s connections from: %s' % (target, self.params['mpn_bg%s_merged_conn_fn' % target])
+        mpn_bg_conn_list = np.loadtxt(self.params['mpn_bg%s_merged_conn_fn' % target])
         n_lines = mpn_bg_conn_list[:, 0].size 
         w = mpn_bg_conn_list[:, 2]
-        pi = test_params['bcpnn_init_pi']
-        pj = test_params['bcpnn_init_pi']
+        pi = mpn_bg_conn_list[:, 3]
+        pj = mpn_bg_conn_list[:, 4]
+        pij = mpn_bg_conn_list[:, 5]
         w *= self.params['gain_MT_%s' % target]
 #        pij = pi * pj * np.exp(w)
         valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
@@ -190,14 +200,15 @@ class CreateConnections(object):
         pij = pi * pj * np.exp(w[valid_idx])
 
         delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
-        param_dict_list = [test_params['params_synapse_%s_MT_BG' % target] for i_ in xrange(valid_idx.size)]
+        param_dict_list = [self.params['params_synapse_%s_MT_BG' % target] for i_ in xrange(valid_idx.size)]
+        model = 'bcpnn_synapse'
         for i_ in xrange(valid_idx.size):
-#            print 'debug',param_dict_list[i_], param_dict_list[i_]['p_i']
-            param_dict_list[i_]['p_i'] = pi
-            param_dict_list[i_]['p_j'] = pj
+            param_dict_list[i_]['p_i'] = pi[i_]
+            param_dict_list[i_]['p_j'] = pj[i_]
             param_dict_list[i_]['p_ij'] = pij[i_]
-#        param_dict = [ {'p_i' : pi[i_], 'p_j': pj[i_], 'p_ij': pij[i_], 'weight': weights[i_], 'delay': delays[i_]} for i_ in xrange(valid_idx.size)]
+            param_dict_list[i_]['weight'] = weights[i_]
             nest.Connect([srcs[i_]], [tgts[i_]], param_dict_list[i_], model=model)
+
 #        nest.Connect(srcs, tgts, weights, delays, model=model)
 
         # set the pi, pj, traces
@@ -208,55 +219,6 @@ class CreateConnections(object):
 
 
     def connect_mt_to_bg_after_training(self, mpn_net, bg_net, training_params, test_params, model='static_synapse', debug=False):
-        """
-        Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
-        based on the weights found in conn_folder
-        """
-        self.merge_connection_files(training_params, test_params)
-        if self.comm != None:
-            self.comm.Barrier()
-        print 'Loading MPN - BG D1 connections from:', training_params['mpn_bgd1_merged_conn_fn']
-        mpn_d1_conn_list = np.loadtxt(training_params['mpn_bgd1_merged_conn_fn'])
-        n_lines = mpn_d1_conn_list[:, 0].size 
-
-        w = mpn_d1_conn_list[:, 2]
-        w *= self.params['gain_MT_d1']
-        valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
-        srcs = list(mpn_d1_conn_list[valid_idx, 0].astype(np.int))
-        tgts = list(mpn_d1_conn_list[valid_idx, 1].astype(np.int))
-        weights = list(w[valid_idx])
-        delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
-        nest.Connect(srcs, tgts, weights, delays, model=model)
-        if debug:
-            output_array_d1 = np.zeros((len(weights), 3))
-            output_array_d1[:, 0] = srcs
-            output_array_d1[:, 1] = tgts
-            output_array_d1[:, 2] = weights
-            mpn_d1_debug_fn = test_params['mpn_bgd1_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
-            print 'Saving the realized connections to %s' % mpn_d1_debug_fn
-            np.savetxt(mpn_d1_debug_fn, output_array_d1)
-
-        if training_params['with_d2'] and test_params['with_d2']:
-            print 'Loading MPN - BG D2 connections from:', training_params['mpn_bgd2_merged_conn_fn']
-            mpn_d2_conn_list = np.loadtxt(training_params['mpn_bgd2_merged_conn_fn'])
-            w = mpn_d2_conn_list[:, 2]
-            w *= self.params['gain_MT_d2']
-            valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
-            srcs = list(mpn_d2_conn_list[valid_idx, 0].astype(np.int))
-            tgts = list(mpn_d2_conn_list[valid_idx, 1].astype(np.int))
-            weights = list(w[valid_idx])
-            delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
-            nest.Connect(srcs, tgts, weights, delays, model=model)
-            if debug:
-                output_array_d2 = np.zeros((len(weights), 3))
-                output_array_d2[:, 0] = srcs
-                output_array_d2[:, 1] = tgts
-                output_array_d2[:, 2] = weights
-                mpn_d2_debug_fn = test_params['mpn_bgd2_merged_conn_fn'].rsplit('.txt')[0] + '_debug.txt'
-                print 'Saving the realized connections to %s' % mpn_d2_debug_fn
-                np.savetxt(mpn_d2_debug_fn, output_array_d2)
-
-    def connect_mt_to_bg_continue_training(self, mpn_net, bg_net, training_params, model='bcpnn_synapse', debug=False):
         """
         Connects the sensor layer (motion-prediction network, MPN) to the Basal Ganglia 
         based on the weights found in conn_folder

@@ -94,14 +94,16 @@ class RewardBasedLearning(object):
             np.savetxt(params['K_values_fn'], np.array(self.K_vec))
 
 
-    def prepare_training(self, w_init_fn=None): 
+    def prepare_training(self, old_params=None):
         self.create_networks()
         self.set_up_data_structures()
-        if w_init_fn == None:
-            # TODO: load a weight matrix in order to continue training
+        if old_params == None:
             self.CC.connect_mt_to_bg(self.MT, self.BG)
         else:
-            self.CC.connect_and_load_mt_to_bg(self.MT, self.BG, w_init)
+            print 'Loading weight matrix for D1'
+            self.CC.connect_and_load_mt_to_bg(self.MT, self.BG, 'd1', old_params)
+            print 'Loading weight matrix for D2'
+            self.CC.connect_and_load_mt_to_bg(self.MT, self.BG, 'd2', old_params)
 
 
     def create_networks(self):
@@ -306,14 +308,17 @@ if __name__ == '__main__':
 
     t0 = time.time()
     write_params = True
+    load_weights = False
     GP = simulation_parameters.global_parameters()
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         params = GP.params
     else:
-        testing_params_json = utils.load_params(os.path.abspath(sys.argv[2]))
-        params = utils.convert_to_NEST_conform_dict(testing_params_json)
-        write_params = False
-    
+        old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
+        old_params = utils.convert_to_NEST_conform_dict(old_params_json)
+        params = GP.params
+        write_params = True
+        load_weights = True
+
     if pc_id == 0 and write_params:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     if pc_id == 0:
@@ -328,12 +333,12 @@ if __name__ == '__main__':
     #    S E T   U P 
     ###################
     RBL = RewardBasedLearning(params, comm)
-    RBL.prepare_training()
+    RBL.prepare_training(old_params)
 
     # keep track of trained stimuli and d1/d2 actions that have been trained
     trained_stimuli = []
-    d1_actions_trained = { [] for i in xrange(params['n_stim'])}
-    d2_actions_trained = { [] for i in xrange(params['n_stim'])}
+    d1_actions_trained = { i : [] for i in xrange(params['n_stim'])}
+    d2_actions_trained = { i : [] for i in xrange(params['n_stim'])}
 
     ####################################
     #   T R A I N   A   S T I M U L U S 
@@ -390,6 +395,8 @@ if __name__ == '__main__':
     #   S A V E     W E I G H T S 
     ####################################
     RBL.CC.get_weights(RBL.MT, RBL.BG)
+    RBL.CC.get_d1_d1_weights(RBL.BG)
+    RBL.CC.get_d2_d2_weights(RBL.BG)
 
     ####################################
     #   R U N   E M P T Y    I N P U T 

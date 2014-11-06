@@ -48,6 +48,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 1.0
         self.params['training'] = True
+        self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
@@ -150,9 +151,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if non-zero and reward_based_learning == False then main_training_iteratively_suboptimally_supevised will randomize the supervisor-action by this integer number
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
-            self.params['sim_id'] = '_titer%d_VA_' % (self.params['t_iteration'])
-            if (self.params['reward_based_learning']):
+            if self.params['reward_based_learning']:
                 self.params['sim_id'] = 'RBL_NoNoise_titer%d' % (self.params['t_iteration'])
+            if self.params['continue_training']:
+                self.params['sim_id'] += '_CNT'
+
 #                if self.params['mixed_training_cycles']:
 #                    self.params['sim_id'] = 'RBL_NoNoise_mixed_titer%d' % (self.params['t_iteration'])
 #                else:
@@ -288,7 +291,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # most active neurons for certain iterations can be determined by PlottingScripts/plot_bcpnn_traces.py
 #        self.params['gids_to_record_mpn'] = None # [12, 13, 14, 60, 62, 210]
         self.params['gids_to_record_mpn'] = []
-        self.params['gids_to_record_bg'] = []
+#        self.params['gids_to_record_bg'] = []
+        self.params['gids_to_record_bg'] = [12693, 12694, 12695, 12696, 12697, 12738, 12739, 12740, 12741, 12742, 12703, 12704, 12705, 12706, 12707 , 12683, 12684, 12685, 12686, 12687 , 12743, 12744, 12745, 12746, 12747]
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
