@@ -124,31 +124,44 @@ class VisualInput(object):
         returns S0, S1, S2 
         """
         different_training_stim = np.zeros((self.params['n_training_stim_per_cycle'], 4))
-        v_lim_frac = .8
+        v_lim_frac = .7
         v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
+        print 'debug VisualInput v_lim:', v_lim
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
         v_training = np.zeros(self.params['n_training_v'])
         for i_v in xrange(self.params['n_training_v']):
             plus_minus = utils.get_plus_minus(self.RNG)
             v_training[i_v] = v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
 
-        x_pos = np.zeros(self.params['n_training_x'])
 
-        for i_x in xrange(self.params['n_training_x']):
+#        x_pos = np.zeros(self.params['n_training_x'])
+#        for i_x in xrange(self.params['n_training_x']):
             # get start position some where in the periphery
-            pm = utils.get_plus_minus(self.RNG)
-            if pm > 0:
-                x_pos[i_x] = self.RNG.uniform(.5 + self.params['center_stim_width'], 1.)
-            else:
-                x_pos[i_x] = self.RNG.uniform(0, .5 - self.params['center_stim_width'])
+#            pm = utils.get_plus_minus(self.RNG)
+#            if pm > 0:
+#                x_pos[i_x] = self.RNG.uniform(.5 + self.params['center_stim_width'], 1.)
+#            else:
+#                x_pos[i_x] = self.RNG.uniform(0, .5 - self.params['center_stim_width'])
+
+        x_lim = (0.1, 0.9)
+        x_grid = np.linspace(x_lim[0], x_lim[1], self.params['n_training_x'])
+#        for i_x in xrange(self.params['n_training_x']):
+#            pm = utils.get_plus_minus(self.RNG)
+#            x_pos[i_] = x_grid[i_x] + pm * self.RNG.uniform(0, self.params['training_stim_noise_x'])) % 1.
+
+
 
         i_stim = 0
         for i_v in xrange(self.params['n_training_v']):
             for i_x in xrange(self.params['n_training_x']):
-                different_training_stim[i_stim, 0] = x_pos[i_x]
+                pm = utils.get_plus_minus(self.RNG)
+                different_training_stim[i_stim, 0] = (x_grid[i_x] + pm * self.RNG.uniform(0, self.params['training_stim_noise_x'])) % 1.
+#                different_training_stim[i_stim, 0] = x_pos[i_x]
                 different_training_stim[i_stim, 1] = .5 # y-pos = center
-                different_training_stim[i_stim, 2] = v_training[i_v]
+#                different_training_stim[i_stim, 2] = v_training[i_v]
+                different_training_stim[i_stim, 2] = v_grid[i_v] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
                 i_stim += 1
+
 
 #        if self.params['mixed_training_cycles']:
 #            idx = range(self.params['n_training_stim_per_cycle'])

@@ -32,20 +32,23 @@ class Plotter(object):
         self.mp_training = None
 
 
-    def plot_training_sample_space(self, plot_process=False):
+    def plot_training_sample_space(self, plot_process=False, motion_params_fn=None):
         if plot_process:
             try:
-                fn = self.params['motion_params_fn']
-                print 'Loading training stimuli data from:', fn
-                d = np.loadtxt(fn)
+                if motion_params_fn == None:
+                    training_stim_fn = self.params['motion_params_fn']
+                print 'Loading training stimuli data from:', motion_params_fn
+                d = np.loadtxt(motion_params_fn)
             except:
-                fn = self.params['motion_params_precomputed_fn']
-                print 'Loading training stimuli data from:', fn
-                d = np.loadtxt(fn)
+                if motion_params_fn == None:
+                    motion_params_fn = self.params['motion_params_precomputed_fn']
+                print 'Loading training stimuli data from:', motion_params_fn
+                d = np.loadtxt(motion_params_fn)
         else:
-            fn = self.params['training_sequence_fn']
-            print 'Loading training stimuli data from:', fn
-            d = np.loadtxt(fn)
+            if motion_params_fn == None:
+                motion_params_fn = self.params['training_sequence_fn']
+            print 'Loading training stimuli data from:', motion_params_fn 
+            d = np.loadtxt(motion_params_fn)
         self.mp_training = d
 
         fig = pylab.figure()#figsize=(12, 12))
@@ -208,23 +211,30 @@ class Plotter(object):
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
-        param_fn = sys.argv[1]
-        if os.path.isdir(param_fn):
-            param_fn += '/Parameters/simulation_parameters.json'
-        import json
-        f = file(param_fn, 'r')
-        print 'Loading parameters from', param_fn
-        params = json.load(f)
-
+        if os.path.isdir(sys.argv[1]):
+            param_fn = sys.argv[1]
+            training_stim_fn = None
+            if os.path.isdir(param_fn):
+                param_fn += '/Parameters/simulation_parameters.json'
+            import json
+            f = file(param_fn, 'r')
+            print 'Loading parameters from', param_fn
+            params = json.load(f)
+        else: # assume the file given is the file with the motion parameters of the training stimuli
+            training_stim_fn = sys.argv[1]
+            import simulation_parameters
+            param_tool = simulation_parameters.global_parameters()
+            params = param_tool.params
     else:
         import simulation_parameters
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
+        training_stim_fn = None
 
-    
     Plotter = Plotter(params)#, it_max=1)
+    Plotter.plot_training_sample_space(plot_process=False, motion_params_fn=training_stim_fn)
 #    Plotter.plot_training_sample_space(plot_process=True)
-#    Plotter.plot_training_sample_space(plot_process=False)
-    Plotter.plot_precomputed_actions(plot_cells=True)
-    Plotter.plot_training_sample_histograms()
+#    Plotter.plot_precomputed_actions(plot_cells=True)
+#    Plotter.plot_training_sample_histograms()
+
     pylab.show()
