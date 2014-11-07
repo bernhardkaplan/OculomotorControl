@@ -280,7 +280,7 @@ class PlotEverything(MetaAnalysisClass):
             y_k = np.r_[y_k, y_]
         ax3.plot(x_k, y_k, c='k', lw=3)
         ax3.set_xlim((it_0 * self.params['t_iteration'], it_1 * self.params['t_iteration']))
-        ylim_ax3 = (-np.max(np.abs(K_vec)) * 1.05, np.max(np.abs(K_vec)))
+        ylim_ax3 = (-np.max(np.abs(K_vec)) * 1.05, np.max(np.abs(K_vec)) * 1.05)
         ax3.set_ylim(ylim_ax3)
 
         ax3.set_ylabel('Reward')

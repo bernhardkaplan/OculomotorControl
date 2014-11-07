@@ -67,9 +67,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 3 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 7# how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 2 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 11 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 20 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -315,9 +315,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['v_lim_training'] = (-self.params['v_max_tp'] * 0.7, self.params['v_max_tp'] * 0.7)
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['blur_X'], self.params['blur_V'] = .25, .25
-        self.params['training_stim_noise_x'] = 0.05 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
-        self.params['training_stim_noise_v'] = 0.01 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['blur_X'], self.params['blur_V'] = .15, .30
+        self.params['training_stim_noise_x'] = 0.01 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['training_stim_noise_v'] = 0.20 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
         self.params['rf_size_x_multiplicator'] = 1.0 # receptive field sizes for x-position are multiplied with this factor (to increase / decrease overlap)
         self.params['rf_size_v_multiplicator'] = 1.0 # receptive field sizes for vx are multiplied with this factor (to increase / decrease overlap)

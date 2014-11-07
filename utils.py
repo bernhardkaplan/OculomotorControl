@@ -119,11 +119,11 @@ def map_gid_to_action(gid, bg_cell_gids, celltype='d1'):
 def get_bg_gid_ranges(params):
     f = file(params['bg_gids_fn'], 'r')
     gids = json.load(f)
-    cell_types = ['d1', 'd2', 'actions']
+    cell_types = ['d1', 'd2', 'action']
     # python 2.6
     gid_ranges = {}
     for ct in cell_types:
-        gid_ranges[xt] = []
+        gid_ranges[ct] = []
     # python 2.7
     #gid_ranges = {'%s' % ct : [] for ct in cell_types}
 
