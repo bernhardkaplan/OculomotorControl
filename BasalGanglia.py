@@ -564,19 +564,19 @@ class BasalGanglia(object):
             action_idx = self.gid_to_action[int(gid_)]
             nspikes_by_action[action_idx] += nspikes[i_]
 
-#        print 'DEBUG BG.get_action_softmax: nspikes_by_action:', nspikes_by_action
+        print 'DEBUG BG.get_action_softmax: nspikes_by_action:', nspikes_by_action
 
         if self.comm != None:
             self.comm.Barrier()
             if self.pc_id == 0:
                 prob_distr = utils.softmax(nspikes_by_action, T=self.params['softmax_action_selection_temperature'])
-                root_chosen_action = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
                 sampled_action_idx = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]
                 for pid in xrange(1, self.n_proc): # do not send to your own node! 
                     self.comm.send(sampled_action_idx, pid, tag=self.iteration)
-#                print 'DEBUG BG.get_action_softmax: prob_distr:', prob_distr, ' sampled action:', sampled_action_idx
+                print 'DEBUG BG.get_action_softmax: prob_distr:', prob_distr, ' sampled action:', sampled_action_idx, ' iteration:', self.iteration
             else:
                 sampled_action_idx = self.comm.recv(source=0, tag=self.iteration)
+            self.comm.Barrier()
         else:
             prob_distr = utils.softmax(nspikes_by_action, T=self.params['softmax_action_selection_temperature'])
             sampled_action_idx = utils.draw_from_discrete_distribution(prob_distr, size=1)[0]

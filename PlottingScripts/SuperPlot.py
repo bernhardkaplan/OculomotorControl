@@ -54,6 +54,7 @@ class PlotEverything(MetaAnalysisClass):
 
 
     def run_super_plot(self, params, stim_range):
+        self.fig_cnt = 0
         self.params = params
         # load bg gids
         f = file(self.params['bg_gids_fn'], 'r')
@@ -79,11 +80,11 @@ class PlotEverything(MetaAnalysisClass):
 
         figsize = FigureCreator.get_fig_size(1400, portrait=False)
         self.fig = plt.figure(figsize=figsize)
-        self.gs = gridspec.GridSpec(5, 1, height_ratios=(2, 1, 1, 1, 2))
+        self.gs = gridspec.GridSpec(3, 1, height_ratios=(2, 1, 1))
 
         self.plot_bg_spikes(t_range)
 #        self.plot_mpn_spikes(t_range)
-        self.plot_bg_rates('action', t_range)
+#        self.plot_bg_rates('action', t_range)
         self.plot_retinal_displacement_and_reward(stim_range, t_range)
 
         output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[-1])
@@ -93,7 +94,7 @@ class PlotEverything(MetaAnalysisClass):
 
     def plot_bg_spikes(self, t_range):
 
-        ax0 = plt.subplot(self.gs[0])
+        ax0 = plt.subplot(self.gs[self.fig_cnt])
 
         marker = 'o'
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -140,6 +141,8 @@ class PlotEverything(MetaAnalysisClass):
         ax0.set_ylabel('BG cells\n')#D1  D2  Actions')
         self.remove_xtick_labels(ax0)
         self.remove_ytick_labels(ax0)
+        self.fig_cnt += 1
+
 
     def load_tuning_prop(self):
         print 'SuperPlot.load_tuning_prop ...'
@@ -158,7 +161,7 @@ class PlotEverything(MetaAnalysisClass):
         self.load_tuning_prop()
         tp_idx_sorted = self.tuning_prop_exc[:, sort_idx].argsort() # + 1 because nest indexing
         
-        ax1 = plt.subplot(self.gs[1])
+        ax1 = plt.subplot(self.gs[self.fig_cnt])
         merged_spike_fn = self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn_merged']
         print 'Plotter.plot_raster_sorted loads:', merged_spike_fn
         spikes_unsrtd = np.loadtxt(merged_spike_fn)
@@ -188,6 +191,7 @@ class PlotEverything(MetaAnalysisClass):
         self.plot_vertical_lines(ax1)
         self.set_xticks(ax1, tick_interval=self.tick_interval)
         self.remove_xtick_labels(ax1)
+        self.fig_cnt += 1
 
 
     def plot_input_spikes_sorted(self, ax, sort_idx=0):
@@ -228,11 +232,11 @@ class PlotEverything(MetaAnalysisClass):
 #        if len(rewards) == 1: # only one stimulus
 #            rewards = rewards.reshape((1, 1))
         K_vec = np.loadtxt(self.params['K_values_fn']) 
-        ax2 = plt.subplot(self.gs[2])
-        ax3 = plt.subplot(self.gs[3])
+        ax2 = plt.subplot(self.gs[self.fig_cnt])
+        self.fig_cnt += 1
+        ax3 = plt.subplot(self.gs[self.fig_cnt])
         color = 'b'
         ylim_ax2 = (-.05, 1.05)
-        ylim_ax3 = (-1.05, 1.05)
         for i_stim in xrange(stim_range[0], stim_range[-1] + 1):
             t0 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 1 * self.params['t_iteration'] # + 1 because stimulus appears in iteration 1 (not 0) within a stimulus
             t1 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 2 * self.params['t_iteration'] # + 2 for the consequence of the action
@@ -249,7 +253,6 @@ class PlotEverything(MetaAnalysisClass):
                 ax2.text(text_pos_x, 0.95, '%d' % action_idx, color='k', fontsize=12)
                 print 'Action %d:' % action_idx, self.bg_gids['action'][action_idx]
 
-        ax3.set_ylim(ylim_ax3)
         ax2.set_ylim(ylim_ax2)
         self.plot_vertical_lines(ax2)
         self.set_xticks(ax2, tick_interval=self.tick_interval)
@@ -277,6 +280,8 @@ class PlotEverything(MetaAnalysisClass):
             y_k = np.r_[y_k, y_]
         ax3.plot(x_k, y_k, c='k', lw=3)
         ax3.set_xlim((it_0 * self.params['t_iteration'], it_1 * self.params['t_iteration']))
+        ylim_ax3 = (-np.max(np.abs(K_vec)) * 1.05, np.max(np.abs(K_vec)))
+        ax3.set_ylim(ylim_ax3)
 
         ax3.set_ylabel('Reward')
         ax3.set_xlabel('Time [ms]')
@@ -288,6 +293,7 @@ class PlotEverything(MetaAnalysisClass):
         # plot horizontal line for retinal displacement
         xlim2 = ax2.get_xlim()
         ax2.plot((xlim2[0], xlim2[1]), (.5, .5), ls='-', c='k')
+        self.fig_cnt += 1
 
 
     def plot_bg_rates(self, cell_type, t_range):
@@ -295,7 +301,7 @@ class PlotEverything(MetaAnalysisClass):
         binsize = 10.
         n_cells_per_pop = self.params['n_cells_per_%s' % cell_type]
         n_bins = np.int((t_range[1] - t_range[0]) / binsize)
-        ax0 = plt.subplot(self.gs[1])
+        ax0 = plt.subplot(self.gs[self.fig_cnt])
 
         # build a color scheme
         # define the colormap
@@ -325,6 +331,7 @@ class PlotEverything(MetaAnalysisClass):
 
         plt.legend()
         print 'finished'
+        self.fig_cnt += 1
 
 
     def plot_vertical_lines(self, ax):
