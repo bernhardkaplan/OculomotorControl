@@ -392,7 +392,7 @@ if __name__ == '__main__':
     #####################
     #   P L O T T I N G 
     #####################
-    if not params['Cluster'] or params['Cluster_Milner']:
+    if not params['Cluster']:
         from PlottingScripts.PlotBGActivity import run_plot_bg
         from PlottingScripts.PlotMPNActivity import MetaAnalysisClass
         from PlottingScripts.SuperPlot import PlotEverything
