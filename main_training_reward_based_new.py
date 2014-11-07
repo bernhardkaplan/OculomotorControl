@@ -12,9 +12,6 @@ import time
 import os
 import utils
 from copy import deepcopy
-from PlottingScripts.PlotBGActivity import run_plot_bg
-from PlottingScripts.PlotMPNActivity import MetaAnalysisClass
-from PlottingScripts.SuperPlot import PlotEverything
 
 try: 
     from mpi4py import MPI
@@ -312,6 +309,7 @@ if __name__ == '__main__':
     GP = simulation_parameters.global_parameters()
     if len(sys.argv) < 2:
         params = GP.params
+        old_params = None
     else:
         old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
         old_params = utils.convert_to_NEST_conform_dict(old_params_json)
@@ -337,8 +335,11 @@ if __name__ == '__main__':
 
     # keep track of trained stimuli and d1/d2 actions that have been trained
     trained_stimuli = []
-    d1_actions_trained = { i : [] for i in xrange(params['n_stim'])}
-    d2_actions_trained = { i : [] for i in xrange(params['n_stim'])}
+    d1_actions_trained = {}
+    d2_actions_trained = {}
+    for i in xrange(params['n_stim']):
+        d1_actions_trained[i] = []
+        d2_actions_trained[i] = []
 
     ####################################
     #   T R A I N   A   S T I M U L U S 
@@ -350,7 +351,13 @@ if __name__ == '__main__':
         order_of_stim = range(params['n_training_stim_per_cycle'])
         np.random.shuffle(order_of_stim) 
 
-        actions_per_stim = [{a: 0 for a in xrange(params['n_actions'])} for i in xrange(params['n_training_stim_per_cycle'])] 
+        #actions_per_stim = [{a: 0 for a in xrange(params['n_actions'])} for i in xrange(params['n_training_stim_per_cycle'])] 
+        actions_per_stim = []
+        for i in xrange(params['n_training_stim_per_cycle']):
+            d = {}
+            for a in xrange(params['n_actions']):
+                d[a] = 0
+            actions_per_stim.append(d)
 
         for i_ in xrange(params['n_training_stim_per_cycle']):
             # pick a stimulus to train
@@ -421,12 +428,16 @@ if __name__ == '__main__':
     #####################
     #   P L O T T I N G 
     #####################
-    if pc_id == 0:
-        n_stim = 1
-        print 'Running analysis...'
-        P = PlotEverything(sys.argv, verbose=True)
-        run_plot_bg(params, None)
-#        run_plot_bg(params, (0, n_stim))
-        MAC = MetaAnalysisClass([params['folder_name']])
-        MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(n_stim)])
+    if not params['Cluster'] or params['Cluster_Milner']:
+        from PlottingScripts.PlotBGActivity import run_plot_bg
+        from PlottingScripts.PlotMPNActivity import MetaAnalysisClass
+        from PlottingScripts.SuperPlot import PlotEverything
+        if pc_id == 0:
+            n_stim = 1
+            print 'Running analysis...'
+            P = PlotEverything(sys.argv, verbose=True)
+            run_plot_bg(params, None)
+    #        run_plot_bg(params, (0, n_stim))
+            MAC = MetaAnalysisClass([params['folder_name']])
+            MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(n_stim)])
 

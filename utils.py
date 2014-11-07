@@ -120,7 +120,10 @@ def get_bg_gid_ranges(params):
     f = file(params['bg_gids_fn'], 'r')
     gids = json.load(f)
     cell_types = ['d1', 'd2', 'actions']
-    gid_ranges = {'%s' % ct : [] for ct in cell_types}
+    gid_ranges = {}
+    for ct in cell_types:
+        gid_ranges[xt] = []
+    #gid_ranges = {'%s' % ct : [] for ct in cell_types}
 
     for ct in cell_types:
         gid_ranges[ct] = (np.min(gids[ct]), np.max(gids[ct]))
