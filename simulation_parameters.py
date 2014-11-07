@@ -446,8 +446,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 2.
-        self.params['neg_kappa'] = -2. # for the nonoptimal decision
+        self.params['pos_kappa'] = 3.
+        self.params['neg_kappa'] = -3. # for the nonoptimal decision
 
         # gain parameters
         if self.params['training']:
@@ -462,8 +462,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 1.2
-        self.params['gain_MT_d2'] = 1.2
+        self.params['gain_MT_d1'] = 1.5
+        self.params['gain_MT_d2'] = 1.5
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 100.
         self.params['d2_gain_after_training'] = 100.
@@ -607,8 +607,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 6.
-        self.params['str_to_output_inh_w'] = -6.
+        self.params['str_to_output_exc_w'] = 7.
+        self.params['str_to_output_inh_w'] = -7.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
