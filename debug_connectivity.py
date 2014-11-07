@@ -13,8 +13,8 @@ def get_sources(params, conn_data, bg_cell_gids, action_idx):
     post_gids = bg_cell_gids['d1'][action_idx]
     all_source_gids = []
     w_in_sum = 0.
-    w_in_mean = np.zeros(params['num_msn_d1'])
-    w_in_mean_sum = np.zeros(params['num_msn_d1'])
+    w_in_mean = np.zeros(params['n_cells_per_d1'])
+    w_in_mean_sum = np.zeros(params['n_cells_per_d1'])
     for i_, gid in enumerate(post_gids):
         sources = utils.get_sources(conn_data, gid)
         all_source_gids += sources[:, 0].tolist()

@@ -183,7 +183,7 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time8: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     if pc_id == 0:
-        np.savetxt(testing_params['actions_taken_fn'], actions)
+        np.savetxt(testing_params['action_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
         np.savetxt(testing_params['motion_params_testing_fn'], VI.motion_params)
         np.savetxt(testing_params['motion_params_training_fn'], test_stim_params)

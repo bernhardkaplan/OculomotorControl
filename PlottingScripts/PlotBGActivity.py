@@ -59,7 +59,7 @@ class ActivityPlotter(object):
             add = str(action_idx)
         else:
             add = ''
-        if cell_type == 'actions':
+        if cell_type == 'action':
             volt_fns = utils.find_files(self.params['spiketimes_folder'], 'bg_action_volt_' + add)
         elif cell_type == 'd1':
             volt_fns = utils.find_files(self.params['spiketimes_folder'], 'd1_volt_' + add)
@@ -98,7 +98,7 @@ class ActivityPlotter(object):
             print 'no fig created'
 
         for naction in xrange(self.params['n_actions']):
-            print 'Plotting %s action %d' % (cell_type, naction)
+            print 'Plotting raster for %s action %d' % (cell_type, naction)
             data = np.loadtxt(self.params['spiketimes_folder'] + self.params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat')
             if xlim != None and data.size > 2:
                 data = utils.get_spiketimes_within_interval(data, xlim[0], xlim[1])
@@ -133,9 +133,9 @@ def run_plot_bg(params, stim_range):
     print 'Plotted the stim_range', stim_range
     print 'Merging spikes ...'
     if params['with_d2']:
-        cell_types = ['d1', 'd2', 'actions']#, 'supervisor']
+        cell_types = ['d1', 'd2', 'action']#, 'supervisor']
     else:
-        cell_types = ['d1', 'actions']#, 'supervisor']
+        cell_types = ['d1', 'action']#, 'supervisor']
 
     if stim_range == None:
         if params['training']:

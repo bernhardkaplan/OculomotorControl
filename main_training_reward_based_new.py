@@ -310,12 +310,17 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         params = GP.params
         old_params = None
+        trained_stimuli = []
     else:
         old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
         old_params = utils.convert_to_NEST_conform_dict(old_params_json)
         params = GP.params
         write_params = True
         load_weights = True
+
+        # load already trained stimuli
+        stim_offset = len(old_params['trained_stimuli'])
+        trained_stimuli = old_params['trained_stimuli']
 
     if pc_id == 0 and write_params:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
@@ -334,13 +339,17 @@ if __name__ == '__main__':
     RBL.prepare_training(old_params)
 
     # keep track of trained stimuli and d1/d2 actions that have been trained
-    trained_stimuli = []
+    # python 2.6
     d1_actions_trained = {}
     d2_actions_trained = {}
     for i in xrange(params['n_stim']):
         d1_actions_trained[i] = []
         d2_actions_trained[i] = []
+    # python 2.7
+    #d1_actions_trained = { i : [] for i in xrange(params['n_stim'])}
+    #d2_actions_trained = { i : [] for i in xrange(params['n_stim'])}
 
+    n_training_trials = 0 
     ####################################
     #   T R A I N   A   S T I M U L U S 
     ####################################
@@ -366,10 +375,11 @@ if __name__ == '__main__':
             print 'stim_params for i_stim %d' % i_stim, stim_params
             # reinitialize the counters how often an action has been selected for each stimulus
             cnt_trial = 0  # counts the total number of trials for any action (including pos and neg reward trials)
-            trained_stimuli.append(i_stim)
+            trained_stimuli.append((i_stim, list(stim_params)))
             while (cnt_trial < params['n_max_trials_same_stim']): # independent of rewards
 
                 v_and_action, R = RBL.present_stimulus_and_train(stim_params)
+                n_training_trials += 1
                 trained_action = v_and_action[2]
                 actions_per_stim[i_stim][trained_action] += 1
 
@@ -386,6 +396,7 @@ if __name__ == '__main__':
 
 
     # update the trained_stimuli parameter in the Parameters/simulation_parameters.json file
+    params['n_training_trials'] = n_training_trials
     params['trained_stimuli'] = trained_stimuli
     params['d1_actions_trained'] = d1_actions_trained
     params['d2_actions_trained'] = d2_actions_trained

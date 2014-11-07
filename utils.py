@@ -120,9 +120,11 @@ def get_bg_gid_ranges(params):
     f = file(params['bg_gids_fn'], 'r')
     gids = json.load(f)
     cell_types = ['d1', 'd2', 'actions']
+    # python 2.6
     gid_ranges = {}
     for ct in cell_types:
         gid_ranges[xt] = []
+    # python 2.7
     #gid_ranges = {'%s' % ct : [] for ct in cell_types}
 
     for ct in cell_types:
@@ -234,7 +236,7 @@ def compare_actions_taken(training_params, test_params):
 def get_min_max_gids_for_bg(params, cell_type):
     """
     cell_type -- string possibly values:
-        ['d1', 'd2', 'actions', 'supervisor']
+        ['d1', 'd2', 'action', 'supervisor']
     """
     fn = params['bg_gids_fn']
     f = file(fn, 'r')
@@ -399,7 +401,7 @@ def merge_spikes(params):
     if not os.path.exists(merged_spike_fn):
         merge_and_sort_files(params['spiketimes_folder'] + params['mpn_exc_spikes_fn'], merged_spike_fn)
 
-    cell_types = ['d1', 'd2', 'actions']
+    cell_types = ['d1', 'd2', 'action']
     MS = MergeSpikefiles.MergeSpikefiles(params)
     for cell_type in cell_types:
         for naction in range(params['n_actions']):

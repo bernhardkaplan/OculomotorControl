@@ -57,7 +57,7 @@ class VoltPlotter(object):
                 if gid in subpop:
                     fn_base = self.params['d2_volt_fn'] + '%d-' % (i_)
                     return fn_base
-            for i_, subpop in enumerate(bg_gids['actions']):
+            for i_, subpop in enumerate(bg_gids['action']):
                 if gid in subpop:
                     fn_base = self.params['actions_volt_fn'] + '%d-' % (i_)
                     return fn_base
@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
     f = file(params['bg_gids_fn'], 'r')
     bg_gids = json.load(f)
-    action_gids = bg_gids['actions']
+    action_gids = bg_gids['action']
     print 'debug', action_gids
     plot_voltage_gids_all_actions(params, action_gids)
 

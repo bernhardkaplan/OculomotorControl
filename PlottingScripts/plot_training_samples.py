@@ -116,6 +116,7 @@ class Plotter(object):
         # define the bins and normalize
         bounds = range(self.params['n_actions'])
         norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+        rgba_colors = m.to_rgba(bounds)
         m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
         m.set_array(np.arange(bounds[0], bounds[-1], 1.))
         cb = fig.colorbar(m)
