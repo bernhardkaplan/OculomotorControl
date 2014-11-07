@@ -8,8 +8,8 @@ import simulation_parameters
 import utils
 import re
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
 import pylab
 import MergeSpikefiles
 import PlotMPNActivity
