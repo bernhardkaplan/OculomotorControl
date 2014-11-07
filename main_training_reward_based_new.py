@@ -245,11 +245,11 @@ if __name__ == '__main__':
     write_params = True
     load_weights = False
     GP = simulation_parameters.global_parameters()
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2: # run the simulation based on simulation_parameters
         params = GP.params
         old_params = None
         trained_stimuli = []
-    else:
+    else: # run old parameters (and connectivity) and continue training
         old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
         old_params = utils.convert_to_NEST_conform_dict(old_params_json)
         params = GP.params
@@ -259,6 +259,16 @@ if __name__ == '__main__':
         # load already trained stimuli
         stim_offset = len(old_params['trained_stimuli'])
         trained_stimuli = old_params['trained_stimuli']
+        if params['continue_training']:
+            training_params_fn = sys.argv[2]
+            training_params = np.loadtxt(training_params_fn)
+            continue_training_idx = int(sys.argv[3])
+#            assert (training_params[:, 0].size > continue_training_idx), 'continue_training_idx (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
+#                    (continue_training_idx, training_params_fn, training_params[:, 0].size)
+            n_max = continue_training_idx + params['n_training_cycles'] * params['n_training_stim_per_cycle']
+            assert (training_params[:, 0].size > n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
+                    (n_max, training_params_fn, training_params[:, 0].size)
+
 
     if pc_id == 0 and write_params:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
@@ -275,6 +285,8 @@ if __name__ == '__main__':
     ###################
     RBL = RewardBasedLearning(params, comm)
     RBL.prepare_training(old_params)
+    if old_params != None and params['continue_training']:
+        RBL.training_stimuli = training_params
 
     # keep track of trained stimuli and d1/d2 actions that have been trained
     # python 2.6
@@ -308,7 +320,10 @@ if __name__ == '__main__':
 
         for i_ in xrange(params['n_training_stim_per_cycle']):
             # pick a stimulus to train
-            i_stim = order_of_stim[i_]
+            if old_params == None or not params['continue_training']:
+                i_stim = order_of_stim[i_]
+            else:
+                i_stim = continue_training_idx + i_cycle * params['n_training_stim_per_cycle'] + i_
             stim_params = RBL.training_stimuli[i_stim, :]
             print 'stim_params for i_stim %d' % i_stim, stim_params
             # reinitialize the counters how often an action has been selected for each stimulus

@@ -35,6 +35,12 @@ tp = VI.set_tuning_prop_1D_with_const_fovea(cell_type='exc')
 
 training_stimuli = VI.get_training_stimuli()
 print 'different training_stimuli \n', training_stimuli
+
+output_fn = 'training_stimuli_nV%d_nX%d.dat' % (params['n_training_v'], params['n_training_x'])
+print 'Saving the training stimuli to:', output_fn
+np.savetxt(output_fn, training_stimuli)
+exit(1)
+
 repeat_action_threshold = 0.05
 
 for i_cycle in xrange(params['n_training_cycles']):
