@@ -345,7 +345,7 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    cell_type_post = 'd1'
+    cell_type_post = 'd2'
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
     bcpnn_params['K'] = 1.
 #    bcpnn_params['p_i'] = 0.01
