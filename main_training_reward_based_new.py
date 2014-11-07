@@ -242,24 +242,20 @@ class RewardBasedLearning(object):
 if __name__ == '__main__':
 
     t0 = time.time()
-    write_params = True
-    load_weights = False
+    old_params = None
     GP = simulation_parameters.global_parameters()
     if len(sys.argv) < 2: # run the simulation based on simulation_parameters
         params = GP.params
-        old_params = None
         trained_stimuli = []
     else: # run old parameters (and connectivity) and continue training
-        old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
-        old_params = utils.convert_to_NEST_conform_dict(old_params_json)
-        params = GP.params
-        write_params = True
-        load_weights = True
+        if os.path.isdir(sys.argv[1]):
+            old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
+            old_params = utils.convert_to_NEST_conform_dict(old_params_json)
+            params = GP.params
+            # load already trained stimuli
+            trained_stimuli = old_params['trained_stimuli']
 
-        # load already trained stimuli
-        stim_offset = len(old_params['trained_stimuli'])
-        trained_stimuli = old_params['trained_stimuli']
-        if params['continue_training']:
+        else: 
             training_params_fn = sys.argv[2]
             training_params = np.loadtxt(training_params_fn)
             continue_training_idx = int(sys.argv[3])
@@ -270,7 +266,7 @@ if __name__ == '__main__':
                     (n_max, training_params_fn, training_params[:, 0].size)
 
 
-    if pc_id == 0 and write_params:
+    if pc_id == 0:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     if pc_id == 0:
         utils.remove_files_from_folder(params['spiketimes_folder'])
