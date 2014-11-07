@@ -43,10 +43,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 80
+            self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-        self.params['softmax_action_selection_temperature'] = 1.0
+        self.params['softmax_action_selection_temperature'] = 2.0
         self.params['training'] = True
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
@@ -241,7 +241,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['connect_noise_to_bg'] = True
         self.params['f_noise_exc_output'] = 1000.
         self.params['f_noise_inh_output'] = 1000.
-        self.params['w_noise_exc_output'] = 1.6
+        self.params['w_noise_exc_output'] = 1.7
         self.params['w_noise_inh_output'] = -1.0
 
         self.params['f_noise_exc_d1'] = 1.
