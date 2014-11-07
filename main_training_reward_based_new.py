@@ -429,7 +429,7 @@ if __name__ == '__main__':
     #####################
     #   P L O T T I N G 
     #####################
-    if pc_id == 0:
+    if pc_id == 0 and params['Cluster']:
         n_stim = 1
         print 'Running analysis...'
         if old_params == None:
