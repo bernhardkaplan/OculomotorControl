@@ -43,7 +43,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 120 
+            self.params['total_num_virtual_procs'] = 48
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 1.0
@@ -241,7 +241,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['connect_noise_to_bg'] = True
         self.params['f_noise_exc_output'] = 1000.
         self.params['f_noise_inh_output'] = 1000.
-        self.params['w_noise_exc_output'] = 1.5
+        self.params['w_noise_exc_output'] = 1.6
         self.params['w_noise_inh_output'] = -1.0
 
         self.params['f_noise_exc_d1'] = 1.
@@ -436,7 +436,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
-        self.params['fmax'] = 300.
+        self.params['fmax'] = 200.
         self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
         if self.params['training']:# and not self.params['reward_based_learning']:
             self.params['gain'] = 0.
@@ -462,8 +462,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 1.2
-        self.params['gain_MT_d2'] = 1.2
+        self.params['gain_MT_d1'] = 2.0 
+        self.params['gain_MT_d2'] = 2.0
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 100.
         self.params['d2_gain_after_training'] = 100.
