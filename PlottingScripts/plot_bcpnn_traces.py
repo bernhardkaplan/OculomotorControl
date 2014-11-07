@@ -26,8 +26,8 @@ def create_K_vectors(params, stim_range, dt=0.1, tgt_cell_type='d1'):
     K_vec_compute = np.zeros(n)
     K_vec_plot = np.zeros(n)
     for it_ in xrange(stim_range[0] * params['n_iterations_per_stim'], stim_range[1] * params['n_iterations_per_stim']):
-        idx_1 = np.int(it_ * params['t_iteration'] / dt)
-        idx_2 = np.int((it_ + 1) * params['t_iteration'] / dt)
+        idx_1 = np.int((it_ - stim_range[0] * params['n_iterations_per_stim']) * params['t_iteration'] / dt) 
+        idx_2 = np.int((it_ + 1 - stim_range[0] * params['n_iterations_per_stim']) * params['t_iteration'] / dt) 
         if (rewards[it_] < 0) and tgt_cell_type == 'd1':
             R = 0
         elif (rewards[it_] < 0) and tgt_cell_type == 'd2':
@@ -114,8 +114,8 @@ class TracePlotter(object):
             for post_gid in post_gids:
                 idx_post = (np.array(self.d_post[:, 0] == post_gid)).nonzero()[0]
                 st_post = self.d_post[idx_post, 1]
-                s_pre = BCPNN.convert_spiketrain_to_trace(st_pre, self.t_range[1])
-                s_post = BCPNN.convert_spiketrain_to_trace(st_post, self.t_range[1])
+                s_pre = BCPNN.convert_spiketrain_to_trace(st_pre, self.t_range[1], t_min=self.t_range[0])
+                s_post = BCPNN.convert_spiketrain_to_trace(st_post, self.t_range[1], t_min=self.t_range[0])
 
                 wij, bias, pi, pj, pij, ei, ej, eij, zi, zj = BCPNN.get_spiking_weight_and_bias(s_pre, s_post, self.params['params_synapse_%s_MT_BG' % self.cell_type_post], K_vec=K_vec)
                 bcpnn_traces.append([wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, s_pre, s_post])
@@ -125,12 +125,12 @@ class TracePlotter(object):
 
 
 
-    def plot_trace_with_spikes(self, bcpnn_traces, bcpnn_params, dt, output_fn=None, fig=None, \
+    def plot_trace_with_spikes(self, bcpnn_traces, bcpnn_params, dt, t_offset=0., output_fn=None, fig=None, \
             color_pre='b', color_post='g', color_joint='r', style_joint='-', K_vec=None, \
             extra_txt=None, w_title=None):
         # unpack the bcpnn_traces
         wij, bias, pi, pj, pij, ei, ej, eij, zi, zj, pre_trace, post_trace = bcpnn_traces
-        t_axis = dt * np.arange(zi.size)
+        t_axis = dt * np.arange(zi.size) + t_offset
         plots = []
         pylab.rcParams.update({'figure.subplot.hspace': 0.50})
         if fig == None:
@@ -347,7 +347,7 @@ if __name__ == '__main__':
 
     cell_type_post = 'd2'
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
-    bcpnn_params['K'] = 1.
+    bcpnn_params['K'] = params['pos_kappa']
 #    bcpnn_params['p_i'] = 0.01
 #    bcpnn_params['tau_i'] = 20.
 #    bcpnn_params['tau_j'] = 10.
@@ -359,19 +359,21 @@ if __name__ == '__main__':
 #    action_idx = int(sys.argv[5])
 #    script_id = int(sys.argv[6]) # for identification of parameter set
 #    param_set_id = int(sys.argv[7])
-    action_idx = 0
+    action_idx = 11
     script_id = 0 
     param_set_id = 0
 
     dt = params['dt']
-    stim_range = (0, params['n_training_trials'])
+#    stim_range = (0, params['n_training_trials'])
+    stim_range = (8, 18)
 #    stim_range = (0, params['n_stim'])
     n_stim = stim_range[1] - stim_range[0]
-    plot_range = (0, n_stim * params['n_iterations_per_stim'])
+#    plot_range = (0, n_stim * params['n_iterations_per_stim'])
+    plot_range = (stim_range[0] * params['n_iterations_per_stim'], stim_range[1] * params['n_iterations_per_stim'])
     K_values = np.loadtxt(params['K_values_fn'])
     K_vec_compute, K_vec_plot = create_K_vectors(params, stim_range, dt, cell_type_post)
 
-    gain = 1.
+    gain = 2.
     fn_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
     fn_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
     if (not os.path.exists(fn_pre)) or (not os.path.exists(fn_post)):
@@ -381,7 +383,9 @@ if __name__ == '__main__':
     TP.load_spikes(fn_pre, fn_post)
     n_pre = 5
     n_post = 1
-    it_range_pre_cell_selection = (0, 3)
+    it_range_pre_cell_selection = (0 + stim_range[0] * params['n_iterations_per_stim'], 3 + stim_range[0] * params['n_iterations_per_stim'])
+#    it_range_pre_cell_selection = (0, 3)
+
     pre_gids = TP.select_cells_most_active_neurons(TP.pre_spikes, n_pre, it_range_pre_cell_selection)
 
     post_gids = TP.bg_gids[cell_type_post][action_idx]
@@ -392,10 +396,11 @@ if __name__ == '__main__':
     w_means = get_mean_weights(params, all_traces)
     w_mean, w_std = np.mean(w_means), np.std(w_means)
     print 'w_mean:', w_mean, '+-', w_std
+    t_offset = stim_range[0] * params['n_iterations_per_stim'] * params['t_iteration']
     for i_, traces in enumerate(all_traces):
         info_txt = 'Action idx: %d' % (action_idx)
         w_title = '$w_{mean}=%.2f \pm %.2f$' % (w_mean, w_std)
-        fig = TP.plot_trace_with_spikes(traces, bcpnn_params, dt, output_fn=output_fn, fig=fig, \
+        fig = TP.plot_trace_with_spikes(traces, bcpnn_params, dt, t_offset=t_offset, output_fn=output_fn, fig=fig, \
             K_vec=K_vec_plot, extra_txt=info_txt, w_title=w_title)
     
     # cell_type_post 
