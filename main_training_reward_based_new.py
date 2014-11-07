@@ -212,68 +212,6 @@ class RewardBasedLearning(object):
         self.advance_iteration()
 
 
-
-    def test_after_training(self, stim_params):
-
-        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., self.params['d1_gain_after_training'], self.params['param_msn_d1']['gain'])
-        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, 0., self.params['d2_gain_after_training'], self.params['param_msn_d2']['gain'])
-
-        self.VI.current_motion_params = deepcopy(stim_params)
-        self.BG.stop_supervisor()
-        self.BG.stop_efference_copy()
-        for i_ in xrange(self.params['n_iterations_per_stim'] - 1):
-            stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.])
-            self.MT.update_input(stim) 
-            if params['debug_mpn']:
-                print 'Saving spike trains...'
-                utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
-            print 'DEBUG, pc_id %d time %.2f stim' % (self.pc_id, nest.GetKernelStatus()['time']), stim
-            self.motion_params.append(self.VI.current_motion_params)
-            nest.Simulate(self.params['t_iteration'])
-            state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-            self.network_states.append(state_)
-            print 'debug iteration_cnt:', self.iteration_cnt, 'bg.iteration', self.BG.iteration, 'params[n_iterations]:', self.params['n_iterations']
-            next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
-            R = utils.get_reward_from_perceived_states(stim_params[0], state_[0])
-            self.rewards.append(R)
-            self.actions_taken.append([next_action[0], next_action[1], next_action[2], R])
-            self.advance_iteration()
-
-        # run 'silent iterations'
-        stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
-        self.MT.update_input(stim) 
-        nest.Simulate(self.params['t_iteration'])
-        self.advance_iteration()
-
-
-
-    def run_one_iteration(self, stim_params):
-        # -------------------------------
-        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., self.params['params_synapse_d1_MT_BG']['gain'], self.params['param_msn_d1']['gain'])
-        self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, 0., self.params['params_synapse_d2_MT_BG']['gain'], self.params['param_msn_d2']['gain'])
-        self.VI.current_motion_params = deepcopy(stim_params)
-        self.BG.stop_supervisor()
-        self.BG.stop_efference_copy()
-        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.])
-        self.MT.update_input(stim) 
-        if params['debug_mpn']:
-            print 'Saving spike trains...'
-            utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
-        self.motion_params[self.iteration_cnt, :4] = self.VI.current_motion_params # store the current motion parameters before they get updated
-        nest.Simulate(self.params['t_iteration'])
-        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-        self.network_states[self.iteration_cnt, :] = state_
-        next_action = self.BG.get_action() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
-        self.actions_taken[self.iteration_cnt, :] = next_action
-        self.MT.advance_iteration()
-        R = self.BG.get_reward_from_action(next_action[2], self.motion_params[self.iteration_cnt, :4], training=False)
-        self.rewards[self.iteration_cnt + 1] = R # + 1 because the reward will affect the next iteration
-        self.iteration_cnt += 1
-        return R
-        
-
-
-
     def trigger_pre_spikes(self):
         # -------------------------------
         self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD1, 0., 0., 0.)

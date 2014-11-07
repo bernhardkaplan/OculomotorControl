@@ -39,7 +39,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
+        self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
@@ -446,8 +446,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 2.
-        self.params['neg_kappa'] = -2. # for the nonoptimal decision
+        self.params['pos_kappa'] = 3.
+        self.params['neg_kappa'] = -3. # for the nonoptimal decision
 
         # gain parameters
         if self.params['training']:
@@ -607,8 +607,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 6.
-        self.params['str_to_output_inh_w'] = -6.
+        self.params['str_to_output_exc_w'] = 7.
+        self.params['str_to_output_inh_w'] = -7.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
