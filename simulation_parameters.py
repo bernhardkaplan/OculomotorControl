@@ -39,16 +39,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
+        self.params['Cluster'] = True
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 48
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-        self.params['softmax_action_selection_temperature'] = 1.0
+        self.params['softmax_action_selection_temperature'] = 2.0
         self.params['training'] = True
-        self.params['continue_training'] = False
+        self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
@@ -152,7 +152,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_NoNoise_titer%d' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_NoNoise_titer%d_temp%.1f' % (self.params['t_iteration'], self.params['softmax_action_selection_temperature'])
             if self.params['continue_training']:
                 self.params['sim_id'] += '_CNT'
 
@@ -177,7 +177,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['master_seed'] = 111
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 0
+        self.params['visual_stim_seed'] = 1
         self.params['tuning_prop_seed'] = 0
         self.params['basal_ganglia_seed'] = 5
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
@@ -241,7 +241,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['connect_noise_to_bg'] = True
         self.params['f_noise_exc_output'] = 1000.
         self.params['f_noise_inh_output'] = 1000.
-        self.params['w_noise_exc_output'] = 1.6
+        self.params['w_noise_exc_output'] = 1.7
         self.params['w_noise_inh_output'] = -1.0
 
         self.params['f_noise_exc_d1'] = 1.
@@ -462,8 +462,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 2.0 
-        self.params['gain_MT_d2'] = 2.0
+        self.params['gain_MT_d1'] = 3.0 
+        self.params['gain_MT_d2'] = 3.0
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 100.
         self.params['d2_gain_after_training'] = 100.
@@ -607,8 +607,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 7.
-        self.params['str_to_output_inh_w'] = -7.
+        self.params['str_to_output_exc_w'] = 8.
+        self.params['str_to_output_inh_w'] = -8.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
