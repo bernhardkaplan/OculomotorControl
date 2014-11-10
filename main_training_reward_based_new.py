@@ -297,7 +297,7 @@ if __name__ == '__main__':
     # python 2.6
     d1_actions_trained = {}
     d2_actions_trained = {}
-    for i in xrange(params['n_stim']):
+    for i in xrange(n_max):
         d1_actions_trained[i] = []
         d2_actions_trained[i] = []
     # python 2.7
@@ -317,7 +317,8 @@ if __name__ == '__main__':
 
         #actions_per_stim = [{a: 0 for a in xrange(params['n_actions'])} for i in xrange(params['n_training_stim_per_cycle'])] 
         actions_per_stim = []
-        for i in xrange(params['n_training_stim_per_cycle']):
+        #for i in xrange(params['n_training_stim_per_cycle']):
+        for i in xrange(n_max):
             d = {}
             for a in xrange(params['n_actions']):
                 d[a] = 0
