@@ -429,7 +429,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #Connections Actions and States to RP
         self.tau_i = 20.
         self.tau_j = 1.
-        self.tau_e = 20.
+        self.tau_e = .1
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
             self.tau_p = 50000.

@@ -12,6 +12,28 @@ import scipy.stats as stats
 import random
 import string
 
+
+def get_start_and_stop_iteration_for_stimulus_from_motion_params(motion_params_fn):
+    """
+    Returns a dictionary with (x, v) as key and {'start': <int>, 'stop' <int>} as value, indicating 
+    the start and stop iteration (line in the motion_params_fn) during which the stimulus has been trained.
+    """
+
+    d = np.loadtxt(motion_params_fn)
+    trained_stim = {}
+    cnt = 0
+    for i_ in xrange(d.shape[0]):
+        stim_params = (d[i_, 0], d[i_, 2])
+        if not trained_stim.has_key(stim_params):
+            trained_stim[stim_params] = {}
+            trained_stim[stim_params]['start'] = i_
+            cnt += 1
+        else:
+            trained_stim[stim_params]['stop'] = i_ + 1
+            trained_stim[stim_params]['cnt'] = cnt
+    return trained_stim
+
+
 def draw_from_discrete_distribution(prob_dist, size=1):
     """
     prob_dist -- array containing probabilities
