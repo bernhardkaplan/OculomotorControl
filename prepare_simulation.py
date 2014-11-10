@@ -2,7 +2,7 @@
 """
 This script needs to be run on a single core for a set of simulations individually.
 It will create the folder structure and print the parameter file,
-with which the simulation script NetworkSimModule is to be called.
+with which the desired main_ file is called, which in turn passes it on to the simulation modules NetworkSimModule, BasalGanglia etc.
 """
 import os
 import simulation_parameters
