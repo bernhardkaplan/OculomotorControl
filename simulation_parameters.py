@@ -39,16 +39,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 48
+            self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-        self.params['softmax_action_selection_temperature'] = 1.0
+        self.params['softmax_action_selection_temperature'] = 2.0
         self.params['training'] = True
-        self.params['continue_training'] = False
+        self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
@@ -67,9 +67,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 7# how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 2 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 11 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 3 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 20 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -177,9 +177,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['master_seed'] = 111
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 0
+        self.params['visual_stim_seed'] = 1
         self.params['tuning_prop_seed'] = 0
-        self.params['basal_ganglia_seed'] = 5
+        self.params['basal_ganglia_seed'] = 6
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
 #        self.params['debug_mpn'] = False
         self.params['debug_mpn'] = not self.params['Cluster']
@@ -241,7 +241,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['connect_noise_to_bg'] = True
         self.params['f_noise_exc_output'] = 1000.
         self.params['f_noise_inh_output'] = 1000.
-        self.params['w_noise_exc_output'] = 1.6
+        self.params['w_noise_exc_output'] = 1.7
         self.params['w_noise_inh_output'] = -1.0
 
         self.params['f_noise_exc_d1'] = 1.
