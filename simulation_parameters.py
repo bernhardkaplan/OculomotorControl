@@ -67,7 +67,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 10 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        #self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
@@ -81,6 +82,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        else:
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
+
+        self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
         self.params['frac_training_samples_from_grid'] = .0
         self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
         self.params['center_stim_width'] = .0 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
@@ -152,9 +155,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_NoNoise_titer%d' % (self.params['t_iteration'])
-            if self.params['continue_training']:
-                self.params['sim_id'] += '_CNT_11-21'
+                self.params['sim_id'] = 'RBL_titer%d' % (self.params['t_iteration'])
+            #if self.params['continue_training']:
+                #self.params['sim_id'] += '_CNT_11-21'
 
 #                if self.params['mixed_training_cycles']:
 #                    self.params['sim_id'] = 'RBL_NoNoise_mixed_titer%d' % (self.params['t_iteration'])
@@ -607,7 +610,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 7.
+        self.params['str_to_output_exc_w'] = 4.
         self.params['str_to_output_inh_w'] = -7.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
@@ -765,9 +768,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_nStim%dx%d_taup%d_gain%.2f_seeds_%d_%d/' % (self.params['sim_id'], \
-                        self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                        self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'], self.params['master_seed'], self.params['visual_stim_seed'])
+                folder_name = 'Training_%s_nStim%d_%d-%d_gain%.2f_seeds_%d_%d/' % (self.params['sim_id'], \
+                        self.params['n_stim_training'], self.params['stim_range'][0], self.params['stim_range'][1], 
+                        self.params['gain_MT_d2'], self.params['master_seed'], self.params['visual_stim_seed'])
             else:
                 if self.params['connect_d1_after_training']:
                     folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
