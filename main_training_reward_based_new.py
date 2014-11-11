@@ -242,35 +242,40 @@ class RewardBasedLearning(object):
 if __name__ == '__main__':
 
     t0 = time.time()
-    write_params = True
-    load_weights = False
+    old_params = None
     GP = simulation_parameters.global_parameters()
-    if len(sys.argv) < 2: # run the simulation based on simulation_parameters
+    trained_stimuli = []
+    info_text = "\nThere are different use cases:\n \
+    \tpython script_name [training_stimuli_fn] [training_stim_idx] \
+    \tpython script_name [folder_containing_connectivity] [training_stimuli_fn] [training_stim_idx] \
+    "
+    assert len(sys.argv) > 2, 'Missing training_stim_information and training_stim_idx!' + info_txt
+    if len(sys.argv) == 3:
+        training_params_fn = sys.argv[1]
+        training_params = np.loadtxt(training_params_fn)
+        continue_training_idx = int(sys.argv[2])
         params = GP.params
-        old_params = None
-        trained_stimuli = []
-    else: # run old parameters (and connectivity) and continue training
+        continue_training_idx = 0
+    elif len(sys.argv) == 4:
         old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
         old_params = utils.convert_to_NEST_conform_dict(old_params_json)
         params = GP.params
-        write_params = True
-        load_weights = True
-
         # load already trained stimuli
-        stim_offset = len(old_params['trained_stimuli'])
         trained_stimuli = old_params['trained_stimuli']
-        if params['continue_training']:
-            training_params_fn = sys.argv[2]
-            training_params = np.loadtxt(training_params_fn)
-            continue_training_idx = int(sys.argv[3])
+        training_params_fn = sys.argv[2]
+        continue_training_idx = int(sys.argv[3])
 #            assert (training_params[:, 0].size > continue_training_idx), 'continue_training_idx (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
 #                    (continue_training_idx, training_params_fn, training_params[:, 0].size)
-            n_max = continue_training_idx + params['n_training_cycles'] * params['n_training_stim_per_cycle']
-            assert (training_params[:, 0].size > n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
-                    (n_max, training_params_fn, training_params[:, 0].size)
+    else:
+        print 'Wrong number of sys.argv!', info_txt
+        exit(1)
 
+    training_params = np.loadtxt(training_params_fn)
+    n_max = continue_training_idx + params['n_training_cycles'] * params['n_training_stim_per_cycle']
+    assert (training_params[:, 0].size > n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
+            (n_max, training_params_fn, training_params[:, 0].size)
 
-    if pc_id == 0 and write_params:
+    if pc_id == 0:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     if pc_id == 0:
         utils.remove_files_from_folder(params['spiketimes_folder'])
@@ -285,8 +290,8 @@ if __name__ == '__main__':
     ###################
     RBL = RewardBasedLearning(params, comm)
     RBL.prepare_training(old_params)
-    if old_params != None and params['continue_training']:
-        RBL.training_stimuli = training_params
+    #if old_params != None and params['continue_training']:
+    RBL.training_stimuli = training_params
 
     # keep track of trained stimuli and d1/d2 actions that have been trained
     # python 2.6
@@ -392,7 +397,7 @@ if __name__ == '__main__':
     #####################
     #   P L O T T I N G 
     #####################
-    if not params['Cluster'] or params['Cluster_Milner']:
+    if not params['Cluster']:
         from PlottingScripts.PlotBGActivity import run_plot_bg
         from PlottingScripts.PlotMPNActivity import MetaAnalysisClass
         from PlottingScripts.SuperPlot import PlotEverything
