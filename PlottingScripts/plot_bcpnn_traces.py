@@ -351,7 +351,7 @@ if __name__ == '__main__':
 #    bcpnn_params['p_i'] = 0.01
 #    bcpnn_params['tau_i'] = 20.
 #    bcpnn_params['tau_j'] = 10.
-#    bcpnn_params['tau_e'] = 100.
+#    bcpnn_params['tau_e'] = .1
 
 #    bcpnn_params['tau_i'] = float(sys.argv[2])
 #    bcpnn_params['tau_e'] = float(sys.argv[3])
@@ -359,13 +359,13 @@ if __name__ == '__main__':
 #    action_idx = int(sys.argv[5])
 #    script_id = int(sys.argv[6]) # for identification of parameter set
 #    param_set_id = int(sys.argv[7])
-    action_idx = 11
+    action_idx = 1
     script_id = 0 
     param_set_id = 0
 
     dt = params['dt']
 #    stim_range = (0, params['n_training_trials'])
-    stim_range = (8, 18)
+    stim_range = (0, 62)
 #    stim_range = (0, params['n_stim'])
     n_stim = stim_range[1] - stim_range[0]
 #    plot_range = (0, n_stim * params['n_iterations_per_stim'])
@@ -373,7 +373,7 @@ if __name__ == '__main__':
     K_values = np.loadtxt(params['K_values_fn'])
     K_vec_compute, K_vec_plot = create_K_vectors(params, stim_range, dt, cell_type_post)
 
-    gain = 2.
+    gain = params['gain_MT_%s' % cell_type_post]
     fn_pre = params['spiketimes_folder'] + params['mpn_exc_spikes_fn_merged']
     fn_post = params['spiketimes_folder'] + params['%s_spikes_fn_merged_all' % cell_type_post]
     if (not os.path.exists(fn_pre)) or (not os.path.exists(fn_post)):
@@ -383,7 +383,9 @@ if __name__ == '__main__':
     TP.load_spikes(fn_pre, fn_post)
     n_pre = 5
     n_post = 1
-    it_range_pre_cell_selection = (0 + stim_range[0] * params['n_iterations_per_stim'], 3 + stim_range[0] * params['n_iterations_per_stim'])
+    it_range_pre_cell_selection = (42 * params['n_iterations_per_stim'], 3 + 42 * params['n_iterations_per_stim'])
+
+#    it_range_pre_cell_selection = (0 + stim_range[0] * params['n_iterations_per_stim'], 3 + stim_range[0] * params['n_iterations_per_stim'])
 #    it_range_pre_cell_selection = (0, 3)
 
     pre_gids = TP.select_cells_most_active_neurons(TP.pre_spikes, n_pre, it_range_pre_cell_selection)

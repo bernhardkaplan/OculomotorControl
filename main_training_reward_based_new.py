@@ -82,6 +82,8 @@ class RewardBasedLearning(object):
 
     def save_data_structures(self):
         if pc_id == 0:
+            print 'DEBUG, removing files from:', self.params['connections_folder']
+            print 'DEBUG, removing files from:', self.params['spiketimes_folder']
             utils.remove_empty_files(self.params['connections_folder'])
             utils.remove_empty_files(self.params['spiketimes_folder'])
             np.savetxt(self.params['actions_taken_fn'], np.array(self.actions_taken))
@@ -245,7 +247,7 @@ if __name__ == '__main__':
     old_params = None
     GP = simulation_parameters.global_parameters()
     trained_stimuli = []
-    info_text = "\nThere are different use cases:\n \
+    info_txt = "\nThere are different use cases:\n \
     \tpython script_name [training_stimuli_fn] [training_stim_idx] \
     \tpython script_name [folder_containing_connectivity] [training_stimuli_fn] [training_stim_idx] \
     "
@@ -256,19 +258,26 @@ if __name__ == '__main__':
         continue_training_idx = int(sys.argv[2])
         params = GP.params
         continue_training_idx = 0
-    elif len(sys.argv) == 4:
+    elif len(sys.argv) == 5:
+        print 'Loading old parameters file from:', sys.argv[1]
         old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
         old_params = utils.convert_to_NEST_conform_dict(old_params_json)
-        params = GP.params
+
+        print 'Loading current parameter file from:', sys.argv[2]
+        params_json = utils.load_params(os.path.abspath(sys.argv[2]))
+        params = utils.convert_to_NEST_conform_dict(params_json)
         # load already trained stimuli
         trained_stimuli = old_params['trained_stimuli']
-        training_params_fn = sys.argv[2]
-        continue_training_idx = int(sys.argv[3])
+        training_params_fn = sys.argv[3]
+        continue_training_idx = int(sys.argv[4])
 #            assert (training_params[:, 0].size > continue_training_idx), 'continue_training_idx (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
 #                    (continue_training_idx, training_params_fn, training_params[:, 0].size)
     else:
         print 'Wrong number of sys.argv!', info_txt
         exit(1)
+
+    if pc_id == 0:
+        print 'DEBUG sys.argv', sys.argv, 'continue_training_idx', continue_training_idx
 
     training_params = np.loadtxt(training_params_fn)
     n_max = continue_training_idx + params['n_training_cycles'] * params['n_training_stim_per_cycle']
@@ -278,9 +287,13 @@ if __name__ == '__main__':
     if pc_id == 0:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     if pc_id == 0:
+        print 'DEBUG: removing files from:', params['spiketimes_folder']
+        print 'DEBUG: removing files from:', params['input_folder_mpn']
+        print 'DEBUG: removing files from:', params['connections_folder']
         utils.remove_files_from_folder(params['spiketimes_folder'])
         utils.remove_files_from_folder(params['input_folder_mpn'])
         utils.remove_files_from_folder(params['connections_folder'])
+
     if comm != None:
         comm.Barrier()
     t0 = time.time()
@@ -297,7 +310,7 @@ if __name__ == '__main__':
     # python 2.6
     d1_actions_trained = {}
     d2_actions_trained = {}
-    for i in xrange(params['n_stim']):
+    for i in xrange(n_max):
         d1_actions_trained[i] = []
         d2_actions_trained[i] = []
     # python 2.7
@@ -317,7 +330,8 @@ if __name__ == '__main__':
 
         #actions_per_stim = [{a: 0 for a in xrange(params['n_actions'])} for i in xrange(params['n_training_stim_per_cycle'])] 
         actions_per_stim = []
-        for i in xrange(params['n_training_stim_per_cycle']):
+        #for i in xrange(params['n_training_stim_per_cycle']):
+        for i in xrange(n_max):
             d = {}
             for a in xrange(params['n_actions']):
                 d[a] = 0
@@ -373,6 +387,7 @@ if __name__ == '__main__':
     RBL.CC.get_weights(RBL.MT, RBL.BG)
     RBL.CC.get_d1_d1_weights(RBL.BG)
     RBL.CC.get_d2_d2_weights(RBL.BG)
+    RBL.CC.merge_connection_files(params)
 
     ####################################
     #   R U N   E M P T Y    I N P U T 

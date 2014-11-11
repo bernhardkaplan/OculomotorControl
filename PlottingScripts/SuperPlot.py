@@ -80,16 +80,42 @@ class PlotEverything(MetaAnalysisClass):
 
         figsize = FigureCreator.get_fig_size(1400, portrait=False)
         self.fig = plt.figure(figsize=figsize)
+#        self.gs = gridspec.GridSpec(4, 1, height_ratios=(2, 1, 1, 1))
         self.gs = gridspec.GridSpec(3, 1, height_ratios=(2, 1, 1))
 
-        self.plot_bg_spikes(t_range)
+        ax0 = self.plot_bg_spikes(t_range)
 #        self.plot_mpn_spikes(t_range)
 #        self.plot_bg_rates('action', t_range)
+
+        trained_stim = utils.get_start_and_stop_iteration_for_stimulus_from_motion_params(self.params['motion_params_training_fn'])
+        self.plot_trained_stim(ax0, trained_stim)
+
         self.plot_retinal_displacement_and_reward(stim_range, t_range)
 
         output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[-1])
         print 'Saving figure to:', output_fn
-        plt.savefig(output_fn)
+        plt.savefig(output_fn, dpi=200)
+
+
+
+    def plot_trained_stim(self, ax, trained_stim):
+        """
+        ax -- an axis element
+        trained_stim -- is a dictionary with (x, v) as key and {'start': <int>, 'stop': <int>, 'cnt': <int> } as value, indicating 
+        the start and stop iteration (line in the motion_params_fn) during which the stimulus has been trained.
+        """
+        ylim = ax.get_ylim()
+        for (x, v) in trained_stim.keys():
+            start, stop = trained_stim[(x, v)]['start'], trained_stim[(x, v)]['stop']
+            cnt = trained_stim[(x, v)]['cnt']
+            t_0 = start * self.params['n_iterations_per_stim'] * self.params['t_iteration']
+            t_1 = stop * self.params['n_iterations_per_stim'] * self.params['t_iteration']
+
+            text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
+            text_pos_y = ylim[1] + 0.04 * (ylim[1] - ylim[0])
+            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d' % (x, v, cnt, start, stop))
+            ax.plot((t_0, t_0), (ylim[0], text_pos_y), ls='-', c='k', lw=3)
+            ax.plot((t_1, t_1), (ylim[0], text_pos_y), ls='-', c='k', lw=3)
 
 
     def plot_bg_spikes(self, t_range):
@@ -124,7 +150,7 @@ class PlotEverything(MetaAnalysisClass):
             gid_min, gid_max = bg_gid_ranges[ct]
             color = colors[z_ % len(colors)]
             text_pos_y = gid_min + .5 * (gid_max - gid_min)
-            text_pos_x = t_range[0] - 1.0 * self.params['t_iteration']
+            text_pos_x = t_range[0] - .02 * (t_range[1] - t_range[0])
 #            print 'debug', ct, gid_min, gid_max, text_pos_x, text_pos_y
             ax0.text(text_pos_x, text_pos_y, '%s' % (ct.capitalize()), color=color, fontsize=16, rotation=90)
 
@@ -142,6 +168,7 @@ class PlotEverything(MetaAnalysisClass):
         self.remove_xtick_labels(ax0)
         self.remove_ytick_labels(ax0)
         self.fig_cnt += 1
+        return ax0
 
 
     def load_tuning_prop(self):
@@ -192,6 +219,7 @@ class PlotEverything(MetaAnalysisClass):
         self.set_xticks(ax1, tick_interval=self.tick_interval)
         self.remove_xtick_labels(ax1)
         self.fig_cnt += 1
+        return ax1
 
 
     def plot_input_spikes_sorted(self, ax, sort_idx=0):
@@ -294,7 +322,7 @@ class PlotEverything(MetaAnalysisClass):
         xlim2 = ax2.get_xlim()
         ax2.plot((xlim2[0], xlim2[1]), (.5, .5), ls='-', c='k')
         self.fig_cnt += 1
-
+        return (ax2, ax3)
 
     def plot_bg_rates(self, cell_type, t_range):
 

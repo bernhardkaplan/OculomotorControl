@@ -43,7 +43,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 120
+            self.params['total_num_virtual_procs'] = 80
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
@@ -67,9 +67,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 2 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        #self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 3 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 20 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -81,6 +82,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        else:
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
+
+        self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
         self.params['frac_training_samples_from_grid'] = .0
         self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
         self.params['center_stim_width'] = .0 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
@@ -152,9 +155,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_NoNoise_titer%d_temp%.1f' % (self.params['t_iteration'], self.params['softmax_action_selection_temperature'])
-            if self.params['continue_training']:
-                self.params['sim_id'] += '_CNT'
+                self.params['sim_id'] = 'RBL_titer%d' % (self.params['t_iteration'])
+            #if self.params['continue_training']:
+                #self.params['sim_id'] += '_CNT_11-21'
 
 #                if self.params['mixed_training_cycles']:
 #                    self.params['sim_id'] = 'RBL_NoNoise_mixed_titer%d' % (self.params['t_iteration'])
@@ -241,7 +244,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['connect_noise_to_bg'] = True
         self.params['f_noise_exc_output'] = 1000.
         self.params['f_noise_inh_output'] = 1000.
-        self.params['w_noise_exc_output'] = 1.7
+        self.params['w_noise_exc_output'] = 1.8
         self.params['w_noise_inh_output'] = -1.0
 
         self.params['f_noise_exc_d1'] = 1.
@@ -429,7 +432,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #Connections Actions and States to RP
         self.tau_i = 20.
         self.tau_j = 1.
-        self.tau_e = 20.
+        self.tau_e = .1
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
             self.tau_p = 50000.
@@ -607,8 +610,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 8.
-        self.params['str_to_output_inh_w'] = -8.
+        self.params['str_to_output_exc_w'] = 4.
+        self.params['str_to_output_inh_w'] = -7.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
@@ -765,9 +768,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_nStim%dx%d_taup%d_gain%.2f_seeds_%d_%d/' % (self.params['sim_id'], \
-                        self.params['n_training_cycles'], self.params['n_training_stim_per_cycle'], \
-                        self.params['params_synapse_d1_MT_BG']['tau_p'], self.params['gain_MT_d2'], self.params['master_seed'], self.params['visual_stim_seed'])
+                folder_name = 'Training_%s_nStim%d_%d-%d_gain%.2f_seeds_%d_%d/' % (self.params['sim_id'], \
+                        self.params['n_stim_training'], self.params['stim_range'][0], self.params['stim_range'][1], 
+                        self.params['gain_MT_d2'], self.params['master_seed'], self.params['visual_stim_seed'])
             else:
                 if self.params['connect_d1_after_training']:
                     folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
