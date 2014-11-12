@@ -52,11 +52,11 @@ if __name__ == '__main__':
     ps = simulation_parameters.global_parameters()
     n_jobs = 3
     n_stimuli_per_run = 10
-    stim_offset = 8
+    stim_offset = 10
     
-    seed_folder = "Training_RBL_titer25_nStim4_4-8_gain2.00_seeds_111_1 " # where the connectivity is saved in 
+    seed_folder = "Training_RBL_Lindgren_titer25_nStim10_0-10_gain3.00_seeds_111_1"
 
-    aprun_cmd_base = 'aprun -n 80 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
+    aprun_cmd_base = 'aprun -n 96 python /cfs/klemming/nobackup/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 
     run_commands = []
     old_folder = seed_folder

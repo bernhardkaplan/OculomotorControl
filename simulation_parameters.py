@@ -42,8 +42,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster'] = True
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
-        if self.params['Cluster'] or self.params['Cluster_Milner']:
+        if self.params['Cluster'] and self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 80
+        if self.params['Cluster'] and not self.params['Cluster_Milner']:
+            self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
@@ -67,7 +69,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 10 # how often a stimulus with the same speed is replaced & presented during one training cycle
         #self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
@@ -155,7 +157,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_titer%d' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_Lindgren5_titer%d' % (self.params['t_iteration'])
             #if self.params['continue_training']:
                 #self.params['sim_id'] += '_CNT_11-21'
 
@@ -541,7 +543,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if bcpnn_synapse is used
         self.params['synapse_d1_d1'] = 'bcpnn_synapse' # if bcpnn_synapse use the trained connections, if static_synapse: use a cross-inhibition
         self.params['synapse_d2_d2'] = 'static_synapse'
-        bcpnn_init = 0.01
+        bcpnn_init = 0.001
         self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
         self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1_pos'], 'K': self.params['kappa_d1_d1'], \
