@@ -43,7 +43,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 80
+            self.params['total_num_virtual_procs'] = 120
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
@@ -67,7 +67,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 2 # how often a stimulus with the same speed is replaced & presented during one training cycle
         #self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
@@ -155,7 +155,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_titer%d' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_withMpnNoise_titer%d' % (self.params['t_iteration'])
             #if self.params['continue_training']:
                 #self.params['sim_id'] += '_CNT_11-21'
 
@@ -237,8 +237,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # for MPN
         self.params['f_noise_exc'] = 1000.
         self.params['f_noise_inh'] = 1000.
-        self.params['w_noise_exc'] = 0.2
-        self.params['w_noise_inh'] = -0.2
+        self.params['w_noise_exc'] = 1.1
+        self.params['w_noise_inh'] = -0.6
 
         # for BG
         self.params['connect_noise_to_bg'] = True
@@ -295,7 +295,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['gids_to_record_mpn'] = None # [12, 13, 14, 60, 62, 210]
         self.params['gids_to_record_mpn'] = []
 #        self.params['gids_to_record_bg'] = []
-        self.params['gids_to_record_bg'] = []#12693, 12694, 12695, 12696, 12697, 12738, 12739, 12740, 12741, 12742, 12703, 12704, 12705, 12706, 12707 , 12683, 12684, 12685, 12686, 12687 , 12743, 12744, 12745, 12746, 12747]
+        self.params['gids_to_record_bg'] = [12568]#12693, 12694, 12695, 12696, 12697, 12738, 12739, 12740, 12741, 12742, 12703, 12704, 12705, 12706, 12707 , 12683, 12684, 12685, 12686, 12687 , 12743, 12744, 12745, 12746, 12747]
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
@@ -465,8 +465,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 2.0 
-        self.params['gain_MT_d2'] = 2.0
+
+        self.params['gain_MT_d1'] = 1.0 
+        self.params['gain_MT_d2'] = 1.0
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 100.
         self.params['d2_gain_after_training'] = 100.
@@ -541,7 +542,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if bcpnn_synapse is used
         self.params['synapse_d1_d1'] = 'bcpnn_synapse' # if bcpnn_synapse use the trained connections, if static_synapse: use a cross-inhibition
         self.params['synapse_d2_d2'] = 'static_synapse'
-        bcpnn_init = 0.01
+        bcpnn_init = 0.001
         self.params['bcpnn_init_pi'] = bcpnn_init
         bcpnn_init = self.params['bcpnn_init_pi'] 
         self.params['params_synapse_d1_d1'] = {'p_i': bcpnn_init , 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain_d1_d1_pos'], 'K': self.params['kappa_d1_d1'], \

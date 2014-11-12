@@ -50,11 +50,11 @@ if __name__ == '__main__':
 
     training_params_fn = 'training_stimuli_nV11_nX7.dat'
     ps = simulation_parameters.global_parameters()
-    n_jobs = 3
-    n_stimuli_per_run = 10
-    stim_offset = 8
+    n_jobs = 2
+    n_stimuli_per_run = 2
+    stim_offset = 2
     
-    seed_folder = "Training_RBL_titer25_nStim4_4-8_gain2.00_seeds_111_1 " # where the connectivity is saved in 
+    seed_folder = "Training_RBL_withMpnNoise_titer25_nStim2_0-2_gain1.00_seeds_111_1 " # where the connectivity is saved in 
 
     aprun_cmd_base = 'aprun -n 80 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 

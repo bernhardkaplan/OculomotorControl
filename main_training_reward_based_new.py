@@ -403,11 +403,11 @@ if __name__ == '__main__':
     RBL.save_data_structures()
 
     t1 = time.time() - t0
-    print 'TimeEND: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     print 'n_iterations: RBL', RBL.iteration_cnt
     print 'n_iterations: MPN', RBL.MT.iteration
     print 'n_iterations: BG', RBL.BG.iteration
     print 'n_iterations: VI', RBL.VI.iteration
+    print 'TimeEND %d: %.2f [sec] %.2f [min]' % (pc_id, t1, t1 / 60.)
 
     #####################
     #   P L O T T I N G 
