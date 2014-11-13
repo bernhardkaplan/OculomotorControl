@@ -9,7 +9,7 @@
 
 # Number of cores to be allocated (multiple of 40)
 #SBATCH -N 3
-#SBATCH -n 120 
+#SBATCH -n 80
 #SBATCH --ntasks-per-node=40
 
 #SBATCH -e error_file_RBL.e
@@ -26,7 +26,7 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-aprun -n 120 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py training_stimuli_nV11_nX7.dat 0 > delme_rbl_0 2>&1
+aprun -n 80 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py training_stimuli_nV11_nX7.dat 0 > delme_rbl_0 2>&1
 #aprun -n 120 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py > delme_rbl_2 2>&1
 
 echo "Stopping at `date`"
