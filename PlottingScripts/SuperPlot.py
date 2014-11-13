@@ -64,9 +64,12 @@ class PlotEverything(MetaAnalysisClass):
         print 'run_super_plot: folder %s, stim_range' % params['folder_name'], stim_range
 
         if stim_range == None:
-            actions = np.loadtxt(self.params['actions_taken_fn'])
-            n_stim = actions.shape[0]
-            stim_range = range(0, n_stim)
+            if self.params['training']:
+                actions = np.loadtxt(self.params['actions_taken_fn'])
+                n_stim = actions.shape[0]
+                stim_range = range(0, n_stim)
+            else:
+                stim_range = self.params['test_stim_range']
 
         t_range = [0, 0]
         t_range[0] = stim_range[0] * self.params['t_iteration'] * self.params['n_iterations_per_stim']
@@ -84,14 +87,18 @@ class PlotEverything(MetaAnalysisClass):
 #        self.gs = gridspec.GridSpec(3, 1, height_ratios=(2, 1, 1))
 
         ax0 = self.plot_bg_spikes(t_range)
-        self.plot_mpn_spikes(t_range)
+#        self.plot_mpn_spikes(t_range)
 #        self.plot_bg_rates('action', t_range)
 
-        trained_stim = utils.get_start_and_stop_iteration_for_stimulus_from_motion_params(self.params['motion_params_training_fn'])
-        self.plot_trained_stim(ax0, trained_stim)
+        if self.params['training']:
+            trained_stim = utils.get_start_and_stop_iteration_for_stimulus_from_motion_params(self.params['motion_params_training_fn'])
+            self.plot_trained_stim(ax0, trained_stim)
 
-        self.plot_retinal_displacement_and_reward(stim_range, t_range)
-
+            self.plot_retinal_displacement(stim_range, t_range)
+            
+            self.plot_reward(stim_range, t_range)
+        else:
+            self.plot_retinal_displacement(stim_range, t_range)
         output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[-1])
         print 'Saving figure to:', output_fn
         plt.savefig(output_fn, dpi=200)
@@ -105,6 +112,8 @@ class PlotEverything(MetaAnalysisClass):
         the start and stop iteration (line in the motion_params_fn) during which the stimulus has been trained.
         """
         ylim = ax.get_ylim()
+#        if self.params['training']:
+        stim_offset = utils.get_stim_offset(self.params)
         for (x, v) in trained_stim.keys():
             start, stop = trained_stim[(x, v)]['start'], trained_stim[(x, v)]['stop']
             cnt = trained_stim[(x, v)]['cnt']
@@ -113,7 +122,7 @@ class PlotEverything(MetaAnalysisClass):
 
             text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
             text_pos_y = ylim[1] + 0.04 * (ylim[1] - ylim[0])
-            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d' % (x, v, cnt, start, stop))
+            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop))
             ax.plot((t_0, t_0), (ylim[0], text_pos_y), ls='-', c='k', lw=3)
             ax.plot((t_1, t_1), (ylim[0], text_pos_y), ls='-', c='k', lw=3)
 
@@ -240,12 +249,13 @@ class PlotEverything(MetaAnalysisClass):
 
 
 
-    def plot_retinal_displacement_and_reward(self, stim_range, t_range, plot_action_idx=True):
+    def plot_retinal_displacement(self, stim_range, t_range, plot_action_idx=True):
         print 'stim_range', stim_range
         if self.params['training']:
             fn = self.params['motion_params_training_fn']
         else:
             fn = self.params['motion_params_testing_fn']
+
 
         mp = np.loadtxt(fn)
         if len(mp.shape) == 1: # only one stimulus
@@ -255,14 +265,13 @@ class PlotEverything(MetaAnalysisClass):
         if len(actions.shape) == 1: # only one stimulus
             actions = actions.reshape((1, 4))
 
-        rewards = actions[:, 3] #np.loadtxt(self.params['rewards_given_fn'])
+#        rewards = actions[:, 3] #np.loadtxt(self.params['rewards_given_fn'])
 #        print 'rewards', rewards.shape
 #        if len(rewards) == 1: # only one stimulus
 #            rewards = rewards.reshape((1, 1))
-        K_vec = np.loadtxt(self.params['K_values_fn']) 
         ax2 = plt.subplot(self.gs[self.fig_cnt])
         self.fig_cnt += 1
-        ax3 = plt.subplot(self.gs[self.fig_cnt])
+
         color = 'b'
         ylim_ax2 = (-.05, 1.05)
         for i_stim in xrange(stim_range[0], stim_range[-1] + 1):
@@ -270,6 +279,7 @@ class PlotEverything(MetaAnalysisClass):
             t1 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 2 * self.params['t_iteration'] # + 2 for the consequence of the action
             t0 += .5 * self.params['t_iteration'] # shift to the middle of the iteration
             t1 += .5 * self.params['t_iteration']
+            print 'debug', mp, i_stim
             x_stim = mp[i_stim, 0]
             v_eye = actions[i_stim, 0]
             action_idx = np.int(actions[i_stim, 2])
@@ -285,7 +295,13 @@ class PlotEverything(MetaAnalysisClass):
         self.plot_vertical_lines(ax2)
         self.set_xticks(ax2, tick_interval=self.tick_interval)
         self.remove_xtick_labels(ax2)
+        ax2.set_xlim(t_range)
+        ax2.set_ylabel('Retinal\ndisplacement')
 
+        # plot horizontal line for retinal displacement
+        xlim2 = ax2.get_xlim()
+        ax2.plot((xlim2[0], xlim2[1]), (.5, .5), ls='-', c='k')
+        return ax2
 
         # plot the K_vec with transitions
 #        idx0 = stim_range[0] * self.params['n_iterations_per_stim']
@@ -297,7 +313,9 @@ class PlotEverything(MetaAnalysisClass):
 #        for it_ in xrange(self.it_range[0], self.it_range[1]):
 #            ax3.plot((it_, it_), (ylim[0], ylim[1]), '--', lw=1, c='k')
 
-
+    def plot_reward(self, stim_range, t_range, plot_action_idx=True):
+        K_vec = np.loadtxt(self.params['K_values_fn']) 
+        ax3 = plt.subplot(self.gs[self.fig_cnt])
         x_k = np.array([])
         y_k = np.array([])
         it_0, it_1 = stim_range[0] * self.params['n_iterations_per_stim'], (stim_range[-1] + 1) * self.params['n_iterations_per_stim']
@@ -315,14 +333,8 @@ class PlotEverything(MetaAnalysisClass):
         ax3.set_xlabel('Time [ms]')
         self.plot_vertical_lines(ax3)
 
-        ax2.set_xlim(t_range)
-        ax2.set_ylabel('Retinal\ndisplacement')
-
-        # plot horizontal line for retinal displacement
-        xlim2 = ax2.get_xlim()
-        ax2.plot((xlim2[0], xlim2[1]), (.5, .5), ls='-', c='k')
         self.fig_cnt += 1
-        return (ax2, ax3)
+        return ax3
 
     def plot_bg_rates(self, cell_type, t_range):
 

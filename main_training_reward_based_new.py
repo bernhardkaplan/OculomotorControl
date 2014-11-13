@@ -282,6 +282,7 @@ if __name__ == '__main__':
         print 'DEBUG sys.argv', sys.argv, 'continue_training_idx', continue_training_idx
 
     training_params = np.loadtxt(training_params_fn)
+    np.savetxt(params['training_stimuli_fn'], training_params)
     n_max = continue_training_idx + params['n_training_cycles'] * params['n_training_stim_per_cycle']
     assert (training_params[:, 0].size > n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
             (n_max, training_params_fn, training_params[:, 0].size)
@@ -379,6 +380,7 @@ if __name__ == '__main__':
     params['trained_stimuli'] = trained_stimuli
     params['d1_actions_trained'] = d1_actions_trained
     params['d2_actions_trained'] = d2_actions_trained
+    params['training_stim_offset'] = continue_training_idx
     if pc_id == 0:
         GP.write_parameters_to_file(params['params_fn_json'], params)
 

@@ -192,7 +192,7 @@ class BasalGanglia(object):
         ###########################################################
         ############# Now we create bcpnn connections #############
 
-        nest.SetDefaults(self.params['bcpnn'], params=self.params['param_bcpnn'])
+#        nest.SetDefaults(self.params['bcpnn'], params=self.params['param_bcpnn'])
         if not self.params['are_MT_BG_connected']:
             self.create_input_pop()
 

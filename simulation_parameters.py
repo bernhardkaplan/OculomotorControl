@@ -49,7 +49,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
-        self.params['training'] = True
+        self.params['training'] = False
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -572,9 +572,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['param_states_rp'] = {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, 'gain': self.params['gain'], 'K': self.K,'fmax': self.params['fmax'] ,'epsilon': self.epsilon,'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
 
         self.params['bcpnn'] = 'bcpnn_synapse'
-        self.params['param_bcpnn'] =  {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, \
-                'gain': self.params['gain'], 'K': self.K, 'fmax': self.params['fmax'], 'epsilon': self.epsilon, \
-                'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
+#        self.params['param_bcpnn'] =  {'p_i': bcpnn_init, 'p_j': bcpnn_init, 'p_ij': bcpnn_init**2, \
+#                'gain': self.params['gain'], 'K': self.K, 'fmax': self.params['fmax'], 'epsilon': self.epsilon, \
+#                'delay':1.0,'tau_i': self.tau_i,'tau_j': self.tau_j,'tau_e': self.tau_e,'tau_p': self.tau_p}
         # during learning gain == 0. K = 1.0 : --> 'offline' learning
         # after learning: gain == 1. K = .0
 
@@ -663,8 +663,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_inh_volt_fn'] = 'mpn_inh_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['training_sequence_fn'] = self.params['data_folder'] + 'training_stimuli_parameters.txt'
-        self.params['testing_sequence_fn'] = self.params['data_folder'] + 'testing_stimuli_parameters.txt'
+        self.params['training_stimuli_fn'] = self.params['data_folder'] + 'training_stimuli_parameters.txt'
+        self.params['testing_stimuli_fn'] = self.params['data_folder'] + 'testing_stimuli_parameters.txt'
 
         # bg files:
         self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
@@ -732,7 +732,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['bg_action_bins_fn'] = self.params['data_folder'] + 'bg_actions_bins.txt'
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
         self.params['motion_params_training_fn'] = self.params['data_folder'] + 'motion_params_training.txt'
-        self.params['motion_params_testing_fn'] = self.params['data_folder'] + 'motion_params.txt'
+        self.params['motion_params_testing_fn'] = self.params['data_folder'] + 'motion_params_testing.txt'
         self.params['supervisor_states_fn'] = self.params['data_folder'] + 'supervisor_states.txt'
         self.params['action_indices_fn'] = self.params['data_folder'] + 'action_indices.txt'
         self.params['nspikes_action_fn'] = self.params['data_folder'] + 'action_activity.txt'
