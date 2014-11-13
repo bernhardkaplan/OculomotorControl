@@ -12,7 +12,6 @@ class VisualInput(object):
         params -- dictionary that contains 
         """
         self.params = params
-        self.trajectories = []
         self.iteration = 0
         self.t_current = 0 # stores the 'current' time
         if visual_stim_seed == None:
@@ -677,7 +676,6 @@ class VisualInput(object):
         self.supervisor_state[1] = k * np.abs(delta_y) / .5 * delta_y / delta_t + network_state[3] + self.current_motion_params[3]
         print 'Supervised_state[%d] = ' % (self.iteration), self.supervisor_state
 
-#        self.trajectories.append(trajectory) # store for later save 
 
         return trajectory, self.supervisor_state
 

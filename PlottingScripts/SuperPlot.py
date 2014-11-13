@@ -80,11 +80,11 @@ class PlotEverything(MetaAnalysisClass):
 
         figsize = FigureCreator.get_fig_size(1400, portrait=False)
         self.fig = plt.figure(figsize=figsize)
-#        self.gs = gridspec.GridSpec(4, 1, height_ratios=(2, 1, 1, 1))
-        self.gs = gridspec.GridSpec(3, 1, height_ratios=(2, 1, 1))
+        self.gs = gridspec.GridSpec(4, 1, height_ratios=(2, 1, 1, 1))
+#        self.gs = gridspec.GridSpec(3, 1, height_ratios=(2, 1, 1))
 
         ax0 = self.plot_bg_spikes(t_range)
-#        self.plot_mpn_spikes(t_range)
+        self.plot_mpn_spikes(t_range)
 #        self.plot_bg_rates('action', t_range)
 
         trained_stim = utils.get_start_and_stop_iteration_for_stimulus_from_motion_params(self.params['motion_params_training_fn'])

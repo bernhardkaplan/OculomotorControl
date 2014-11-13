@@ -618,16 +618,29 @@ def get_spiketimes_within_interval(spike_data, t0, t1):
     all_spikes: 2-dim array containing all spiketimes
     return those spike times which are between > t0 and <= t1
     """
+    assert (t0 < t1), 'get_spiketimes_within_interval got wrong order of t0 and t1: first time must be smaller than t1'
     if spike_data.ndim == 2:
-        t0_idx = set((spike_data[:, 1] > t0).nonzero()[0])
-        t1_idx = set((spike_data[:, 1] <= t1).nonzero()[0])
-        valid_idx = list(t0_idx.intersection(t1_idx))
-        return spike_data[valid_idx, :]
+        t0_idx = (spike_data[:, 1] > t0).nonzero()[0]
+        t1_idx = (spike_data[:, 1] <= t1).nonzero()[0]
+        valid_idx = set(t0_idx).intersection(t1_idx)
+        return spike_data[list(valid_idx), :]
     else:
         t0_idx = set((spike_data > t0).nonzero()[0])
         t1_idx = set((spike_data <= t1).nonzero()[0])
         valid_idx = list(t0_idx.intersection(t1_idx))
         return spike_data[valid_idx]
+
+#def get_spikedata_within_interval(spike_data, t0, t1):
+#    if spike_data.ndim == 2:
+#        t0_idx = set((spike_data[:, 1] > t0).nonzero()[0])
+#        t1_idx = set((spike_data[:, 1] <= t1).nonzero()[0])
+#        valid_idx = list(t0_idx.intersection(t1_idx))
+#        return spike_data[valid_idx, :]
+#    else:
+#        t0_idx = set((spike_data > t0).nonzero()[0])
+#        t1_idx = set((spike_data <= t1).nonzero()[0])
+#        valid_idx = list(t0_idx.intersection(t1_idx))
+#        return spike_data[valid_idx]
 
 
 def communicate_local_spikes(gids, comm):
