@@ -73,7 +73,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
-        self.params['n_max_trials_same_stim'] = 20 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
+        self.params['n_max_trials_same_stim'] = 25 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
         self.params['n_max_trials_pos_rew'] = 3 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
 #        self.params['suboptimal_training'] = 1
@@ -245,7 +245,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['connect_noise_to_bg'] = True
         self.params['f_noise_exc_output'] = 1000.
         self.params['f_noise_inh_output'] = 1000.
-        self.params['w_noise_exc_output'] = 1.8
+        self.params['w_noise_exc_output'] = 1.9
         self.params['w_noise_inh_output'] = -1.0
 
         self.params['f_noise_exc_d1'] = 1.
@@ -436,7 +436,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_e = .1
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
-            self.tau_p = 50000.
+            self.tau_p = 200000.
             # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
@@ -450,8 +450,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 3.
-        self.params['neg_kappa'] = -3. # for the nonoptimal decision
+        self.params['pos_kappa'] = 10.
+        self.params['neg_kappa'] = -10. # for the nonoptimal decision
 
         # gain parameters
         if self.params['training']:
@@ -467,8 +467,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 1.0 
-        self.params['gain_MT_d2'] = 1.0
+        self.params['gain_MT_d1'] = 0.8
+        self.params['gain_MT_d2'] = 0.8
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 100.
         self.params['d2_gain_after_training'] = 100.
@@ -613,7 +613,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
         self.params['str_to_output_exc_w'] = 4.
-        self.params['str_to_output_inh_w'] = -7.
+        self.params['str_to_output_inh_w'] = -10.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
 
@@ -770,9 +770,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_nStim%d_%d-%d_gain%.2f_seeds_%d_%d/' % (self.params['sim_id'], \
+                folder_name = 'Training_%s_nStim%d_%d-%d_gain%.2f_wD2o%.1f_seeds_%d_%d/' % (self.params['sim_id'], \
                         self.params['n_stim_training'], self.params['stim_range'][0], self.params['stim_range'][1], 
-                        self.params['gain_MT_d2'], self.params['master_seed'], self.params['visual_stim_seed'])
+                        self.params['gain_MT_d1'], self.params['str_to_output_inh_w'], self.params['master_seed'], self.params['visual_stim_seed'])
             else:
                 if self.params['connect_d1_after_training']:
                     folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
