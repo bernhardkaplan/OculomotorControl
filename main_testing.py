@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
 #    training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
     training_params = utils.load_params(training_folder)
-    actions = np.zeros((testing_params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index)
+    actions = np.zeros((testing_params['n_iterations'] + 1, 4)) # the first row gives the initial action, [0, 0] (vx, vy, action_index, reward)
     network_states_net = np.zeros((testing_params['n_iterations'], 4))
     training_stimuli = np.zeros((training_params['n_stim_training'], 4))
     training_stimuli_= np.loadtxt(training_params['motion_params_training_fn'])
@@ -79,10 +79,13 @@ if __name__ == '__main__':
     VI = VisualInput.VisualInput(testing_params, comm=comm)
     training_params['training_params'] = training_params # double check
     if testing_params['use_training_stim_for_testing']:
-        test_stim_params = np.zeros((self.params['n_stim_testing'], 4)) 
-        test_stim_params[:, 1] = .5
+#        test_stim_params = np.zeros((testing_params['n_stim_testing'], 4)) 
+#        test_stim_params[:, 1] = .5
+#        test_stim_params = np.loadtxt(training_params['training_stimuli_fn'])
+        test_stim_params = np.loadtxt('training_stimuli_nV11_nX7.dat')
     else:
         test_stim_params = VI.create_test_stimuli()
+    np.savetxt(testing_params['motion_params_testing_fn'], test_stim_params[testing_params['test_stim_range'][0]:testing_params['test_stim_range'][-1] + 1])
 
     t1 = time.time() - t0
     print 'Time2: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
@@ -124,17 +127,9 @@ if __name__ == '__main__':
     if len(testing_params['test_stim_range']) > 1:
         assert (testing_params['test_stim_range'][1] <= training_params['n_training_cycles'] * training_params['n_training_stim_per_cycle']), 'Corretct test_stim_range in sim params!'
     iteration_cnt = 0
-    for i_, i_stim in enumerate(testing_params['test_stim_range']):
-#        print 'DEBUG', training_stimuli, training_stimuli.shape, i_stim
 
-        if testing_params['use_training_stim_for_testing']:
-            if len(training_stimuli.shape) == 1:
-                VI.current_motion_params = training_stimuli
-            else:
-                VI.current_motion_params = training_stimuli[i_stim, :]
-            test_stim_params[i_stim, :] = VI.current_motion_params
-        else:
-            VI.current_motion_params = test_stim_params[i_stim, :]
+    for i_, i_stim in enumerate(testing_params['test_stim_range']):
+        VI.current_motion_params = test_stim_params[i_stim, :]
 
         for it in xrange(testing_params['n_iterations_per_stim']):
 
@@ -183,10 +178,9 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time8: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     if pc_id == 0:
-        np.savetxt(testing_params['action_taken_fn'], actions)
+        np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
-        np.savetxt(testing_params['motion_params_testing_fn'], VI.motion_params)
-        np.savetxt(testing_params['motion_params_training_fn'], test_stim_params)
+        np.savetxt(testing_params['motion_params_testing_fn'], test_stim_params[testing_params['test_stim_range'][0]:testing_params['test_stim_range'][-1] + 1])
         utils.remove_empty_files(testing_params['connections_folder'])
         utils.remove_empty_files(testing_params['spiketimes_folder'])
 #        if params['n_stim'] > 6:

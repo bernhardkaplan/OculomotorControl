@@ -12,7 +12,6 @@ import scipy.stats as stats
 import random
 import string
 
-
 def get_start_and_stop_iteration_for_stimulus_from_motion_params(motion_params_fn):
     """
     Returns a dictionary with (x, v) as key and {'start': <int>, 'stop' <int>} as value, indicating 
@@ -20,6 +19,8 @@ def get_start_and_stop_iteration_for_stimulus_from_motion_params(motion_params_f
     """
 
     d = np.loadtxt(motion_params_fn)
+    if len(d.shape) == 1: # only one stimulus
+        d = d.reshape((1, 4))
     trained_stim = {}
     cnt = 0
     for i_ in xrange(d.shape[0]):
@@ -32,6 +33,24 @@ def get_start_and_stop_iteration_for_stimulus_from_motion_params(motion_params_f
             trained_stim[stim_params]['stop'] = i_ + 1
             trained_stim[stim_params]['cnt'] = cnt
     return trained_stim
+
+
+def get_stim_offset(params):
+    """
+    As long as the parameter dictionary does not contain training_stim_offset
+    this helper function returns the first stim for which entry in d1/d2_actions_trained is not len = 0
+    """
+    stim_offset_d1 = np.inf
+    stim_offset_d2 = np.inf
+    for stim_cnt in params['d1_actions_trained'].keys():
+#        print 'stim_cnt', stim_cnt, params['d1_actions_trained'][stim_cnt], len(params['d1_actions_trained'][stim_cnt]), min(stim_offset_d1, stim_cnt) #np.min(stim_offset_d1, stim_cnt)
+        if len(params['d1_actions_trained'][stim_cnt]) != 0:
+#            print 'd1', stim_cnt, stim_offset_d1, np.min(stim_offset_d1, stim_cnt)
+            stim_offset_d1 = min(stim_offset_d1, int(stim_cnt))
+        if len(params['d2_actions_trained'][stim_cnt]) != 0:
+#            print 'd2', stim_cnt, stim_offset_d2, np.min(stim_offset_d2, stim_cnt)
+            stim_offset_d2 = min(stim_offset_d2, int(stim_cnt))
+    return min(stim_offset_d1, stim_offset_d2)
 
 
 def draw_from_discrete_distribution(prob_dist, size=1):
