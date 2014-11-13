@@ -263,6 +263,8 @@ if __name__ == '__main__':
         old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
         old_params = utils.convert_to_NEST_conform_dict(old_params_json)
 
+        if comm != None:
+            comm.Barrier()
         print 'Loading current parameter file from:', sys.argv[2]
         params_json = utils.load_params(os.path.abspath(sys.argv[2]))
         params = utils.convert_to_NEST_conform_dict(params_json)
