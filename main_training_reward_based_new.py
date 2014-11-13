@@ -304,6 +304,7 @@ if __name__ == '__main__':
     #d1_actions_trained = { i : [] for i in xrange(params['n_stim'])}
     #d2_actions_trained = { i : [] for i in xrange(params['n_stim'])}
 
+    unsuccessfully_trained_stimuli = []
     n_training_trials = 0 
     ####################################
     #   T R A I N   A   S T I M U L U S 
@@ -342,6 +343,8 @@ if __name__ == '__main__':
                 actions_per_stim[i_stim][trained_action] += 1
 
                 cnt_trial += 1
+                if cnt_trial >= params['n_max_trials_same_stim']:
+                    unsuccessfully_trained_stimuli.append(i_stim)
                 if (actions_per_stim[i_stim][trained_action] >= params['n_max_trials_pos_rew'] and R > 0): 
                     d1_actions_trained[i_stim].append(trained_action)
                     # new stimulus!
@@ -352,6 +355,8 @@ if __name__ == '__main__':
                 elif (R < 0):
                     d2_actions_trained[i_stim].append(trained_action)
 
+    if len(unsuccessfully_trained_stimuli) > 0:
+        np.savetxt(params['data_folder'] + 'unsuccessfully_trained_stimuli.dat', np.array(unsuccessfully_trained_stimuli))
 
     # update the trained_stimuli parameter in the Parameters/simulation_parameters.json file
     params['n_training_trials'] = n_training_trials

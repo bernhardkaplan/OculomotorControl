@@ -345,10 +345,11 @@ if __name__ == '__main__':
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
-    cell_type_post = 'd2'
+    cell_type_post = 'd1'
     bcpnn_params = params['params_synapse_%s_MT_BG' % cell_type_post]
     bcpnn_params['K'] = params['pos_kappa']
-#    bcpnn_params['p_i'] = 0.01
+    bcpnn_init = 0.001
+    bcpnn_params['p_i'] = bcpnn_init
 #    bcpnn_params['tau_i'] = 20.
 #    bcpnn_params['tau_j'] = 10.
 #    bcpnn_params['tau_e'] = .1
@@ -359,13 +360,13 @@ if __name__ == '__main__':
 #    action_idx = int(sys.argv[5])
 #    script_id = int(sys.argv[6]) # for identification of parameter set
 #    param_set_id = int(sys.argv[7])
-    action_idx = 1
+    action_idx = 13
     script_id = 0 
     param_set_id = 0
 
     dt = params['dt']
 #    stim_range = (0, params['n_training_trials'])
-    stim_range = (0, 62)
+    stim_range = (0, 68)
 #    stim_range = (0, params['n_stim'])
     n_stim = stim_range[1] - stim_range[0]
 #    plot_range = (0, n_stim * params['n_iterations_per_stim'])
@@ -381,16 +382,21 @@ if __name__ == '__main__':
     
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
-    n_pre = 5
+    n_pre = 1
     n_post = 1
-    it_range_pre_cell_selection = (42 * params['n_iterations_per_stim'], 3 + 42 * params['n_iterations_per_stim'])
+    it_range_pre_cell_selection = (38 * params['n_iterations_per_stim'], 3 + 38 * params['n_iterations_per_stim'])
 
 #    it_range_pre_cell_selection = (0 + stim_range[0] * params['n_iterations_per_stim'], 3 + stim_range[0] * params['n_iterations_per_stim'])
 #    it_range_pre_cell_selection = (0, 3)
 
-    pre_gids = TP.select_cells_most_active_neurons(TP.pre_spikes, n_pre, it_range_pre_cell_selection)
-
+#    pre_gids = TP.select_cells_most_active_neurons(TP.pre_spikes, n_pre, it_range_pre_cell_selection)
+#    pre_gids = [1044]
+    pre_gids = [int(sys.argv[2])] 
     post_gids = TP.bg_gids[cell_type_post][action_idx]
+
+    print 'pre_gids:', pre_gids
+    print 'post_gids:', post_gids
+
     all_traces, gid_pairs = TP.compute_traces(pre_gids, post_gids, plot_range, gain=gain, K_vec=K_vec_compute)
     output_fn_base = params['figures_folder'] + 'bcpnn_trace_'
     fig = None
@@ -432,8 +438,8 @@ if __name__ == '__main__':
     f_out = file(params['tmp_folder'] + 'w_mean_%d.json' % (script_id), 'w')
     json.dump(to_write, f_out, indent=2)
 
-    output_fn = params['figures_folder'] + 'bcpnn_trace_action_mpn_%s_it%d-%d_piinit%.1e_tau_i%d_j%d_e%d_p%d_a%d.png' % \
-            (cell_type_post, stim_range[0], stim_range[1], bcpnn_params['p_i'], bcpnn_params['tau_i'], bcpnn_params['tau_j'], bcpnn_params['tau_e'], bcpnn_params['tau_p'], action_idx)
+    output_fn = params['figures_folder'] + 'bcpnn_trace_action_mpn_%s_it%d-%d_piinit%.1e_tau_i%d_j%d_e%d_p%d_a%d_pregid%d.png' % \
+            (cell_type_post, stim_range[0], stim_range[1], bcpnn_params['p_i'], bcpnn_params['tau_i'], bcpnn_params['tau_j'], bcpnn_params['tau_e'], bcpnn_params['tau_p'], action_idx, pre_gids[0])
     print 'Saving to:', output_fn
     fig.savefig(output_fn)
     if len(sys.argv) < 2:
