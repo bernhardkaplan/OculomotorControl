@@ -373,12 +373,46 @@ class VisualInput(object):
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
 
-#        print 'DEBUG VI compute_input action iteration %d current_motion_params' % self.iteration, self.current_motion_params, ' action:', v_eye
+        print 'DEBUG VI compute_input action iteration %d current_motion_params' % self.iteration, self.current_motion_params, ' action:', v_eye
 #        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(v_eye)
         self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(v_eye) # motion_params update is done in update_stimulus_trajectory_static
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
         self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
         return self.stim, supervisor_state
+
+
+    def update_stimulus_trajectory_static(self, v_eye):
+        """
+        During one iteration the stimulus is perceived as static, except for the movement given by the 
+        difference between eye (= v_eye) and the stimulus
+        """
+        n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
+        time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
+
+        x_stim = self.current_motion_params[0] + (time_axis * self.current_motion_params[2] - v_eye[0] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
+        y_stim = self.current_motion_params[1] + (time_axis * self.current_motion_params[3] - v_eye[1] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
+
+        trajectory = (x_stim, y_stim)
+        # update the 'current_motion_params'
+        self.current_motion_params[0] = deepcopy(x_stim[-1])
+        self.current_motion_params[1] = deepcopy(y_stim[-1])
+        print 'DEBUG VI update_stimulus_trajectory_static end', self.current_motion_params
+        # compute the supervisor signal taking into account:
+        # - the trajectory position at the end of the iteration
+        # - the knowledge about the motion (current_motion_params
+        delta_x_end = (x_stim[-1] - .5)
+        delta_y_end = (y_stim[-1] - .5)
+        delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
+        k = self.params['supervisor_amp_param']
+
+        # omniscient supervisor computes the 'correct' action to take
+        self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
+        self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
+
+
+        return trajectory, self.supervisor_state
+
+
 
 
 
@@ -572,39 +606,6 @@ class VisualInput(object):
         return L
 
 
-    def update_stimulus_trajectory_static(self, v_eye):
-        """
-        During one iteration the stimulus is perceived as static, except for the movement given by the 
-        difference between eye (= v_eye) and the stimulus
-        """
-        n_steps = self.params['t_iteration'] / self.params['dt_input_mpn']
-        time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
-
-        x_stim = self.current_motion_params[0] + (time_axis * self.current_motion_params[2] - v_eye[0] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
-        y_stim = self.current_motion_params[1] + (time_axis * self.current_motion_params[3] - v_eye[1] * self.params['t_iteration'] * np.ones(n_steps)) / self.params['t_cross_visual_field']
-
-        trajectory = (x_stim, y_stim)
-        # update the 'current_motion_params'
-        self.current_motion_params[0] = deepcopy(x_stim[-1])
-        self.current_motion_params[1] = deepcopy(y_stim[-1])
-#        print 'DEBUG VI update_stimulus_trajectory_static end', self.current_motion_params
-        # compute the supervisor signal taking into account:
-        # - the trajectory position at the end of the iteration
-        # - the knowledge about the motion (current_motion_params
-        delta_x_end = (x_stim[-1] - .5)
-        delta_y_end = (y_stim[-1] - .5)
-        delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
-        k = self.params['supervisor_amp_param']
-
-        # omniscient supervisor computes the 'correct' action to take
-        self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
-        self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
-
-
-        return trajectory, self.supervisor_state
-
-
-
     def update_stimulus_trajectory_new(self, action_code):
         """
         Update the motion parameters based on the action
@@ -747,6 +748,7 @@ class VisualInput(object):
                     index += 1
         assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
         return tuning_prop
+
 
 
     def set_tuning_prop_1D_with_const_fovea(self, cell_type='exc'):
