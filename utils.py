@@ -706,12 +706,10 @@ def get_xpos_log_distr(logscale, n_x, x_min=1e-6, x_max=.5):
     logspace = list(logspace)
     logspace.reverse()
     x_lower = .5 - np.array(logspace)
-    
     logspace = np.logspace(np.log(x_min) / np.log(logscale), np.log(x_max) / np.log(logscale), n_x / 2 + 1, base=logscale)
     x_upper =  logspace + .5
     x_rho = np.zeros(n_x)
     x_rho[:n_x/2] = x_lower[:-1]
-
     if n_x % 2:
         x_rho[n_x/2+1:] = x_upper[1:]
     else:
@@ -719,11 +717,8 @@ def get_xpos_log_distr(logscale, n_x, x_min=1e-6, x_max=.5):
     return x_rho
 
 
-#def get_xpos_log_distr_const_fovea(params, n_x, x_min=1e-6, x_max=.5):
-
 
 def get_receptive_field_sizes_x(params, rf_x):
-#    print 'rf_x', rf_x
     idx = np.argsort(rf_x)
     rf_size_x = np.zeros(rf_x.size)
     pos_idx = (rf_x[idx] > 0.5).nonzero()[0]
@@ -732,12 +727,6 @@ def get_receptive_field_sizes_x(params, rf_x):
     dx_neg_half = np.zeros(neg_idx.size)
     dx_pos_half = rf_x[idx][pos_idx][1:] - rf_x[idx][pos_idx][:-1]
     dx_neg_half = rf_x[idx][neg_idx][1:] - rf_x[idx][neg_idx][:-1]
-#    print 'rf_x[idx][pos_idx]', rf_x[idx][pos_idx]
-#    print 'rf_x[idx][neg_idx]', rf_x[idx][neg_idx]
-#    print 'dx_pos_half', dx_pos_half
-#    print 'dx_neg_half', dx_neg_half
-#    print 'pos_idx', pos_idx
-#    print 'idx', idx
     rf_size_x[:neg_idx.size-1] = dx_neg_half
     rf_size_x[neg_idx.size] = dx_neg_half[-1]
     if params['n_rf_x'] % 2:
@@ -747,7 +736,6 @@ def get_receptive_field_sizes_x(params, rf_x):
     rf_size_x[pos_idx.size] = dx_pos_half[0]
     rf_size_x[idx.size / 2 - 1] = dx_pos_half[0]
     rf_size_x *= params['rf_size_x_multiplicator']
-#    print 'rf_size_x', rf_size_x
     return rf_size_x
 
 

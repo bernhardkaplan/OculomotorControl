@@ -279,7 +279,6 @@ class PlotEverything(MetaAnalysisClass):
             t1 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 2 * self.params['t_iteration'] # + 2 for the consequence of the action
             t0 += .5 * self.params['t_iteration'] # shift to the middle of the iteration
             t1 += .5 * self.params['t_iteration']
-            print 'debug', mp, i_stim
             x_stim = mp[i_stim, 0]
             v_eye = actions[i_stim, 0]
             action_idx = np.int(actions[i_stim, 2])

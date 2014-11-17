@@ -38,7 +38,7 @@ print 'different training_stimuli \n', training_stimuli
 
 idx = range(training_stimuli[:, 0].size)
 np.random.shuffle(idx)
-output_fn = 'training_stimuli_nV%d_nX%d.dat' % (params['n_training_v'], params['n_training_x'])
+output_fn = 'training_stimuli_nV%d_nX%d_seed%d.dat' % (params['n_training_v'], params['n_training_x'], params['visual_stim_seed'])
 print 'Saving the training stimuli to:', output_fn
 np.savetxt(output_fn, training_stimuli[idx, :])
 exit(1)

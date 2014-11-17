@@ -26,6 +26,13 @@ except:
     print "MPI not used"
 
 
+def advance_iteration(MT, BG, VI):
+    MT.advance_iteration()
+    BG.advance_iteration()
+    VI.advance_iteration()
+
+
+
 if __name__ == '__main__':
 
     t0 = time.time()
@@ -61,7 +68,7 @@ if __name__ == '__main__':
 
 #    training_params_fn = os.path.abspath(training_folder) + '/Parameters/simulation_parameters.json'
     training_params = utils.load_params(training_folder)
-    actions = np.zeros((testing_params['n_iterations'] + 1, 4)) # the first row gives the initial action, [0, 0] (vx, vy, action_index, reward)
+    actions = np.zeros((testing_params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index, reward)
     network_states_net = np.zeros((testing_params['n_iterations'], 4))
     training_stimuli = np.zeros((training_params['n_stim_training'], 4))
     training_stimuli_= np.loadtxt(training_params['motion_params_training_fn'])
@@ -159,6 +166,7 @@ if __name__ == '__main__':
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
+            advance_iteration(MT, BG, VI)
             iteration_cnt += 1
             if comm != None:
                 comm.Barrier()

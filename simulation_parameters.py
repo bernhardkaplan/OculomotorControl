@@ -69,10 +69,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 10 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 20 # how often a stimulus with the same speed is replaced & presented during one training cycle
         #self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 16 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 20 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -94,7 +94,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -110,7 +110,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['n_iterations_per_stim'] = 4 + self.params['n_iterations_RBL_training']  
                 # noise, stim, noise, training, noise
         else:
-            self.params['n_iterations_per_stim'] = 6 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 15 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
@@ -182,7 +182,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['master_seed'] = 111
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 1
+        self.params['visual_stim_seed'] = 2
         self.params['tuning_prop_seed'] = 0
         self.params['basal_ganglia_seed'] = 6
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
@@ -467,8 +467,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['gain_d2_d2'] = 0.
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
-        self.params['gain_MT_d1'] = 3.0 
-        self.params['gain_MT_d2'] = 3.0
+        self.params['gain_MT_d1'] = 0.8
+        self.params['gain_MT_d2'] = 0.8
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 100.
         self.params['d2_gain_after_training'] = 100.

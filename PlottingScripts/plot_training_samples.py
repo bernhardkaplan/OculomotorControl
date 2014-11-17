@@ -64,7 +64,8 @@ class Plotter(object):
             ax1.add_artist(ellipse)
 
         # plot the stimulus start points
-        for i_ in xrange(self.params['n_stim']):
+#        for i_ in xrange(self.params['n_stim']):
+        for i_ in xrange(d[:, 0].size):
             if plot_process:
 #                idx = i_ * self.params['n_iterations_per_stim']
 #                mp = d[idx, :]
