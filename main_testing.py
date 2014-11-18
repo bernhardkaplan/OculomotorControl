@@ -54,8 +54,9 @@ if __name__ == '__main__':
         #testing_params = utils.convert_to_NEST_conform_dict(testing_params_json)
         #write_params = False
     
-    test_stim_range = (int(sys.argv[2]), int(sys.argv[3]))
-    testing_params['test_stim_range'] = test_stim_range
+    #test_stim_range = range(int(sys.argv[2]), int(sys.argv[3]))
+    #testing_params['test_stim_range'] = test_stim_range
+    #testing_params['n_iterations'] = (test_stim_range[-1] - test_stim_range[0]) * testing_params['n_iterations_per_stim']
 
     if testing_params['training']:
         print 'Set training = False!'
@@ -165,7 +166,8 @@ if __name__ == '__main__':
             network_states_net[iteration_cnt, :] = state_
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
 
-            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            #next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            next_action = BG.get_action_softmax()
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             advance_iteration(MT, BG, VI)
@@ -197,11 +199,11 @@ if __name__ == '__main__':
 #            n_stim = 6 
 #        else:
 #            n_stim = params['n_stim']
-        n_stim = testing_params['n_stim']
-        run_plot_bg(testing_params, (0, n_stim))
-        MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
-        MAC = MetaAnalysisClass([testing_params['folder_name']])
-        run_plot_bg(testing_params, None)
+        #n_stim = testing_params['n_stim']
+        #run_plot_bg(testing_params, (0, n_stim))
+        #MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
+        #MAC = MetaAnalysisClass([testing_params['folder_name']])
+        #run_plot_bg(testing_params, None)
 
     if comm != None:
         comm.Barrier()
