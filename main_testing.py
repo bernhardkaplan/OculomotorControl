@@ -47,13 +47,16 @@ if __name__ == '__main__':
 
     write_params = True
     testing_params = GP.params
-    if len(sys.argv) < 3:
-        testing_params = GP.params
-    else:
-        testing_params_json = utils.load_params(os.path.abspath(sys.argv[2]))
-        testing_params = utils.convert_to_NEST_conform_dict(testing_params_json)
-        write_params = False
+    #if len(sys.argv) < 3:
+        #testing_params = GP.params
+    #else:
+        #testing_params_json = utils.load_params(os.path.abspath(sys.argv[2]))
+        #testing_params = utils.convert_to_NEST_conform_dict(testing_params_json)
+        #write_params = False
     
+    #test_stim_range = range(int(sys.argv[2]), int(sys.argv[3]))
+    #testing_params['test_stim_range'] = test_stim_range
+    #testing_params['n_iterations'] = (test_stim_range[-1] - test_stim_range[0]) * testing_params['n_iterations_per_stim']
 
     if testing_params['training']:
         print 'Set training = False!'
@@ -88,8 +91,8 @@ if __name__ == '__main__':
     if testing_params['use_training_stim_for_testing']:
 #        test_stim_params = np.zeros((testing_params['n_stim_testing'], 4)) 
 #        test_stim_params[:, 1] = .5
-#        test_stim_params = np.loadtxt(training_params['training_stimuli_fn'])
-        test_stim_params = np.loadtxt('training_stimuli_nV11_nX7.dat')
+        #test_stim_params = np.loadtxt('training_stimuli_nV11_nX7.dat')
+        test_stim_params = np.loadtxt(training_params['training_stimuli_fn'])
     else:
         test_stim_params = VI.create_test_stimuli()
     np.savetxt(testing_params['motion_params_testing_fn'], test_stim_params[testing_params['test_stim_range'][0]:testing_params['test_stim_range'][-1] + 1])
@@ -131,8 +134,8 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time7: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
-    if len(testing_params['test_stim_range']) > 1:
-        assert (testing_params['test_stim_range'][1] <= training_params['n_training_cycles'] * training_params['n_training_stim_per_cycle']), 'Corretct test_stim_range in sim params!'
+    #if len(testing_params['test_stim_range']) > 1:
+        #assert (testing_params['test_stim_range'][1] <= training_params['n_training_cycles'] * training_params['n_training_stim_per_cycle']), 'Corretct test_stim_range in sim params!'
     iteration_cnt = 0
 
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
@@ -163,7 +166,8 @@ if __name__ == '__main__':
             network_states_net[iteration_cnt, :] = state_
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
 
-            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            #next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
+            next_action = BG.get_action_softmax()
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             advance_iteration(MT, BG, VI)
@@ -195,11 +199,11 @@ if __name__ == '__main__':
 #            n_stim = 6 
 #        else:
 #            n_stim = params['n_stim']
-        n_stim = testing_params['n_stim']
-        run_plot_bg(testing_params, (0, n_stim))
-        MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
-        MAC = MetaAnalysisClass([testing_params['folder_name']])
-        run_plot_bg(testing_params, None)
+        #n_stim = testing_params['n_stim']
+        #run_plot_bg(testing_params, (0, n_stim))
+        #MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
+        #MAC = MetaAnalysisClass([testing_params['folder_name']])
+        #run_plot_bg(testing_params, None)
 
     if comm != None:
         comm.Barrier()

@@ -48,24 +48,25 @@ if __name__ == '__main__':
 
 #    USE_MPI = False
 
-    training_params_fn = 'training_stimuli_nV11_nX7.dat'
+    training_params_fn = 'training_stimuli_nV16_nX20_seed2.dat'
     ps = simulation_parameters.global_parameters()
-    n_jobs = 3
-    n_stimuli_per_run = 10
-    stim_offset = 10
-    
-    seed_folder = "Training_RBL_Lindgren_titer25_nStim10_0-10_gain3.00_seeds_111_1"
 
-    aprun_cmd_base = 'aprun -n 96 python /cfs/klemming/nobackup/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
+    n_jobs = 30
+    n_stimuli_per_run = 10
+    stim_offset = 3
+    
+    seed_folder = "Training_RBL_longTrainign_withMpnNoise_titer25_nStim3_0-3_gain0.80_wD2o-10.0_K20_seeds_111_2 " # where the connectivity is saved in 
+
+    aprun_cmd_base = 'aprun -n 120 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 
     run_commands = []
     old_folder = seed_folder
     for i_ in xrange(0, n_jobs):
         params = ps.params
         stim_range = (i_ * n_stimuli_per_run + stim_offset, (i_ + 1) * n_stimuli_per_run + stim_offset) 
-        folder_name = 'Training_%s_nStim%d_%d-%d_gain%.2f_seeds_%d_%d/' % (params['sim_id'], \
+        folder_name = 'Training_%s_nStim%d_%d-%d_gain%.2f_K%d_seeds_%d_%d/' % (params['sim_id'], \
                 params['n_stim_training'], stim_range[0], stim_range[1], 
-                params['gain_MT_d2'], params['master_seed'], params['visual_stim_seed'])
+                params['gain_MT_d2'], params['pos_kappa'], params['master_seed'], params['visual_stim_seed'])
         assert (params['n_stim_training'] == n_stimuli_per_run), 'ERROR: make sure that n_training_x/v match your desired number of simulations to be run!'
         print 'folder_name:', folder_name
         params['stim_range'] = [stim_range[0], stim_range[1]]

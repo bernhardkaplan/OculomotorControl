@@ -263,6 +263,8 @@ if __name__ == '__main__':
         old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
         old_params = utils.convert_to_NEST_conform_dict(old_params_json)
 
+        if comm != None:
+            comm.Barrier()
         print 'Loading current parameter file from:', sys.argv[2]
         params_json = utils.load_params(os.path.abspath(sys.argv[2]))
         params = utils.convert_to_NEST_conform_dict(params_json)
@@ -280,7 +282,6 @@ if __name__ == '__main__':
         print 'DEBUG sys.argv', sys.argv, 'continue_training_idx', continue_training_idx
 
     training_params = np.loadtxt(training_params_fn)
-    np.savetxt(params['training_stimuli_fn'], training_params)
     n_max = continue_training_idx + params['n_training_cycles'] * params['n_training_stim_per_cycle']
     assert (training_params[:, 0].size > n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
             (n_max, training_params_fn, training_params[:, 0].size)
@@ -294,6 +295,7 @@ if __name__ == '__main__':
         utils.remove_files_from_folder(params['spiketimes_folder'])
         utils.remove_files_from_folder(params['input_folder_mpn'])
         utils.remove_files_from_folder(params['connections_folder'])
+        np.savetxt(params['training_stimuli_fn'], training_params)
 
     if comm != None:
         comm.Barrier()
@@ -410,11 +412,11 @@ if __name__ == '__main__':
     RBL.save_data_structures()
 
     t1 = time.time() - t0
-    print 'TimeEND: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     print 'n_iterations: RBL', RBL.iteration_cnt
     print 'n_iterations: MPN', RBL.MT.iteration
     print 'n_iterations: BG', RBL.BG.iteration
     print 'n_iterations: VI', RBL.VI.iteration
+    print 'TimeEND %d: %.2f [sec] %.2f [min]' % (pc_id, t1, t1 / 60.)
 
     #####################
     #   P L O T T I N G 
