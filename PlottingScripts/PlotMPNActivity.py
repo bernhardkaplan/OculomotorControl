@@ -35,7 +35,7 @@ class ActivityPlotter(object):
         self.n_cells = self.params['n_exc_mpn']
         self.spiketrains = [[] for i in xrange(self.n_cells)]
         self.d = {}
-
+#        self.training_stimuli = np.loadtxt(self.params['training_stimuli_fn'])
 
     def load_tuning_prop(self):
         print 'ActivityPlotter.load_tuning_prop ...'
@@ -612,7 +612,9 @@ class MetaAnalysisClass(object):
 
         # plot x - pos sorting
         print 'Plotting raster plots'
-        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by x-position', sort_idx=0, t_range=t_range)
+        title = 'Exc cells sorted by x-position'
+#        title = 
+        fig, ax = Plotter.plot_raster_sorted(title=title, sort_idx=0, t_range=t_range)
         if params['debug_mpn']:
             Plotter.plot_input_spikes_sorted(ax, sort_idx=0)
         print 'Saving to', output_fn

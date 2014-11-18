@@ -93,7 +93,7 @@ class VisualInput(object):
 #                j_ = (i_cycle + 1) * self.params['n_training_stim_per_cycle']
 #                mp_training[i_:j_, :] = self.tuning_prop_exc[training_states, :]
 
-        np.savetxt(self.params['training_sequence_fn'], mp_training)
+        np.savetxt(self.params['training_stimuli_fn'], mp_training)
         return mp_training 
 
 
@@ -274,7 +274,8 @@ class VisualInput(object):
         v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
 
         if self.params['reward_based_learning']:
-            n_training_x = self.params['n_training_x'] * (self.params['suboptimal_training'] + 1)
+            n_training_x = self.params['n_training_x']
+#            n_training_x = self.params['n_training_x'] * (self.params['suboptimal_training'] + 1)
         else:
             print 'Set params[reward_based_learning] = True!'
             exit(1)
@@ -305,8 +306,7 @@ class VisualInput(object):
                     plus_minus = utils.get_plus_minus(self.RNG)
                     mp_training[i_stim + i_, 2] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
                     mp_training[i_stim + i_, 3] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
-#        print 'VisualInput saves training sequence parameters to:', self.params['training_sequence_fn']
-        np.savetxt(self.params['training_sequence_fn'], mp_training)
+        np.savetxt(self.params['training_stimuli_fn'], mp_training)
         return mp_training 
 
 
@@ -315,7 +315,7 @@ class VisualInput(object):
         n_center = int(np.round(self.params['n_stim_training'] * self.params['frac_training_samples_center']))
 
         mp_center = np.zeros((n_center, 4))
-        mp_center[:, 0] = self.RNG.normal(.5, self.params['center_stim_width'], n_center)
+        mp_center[:, 0] = self.RNG.normal(.5, self.params['center_stim_width'] + 0.01, n_center)
         mp_center[:, 2] = self.RNG.uniform(-self.params['v_max_tp'], self.params['v_max_tp'], n_center)
         return mp_center
         
@@ -359,7 +359,7 @@ class VisualInput(object):
                 mp_training[idx_rnd, 0] = stim_params[idx_, 0]
                 mp_training[idx_rnd, 1] = stim_params[idx_, 1]
                 mp_training[idx_rnd, 2] = stim_params[idx_, 2]
-        np.savetxt(self.params['training_sequence_fn'], mp_training)
+        np.savetxt(self.params['training_stimuli_fn'], mp_training)
         return mp_training 
 
 

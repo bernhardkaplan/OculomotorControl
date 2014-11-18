@@ -87,7 +87,7 @@ class PlotEverything(MetaAnalysisClass):
 #        self.gs = gridspec.GridSpec(3, 1, height_ratios=(2, 1, 1))
 
         ax0 = self.plot_bg_spikes(t_range)
-#        self.plot_mpn_spikes(t_range)
+        self.plot_mpn_spikes(t_range)
 #        self.plot_bg_rates('action', t_range)
 
         if self.params['training']:

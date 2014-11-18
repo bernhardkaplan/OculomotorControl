@@ -46,7 +46,7 @@ class Plotter(object):
                 d = np.loadtxt(motion_params_fn)
         else:
             if motion_params_fn == None:
-                motion_params_fn = self.params['training_sequence_fn']
+                motion_params_fn = self.params['training_stimuli_fn']
             print 'Loading training stimuli data from:', motion_params_fn 
             d = np.loadtxt(motion_params_fn)
         self.mp_training = d
@@ -92,7 +92,7 @@ class Plotter(object):
         ax1.set_title('Training stimuli state space')
         ax1.set_xlabel('Stimulus position') 
         ax1.set_ylabel('Stimulus speed vx') 
-        output_fig = params['figures_folder'] + 'stimulus_state_space_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
+        output_fig = self.params['figures_folder'] + 'stimulus_state_space_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
         print 'Saving to:', output_fig
         pylab.savefig(output_fig, dpi=200)
 
@@ -102,7 +102,7 @@ class Plotter(object):
 
         action_indices = np.loadtxt(self.params['action_indices_fn'])
 #        d = np.loadtxt(self.params['motion_params_precomputed_fn'])
-        d = np.loadtxt(self.params['training_sequence_fn'])
+        d = np.loadtxt(self.params['training_stimuli_fn'])
         self.mp_training = d
 
         patches = []
@@ -120,9 +120,9 @@ class Plotter(object):
         # define the bins and normalize
         bounds = range(self.params['n_actions'])
         norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
-        rgba_colors = m.to_rgba(bounds)
         m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
         m.set_array(np.arange(bounds[0], bounds[-1], 1.))
+        rgba_colors = m.to_rgba(bounds)
         cb = fig.colorbar(m)
         cb.set_label('Action indices')#, fontsize=24)
 
@@ -135,13 +135,14 @@ class Plotter(object):
                 ax1.add_artist(ellipse)
 
         colors = m.to_rgba(action_indices)
-        print 'debug colors', colors, '\n\n', action_indices
+#        print 'debug colors', colors, '\n\n', action_indices
 
         if self.params['reward_based_learning']:
             for i_ in xrange(len(action_indices)):
-                stim_idx = (i_ + 1) * (self.params['suboptimal_training'] + 1) - 1
+#                stim_idx = (i_ + 1) * (self.params['suboptimal_training'] + 1) - 1
+                stim_idx = i_
                 mp = d[stim_idx, :]
-                print 'stim_idx:', stim_idx, mp, action_indices[i_]
+#                print 'stim_idx:', stim_idx, mp, action_indices[i_]
                 ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
                 ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
                 ellipse.set_facecolor('r')
@@ -165,7 +166,7 @@ class Plotter(object):
         ax1.set_title('Training stimuli state space')
         ax1.set_xlabel('Stimulus position') 
         ax1.set_ylabel('Stimulus speed vx') 
-        output_fig = params['figures_folder'] + 'stimulus_state_space_with_precomputed_actions_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
+        output_fig = self.params['figures_folder'] + 'stimulus_state_space_with_precomputed_actions_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
         print 'Saving to:', output_fig
         pylab.savefig(output_fig, dpi=200)
 
@@ -173,7 +174,7 @@ class Plotter(object):
     def plot_training_sample_histograms(self):
 
         if self.mp_training == None:
-            fn = self.params['training_sequence_fn']
+            fn = self.params['training_stimuli_fn']
             print 'Loading training stimuli data from:', fn
             self.mp_training = np.loadtxt(fn)
 

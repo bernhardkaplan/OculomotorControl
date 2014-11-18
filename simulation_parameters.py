@@ -49,7 +49,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
-        self.params['training'] = False
+        self.params['training'] = True
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -86,8 +86,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
-        self.params['frac_training_samples_from_grid'] = .0
-        self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
+        self.params['frac_training_samples_from_grid'] = .2
+        self.params['frac_training_samples_center'] = .2 # fraction of training samples drawn from the center
         self.params['center_stim_width'] = .0 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
         assert (1.0 >= self.params['frac_training_samples_center'] + self.params['frac_training_samples_from_grid'])
         # to generate the training samples, three methods are used: 1) sampling from the tuning properties, 2) sampling from a grid  3) sampling nearby the center (as these stimuli occur more frequently)
@@ -157,7 +157,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_Lindgren5_titer%d' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'DEBUG_titer%d' % (self.params['t_iteration'])
             #if self.params['continue_training']:
                 #self.params['sim_id'] += '_CNT_11-21'
 
@@ -437,7 +437,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_e = .1
 #        self.au_p = max(1000., self.params['t_sim'])
         if self.params['reward_based_learning']:
-            self.tau_p = 50000.
+            self.tau_p = 200000.
             # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
         else:
             self.tau_p = .5 * self.params['t_sim']
@@ -808,8 +808,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['params_fn_json'] = '%ssimulation_parameters.json' % (self.params['parameters_folder'])
 
 
-        self.params['folder_names'].append(self.params['spiketimes_folder'])
-        self.params['folder_names'].append(self.params['input_folder_mpn'])
 #        self.create_folders()
 
 
