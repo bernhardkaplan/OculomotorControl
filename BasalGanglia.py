@@ -256,35 +256,59 @@ class BasalGanglia(object):
 
     def connect_noise(self):
 
-        self.noise_exc_d1 = {}
-        self.noise_inh_d1 = {}
-        self.noise_exc_actions = {}
-        self.noise_inh_actions = {}
+        self.noise_exc_d1 = nest.Create('poisson_generator', 1)
+        self.noise_inh_d1 = nest.Create('poisson_generator', 1)
+        self.noise_exc_actions = nest.Create('poisson_generator', 1)
+        self.noise_inh_actions = nest.Create('poisson_generator', 1)
         for naction in xrange(self.params['n_actions']):
-            self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d1']) 
-            self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d1'])
-            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc_d1']})
-            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh_d1']})
-            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc_d1'], self.params['dt'])
-            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh_d1'], self.params['dt'])
+            nest.SetStatus(self.noise_exc_d1, {'rate': self.params['f_noise_exc_d1']})
+            nest.SetStatus(self.noise_inh_d1, {'rate': self.params['f_noise_inh_d1']})
+            nest.DivergentConnect(self.noise_exc_d1, self.strD1[naction], self.params['w_noise_exc_d1'], self.params['dt'])
+            nest.DivergentConnect(self.noise_inh_d1, self.strD1[naction], self.params['w_noise_inh_d1'], self.params['dt'])
 
-            self.noise_exc_actions[naction] = nest.Create('poisson_generator', self.params['n_cells_per_action']) 
-            self.noise_inh_actions[naction] = nest.Create('poisson_generator', self.params['n_cells_per_action'])
-            nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc_output']})
-            nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh_output']})
-            nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc_output'], self.params['dt'])
-            nest.Connect(self.noise_inh_actions[naction], self.actions[naction], self.params['w_noise_inh_output'], self.params['dt'])
+            nest.SetStatus(self.noise_exc_actions, {'rate': self.params['f_noise_exc_output']})
+            nest.SetStatus(self.noise_inh_actions, {'rate': self.params['f_noise_inh_output']})
+            nest.DivergentConnect(self.noise_exc_actions, self.actions[naction], self.params['w_noise_exc_output'], self.params['dt'])
+            nest.DivergentConnect(self.noise_inh_actions, self.actions[naction], self.params['w_noise_inh_output'], self.params['dt'])
 
         if self.params['with_d2']:
-            self.noise_exc_d2 = {}
-            self.noise_inh_d2 = {}
+            self.noise_exc_d2 = nest.Create('poisson_generator', 1)
+            self.noise_inh_d2 = nest.Create('poisson_generator', 1)
             for naction in xrange(self.params['n_actions']):
-                self.noise_exc_d2[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d2']) 
-                self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d2'])
-                nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc_d2']})
-                nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh_d2']})
-                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc_d2'], self.params['dt'])
-                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh_d2'], self.params['dt'])
+                nest.SetStatus(self.noise_exc_d2, {'rate': self.params['f_noise_exc_d2']})
+                nest.SetStatus(self.noise_inh_d2, {'rate': self.params['f_noise_inh_d2']})
+                nest.DivergentConnect(self.noise_exc_d2, self.strD2[naction], self.params['w_noise_exc_d2'], self.params['dt'])
+                nest.DivergentConnect(self.noise_inh_d2, self.strD2[naction], self.params['w_noise_inh_d2'], self.params['dt'])
+
+#        self.noise_exc_d1 = {}
+#        self.noise_inh_d1 = {}
+#        self.noise_exc_actions = {}
+#        self.noise_inh_actions = {}
+#        for naction in xrange(self.params['n_actions']):
+#            self.noise_exc_d1[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d1']) 
+#            self.noise_inh_d1[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d1'])
+#            nest.SetStatus(self.noise_exc_d1[naction], {'rate': self.params['f_noise_exc_d1']})
+#            nest.SetStatus(self.noise_inh_d1[naction], {'rate': self.params['f_noise_inh_d1']})
+#            nest.Connect(self.noise_exc_d1[naction], self.strD1[naction], self.params['w_noise_exc_d1'], self.params['dt'])
+#            nest.Connect(self.noise_inh_d1[naction], self.strD1[naction], self.params['w_noise_inh_d1'], self.params['dt'])
+
+#            self.noise_exc_actions[naction] = nest.Create('poisson_generator', self.params['n_cells_per_action']) 
+#            self.noise_inh_actions[naction] = nest.Create('poisson_generator', self.params['n_cells_per_action'])
+#            nest.SetStatus(self.noise_exc_actions[naction], {'rate': self.params['f_noise_exc_output']})
+#            nest.SetStatus(self.noise_inh_actions[naction], {'rate': self.params['f_noise_inh_output']})
+#            nest.Connect(self.noise_exc_actions[naction], self.actions[naction], self.params['w_noise_exc_output'], self.params['dt'])
+#            nest.Connect(self.noise_inh_actions[naction], self.actions[naction], self.params['w_noise_inh_output'], self.params['dt'])
+
+#        if self.params['with_d2']:
+#            self.noise_exc_d2 = {}
+#            self.noise_inh_d2 = {}
+#            for naction in xrange(self.params['n_actions']):
+#                self.noise_exc_d2[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d2']) 
+#                self.noise_inh_d2[naction] = nest.Create('poisson_generator', self.params['n_cells_per_d2'])
+#                nest.SetStatus(self.noise_exc_d2[naction], {'rate': self.params['f_noise_exc_d2']})
+#                nest.SetStatus(self.noise_inh_d2[naction], {'rate': self.params['f_noise_inh_d2']})
+#                nest.Connect(self.noise_exc_d2[naction], self.strD2[naction], self.params['w_noise_exc_d2'], self.params['dt'])
+#                nest.Connect(self.noise_inh_d2[naction], self.strD2[naction], self.params['w_noise_inh_d2'], self.params['dt'])
 
 
 

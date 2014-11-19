@@ -92,9 +92,11 @@ if __name__ == '__main__':
 #        test_stim_params = np.zeros((testing_params['n_stim_testing'], 4)) 
 #        test_stim_params[:, 1] = .5
         #test_stim_params = np.loadtxt('training_stimuli_nV11_nX7.dat')
+#        print 'debug training stimuli fn:', training_params['training_stimuli_fn']
         test_stim_params = np.loadtxt(training_params['training_stimuli_fn'])
     else:
         test_stim_params = VI.create_test_stimuli()
+#    print 'debug saving motion params testing to:', testing_params['motion_params_testing_fn']
     np.savetxt(testing_params['motion_params_testing_fn'], test_stim_params[testing_params['test_stim_range'][0]:testing_params['test_stim_range'][-1] + 1])
 
     t1 = time.time() - t0

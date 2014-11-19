@@ -360,13 +360,13 @@ if __name__ == '__main__':
 #    action_idx = int(sys.argv[5])
 #    script_id = int(sys.argv[6]) # for identification of parameter set
 #    param_set_id = int(sys.argv[7])
-    action_idx = 13
+    action_idx = 5
     script_id = 0 
     param_set_id = 0
 
     dt = params['dt']
 #    stim_range = (0, params['n_training_trials'])
-    stim_range = (0, 68)
+    stim_range = (0, 33)
 #    stim_range = (0, params['n_stim'])
     n_stim = stim_range[1] - stim_range[0]
 #    plot_range = (0, n_stim * params['n_iterations_per_stim'])
@@ -382,16 +382,16 @@ if __name__ == '__main__':
     
     TP = TracePlotter(params, cell_type_post)
     TP.load_spikes(fn_pre, fn_post)
-    n_pre = 1
-    n_post = 1
-    it_range_pre_cell_selection = (38 * params['n_iterations_per_stim'], 3 + 38 * params['n_iterations_per_stim'])
+    n_pre = 5
+#    n_post = 1
+    it_range_pre_cell_selection = (1, 2)
 
 #    it_range_pre_cell_selection = (0 + stim_range[0] * params['n_iterations_per_stim'], 3 + stim_range[0] * params['n_iterations_per_stim'])
 #    it_range_pre_cell_selection = (0, 3)
 
-#    pre_gids = TP.select_cells_most_active_neurons(TP.pre_spikes, n_pre, it_range_pre_cell_selection)
+    pre_gids = TP.select_cells_most_active_neurons(TP.pre_spikes, n_pre, it_range_pre_cell_selection)
 #    pre_gids = [1044]
-    pre_gids = [int(sys.argv[2])] 
+#    pre_gids = [int(sys.argv[2])] 
     post_gids = TP.bg_gids[cell_type_post][action_idx]
 
     print 'pre_gids:', pre_gids

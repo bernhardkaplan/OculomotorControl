@@ -152,20 +152,35 @@ class MotionPrediction(object):
 
     def connect_noise(self):
 
-        self.noise_exc_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # exc noise targeting exc
-        self.noise_inh_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # inh -> exc
+#        self.noise_exc_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # exc noise targeting exc
+#        self.noise_inh_exc = nest.Create('poisson_generator', self.params['n_exc_mpn']) # inh -> exc
+#        nest.SetStatus(self.noise_exc_exc, {'rate': self.params['f_noise_exc']})
+#        nest.SetStatus(self.noise_inh_exc, {'rate': self.params['f_noise_inh']})
+#        nest.Connect(self.noise_exc_exc, self.exc_pop, self.params['w_noise_exc'], self.params['dt'])
+#        nest.Connect(self.noise_inh_exc, self.exc_pop, self.params['w_noise_inh'], self.params['dt'])
+
+#        if self.params['with_inh_mpn']:
+#            self.noise_exc_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # exc -> inh
+#            self.noise_inh_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # inh -> inh
+#            nest.SetStatus(self.noise_exc_inh, {'rate': self.params['f_noise_exc']})
+#            nest.SetStatus(self.noise_inh_inh, {'rate': self.params['f_noise_inh']})
+#            nest.Connect(self.noise_exc_inh, self.inh_pop, self.params['w_noise_exc'], self.params['dt'])
+#            nest.Connect(self.noise_inh_inh, self.inh_pop, self.params['w_noise_inh'], self.params['dt'])
+
+        self.noise_exc_exc = nest.Create('poisson_generator', 1)
+        self.noise_inh_exc = nest.Create('poisson_generator', 1)
         nest.SetStatus(self.noise_exc_exc, {'rate': self.params['f_noise_exc']})
         nest.SetStatus(self.noise_inh_exc, {'rate': self.params['f_noise_inh']})
-        nest.Connect(self.noise_exc_exc, self.exc_pop, self.params['w_noise_exc'], self.params['dt'])
-        nest.Connect(self.noise_inh_exc, self.exc_pop, self.params['w_noise_inh'], self.params['dt'])
+        nest.DivergentConnect(self.noise_exc_exc, self.exc_pop, self.params['w_noise_exc'], self.params['dt'])
+        nest.DivergentConnect(self.noise_inh_exc, self.exc_pop, self.params['w_noise_inh'], self.params['dt'])
 
         if self.params['with_inh_mpn']:
-            self.noise_exc_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # exc -> inh
-            self.noise_inh_inh = nest.Create('poisson_generator', self.params['n_inh_mpn']) # inh -> inh
+            self.noise_exc_inh = nest.Create('poisson_generator', 1)
+            self.noise_inh_inh = nest.Create('poisson_generator', 1)
             nest.SetStatus(self.noise_exc_inh, {'rate': self.params['f_noise_exc']})
             nest.SetStatus(self.noise_inh_inh, {'rate': self.params['f_noise_inh']})
-            nest.Connect(self.noise_exc_inh, self.inh_pop, self.params['w_noise_exc'], self.params['dt'])
-            nest.Connect(self.noise_inh_inh, self.inh_pop, self.params['w_noise_inh'], self.params['dt'])
+            nest.DivergentConnect(self.noise_exc_inh, self.inh_pop, self.params['w_noise_exc'], self.params['dt'])
+            nest.DivergentConnect(self.noise_inh_inh, self.inh_pop, self.params['w_noise_inh'], self.params['dt'])
 
 
 
