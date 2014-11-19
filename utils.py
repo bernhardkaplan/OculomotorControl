@@ -246,6 +246,7 @@ def convert_connlist_to_matrix(data, src_min=None, src_max=None, tgt_min=None, t
 
     return conn_mat
 
+
 def get_most_active_neurons(spike_data, n_cells=None):
     gids = np.unique(spike_data[:, 0])
     gids = np.array(gids, dtype=np.int)

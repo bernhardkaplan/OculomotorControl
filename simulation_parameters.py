@@ -39,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
@@ -155,7 +155,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_gLeak25_titer%d' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_titer%d' % (self.params['t_iteration'])
             #if self.params['continue_training']:
                 #self.params['sim_id'] += '_CNT_11-21'
 
@@ -425,6 +425,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_states'] = 12
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.20
+        self.params['gids_to_record_bg'] = []
 
         #Connections Actions and States to RP
         self.tau_i = 20.

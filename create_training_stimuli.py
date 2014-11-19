@@ -16,15 +16,8 @@ import pylab
 from PlottingScripts.plot_training_samples import Plotter
 import random
 
-if __name__ == '__main__':
 
-
-    GP = simulation_parameters.global_parameters()
-    params = GP.params
-    GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
-    print 'n_cycles', params['n_training_cycles']
-    np.random.seed(params['visual_stim_seed'])
-    BG = BasalGanglia.BasalGanglia(params, dummy=True)
+def create_stimuli_from_grid_center_and_tuning_prop(params):
     VI = VisualInput.VisualInput(params)
 
     tp = VI.set_tuning_prop_1D_with_const_fovea(cell_type='exc')
@@ -44,7 +37,26 @@ if __name__ == '__main__':
 #    training_stimuli[:n_grid, :] = training_stimuli_grid[random.sample(range(params['n_stim_training']), n_grid), :]
 #    training_stimuli[n_grid:n_grid+n_center, :] = training_stimuli_center 
     training_stimuli[n_grid+n_center:, :] = training_stimuli_sample[random.sample(range(params['n_stim_training']), params['n_stim_training'] - n_grid - n_center), :]
+    return training_stimuli
+
+
+def create_stimuli_along_a_trajectory(params, x_start):
+
+    BG = BasalGanglia.BasalGanglia(params, dummy=True)
+
+
+
+if __name__ == '__main__':
+
+
+    GP = simulation_parameters.global_parameters()
+    params = GP.params
+    GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
+    print 'n_cycles', params['n_training_cycles']
+    np.random.seed(params['visual_stim_seed'])
+    BG = BasalGanglia.BasalGanglia(params, dummy=True)
     print 'Saving training stimuli parameters to:', params['training_stimuli_fn']
+    training_stimuli = create_stimuli_from_grid_center_and_tuning_prop(params)
     np.savetxt(params['training_stimuli_fn'], training_stimuli)
 
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
