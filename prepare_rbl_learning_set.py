@@ -48,33 +48,34 @@ if __name__ == '__main__':
 
 #    USE_MPI = False
 
-    training_params_fn = 'training_stimuli_nV16_nX20_seed2.dat'
+    training_params_fn = 'training_stimuli_nV16_nX20_seed2_centered_first.dat'
     ps = simulation_parameters.global_parameters()
 
-    n_jobs = 30
+    n_jobs = 1
     n_stimuli_per_run = 10
     stim_offset = 3
     
-    seed_folder = "Training_RBL_longTrainign_withMpnNoise_titer25_nStim3_0-3_gain0.80_wD2o-10.0_K20_seeds_111_2 " # where the connectivity is saved in 
+    seed_folder = "Training_RBL_gLeak25_titer25_nStim3_0-3_gainD1_0.8_D2_1.0_K20_-20_seeds_111_2 " # where the connectivity is saved in 
 
-    aprun_cmd_base = 'aprun -n 120 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
+    aprun_cmd_base = 'aprun -n 160 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 
     run_commands = []
     old_folder = seed_folder
     for i_ in xrange(0, n_jobs):
         params = ps.params
         stim_range = (i_ * n_stimuli_per_run + stim_offset, (i_ + 1) * n_stimuli_per_run + stim_offset) 
-        folder_name = 'Training_%s_nStim%d_%d-%d_gain%.2f_K%d_seeds_%d_%d/' % (params['sim_id'], \
-                params['n_stim_training'], stim_range[0], stim_range[1], 
-                params['gain_MT_d2'], params['pos_kappa'], params['master_seed'], params['visual_stim_seed'])
-        assert (params['n_stim_training'] == n_stimuli_per_run), 'ERROR: make sure that n_training_x/v match your desired number of simulations to be run!'
-        print 'folder_name:', folder_name
         params['stim_range'] = [stim_range[0], stim_range[1]]
+
+        folder_name = 'Training_%s_nStim%d_%d-%d_gainD1_%.1f_D2_%.1f_K%d_%d_seeds_%d_%d/' % (params['sim_id'], \
+                params['n_stim_training'], params['stim_range'][0], params['stim_range'][1], 
+                params['gain_MT_d1'], params['gain_MT_d2'], params['pos_kappa'], params['neg_kappa'], params['master_seed'], params['visual_stim_seed'])
         params['folder_name'] = folder_name
+        print 'folder_name:', folder_name
+        assert (params['n_stim_training'] == n_stimuli_per_run), 'ERROR: make sure that n_training_x/v match your desired number of simulations to be run!'
         prepare_simulation(ps, params)
 
         stim_idx = stim_offset + i_ * n_stimuli_per_run
-        new_cmd = ' %s %s %s %d > delme_rbl_%d 2>&1' % (old_folder, folder_name, training_params_fn, stim_idx, stim_idx)
+        new_cmd = ' %s %s %s %d > delme_rbl_K%d_%d_%d 2>&1' % (old_folder, folder_name, training_params_fn, stim_idx, params['pos_kappa'], params['neg_kappa'], stim_idx)
         aprun_cmd = aprun_cmd_base + new_cmd
         old_folder = folder_name
 
