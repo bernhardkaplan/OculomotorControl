@@ -49,7 +49,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
-        self.params['training'] = False
+        self.params['training'] = True
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -69,7 +69,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 10 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
@@ -114,7 +114,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
         self.params['connect_d1_after_training'] = False
-        self.params['connect_d1_static_cross_inhibition'] = not self.params['connect_d1_after_training']
+        self.params['connect_d1_static_cross_inhibition'] = False #not self.params['connect_d1_after_training']
         self.params['connect_d2_d2'] = False
         self.params['clip_weights_mpn_d1'] = False # only for VisualLayer --> D1 weights
         self.params['clip_weights_mpn_d2'] = self.params['clip_weights_mpn_d1']
@@ -164,7 +164,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #                else:
 #                    self.params['sim_id'] = 'RBL_NoNoise_block_titer%d' % (self.params['t_iteration'])
         else:
-            self.params['sim_id'] = '%d_softMax' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_noD1conn_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -293,7 +293,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['gids_to_record_mpn'] = None # [12, 13, 14, 60, 62, 210]
         self.params['gids_to_record_mpn'] = []
 #        self.params['gids_to_record_bg'] = []
-        self.params['gids_to_record_bg'] = [12568]#12693, 12694, 12695, 12696, 12697, 12738, 12739, 12740, 12741, 12742, 12703, 12704, 12705, 12706, 12707 , 12683, 12684, 12685, 12686, 12687 , 12743, 12744, 12745, 12746, 12747]
+        self.params['gids_to_record_bg'] = []
 
 #        self.params['gids_to_record_mpn'] = [270, 365, 502, 822, 1102, 1108, 1132, 1173, 1174, 1437, 1510, 1758, 1797, 2277, 2374, 2589, 2644, 3814, 4437, 4734, 4821, 4989, 5068, 5134, 5718, 6021, 6052, 6318, 7222, 7246, 7396, 7678, 8014, 8454, 8710, 8973, 9052, 9268, 9438, 9669, 10014, 10247, 10398, 10414, 10492, 11214, 11349, 11637]
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
@@ -425,7 +425,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_states'] = 12
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.20
-        self.params['gids_to_record_bg'] = [10173 + i * 5 for i in xrange(self.params['n_actions'])]
 
         #Connections Actions and States to RP
         self.tau_i = 20.
@@ -447,8 +446,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 20.
-        self.params['neg_kappa'] = -20. # for the nonoptimal decision
+        self.params['pos_kappa'] = 10.
+        self.params['neg_kappa'] = -10. # for the nonoptimal decision
 
         # gain parameters
         if self.params['training']:
