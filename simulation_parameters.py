@@ -85,8 +85,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
-        self.params['frac_training_samples_from_grid'] = .0
-        self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
+        self.params['frac_training_samples_from_grid'] = .2
+        self.params['frac_training_samples_center'] = .2 # fraction of training samples drawn from the center
         self.params['center_stim_width'] = .0 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
         assert (1.0 >= self.params['frac_training_samples_center'] + self.params['frac_training_samples_from_grid'])
         # to generate the training samples, three methods are used: 1) sampling from the tuning properties, 2) sampling from a grid  3) sampling nearby the center (as these stimuli occur more frequently)
@@ -804,8 +804,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['params_fn_json'] = '%ssimulation_parameters.json' % (self.params['parameters_folder'])
 
 
-        self.params['folder_names'].append(self.params['spiketimes_folder'])
-        self.params['folder_names'].append(self.params['input_folder_mpn'])
 #        self.create_folders()
 
 

@@ -153,8 +153,8 @@ if __name__ == '__main__':
         python PlottingScripts/plot_conn_list_as_colormap.py [FOLDER_NAME]
     """
 
-#    src_type = 'mpn'
-    src_type = 'd1'
+    src_type = 'mpn'
+#    src_type = 'd1'
 #    tgt_type = 'd1'
     tgt_type = 'd1'
     fns = sys.argv[1:] # 
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 #    clim = (-5., 5.)
 #    clim = (-200., 200.)
 
-    xv = 'v'
+    xv = 'x'
 
     if len(sys.argv) > 2:
         for fn in fns:

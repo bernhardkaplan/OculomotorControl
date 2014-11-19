@@ -12,6 +12,44 @@ import scipy.stats as stats
 import random
 import string
 
+
+def vector_average_spike_data(d, tuning_prop, n_tp_bins, t_range=None, n_time=1, tp_idx=0, tp_range=None):
+    """
+    d = spike_data -- 2-dim array: format [[GID_0, time_0], [GID_1, time_1], ....]
+    tuning_prop -- n_cells x 4 array
+    n_tp_bins -- number of bins the readout is projected to (number of positions in space / velocity domain)
+    t_range -- time range
+    n_time -- time axis binning
+    tp_idx  -- determines the dimension for readout, given by the column used in tuning_prop
+    tp_range -- tuple giving the min and max value for the readout / projection range
+    """
+    output_array = np.zeros((n_time, n_tp_bins))
+    if t_range == None:
+        t_min = np.min(d[:, 1])
+        t_max = np.max(d[:, 1])
+    else: 
+        (t_min, t_max) = t_range
+       
+    t_axis = np.linspace(t_min, t_max, n_time + 1)
+#    print 't_axis', t_axis, t_min, t_max
+    if tp_range == None:
+        tp_range = (np.min(tuning_prop[:, tp_idx]), np.max(tuning_prop[:, tp_idx]))
+    tp_bins = np.linspace(tp_range[0], tp_range[1], n_tp_bins)
+    for it_ in xrange(n_time):
+        t0 = t_axis[it_]
+        t1 = t_axis[it_ + 1]
+        sd = get_spiketimes_within_interval(d, t0, t1)
+        if sd.size > 0:
+            idx = np.array(sd[:, 0], dtype=np.int) - 1
+            hist, bin_edges = np.histogram(tuning_prop[idx, tp_idx], bins=n_tp_bins, range=(tp_range[0], tp_range[1]))
+            N = sd[:, 0].size
+#            print 'debug t0 t1', t0, t1
+            output_array[it_, :] = hist / float(N)
+
+#    output_array[-1, :] = 
+    return output_array
+
+
 def get_start_and_stop_iteration_for_stimulus_from_motion_params(motion_params_fn):
     """
     Returns a dictionary with (x, v) as key and {'start': <int>, 'stop' <int>} as value, indicating 
