@@ -43,7 +43,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 120
+            self.params['total_num_virtual_procs'] = 160
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
@@ -69,7 +69,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 20 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 3 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
@@ -155,7 +155,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_longTrainign_withMpnNoise_titer%d' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_gLeak25_titer%d' % (self.params['t_iteration'])
             #if self.params['continue_training']:
                 #self.params['sim_id'] += '_CNT_11-21'
 
@@ -218,14 +218,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # #####################################
 #        self.params['neuron_model_mpn'] = 'iaf_cond_exp_bias'
         self.params['neuron_model_mpn'] = 'iaf_cond_exp'
+        self.params['g_leak'] = 25. # before it was 16.66667
         self.params['cell_params_exc_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -80.0, 'V_th': -50.0, \
-                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
+                'g_L': self.params['g_leak'], 't_ref': 2.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
         self.params['cell_params_inh_mpn'] = self.params['cell_params_exc_mpn'].copy()
 
-#        self.params['cell_params_inh_mpn'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
-#                'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -70.0, 'V_th': -55.0, \
-#                'g_L': 16.6667, 't_ref': 2.0, 'tau_syn_ex': 2.0, 'tau_syn_in': 5.0}
         # input parameters
         self.params['w_input_exc_mpn'] = 15. #30. # [nS]
         self.params['w_trigger_spikes_mpn'] = 30.
@@ -237,15 +235,15 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # for MPN
         self.params['f_noise_exc'] = 1000.
         self.params['f_noise_inh'] = 1000.
-        self.params['w_noise_exc'] = 1.1
-        self.params['w_noise_inh'] = -0.6
+        self.params['w_noise_exc'] = 1.5
+        self.params['w_noise_inh'] = -0.5
 
         # for BG
         self.params['connect_noise_to_bg'] = True
         self.params['f_noise_exc_output'] = 1000.
         self.params['f_noise_inh_output'] = 1000.
-        self.params['w_noise_exc_output'] = 1.9
-        self.params['w_noise_inh_output'] = -1.0
+        self.params['w_noise_exc_output'] = 1.5
+        self.params['w_noise_inh_output'] = -0.5
 
         self.params['f_noise_exc_d1'] = 1.
         self.params['f_noise_inh_d1'] = 1.
@@ -449,8 +447,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 5.
-        self.params['neg_kappa'] = -5. # for the nonoptimal decision
+        self.params['pos_kappa'] = 20.
+        self.params['neg_kappa'] = -20. # for the nonoptimal decision
 
         # gain parameters
         if self.params['training']:
@@ -467,7 +465,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d2_d2'] = 0.
 
         self.params['gain_MT_d1'] = 0.8
-        self.params['gain_MT_d2'] = 0.8
+        self.params['gain_MT_d2'] = 1.0
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 100.
         self.params['d2_gain_after_training'] = 100.
@@ -497,13 +495,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_cells_per_d2'] = 5
         self.params['n_cells_d1'] = self.params['n_cells_per_d1'] * self.params['n_actions']
         self.params['n_cells_d2'] = self.params['n_cells_per_d2'] * self.params['n_actions']
-#        self.params['param_msn_d1'] = { 't_ref': 2.0, 'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5.,  \
-#                'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70.}
         self.params['param_msn_d1'] = {'fmax':self.params['fmax'], 'tau_j': self.tau_j, 'tau_e': self.tau_e,\
                 'tau_p': self.tau_p, 'epsilon': self.epsilon, 't_ref': 2.0, \
                 'V_reset':-80., 'tau_syn_ex': 5., 'tau_syn_in' : 5., \
-                'g_L':16.667, 'C_m':250., 'E_L':-70., 'E_in': -70., \
-                'K': self.K, 'gain': self.params['bias_gain']}
+                'g_L': self.params['g_leak'], 'C_m':250., 'E_L':-70., 'E_in': -80., \
+                'K': self.K, 'gain': self.params['bias_gain'], \
+                'V_th': -50.0, 'E_ex': 0.0, 'I_e': 0.0, 'V_m': -70.0}
 #                'g_L': 50., 'C_m':250., 'E_L':-70., 'E_in': -70., \
         self.params['param_msn_d2'] = self.params['param_msn_d1'].copy()
         # iaf_cond_exp_bias default parameters: 
@@ -514,7 +511,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_cells_per_action'] = 5
         self.params['param_bg_output'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -80.0, 'V_th': -50.0, \
-                'g_L': 16.667, 't_ref': 1.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
+                'g_L': self.params['g_leak'], 't_ref': 1.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
         #{'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
 
         
@@ -769,9 +766,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         if folder_name == None:
             if self.params['training']:
-                folder_name = 'Training_%s_nStim%d_%d-%d_gain%.2f_wD2o%.1f_K%d_%d_seeds_%d_%d/' % (self.params['sim_id'], \
+                folder_name = 'Training_%s_nStim%d_%d-%d_gainD1_%.1f_D2_%.1f_K%d_%d_seeds_%d_%d/' % (self.params['sim_id'], \
                         self.params['n_stim_training'], self.params['stim_range'][0], self.params['stim_range'][1], 
-                        self.params['gain_MT_d1'], self.params['str_to_output_inh_w'], self.params['pos_kappa'], self.params['neg_kappa'], self.params['master_seed'], self.params['visual_stim_seed'])
+                        self.params['gain_MT_d1'], self.params['gain_MT_d2'], self.params['pos_kappa'], self.params['neg_kappa'], self.params['master_seed'], self.params['visual_stim_seed'])
             else:
                 if self.params['connect_d1_after_training']:
                     folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
