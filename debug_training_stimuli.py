@@ -1,9 +1,13 @@
 import pylab
 import numpy as np
 import matplotlib
+import sys
 
 #fn = 'training_stimuli_nV16_nX20_seed2.dat'
-fn = 'Training_DEBUG_titer25_nStim320_0-320_gain0.80_seeds_111_2/Data/training_stimuli_parameters.txt'
+#fn = 'Training_DEBUG_titer25_nStim320_0-320_gain0.80_seeds_111_2/Data/training_stimuli_parameters.txt'
+#fn = 'training_stimuli_1200.txt'
+
+fn = sys.argv[1]
 d = np.loadtxt(fn)
 
 fig = pylab.figure()
@@ -19,7 +23,7 @@ m.set_array(np.arange(bounds[0], bounds[-1], 1.))
 rgba_colors = m.to_rgba(bounds)
 
 #for i_ in xrange(d[:, 0].size):
-for i_ in xrange(20):
+for i_ in xrange(40):
     ax.plot(d[i_, 0], d[i_, 2], 'o', color=rgba_colors[i_])
     ax.text(d[i_, 0], d[i_, 2], '%d' % i_, color=rgba_colors[i_])
 

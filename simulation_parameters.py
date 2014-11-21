@@ -39,8 +39,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 160
@@ -49,14 +49,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
-        self.params['training'] = True
-        self.params['continue_training'] = True
+        self.params['training'] = False
+        self.params['continue_training'] = False
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
 #        self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
+        self.params['n_training_cycles'] = 3 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
         """
@@ -84,6 +84,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
 
+        self.params['n_steps_training_trajectory'] = 4
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
         self.params['frac_training_samples_from_grid'] = .2
         self.params['frac_training_samples_center'] = .2 # fraction of training samples drawn from the center
@@ -93,7 +94,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['test_stim_range'] = range(0, 3)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -109,7 +110,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['n_iterations_per_stim'] = 4 + self.params['n_iterations_RBL_training']  
                 # noise, stim, noise, training, noise
         else:
-            self.params['n_iterations_per_stim'] = 25 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 30 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
@@ -164,7 +165,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #                else:
 #                    self.params['sim_id'] = 'RBL_NoNoise_block_titer%d' % (self.params['t_iteration'])
         else:
-            self.params['sim_id'] = '%d_noD1conn_' % (self.params['t_iteration'])
+#            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_longTraining_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -235,7 +237,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # for MPN
         self.params['f_noise_exc'] = 1000.
         self.params['f_noise_inh'] = 1000.
-        self.params['w_noise_exc'] = 1.7
+        self.params['w_noise_exc'] = 1.4
         self.params['w_noise_inh'] = -0.5
 
         # for BG
@@ -311,14 +313,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_exc_to_record_mpn'] = 0
         self.params['x_max_tp'] = 0.45 # [a.u.] minimal distance to the center  
         self.params['x_min_tp'] = 0.1  # [a.u.] all cells with abs(rf_x - .5) < x_min_tp are considered to be in the center and will have constant, minimum RF size (--> see n_rf_x_fovea)
-        self.params['v_max_tp'] = 2.0   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
+        self.params['v_max_tp'] = 1.8   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
         self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 
         self.params['v_lim_training'] = (-self.params['v_max_tp'] * 0.7, self.params['v_max_tp'] * 0.7)
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['blur_X'], self.params['blur_V'] = .15, .30
-        self.params['training_stim_noise_x'] = 0.01 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
-        self.params['training_stim_noise_v'] = 0.20 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['training_stim_noise_x'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
         self.params['rf_size_x_multiplicator'] = 1.0 # receptive field sizes for x-position are multiplied with this factor (to increase / decrease overlap)
         self.params['rf_size_v_multiplicator'] = 1.0 # receptive field sizes for vx are multiplied with this factor (to increase / decrease overlap)
@@ -464,11 +466,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.8
-        self.params['gain_MT_d2'] = 1.0
+        self.params['gain_MT_d1'] = 0.6
+        self.params['gain_MT_d2'] = 0.6
         self.params['bias_gain'] = 0.
-        self.params['d1_gain_after_training'] = 100.
-        self.params['d2_gain_after_training'] = 100.
 
 
         # #####################################

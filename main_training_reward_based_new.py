@@ -75,7 +75,7 @@ class RewardBasedLearning(object):
 #            self.training_stim_params = self.VI.create_training_sequence_RBL_mixed_within_a_cycle()
 #        else:
 #            self.training_stim_params = self.VI.create_training_sequence_RBL_cycle_blocks()
-        self.training_stimuli = self.VI.get_training_stimuli()
+#        self.training_stimuli = self.VI.get_training_stimuli() # this is to be done 'externally' with a given file of training parameters
         if self.comm != None:
             self.comm.Barrier()
 
@@ -254,7 +254,6 @@ if __name__ == '__main__':
     assert len(sys.argv) > 2, 'Missing training_stim_information and training_stim_idx!' + info_txt
     if len(sys.argv) == 3:
         training_params_fn = sys.argv[1]
-        training_params = np.loadtxt(training_params_fn)
         continue_training_idx = int(sys.argv[2])
         params = GP.params
         continue_training_idx = 0
