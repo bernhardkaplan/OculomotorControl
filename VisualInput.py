@@ -988,7 +988,7 @@ class VisualInput(object):
     def spikes_for_all(self, local_gids):
         local_gids = np.array(local_gids)
 #        n_spikes_trigger = np.int(40. / self.params['w_input_exc_mpn'])
-        n_spikes_trigger = 1
+        n_spikes_trigger = 4
 
         self.stim = [ [] for gid in xrange(len(local_gids))]
         for i_ in xrange(len(local_gids)):

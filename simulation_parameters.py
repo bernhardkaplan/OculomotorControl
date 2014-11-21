@@ -43,7 +43,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 160
+            self.params['total_num_virtual_procs'] = 200
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
@@ -69,7 +69,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 3 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 6 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
@@ -93,7 +93,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
 #        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(0, 1)
+        self.params['test_stim_range'] = range(0, 12)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -155,7 +155,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'RBL_titer%d' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'RBL_titer%d_TRJ_CNT_' % (self.params['t_iteration'])
             #if self.params['continue_training']:
                 #self.params['sim_id'] += '_CNT_11-21'
 
@@ -235,14 +235,14 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # for MPN
         self.params['f_noise_exc'] = 1000.
         self.params['f_noise_inh'] = 1000.
-        self.params['w_noise_exc'] = 1.7
+        self.params['w_noise_exc'] = 1.4
         self.params['w_noise_inh'] = -0.5
 
         # for BG
         self.params['connect_noise_to_bg'] = True
         self.params['f_noise_exc_output'] = 1000.
         self.params['f_noise_inh_output'] = 1000.
-        self.params['w_noise_exc_output'] = 1.5
+        self.params['w_noise_exc_output'] = 1.8
         self.params['w_noise_inh_output'] = -0.5
 
         self.params['f_noise_exc_d1'] = 1.
@@ -447,8 +447,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 20.
-        self.params['neg_kappa'] = -20. # for the nonoptimal decision
+        self.params['pos_kappa'] = 3.
+        self.params['neg_kappa'] = -3. # for the nonoptimal decision
 
         # gain parameters
         if self.params['training']:
@@ -464,8 +464,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.8
-        self.params['gain_MT_d2'] = 1.0
+        self.params['gain_MT_d1'] = 0.2
+        self.params['gain_MT_d2'] = 0.2
         self.params['bias_gain'] = 0.
         self.params['d1_gain_after_training'] = 100.
         self.params['d2_gain_after_training'] = 100.

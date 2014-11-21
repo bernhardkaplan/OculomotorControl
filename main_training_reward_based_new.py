@@ -254,10 +254,17 @@ if __name__ == '__main__':
     assert len(sys.argv) > 2, 'Missing training_stim_information and training_stim_idx!' + info_txt
     if len(sys.argv) == 3:
         training_params_fn = sys.argv[1]
-        training_params = np.loadtxt(training_params_fn)
         continue_training_idx = int(sys.argv[2])
         params = GP.params
-        continue_training_idx = 0
+    elif len(sys.argv) == 4:
+        print 'Loading old parameters file from:', sys.argv[1]
+        old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
+        old_params = utils.convert_to_NEST_conform_dict(old_params_json)
+        training_params_fn = sys.argv[2]
+        continue_training_idx = int(sys.argv[3])
+        params = GP.params
+        if comm != None:
+            comm.Barrier()
     elif len(sys.argv) == 5:
         print 'Loading old parameters file from:', sys.argv[1]
         old_params_json = utils.load_params(os.path.abspath(sys.argv[1]))
@@ -272,8 +279,6 @@ if __name__ == '__main__':
         trained_stimuli = old_params['trained_stimuli']
         training_params_fn = sys.argv[3]
         continue_training_idx = int(sys.argv[4])
-#            assert (training_params[:, 0].size > continue_training_idx), 'continue_training_idx (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
-#                    (continue_training_idx, training_params_fn, training_params[:, 0].size)
     else:
         print 'Wrong number of sys.argv!', info_txt
         exit(1)
@@ -283,7 +288,7 @@ if __name__ == '__main__':
 
     training_params = np.loadtxt(training_params_fn)
     n_max = continue_training_idx + params['n_training_cycles'] * params['n_training_stim_per_cycle']
-    assert (training_params[:, 0].size > n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
+    assert (training_params[:, 0].size >= n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
             (n_max, training_params_fn, training_params[:, 0].size)
 
     if pc_id == 0:
@@ -296,6 +301,7 @@ if __name__ == '__main__':
         utils.remove_files_from_folder(params['input_folder_mpn'])
         utils.remove_files_from_folder(params['connections_folder'])
         np.savetxt(params['training_stimuli_fn'], training_params)
+        print 'DEBUG training params:', training_params
 
     if comm != None:
         comm.Barrier()
