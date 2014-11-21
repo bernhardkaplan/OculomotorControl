@@ -9,7 +9,7 @@ import utils
 import re
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import pylab
 import MergeSpikefiles
 import PlotMPNActivity
@@ -27,6 +27,29 @@ class ActivityPlotter(object):
         self.n_x_ticks = 10
         self.x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
         self.rp_markersize = 2
+
+        plot_params = {'backend': 'png',
+                      'axes.labelsize': 20,
+                      'axes.titlesize': 20,
+                      'text.fontsize': 20,
+                      'xtick.labelsize': 16,
+                      'ytick.labelsize': 16,
+                      'legend.pad': 0.2,     # empty space around the legend box
+                      'legend.fontsize': 14,
+                       'lines.markersize': 1,
+                       'lines.markeredgewidth': 0.,
+                       'lines.linewidth': 1,
+                      'font.size': 12,
+                      'path.simplify': False,
+                      'figure.subplot.left':.15,
+                      'figure.subplot.bottom':.13,
+                      'figure.subplot.right':.94,
+                      'figure.subplot.top':.85,
+                      'figure.subplot.hspace':.30,
+                      'figure.subplot.wspace':.30}
+        #              'figure.figsize': get_fig_size(800)}
+
+        pylab.rcParams.update(plot_params)
 
     def plot_raster_simple(self):
         # first find files in Spikes folder 
@@ -124,13 +147,30 @@ class ActivityPlotter(object):
         if self.params['training']:
             ax.set_title('Spikes in BG during training')
         else:
-            ax.set_title('Spikes in BG during testing, w_mpn_D1(D2)=%.2f (%.2f)' % (self.params['gain_MT_d1'], self.params['gain_MT_d2']))
+            title = 'Spikes in BG during testing, w_mpn_D1(D2)=%.2f (%.2f)' % (self.params['gain_MT_d1'], self.params['gain_MT_d2'])
+            ax.set_title(title)
         return ax
+
+
+    def plot_stim_params(self, ax, stim_range):
+
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        t_stim = self.params['n_iterations_per_stim'] * self.params['t_iteration']
+        print 'debug', self.params['motion_params_testing_fn']
+        stim_params = np.loadtxt(self.params['motion_params_testing_fn'])
+        for i_ in xrange(stim_range[0], stim_range[1]):
+            x, y, u, v = stim_params[i_, :]
+            xpos_txt = .5 * (i_ * t_stim + (i_ + 1) * t_stim)
+            (best_speed, vy, best_action_idx) = utils.get_optimal_action(self.params, stim_params[i_, :])
+            ax.text(xpos_txt, ylim[1] + .1 * (ylim[1] - ylim[0]), 'Stim: (%.2f, %.1f) opt action: %d' % (x, u, best_action_idx), fontsize=12)
+
+
 
 
 def run_plot_bg(params, stim_range):
 
-    print 'Plotted the stim_range', stim_range
+    print 'Plotting the stim_range', stim_range
     print 'Merging spikes ...'
     if params['with_d2']:
         cell_types = ['d1', 'd2', 'action']#, 'supervisor']
@@ -150,13 +190,14 @@ def run_plot_bg(params, stim_range):
         t_stim = params['n_iterations_per_stim'] * params['t_iteration']
         xlim = (stim_range[0] * t_stim, stim_range[1] * t_stim)
 
-    MS = MergeSpikefiles.MergeSpikefiles(params)
-    for cell_type in cell_types:
-        for naction in range(params['n_actions']):
-            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction) + '-' # '-' because NEST attaches something like -8357-0.dat to the file name
-            output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
-            if not os.path.exists(output_fn):
-                MS.merge_spiketimes_files(merge_pattern, output_fn)
+    utils.merge_spikes(params)
+#    MS = MergeSpikefiles.MergeSpikefiles(params)
+#    for cell_type in cell_types:
+#        for naction in range(params['n_actions']):
+#            merge_pattern = params['spiketimes_folder'] + params['%s_spikes_fn' % cell_type] + str(naction) + '-' # '-' because NEST attaches something like -8357-0.dat to the file name
+#            output_fn = params['spiketimes_folder'] + params['%s_spikes_fn_merged' % cell_type] + str(naction) + '.dat'
+#            if not os.path.exists(output_fn):
+#                MS.merge_spiketimes_files(merge_pattern, output_fn)
 
     Plotter = ActivityPlotter(params)#, it_max=1)
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -172,6 +213,8 @@ def run_plot_bg(params, stim_range):
         cl = colors[z % len(colors)]
         marker = markers[z % len(markers)]
         ax = Plotter.plot_spikes_for_cell_type(cell_type, color=cl, gid_offset=offset, marker=marker, ylim=(gid_min, gid_max), ax=ax, xlim=xlim)
+
+    Plotter.plot_stim_params(ax, stim_range)
 
     PMPN = PlotMPNActivity.ActivityPlotter(params)
     PMPN.plot_vertical_lines(ax, params)
@@ -229,4 +272,4 @@ if __name__ == '__main__':
             params = utils.load_params(fn)
             run_plot_bg(params, stim_range)
 
-#    pylab.show()
+    pylab.show()

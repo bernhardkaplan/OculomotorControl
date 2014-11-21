@@ -7,14 +7,15 @@ import json
 
 class CreateConnections(object):
 
-    def __init__(self, params, comm=None):
+    def __init__(self, params, comm=None, dummy=False):
         
         self.params = params
 
 #        print nest.Models()
 #        nest.CopyModel('bcpnn_synapse', 'adfadsf', params=self.params['params_synapse_d1_MT_BG'])
-        nest.CopyModel('bcpnn_synapse', self.params['synapse_d1_MT_BG'], params=self.params['params_synapse_d1_MT_BG'])
-        nest.CopyModel('bcpnn_synapse', self.params['synapse_d2_MT_BG'], params=self.params['params_synapse_d2_MT_BG'])
+        if not dummy:
+            nest.CopyModel('bcpnn_synapse', self.params['synapse_d1_MT_BG'], params=self.params['params_synapse_d1_MT_BG'])
+            nest.CopyModel('bcpnn_synapse', self.params['synapse_d2_MT_BG'], params=self.params['params_synapse_d2_MT_BG'])
 
         self.comm = comm
         if comm != None:

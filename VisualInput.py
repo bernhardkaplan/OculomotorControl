@@ -265,7 +265,7 @@ class VisualInput(object):
         mp_training = np.zeros((n_stim, 4))
 
         x_lim_frac = .9
-        v_lim_frac = .8
+        v_lim_frac = .6
 #        x_lim_frac = 1.
 #        v_lim_frac = 1.
 #        x_lim = ((1. - x_lim_frac) * (self.params['x_max_tp'] - self.params['x_min_tp']), x_lim_frac * self.params['x_max_tp'])
@@ -305,7 +305,7 @@ class VisualInput(object):
                     mp_training[i_stim + i_, 1] = .5
                     plus_minus = utils.get_plus_minus(self.RNG)
                     mp_training[i_stim + i_, 2] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
-                    mp_training[i_stim + i_, 3] =  training_states[i_stim][1] + plus_minus * self.RNG.uniform(0, self.params['training_stim_noise_v'])
+                    mp_training[i_stim + i_, 3] = 0.
         np.savetxt(self.params['training_stimuli_fn'], mp_training)
         return mp_training 
 

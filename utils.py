@@ -50,6 +50,32 @@ def vector_average_spike_data(d, tuning_prop, n_tp_bins, t_range=None, n_time=1,
     return output_array
 
 
+def get_optimal_action(params, stim_params):
+    try:
+        action_bins = np.loadtxt(params['bg_action_bins_fn'])[:, 0]
+    except:
+        action_bins = []
+        n_bins_x = np.int(np.round((params['n_actions'] - 1) / 2.))
+        n_bins_y = np.int(np.round((params['n_actions'] - 1) / 2.))
+        v_scale_half = ((-1.) * np.logspace(np.log(params['v_min_out']) / np.log(params['log_scale']),
+                            np.log(params['v_max_out']) / np.log(params['log_scale']), num=n_bins_x,
+                            endpoint=True, base=params['log_scale'])).tolist()
+        v_scale_half.reverse()
+        action_bins += v_scale_half
+        action_bins += [0.]
+        v_scale_half = (np.logspace(np.log(params['v_min_out']) / np.log(params['log_scale']),
+                            np.log(params['v_max_out']) / np.log(params['log_scale']), num=n_bins_x,
+                            endpoint=True, base=params['log_scale'])).tolist()
+        action_bins += v_scale_half
+
+    all_outcomes = np.zeros(len(action_bins))
+    for i_, action in enumerate(action_bins):    
+        all_outcomes[i_] = get_next_stim(params, stim_params, action)[0]
+    best_action_idx = np.argmin(np.abs(all_outcomes - .5))
+    best_speed = action_bins[best_action_idx ]
+    return (best_speed, 0, best_action_idx)
+
+
 def get_start_and_stop_iteration_for_stimulus_from_motion_params(motion_params_fn):
     """
     Returns a dictionary with (x, v) as key and {'start': <int>, 'stop' <int>} as value, indicating 

@@ -58,7 +58,7 @@ class BasalGanglia(object):
         self.reset_pool_of_possible_actions()
         if not dummy:
             self.create_populations()
-            if self.params['gids_to_record_bg']:
+            if len(self.params['gids_to_record_bg']) > 0:
                 self.record_extra_cells()
 
             if self.params['training']:

@@ -65,6 +65,10 @@ class Plotter(object):
 
         # plot the stimulus start points
 #        for i_ in xrange(self.params['n_stim']):
+
+        ylim = ax1.get_ylim()
+        ax1.plot((.5, .5), (ylim[0], ylim[1]), ls='--', c='k', lw=3)
+
         for i_ in xrange(d[:, 0].size):
             if plot_process:
 #                idx = i_ * self.params['n_iterations_per_stim']
@@ -88,6 +92,7 @@ class Plotter(object):
         collection = PatchCollection(patches)#, alpha=0.1)
         ax1.add_collection(collection)
 
+        ax1.text(.4, ylim[0] + .1 * (ylim[1] - ylim[0]), 'Visual field center', fontsize=16)
 
         ax1.set_title('Training stimuli state space')
         ax1.set_xlabel('Stimulus position') 
