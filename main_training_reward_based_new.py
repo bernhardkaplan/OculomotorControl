@@ -399,10 +399,13 @@ if __name__ == '__main__':
     ####################################
     #   S A V E     W E I G H T S 
     ####################################
+    t_a = time.time()
     RBL.CC.get_weights(RBL.MT, RBL.BG)
     RBL.CC.get_d1_d1_weights(RBL.BG)
     RBL.CC.get_d2_d2_weights(RBL.BG)
     RBL.CC.merge_connection_files(params)
+    t_b = time.time() - t_a
+    print 'Time for get_weights %d: %.2f [sec] %.2f [min]' % (pc_id, t_b, t_b / 60.)
 
     ####################################
     #   R U N   E M P T Y    I N P U T 

@@ -2,7 +2,7 @@
 # The -l above is required to get the full environment with modules
 
 # The name of the script is myjob
-#SBATCH -J K5_g0.2_RBL
+#SBATCH -J K5_g0.2_RBL_CNT
 
 # Only 1 hour wall-clock time will be given to this job
 #SBATCH -t 01:25:00
@@ -12,8 +12,8 @@
 #SBATCH -n 200
 #SBATCH --ntasks-per-node=40
 
-#SBATCH -e error_file_RBL_K3.e
-#SBATCH -o output_file_RBL_K3.o
+#SBATCH -e error_file_RBL_K5.e
+#SBATCH -o output_file_RBL_K5.o
 
 echo "Starting at `date`"
 export CRAY_ROOTFS=DSL
@@ -26,7 +26,7 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-aprun -n 200 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py Training_RBL_titer25_TRJ_small__nStim12_0-12_gainD1_0.2_D2_0.2_K10_-10_seeds_111_2 training_stimuli_debug.txt 0 > delme_K5_gain0.2 2>&1
+aprun -n 200 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py Training_RBL_titer25_TRJ_small__nStim12_0-12_gainD1_0.2_D2_0.2_K5_-5_seeds_111_2 training_stimuli_900_3step_nonshuffled.txt  0 > delme_K5_gain0.2 2>&1
 
 #aprun -n 160 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py training_stimuli_nV10_nX10_trajectory_8steps.dat  0 > delme_rbl_K20_-20 2>&1
 #aprun -n 160 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py training_stimuli_nV1_nX1_3cycles_5step_trajectory.txt  0 > delme_rbl_K5_-20 2>&1

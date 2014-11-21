@@ -187,7 +187,7 @@ class CreateConnections(object):
                 self.merge_connection_files(old_params, self.params)
             else:
                 # copy the merged file to the new directory
-                cmd = 'cp %s %s' % (old_params['mpn_bg%s_merged_conn_fn' % cell_type], self.params['mpn_bg%s_merged_conn_fn' % cell_type])
+                cmd = 'cp %s %s' % (old_params['mpn_bg%s_old_merged_conn_fn' % cell_type], self.params['mpn_bg%s_merged_conn_fn' % cell_type])
                 os.system(cmd)
 
         if self.comm != None:
@@ -209,7 +209,7 @@ class CreateConnections(object):
 
         delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
         param_dict_list = [self.params['params_synapse_%s_MT_BG' % target] for i_ in xrange(valid_idx.size)]
-        model = 'bcpnn_synapse'
+        model = self.params['synapse_%s_MT_BG' % target]
         for i_ in xrange(valid_idx.size):
             param_dict_list[i_]['p_i'] = pi[i_]
             param_dict_list[i_]['p_j'] = pj[i_]
@@ -217,6 +217,12 @@ class CreateConnections(object):
             param_dict_list[i_]['weight'] = weights[i_]
             nest.Connect([srcs[i_]], [tgts[i_]], param_dict_list[i_], model=model)
 
+        #conns = nest.GetConnections([srcs[i_]], [tgts[i_]], synapse_model=model)
+        #print 'CreateConnections.get_weights %d action n_conn %d (model) %s' % (self.pc_id, len(conns), model)
+        #for nactions in xrange(self.params['n_actions']):
+            #conns = nest.GetConnections(mpn_net.exc_pop, bg_net.strD1[nactions], synapse_model=model)
+            #conns = nest.GetConnections(mpn_net.exc_pop, bg_net.strD1[nactions], synapse_model=self.params['synapse_%s_MT_BG' % target]) # get the list of connections stored on the current MPI node
+            #print 'DEBUG AFTER CONNECT: pc_id %d n_conns: %d model=%s' % (self.pc_id, len(conns), self.params['synapse_%s_MT_BG' % target])
 #        nest.Connect(srcs, tgts, weights, delays, model=model)
 
         # set the pi, pj, traces
@@ -340,30 +346,46 @@ class CreateConnections(object):
         print 'Writing weights to files...'
         D1_conns = ''
         bias_d1 = {}
-        for nactions in xrange(self.params['n_actions']):
-            print 'CreateConnections.get_weights action %d' % nactions, 'iteration:', iteration
-            conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions], synapse_model=self.params['synapse_d1_MT_BG']) # get the list of connections stored on the current MPI node
-#            print 'DEBUG src_pop.exc_pop:', src_pop.exc_pop
-#            print 'DEBUG tgt_pop:', tgt_pop.strD1[nactions]
-#            print 'DEBUG %d n_conns: %d' % (self.pc_id, len(conns))
-#            exit(1)
-#            print 'DEBUG conns', conns
-            if conns != None and model != 'static_synapse':
-                for i_, c in enumerate(conns):
-                    cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
-                    pi = cp[0]['p_i']
-                    pj = cp[0]['p_j']
-                    pij = cp[0]['p_ij']
-                    w = np.log(pij / (pi * pj))
-                    D1_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w, pi, pj, pij)
+
+        model = self.params['synapse_d1_MT_BG']
+        for i_pre in xrange(len(src_pop.exc_pop)):
+            gid_pre = src_pop.exc_pop[i_pre]
+            for nactions in xrange(self.params['n_actions']):
+                for j_ in xrange(len(tgt_pop.strD1[nactions])):
+                    gid_post = tgt_pop.strD1[nactions][j_]
+                    conns = nest.GetConnections([gid_pre], [gid_post], synapse_model=model)
+                    if conns != None:
+                        for i_, c in enumerate(conns):
+                            cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                            pi = cp[0]['p_i']
+                            pj = cp[0]['p_j']
+                            pij = cp[0]['p_ij']
+                            w = np.log(pij / (pi * pj))
+                            D1_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w, pi, pj, pij)
+                            bias_d1[cp[0]['target']] = cp[0]['bias']
+
+        #for nactions in xrange(self.params['n_actions']):
+            #print 'CreateConnections.get_weights action %d' % nactions, 'iteration:', iteration
+            #conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD1[nactions], synapse_model=self.params['synapse_d1_MT_BG']) # get the list of connections stored on the current MPI node
+            #print 'DEBUG get_weights: pc_id %d n_conns: %d' % (self.pc_id, len(conns))
+            #if conns != None:
+                #print 'DEBUG get_weights GO: pc_id %d n_conns: %d' % (self.pc_id, len(conns))
+                #for i_, c in enumerate(conns):
+                    #cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                    #pi = cp[0]['p_i']
+                    #pj = cp[0]['p_j']
+                    #pij = cp[0]['p_ij']
+                    #w = np.log(pij / (pi * pj))
+                    #D1_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w, pi, pj, pij)
+                    #asdf 
 #                        w_ = self.clip_weight(w, self.params['clip_weights_mpn_d1'], self.params['weight_threshold_abstract_mpn_d1'])
 #                        if w_:
 #                    D1_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
-                    bias_d1[cp[0]['target']] = cp[0]['bias']
-            elif conns != None and model == 'static_synapse':
-                for i_, c in enumerate(conns):
-                    cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
-                    D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], cp[0]['weight'])
+                    #bias_d1[cp[0]['target']] = cp[0]['bias']
+            #elif conns != None and model == 'static_synapse':
+                #for i_, c in enumerate(conns):
+                    #cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                    #D1_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], cp[0]['weight'])
 
         if iteration == None:
             fn_out = self.params['mpn_bgd1_conn_fn_base'] + '%d.txt' % (self.pc_id)
@@ -379,25 +401,22 @@ class CreateConnections(object):
         if self.params['with_d2']:
             D2_conns = ''
             bias_d2 = {}
-            for nactions in xrange(self.params['n_actions']):
-                conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions], synapse_model=self.params['synapse_d2_MT_BG']) # get the list of connections stored on the current MPI node
-                if conns != None and model != 'static_synapse':
-                    for c in conns:
-                        cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
-                        pi = cp[0]['p_i']
-                        pj = cp[0]['p_j']
-                        pij = cp[0]['p_ij']
-                        w = np.log(pij / (pi * pj))
-                        D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w, pi, pj, pij)
-                elif conns != None and model == 'static_synapse':
-                    for i_, c in enumerate(conns):
-                        cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
-                        D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], cp[0]['weight'])
-#                            w_ = self.clip_weight(w, self.params['clip_weights_mpn_d2'], self.params['weight_threshold_abstract_mpn_d2'])
-#                            if w_:
-#                                D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
-#                                bias_d2[cp[0]['target']] = cp[0]['bias']
-
+            model = self.params['synapse_d2_MT_BG']
+            for i_pre in xrange(len(src_pop.exc_pop)):
+                gid_pre = src_pop.exc_pop[i_pre]
+                for nactions in xrange(self.params['n_actions']):
+                    for j_ in xrange(len(tgt_pop.strD2[nactions])):
+                        gid_post = tgt_pop.strD2[nactions][j_]
+                        conns = nest.GetConnections([gid_pre], [gid_post], synapse_model=model)
+                        if conns != None:
+                            for i_, c in enumerate(conns):
+                                cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                                pi = cp[0]['p_i']
+                                pj = cp[0]['p_j']
+                                pij = cp[0]['p_ij']
+                                w = np.log(pij / (pi * pj))
+                                D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w, pi, pj, pij)
+                                bias_d2[cp[0]['target']] = cp[0]['bias']
             bias_d2_f = file(self.params['bias_d2_fn_base'] + 'pc%d.json' % self.pc_id, 'w')
             json.dump(bias_d2, bias_d2_f, indent=0)
             if iteration == None:
@@ -408,6 +427,29 @@ class CreateConnections(object):
             D2_f = file(fn_out, 'w')
             D2_f.write(D2_conns)
             D2_f.close()
+
+
+            #D2_conns = ''
+            #bias_d2 = {}
+            #for nactions in xrange(self.params['n_actions']):
+                #conns = nest.GetConnections(src_pop.exc_pop, tgt_pop.strD2[nactions], synapse_model=self.params['synapse_d2_MT_BG']) # get the list of connections stored on the current MPI node
+                #if conns != None and model != 'static_synapse':
+                    #for c in conns:
+                        #cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                        #pi = cp[0]['p_i']
+                        ##pj = cp[0]['p_j']
+                        #pij = cp[0]['p_ij']
+                        #w = np.log(pij / (pi * pj))
+                        #D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w, pi, pj, pij)
+                #elif conns != None and model == 'static_synapse':
+                    #for i_, c in enumerate(conns):
+                        #cp = nest.GetStatus([c])  # retrieve the dictionary for this connection
+                        #D2_conns += '%d\t%d\t%.4e\n' % (cp[0]['source'], cp[0]['target'], cp[0]['weight'])
+                        #adfasdf
+#                            w_ = self.clip_weight(w, self.params['clip_weights_mpn_d2'], self.params['weight_threshold_abstract_mpn_d2'])
+#                            if w_:
+#                                D2_conns += '%d\t%d\t%.4e\t%.4e\t%.4e\t%.4e\n' % (cp[0]['source'], cp[0]['target'], w_, pi, pj, pij)
+#                                bias_d2[cp[0]['target']] = cp[0]['bias']
 
 
     def get_d1_d1_weights(self, BG):

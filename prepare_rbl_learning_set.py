@@ -48,14 +48,14 @@ if __name__ == '__main__':
 
 #    USE_MPI = False
 
-    training_params_fn = 'training_stimuli_1200.txt'
+    training_params_fn = 'training_stimuli_900_3step_nonshuffled.txt'
     ps = simulation_parameters.global_parameters()
 
-    n_jobs = 20
-    n_stimuli_per_run = 10
+    n_jobs = 10
+    n_stimuli_per_run = 12
     stim_offset = 0
     
-    seed_folder = "Training_RBL_titer25_TRJ_small__nStim12_0-12_gainD1_0.8_D2_0.8_K5_-5_seeds_111_2 " # where the connectivity is saved in 
+    seed_folder = "Training_RBL_titer25_TRJ_small__nStim12_0-12_gainD1_0.2_D2_0.2_K5_-5_seeds_111_2 " # where the connectivity is saved in 
 
     aprun_cmd_base = 'aprun -n 200 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 
