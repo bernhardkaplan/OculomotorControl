@@ -23,7 +23,7 @@ m.set_array(np.arange(bounds[0], bounds[-1], 1.))
 rgba_colors = m.to_rgba(bounds)
 
 #for i_ in xrange(d[:, 0].size):
-for i_ in xrange(40):
+for i_ in xrange(10):
     ax.plot(d[i_, 0], d[i_, 2], 'o', color=rgba_colors[i_])
     ax.text(d[i_, 0], d[i_, 2], '%d' % i_, color=rgba_colors[i_])
 

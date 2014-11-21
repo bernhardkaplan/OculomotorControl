@@ -50,7 +50,7 @@ def create_stimuli_along_a_trajectory(params):
 
     n_stim = stim_params_grid[:, 0].size 
     shuffled_idx = range(n_stim)
-    np.random.shuffle(shuffled_idx)
+    #np.random.shuffle(shuffled_idx)
 
     stim_params_start = stim_params_grid[shuffled_idx, :]
 

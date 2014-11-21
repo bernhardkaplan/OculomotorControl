@@ -33,7 +33,7 @@ export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/pytho
 
 #aprun -n 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training_SubOpt_2_titer25_nRF50_nV50_nStim4x400_nactions17_blurX0.05_V0.05_taup100000/ > delme_testing_before_rbl_2 2>&1
 
-aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training_RBL_longTrainign_withMpnNoise_titer25_nStim10_293-303_gain0.80_K20_seeds_111_2 0 20 > delme_testing_280-300 2>&1
+aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training_RBL_titer25_TRJ_small__nStim12_0-12_gainD1_0.8_D2_0.8_K5_-5_seeds_111_2 0 12 > delme_testing_ 2>&1
 
 
 # RBL

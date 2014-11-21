@@ -48,16 +48,16 @@ if __name__ == '__main__':
 
 #    USE_MPI = False
 
-    training_params_fn = 'training_stimuli_nV16_nX20_seed2_centered_first.dat'
+    training_params_fn = 'training_stimuli_1200.txt'
     ps = simulation_parameters.global_parameters()
 
-    n_jobs = 1
+    n_jobs = 20
     n_stimuli_per_run = 10
-    stim_offset = 3
+    stim_offset = 0
     
-    seed_folder = "Training_RBL_gLeak25_titer25_nStim3_0-3_gainD1_0.8_D2_1.0_K20_-20_seeds_111_2 " # where the connectivity is saved in 
+    seed_folder = "Training_RBL_titer25_TRJ_small__nStim12_0-12_gainD1_0.8_D2_0.8_K5_-5_seeds_111_2 " # where the connectivity is saved in 
 
-    aprun_cmd_base = 'aprun -n 160 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
+    aprun_cmd_base = 'aprun -n 200 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 
     run_commands = []
     old_folder = seed_folder
