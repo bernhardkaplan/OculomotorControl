@@ -292,6 +292,7 @@ if __name__ == '__main__':
     assert (training_params[:, 0].size >= n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
             (n_max, training_params_fn, training_params[:, 0].size)
 
+    params['training_params_fn'] = training_params_fn
     if pc_id == 0:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     if pc_id == 0:
@@ -337,7 +338,8 @@ if __name__ == '__main__':
         print '\n================ NEW CYCLE ======================'
         # randomize order of stimuli within each cycle
         order_of_stim = range(params['n_training_stim_per_cycle'])
-        np.random.shuffle(order_of_stim) 
+        if i_cycle > 0:
+            np.random.shuffle(order_of_stim) 
 
         #actions_per_stim = [{a: 0 for a in xrange(params['n_actions'])} for i in xrange(params['n_training_stim_per_cycle'])] 
         actions_per_stim = []
@@ -400,10 +402,13 @@ if __name__ == '__main__':
     ####################################
     #   S A V E     W E I G H T S 
     ####################################
+    t_a = time.time()
     RBL.CC.get_weights(RBL.MT, RBL.BG)
     RBL.CC.get_d1_d1_weights(RBL.BG)
     RBL.CC.get_d2_d2_weights(RBL.BG)
     RBL.CC.merge_connection_files(params)
+    t_b = time.time() - t_a
+    print 'Time for get_weights %d: %.2f [sec] %.2f [min]' % (pc_id, t_b, t_b / 60.)
 
     ####################################
     #   R U N   E M P T Y    I N P U T 

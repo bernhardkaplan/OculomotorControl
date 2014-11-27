@@ -41,22 +41,22 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 8
+        self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 200
+            self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
         self.params['training'] = False
-        self.params['continue_training'] = False
+        self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
         self.params['use_training_stim_for_testing'] = True
 #        self.params['mixed_training_cycles'] = False
-        self.params['n_training_cycles'] = 3 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
+        self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
         # for RBL n_training_cycles stands for the number of different stimuli presented
         """
@@ -69,9 +69,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 10 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 3 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 10 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 25 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -156,7 +156,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'DEBUG_RBL_titer%d_TRJ_CNT_' % (self.params['t_iteration'])
+                self.params['sim_id'] = 'PRESENTATION_RBL_titer%d_TRJ_CNT_' % (self.params['t_iteration'])
             #if self.params['continue_training']:
                 #self.params['sim_id'] += '_CNT_11-21'
 
@@ -166,7 +166,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #                    self.params['sim_id'] = 'RBL_NoNoise_block_titer%d' % (self.params['t_iteration'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_longTraining_' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_shortTraining_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -449,8 +449,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 10.
-        self.params['neg_kappa'] = -10. # for the nonoptimal decision
+        self.params['pos_kappa'] = 5.
+        self.params['neg_kappa'] = -5. # for the nonoptimal decision
 
         # gain parameters
         if self.params['training']:
@@ -466,8 +466,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.4
-        self.params['gain_MT_d2'] = 0.4
+        self.params['gain_MT_d1'] = 0.6
+        self.params['gain_MT_d2'] = 0.6
         self.params['bias_gain'] = 0.
 
 
@@ -739,6 +739,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_bgd2_conn_fn_base'] = self.params['connections_folder'] + 'mpn_bg_d2_connections'
         self.params['mpn_bgd1_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d1_connections.txt'
         self.params['mpn_bgd2_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connections.txt'
+        self.params['mpn_bgd1_old_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d1_connections_before_training.txt'
+        self.params['mpn_bgd2_old_merged_conn_fn'] = self.params['connections_folder'] + 'merged_mpn_bg_d2_connections_before_training.txt'
         self.params['d1_d1_conn_fn_base'] = self.params['connections_folder'] + 'd1_d1_connections'
         self.params['d1_d1_merged_conn_fn'] = self.params['connections_folder'] + 'merged_d1_d1_connections.txt'
         self.params['d2_d2_conn_fn_base'] = self.params['connections_folder'] + 'd2_d2_connections'
