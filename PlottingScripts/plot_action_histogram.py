@@ -23,7 +23,7 @@ plot_params = {'backend': 'png',
                'lines.linewidth': 3,
               'path.simplify': False,
               'figure.subplot.left' : 0.17, 
-              'figure.subplot.bottom' : 0.10, 
+              'figure.subplot.bottom' : 0.15, 
               'figure.subplot.right' : 0.97, 
               'figure.subplot.top' : 0.92, 
               'figure.subplot.hspace' : 0.45,
@@ -36,7 +36,8 @@ pylab.rcParams.update(plot_params)
 folder = os.path.abspath(sys.argv[1])
 params = utils.load_params(folder)
 try:
-    action_mapping = np.loadtxt(params['bg_action_bins_fn'])
+    action_mapping = np.loadtxt(params['bg_action_bins_fn'])[:, 0]
+    print 'Loadin action mapping from:', params['bg_action_bins_fn']
 except:
     BG = BasalGanglia.BasalGanglia(params, dummy=True)
     action_mapping = BG.action_bins_x
@@ -46,15 +47,22 @@ except:
 # ---- Plot 2 D action_idx (int) vs Output Speed (vx)
 fig = pylab.figure()
 ax = fig.add_subplot(111)
-ax.plot(range(len(action_mapping)), action_mapping, 'o', markersize=3)
+ax.plot(range(len(action_mapping)), action_mapping, 'o', markersize=10)
+ax.set_xlim(-1, len(action_mapping) + 1)
 ax.set_xlabel('Action index')
-ax.set_ylabel('Action $v_x$ [Hz]')
-fig.savefig(params['figures_folder'] + 'vx_output_action.png')
+ax.set_ylabel('Action $v_x$ [a.u.]')
+ax.set_title('Eye velocity of different actions')
+ax.plot((-1, params['n_actions']), (0., 0.), ls='--', c='k', lw=3)
+output_fn = params['figures_folder'] + 'vx_output_action.png'
+print 'Saving output action mapping to:', output_fn
+fig.savefig(output_fn, dpi=200)
 
-#d = np.loadtxt(params['actions_taken_fn'])
-d = np.loadtxt(params['action_indices_fn'])
+print 'Loading actions taken from:', params['actions_taken_fn']
+d = np.loadtxt(params['actions_taken_fn'])
+#d = np.loadtxt(params['action_indices_fn'])
 
-actions_taken = np.zeros(params['n_stim'])
+actions_taken = d[:, 2]
+#actions_taken = np.zeros(params['n_stim'])
 # if multi column data in actions_taken
 #for i_ in xrange(params['n_stim']):
 #    print 'action idx[%d] = ' % i_, d[i_ * (params['n_silent_iterations'] + 1) + 1, 2]
@@ -76,16 +84,17 @@ fig = pylab.figure(figsize=figsize)
 ax1 = fig.add_subplot(411)
 ax1.set_title('Histogram of actions taken during training\n%d cycles x %d stimuli' % (params['n_training_cycles'], params['n_training_stim_per_cycle']))
 print 'n_actions', params['n_actions']
-print 'Actions takend: ', d
+#print 'Actions takend: ', d
 # if multi column data in actions_taken
-#cnt, bins = np.histogram(d[:, 2], bins=params['n_actions'], range=(0, params['n_actions']))
-cnt, bins = np.histogram(d, bins=params['n_actions'], range=(0, params['n_actions']))
+cnt, bins = np.histogram(d[:, 2], bins=params['n_actions'], range=(0, params['n_actions']))
+#cnt, bins = np.histogram(d, bins=params['n_actions'], range=(0, params['n_actions']))
 print 'Action hist bins', bins
 print 'Action hist cnt', cnt
 print 'Action mapping', action_mapping
 idx_never_done = np.nonzero(cnt == 0)[0]
 print 'Actions never done:', idx_never_done
-print 'Actions never done (vx):', action_mapping[idx_never_done]
+if len(idx_never_done) > 0:
+    print 'Actions never done (vx):', action_mapping[idx_never_done]
 ax1.bar(bins[:-1], cnt, width=bins[1]-bins[0])
 ax1.set_xlabel('Actions taken')
 ax1.set_ylabel('Count')

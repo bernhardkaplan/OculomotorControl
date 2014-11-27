@@ -122,6 +122,6 @@ if __name__ == '__main__':
     output_fn = params['figures_folder'] + 'training_stimuli.png'
     pylab.savefig(output_fn, dpi=200)
 #    Plotter.plot_training_sample_space(plot_process=True)
-#    Plotter.plot_precomputed_actions(plot_cells=True)
+    Plotter.plot_precomputed_actions(plot_cells=True)
 
     pylab.show()
