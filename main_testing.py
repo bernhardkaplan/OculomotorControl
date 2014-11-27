@@ -119,6 +119,7 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time5: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
+    CC.merge_connection_files(training_params)
     CC.connect_mt_to_bg_after_training(MT, BG, training_params, testing_params, debug=True)
     if testing_params['connect_d1_after_training']:
         CC.connect_d1_after_training(BG, training_params, testing_params)
@@ -219,8 +220,6 @@ if __name__ == '__main__':
 
     if comm != None:
         comm.Barrier()
-    t1 = time.time() - t0
-    print 'Time9: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
 
     t1 = time.time() - t0
     print 'TimeEND: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)

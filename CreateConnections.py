@@ -53,8 +53,8 @@ class CreateConnections(object):
                 p = training_params
             fn_out = p['mpn_bg%s_merged_conn_fn' % cell_type]
             merge_pattern = training_params['mpn_bg%s_conn_fn_base' % cell_type]
-            if not os.path.exists(p['mpn_bg%s_merged_conn_fn' % cell_type]):
-                utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
+            #if not os.path.exists(p['mpn_bg%s_merged_conn_fn' % cell_type]):
+            utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
 
             if test_params != None: 
                 bias_fns = utils.find_files(training_params['connections_folder'], 'bias_%s_pc' % cell_type)
@@ -73,10 +73,10 @@ class CreateConnections(object):
                     fn_merged = test_params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it)
                 else:
                     fn_merged = training_params['mpn_bg%s_merged_conntracking_fn_base' % cell_type] + 'it%d.txt' % (it)
-                if not os.path.exists(fn_merged):
+                #if not os.path.exists(fn_merged):
                     # merge the connection files
-                    merge_pattern = training_params['mpn_bg%s_conntracking_fn_base' % cell_type] + 'it%d_' % it
-                    utils.merge_and_sort_files(merge_pattern, fn_merged, sort=True)
+                merge_pattern = training_params['mpn_bg%s_conntracking_fn_base' % cell_type] + 'it%d_' % it
+                utils.merge_and_sort_files(merge_pattern, fn_merged, sort=True)
 
         if self.pc_id == 0:
             merge_for_tgt_cell_type('d1')
@@ -186,15 +186,17 @@ class CreateConnections(object):
         for cell_type in ['d1', 'd2']:
             if not os.path.exists(old_params['mpn_bg%s_merged_conn_fn' % cell_type]):
                 self.merge_connection_files(old_params, self.params)
-            else:
+            #else:
                 # copy the merged file to the new directory
-                cmd = 'cp %s %s' % (old_params['mpn_bg%s_old_merged_conn_fn' % cell_type], self.params['mpn_bg%s_merged_conn_fn' % cell_type])
-                os.system(cmd)
+                #cmd = 'cp %s %s' % (old_params['mpn_bg%s_old_merged_conn_fn' % cell_type], self.params['mpn_bg%s_merged_conn_fn' % cell_type])
+                #os.system(cmd)
 
         if self.comm != None:
             self.comm.Barrier()
-        print 'Loading MPN - BG %s connections from: %s' % (target, self.params['mpn_bg%s_merged_conn_fn' % target])
-        mpn_bg_conn_list = np.loadtxt(self.params['mpn_bg%s_merged_conn_fn' % target])
+        #print 'Loading MPN - BG %s connections from: %s' % (target, self.params['mpn_bg%s_merged_conn_fn' % target])
+        #mpn_bg_conn_list = np.loadtxt(self.params['mpn_bg%s_merged_conn_fn' % target])
+        print 'Loading MPN - BG %s connections from: %s' % (target, old_params['mpn_bg%s_merged_conn_fn' % target])
+        mpn_bg_conn_list = np.loadtxt(old_params['mpn_bg%s_merged_conn_fn' % target])
         n_lines = mpn_bg_conn_list[:, 0].size 
         w = mpn_bg_conn_list[:, 2]
         pi = mpn_bg_conn_list[:, 3]
