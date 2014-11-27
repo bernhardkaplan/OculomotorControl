@@ -105,6 +105,7 @@ class RewardBasedLearning(object):
             self.CC.connect_and_load_mt_to_bg(self.MT, self.BG, 'd2', old_params)
 
 
+
     def create_networks(self):
         self.VI = VisualInput.VisualInput(self.params, comm=self.comm)
         self.MT = MotionPrediction.MotionPrediction(self.params, self.VI, self.comm)
