@@ -89,6 +89,7 @@ class PlotTesting(MetaAnalysisClass):
         n_time = 1
         n_bins = 50
         cmap_data = np.zeros((n_time * (self.it_range[1] - self.it_range[0]), n_bins))
+
         vec_avg = np.zeros(n_time * (self.it_range[1] - self.it_range[0]))
         y_axis = np.linspace(np.min(self.tuning_prop[:, tp_idx]), np.max(self.tuning_prop[:, tp_idx]), n_bins)
         for it_ in xrange(self.it_range[1] - self.it_range[0]):
@@ -122,7 +123,7 @@ class PlotTesting(MetaAnalysisClass):
         ax.set_ylabel('Retinal displacement')
         output_fn = self.params['figures_folder'] + 'retinal_displacement_cmap_%d-%d.png' % (self.stim_range[0], self.stim_range[-1])
         print 'Saving colormap figure to:', output_fn
-        plt.savefig(output_fn, dpi=200)
+        plt.savefig(output_fn, dpi=300)
         output_fn = self.params['data_folder'] + 'retinal_displacement_cmap_%d-%d.dat' % (self.stim_range[0], self.stim_range[-1])
         print 'Saving colormap data to:', output_fn
         np.savetxt(output_fn, cmap_data)
@@ -135,7 +136,6 @@ class PlotTesting(MetaAnalysisClass):
         fig = plt.figure()
         ax = fig.add_subplot(211)
         n_stim = self.stim_range[-1] + 1 - self.stim_range[0]
-        print 'debug n_stim', n_stim
         all_va = np.zeros((n_stim, n_time * self.params['n_iterations_per_stim']))
         for i_stim in xrange(self.stim_range[-1] + 1- self.stim_range[0]):
             idx0 = i_stim * self.params['n_iterations_per_stim'] * n_time
@@ -143,6 +143,7 @@ class PlotTesting(MetaAnalysisClass):
             y_data = vec_avg[idx0:idx1]
             all_va[i_stim, :] = np.abs(y_data - .5)
             ax.plot(range(n_time * self.params['n_iterations_per_stim']), y_data, c='k', lw=1)
+
         xlim = ax.get_xlim()
         ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', c='k', lw=3)
 
@@ -184,7 +185,7 @@ class PlotTesting(MetaAnalysisClass):
         # SAVING
         output_fn = self.params['figures_folder'] + 'retinal_displacement_avg_%d-%d.png' % (self.stim_range[0], self.stim_range[-1])
         print 'Saving figures to:', output_fn
-        plt.savefig(output_fn, dpi=200)
+        plt.savefig(output_fn, dpi=300)
         output_fn = self.params['data_folder'] + 'retinal_displacement_allVA_%d-%d.dat' % (self.stim_range[0], self.stim_range[-1])
         print 'Saving colormap data to:', output_fn
         np.savetxt(output_fn, all_va)
