@@ -166,7 +166,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #                    self.params['sim_id'] = 'RBL_NoNoise_block_titer%d' % (self.params['t_iteration'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_longTraining_' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_shortTraining_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -466,8 +466,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.4
-        self.params['gain_MT_d2'] = 0.4
+        self.params['gain_MT_d1'] = 0.6
+        self.params['gain_MT_d2'] = 0.6
         self.params['bias_gain'] = 0.
 
 

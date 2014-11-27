@@ -291,6 +291,7 @@ if __name__ == '__main__':
     assert (training_params[:, 0].size >= n_max), 'The expected number of training iterations (= %d) is too high for the given training_params from file %s (contains %d training stim)' % \
             (n_max, training_params_fn, training_params[:, 0].size)
 
+    params['training_params_fn'] = training_params_fn
     if pc_id == 0:
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     if pc_id == 0:

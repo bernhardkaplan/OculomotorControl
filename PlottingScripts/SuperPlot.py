@@ -9,7 +9,7 @@ import utils
 import re
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import MergeSpikefiles
@@ -43,7 +43,7 @@ class PlotEverything(MetaAnalysisClass):
                       'figure.subplot.left':.08,
                       'figure.subplot.bottom':.08,
                       'figure.subplot.right':.94,
-                      'figure.subplot.top':.92,
+                      'figure.subplot.top':.88,
                       'figure.subplot.hspace':.05, 
                       'figure.subplot.wspace':.30}
         #              'figure.figsize': get_fig_size(800)}
@@ -93,7 +93,7 @@ class PlotEverything(MetaAnalysisClass):
 
         if self.params['training']:
             trained_stim = utils.get_start_and_stop_iteration_for_stimulus_from_motion_params(self.params['motion_params_training_fn'])
-            self.plot_trained_stim(ax0, trained_stim)
+            self.plot_trained_stim(ax0, trained_stim)#, stim_range)
 
             self.plot_retinal_displacement(stim_range, t_range)
             
@@ -106,12 +106,14 @@ class PlotEverything(MetaAnalysisClass):
 
 
 
-    def plot_trained_stim(self, ax, trained_stim):
+    def plot_trained_stim(self, ax, trained_stim):#, stim_range):
         """
         ax -- an axis element
         trained_stim -- is a dictionary with (x, v) as key and {'start': <int>, 'stop': <int>, 'cnt': <int> } as value, indicating 
         the start and stop iteration (line in the motion_params_fn) during which the stimulus has been trained.
         """
+        print 'debug trained_stim', trained_stim
+#        print 'debug stim_range', stim_range
         ylim = ax.get_ylim()
 #        if self.params['training']:
         stim_offset = utils.get_stim_offset(self.params)
@@ -121,12 +123,22 @@ class PlotEverything(MetaAnalysisClass):
             t_0 = start * self.params['n_iterations_per_stim'] * self.params['t_iteration']
             t_1 = stop * self.params['n_iterations_per_stim'] * self.params['t_iteration']
 
-            text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
+#            text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
             text_pos_y = ylim[1] + 0.04 * (ylim[1] - ylim[0])
-            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop))
+            #ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop))
+            text_pos_x = t_0 + 0.2 * (t_1 - t_0) 
+            print 'debug text_pos:', text_pos_x, text_pos_y
+            # for presentation
+#            ax.text(text_pos_x, text_pos_y, 'Stimulus parameters: \n(%.2f, %.2f)\n%d: iterations %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=14)
+            ax.text(text_pos_x, text_pos_y, 'Activity in BG during training\nStimulus parameters: (%.2f, %.2f) %d: iterations %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=28)
             ax.plot((t_0, t_0), (ylim[0], text_pos_y), ls='-', c='k', lw=3)
             ax.plot((t_1, t_1), (ylim[0], text_pos_y), ls='-', c='k', lw=3)
 
+#        xlim = ax.get_xlim()
+#        text_pos_x = xlim[0] + .1 * (xlim[1] - xlim[0])
+#        ax.text(text_pos_x, text_pos_y, 'Activity in BG during training\nStimulus parameters: (%.2f, %.2f) %d: iterations %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=28)
+        # for presentation:
+#        ax.set_title('Activity in BG during training')
 
     def plot_bg_spikes(self, t_range):
 
