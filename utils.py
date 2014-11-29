@@ -140,7 +140,8 @@ def get_next_stim(params, stim_params, v_eye):
     x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
-def get_reward_gauss(x_new, stim_params, params=None):
+
+def get_reward_gauss(x_new, stim_params, params=None, reward_width_min=1e-3):
     """
     Computes the reward based on the resulting position
     """
@@ -155,7 +156,6 @@ def get_reward_gauss(x_new, stim_params, params=None):
     v_stim = stim_params[2]
     r_amp = np.abs(v_stim) / 2.
 #    r_amp = 1.
-    reward_width_min = 1e-3
     reward_width = reward_width_min + r_amp * np.abs(x_old - .5)**3
     x_displ_new = np.abs(x_new - .5)
 #    R = np.exp(-(x_displ_new)**2 / (2 * reward_width)) + K_min

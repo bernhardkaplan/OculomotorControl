@@ -463,6 +463,7 @@ class ActivityPlotter(object):
                 fn_ = self.params['input_folder_mpn'] + fn
                 d = np.loadtxt(fn_)
                 ax.plot(d, y_pos_of_cell * np.ones(d.size), 'o', markersize=3, alpha=.1, color='b')
+        del d
         self.plot_vertical_lines(ax)
 
 

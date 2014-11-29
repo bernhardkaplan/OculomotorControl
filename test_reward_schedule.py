@@ -7,6 +7,7 @@ import utils
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib
 from matplotlib import cm
+from PlottingScripts.FigureCreator import plot_params, get_fig_size
 
 
 def plot_reward_schedule(x, R):
@@ -226,7 +227,7 @@ def plot_actions_and_rewards_for_single_stim(stim_params, ax=None, x_offset=0.):
     R = np.zeros(params['n_actions'])
     for i_a in xrange(params['n_actions']):
         x_new = utils.get_next_stim(params, stim_params, speeds[i_a])[0]
-        R[i_a] = utils.get_reward_gauss(x_new, stim_params)#, params)
+        R[i_a] = utils.get_reward_gauss(x_new, stim_params, params)
 #        R[i_a] = utils.get_reward_from_perceived_states(x_old, x_new)
         x_post[i_a] = x_new
 
@@ -268,6 +269,57 @@ def plot_actions_and_rewards_for_single_stim(stim_params, ax=None, x_offset=0.):
     return ax
 
 
+def plot_reward_schedule(x_pre_action, ls='-', ax=None):
+
+#    plot_params['figure.subplot.right'] = 0.95
+    pylab.rcParams.update(plot_params)
+
+    GP = simulation_parameters.global_parameters()
+    params = GP.params
+
+    x_range_new = np.arange(0, 1., 0.01)
+    v_range = np.arange(-2., 2., 0.4)
+    R = np.zeros((len(x_range_new), len(v_range)))
+    for i_x in xrange(len(x_range_new)):
+        for i_v in xrange(len(v_range)):
+            stim_params = (x_pre_action, .5, v_range[i_v], .0)
+            R[i_x, i_v] = utils.get_reward_gauss(x_range_new[i_x], stim_params, params)
+
+    n_curves = len(v_range)
+    bounds = np.abs(v_range)
+    bounds_sorted = np.sort(bounds)
+    cmap = matplotlib.cm.jet
+#    norm = matplotlib.colors.BoundaryNorm(bounds_sorted, cmap.N)
+    norm = matplotlib.colors.Normalize(vmin=np.min(bounds), vmax=np.max(bounds))#, clip=True)
+    m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
+    m.set_array(np.arange(np.min(bounds), np.max(bounds), .1))
+    rgba_colors = m.to_rgba(bounds)
+
+
+    fontsize = 20
+    if ax == None:
+        fig = pylab.figure(figsize=get_fig_size(1000))
+        ax = fig.add_subplot(111)
+        cb = fig.colorbar(m)
+        cb.set_label('$|v_{stim}|$', fontsize=fontsize)
+
+    for i_v in xrange(len(v_range)):
+        p, = ax.plot(x_range_new, R[:, i_v], color=rgba_colors[i_v], lw=2, ls=ls)
+
+    ax.set_xlabel('$x_{stim}$ after action', fontsize=fontsize)
+    ax.set_ylabel('Rewards', fontsize=fontsize)
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    xlim_mid = .5 * (xlim[1] - xlim[0]) + xlim[0]
+    ylim_mid = .5 * (ylim[1] - ylim[0]) + ylim[0]
+    ax.plot((xlim_mid, xlim_mid), (ylim[0], ylim[1]), c='k', ls='-', lw=2)
+    ax.plot((xlim[0], xlim[1]), (ylim_mid, ylim_mid), c='k', ls='-', lw=2)
+
+    p, = ax.plot((x_pre_action, x_pre_action), (ylim[0], ylim[1]), ls=ls, c='k', lw=3)
+
+    return ax, p
+
+
 if __name__ == '__main__':
 
 #    test_random_placements()
@@ -276,34 +328,29 @@ if __name__ == '__main__':
 #    v_stim = 1.0
 #    plot_rewards_for_one_speed(v_stim, n_pos=100)
 
-    motion_params = [(.9, .5, -2., 0.), \
-                    (.5, .5, .2, 0.), \
-                    (.1, .5, -2., 0.), \
-                    (.45, .5, .2, 0.), \
-                    (.45, .5, -2., 0.)]
+    x_pre_actions = [0.1, 0.3, 0.45]
+    linestyles = ['-', '--', ':']
+    plots = []
+    labels = []
     ax = None
-    for i_, mp in enumerate(motion_params):
-        ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=1.2 * i_)
+    for i_, x_pre_action in enumerate(x_pre_actions):
+        ax, p = plot_reward_schedule(x_pre_action, ls=linestyles[i_], ax=ax)
+        label = '$x_{stim}$ before action: %.2f' % (x_pre_action)
+        labels.append(label)
+        plots.append(p)
+
+    ax.legend(plots, labels)
 
 
-#    mp = (0.9, 0.5, -2., 0.)
-#    ax = plot_actions_and_rewards_for_single_stim(mp, x_offset=0)
-
-#    mp = (0.45, 0.5, -2., 0.)
-#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=1.1)
-
-#    mp = (0.1, 0.5, -2., 0.)
-#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=2.2)
-
-
-#    mp = (0.45, 0.5, -.2, 0.)
-#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=3.3)
-
-#    mp = (0.01, 0.5, -2.0, 0.)
-#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax)
-
-#    mp = (0.4, 0.5, -2., 0.)
-#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax)
+    # plot some examples 
+#    motion_params = [(.9, .5, -2., 0.), \
+#                    (.5, .5, .2, 0.), \
+#                    (.1, .5, -2., 0.), \
+#                    (.45, .5, .2, 0.), \
+#                    (.45, .5, -2., 0.)]
+#    ax = None
+#    for i_, mp in enumerate(motion_params):
+#        ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=1.2 * i_)
 
     pylab.show()
 
