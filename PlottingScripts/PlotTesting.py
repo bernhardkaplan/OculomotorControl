@@ -10,7 +10,8 @@ import re
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+import pylab as plt
 import matplotlib.gridspec as gridspec
 import MergeSpikefiles
 import FigureCreator
