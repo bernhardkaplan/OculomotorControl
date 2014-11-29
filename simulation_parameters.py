@@ -39,17 +39,20 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
+        self.params['training'] = True
         self.params['Cluster'] = True
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
-            self.params['total_num_virtual_procs'] = 200
+            if self.params['training']:
+                self.params['total_num_virtual_procs'] = 200
+            else:
+                self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-        self.params['softmax_action_selection_temperature'] = 2.0
-        self.params['training'] = True
+        self.params['softmax_action_selection_temperature'] = 1.5
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -69,11 +72,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 15 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 10 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
-        self.params['n_max_trials_same_stim'] = 25 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
+        self.params['n_max_trials_same_stim'] = 30 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
         self.params['n_max_trials_pos_rew'] = 3 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
 #        self.params['suboptimal_training'] = 1
@@ -93,8 +96,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # to generate the training samples, three methods are used: 1) sampling from the tuning properties, 2) sampling from a grid  3) sampling nearby the center (as these stimuli occur more frequently)
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
-#        self.params['train_iteratively'] = False
-        self.params['test_stim_range'] = range(36, 48)
+        #self.params['test_stim_range'] = [300 + i * 3 for i in xrange(15)] #range(0, 10)
+        self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -156,7 +159,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = '_RBL_titer%d_TRJ_CNT_' % (self.params['t_iteration'])
+                self.params['sim_id'] = '_noOverlapShuffled_nIt%d_temp%.1f_nC%d_' % (self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
             #if self.params['continue_training']:
                 #self.params['sim_id'] += '_CNT_11-21'
 
@@ -166,7 +169,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #                    self.params['sim_id'] = 'RBL_NoNoise_block_titer%d' % (self.params['t_iteration'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_shortTraining_' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_315tr_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -466,8 +469,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.6
-        self.params['gain_MT_d2'] = 0.6
+        self.params['gain_MT_d1'] = 0.5
+        self.params['gain_MT_d2'] = 0.5
         self.params['bias_gain'] = 0.
 
 
