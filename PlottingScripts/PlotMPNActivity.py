@@ -430,9 +430,9 @@ class ActivityPlotter(object):
             ax.set_ylim((tp[:, 2].min() - 0.02, tp[:, 2].max() + 0.02))
 
         if sort_idx == 0:
-            ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', lw=3, c='k')
+            ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', lw=3, c='r')
         elif sort_idx == 2:
-            ax.plot((xlim[0], xlim[1]), (.0, .0), ls='--', lw=3, c='k')
+            ax.plot((xlim[0], xlim[1]), (.0, .0), ls='--', lw=3, c='r')
         if t_range != None:
             ax.set_xlim(t_range)
 
@@ -463,6 +463,7 @@ class ActivityPlotter(object):
                 fn_ = self.params['input_folder_mpn'] + fn
                 d = np.loadtxt(fn_)
                 ax.plot(d, y_pos_of_cell * np.ones(d.size), 'o', markersize=3, alpha=.1, color='b')
+        del d
         self.plot_vertical_lines(ax)
 
 

@@ -90,17 +90,14 @@ if __name__ == '__main__':
     t1 = time.time() - t0
     print 'Time1: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
     VI = VisualInput.VisualInput(testing_params, comm=comm)
-    training_params['training_params'] = training_params # double check
     if testing_params['use_training_stim_for_testing']:
-#        test_stim_params = np.zeros((testing_params['n_stim_testing'], 4)) 
-#        test_stim_params[:, 1] = .5
-        #test_stim_params = np.loadtxt('training_stimuli_nV11_nX7.dat')
-#        print 'debug training stimuli fn:', training_params['training_stimuli_fn']
-        test_stim_params = np.loadtxt(training_params['training_stimuli_fn'])
+        training_stimuli = np.loadtxt(training_params['training_stimuli_fn'])
+        test_stim_params = training_stimuli[np.array(testing_params['test_stim_range']), :]
     else:
         test_stim_params = VI.create_test_stimuli()
 
-    np.savetxt(testing_params['motion_params_testing_fn'], test_stim_params[testing_params['test_stim_range'][0]:testing_params['test_stim_range'][-1] + 1])
+    np.savetxt(testing_params['testing_stimuli_fn'], test_stim_params)
+    np.savetxt(testing_params['training_stimuli_fn'], training_stimuli)
 
     t1 = time.time() - t0
     print 'Time2: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
@@ -144,10 +141,12 @@ if __name__ == '__main__':
         #assert (testing_params['test_stim_range'][1] <= training_params['n_training_cycles'] * training_params['n_training_stim_per_cycle']), 'Corretct test_stim_range in sim params!'
     iteration_cnt = 0
 
+    motion_params_testing = []
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
-        VI.current_motion_params = deepcopy(test_stim_params[i_stim, :])
+        VI.current_motion_params = deepcopy(training_stimuli[i_stim, :])
 
         for it in xrange(testing_params['n_iterations_per_stim']):
+            motion_params_testing.append(VI.current_motion_params)
 
             if it >= (testing_params['n_iterations_per_stim'] - testing_params['n_silent_iterations']):
                 stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
@@ -198,7 +197,7 @@ if __name__ == '__main__':
     if pc_id == 0:
         np.savetxt(testing_params['actions_taken_fn'], actions)
         np.savetxt(testing_params['network_states_fn'], network_states_net)
-        np.savetxt(testing_params['motion_params_testing_fn'], test_stim_params[testing_params['test_stim_range'][0]:testing_params['test_stim_range'][-1] + 1])
+        np.savetxt(testing_params['motion_params_testing_fn'], motion_params_testing)
         utils.remove_empty_files(testing_params['connections_folder'])
         utils.remove_empty_files(testing_params['spiketimes_folder'])
 #        if params['n_stim'] > 6:
@@ -210,10 +209,10 @@ if __name__ == '__main__':
 
         n_stim = testing_params['n_stim']
         run_plot_bg(testing_params, (0, n_stim))
-        for i_stim in xrange(testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1]):
+        for i_stim in testing_params['test_stim_range']:
             run_plot_bg(testing_params, (i_stim, i_stim + 1))
-            MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(i_stim), str(i_stim+1)])
-#        MAC = MetaAnalysisClass([testing_params['folder_name']])
+#            MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(i_stim), str(i_stim+1)]) # single plot of each stimulus
+        MAC = MetaAnalysisClass([testing_params['folder_name']])
 #        MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
 
         #MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])

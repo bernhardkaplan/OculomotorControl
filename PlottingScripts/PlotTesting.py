@@ -9,7 +9,7 @@ import utils
 import re
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
 import pylab as plt
 import matplotlib.gridspec as gridspec
@@ -17,7 +17,7 @@ import MergeSpikefiles
 import FigureCreator
 import json
 from MetaAnalysisClass import MetaAnalysisClass
-
+import PlotMPNActivity
 
 class PlotTesting(MetaAnalysisClass):
 
@@ -54,6 +54,11 @@ class PlotTesting(MetaAnalysisClass):
         # the constructer of the MetaAnalysisClass calls run_super_plot
         # with params and stim_range retrieved from the command line arguments
 
+    def plot_mpn_spikes(self):
+        P = PlotMPNActivity.ActivityPlotter(self.params)
+        title = 'Exc cells sorted by x-position'
+        fig, ax = P.plot_raster_sorted(title=title, sort_idx=0, t_range=self.t_range)
+
 
     def run_super_plot(self, params, stim_range):
 
@@ -61,10 +66,12 @@ class PlotTesting(MetaAnalysisClass):
         self.params = params
         utils.merge_spikes(params)
 
+
         self.tuning_prop = np.loadtxt(self.params['tuning_prop_exc_fn'])
         if stim_range == None:
 #            self.stim_range = (self.params['test_stim_range'], self.params['test_stim_range'][-1] + 1)
-            self.stim_range = self.params['test_stim_range']
+            self.stim_range = range(len(self.params['test_stim_range']))
+#            self.stim_range = self.params['test_stim_range']
         else:
             self.stim_range = stim_range
 
@@ -75,16 +82,14 @@ class PlotTesting(MetaAnalysisClass):
         self.t_range = [0, 0]
         self.t_range[0] = self.stim_range[0] * self.params['t_iteration'] * self.params['n_iterations_per_stim']
         self.t_range[1] = (self.stim_range[-1] + 1) * self.params['t_iteration'] * self.params['n_iterations_per_stim']
+
+#        self.plot_mpn_spikes()
         print 'Plotting stim_range', self.stim_range
         print 'Plotting t_range', self.t_range
-#        print 'debug stim_range', stim_range
-#        print 'debug self.stim_range', self.stim_range
-#        exit(1)
-
         self.plot_retinal_displacement()
 
 
-    def plot_retinal_displacement(self, tp_idx=0):
+    def plot_network_readout_as_colormap(self, tp_idx=0):
         spike_fn = self.params['spiketimes_folder'] + self.params['mpn_exc_spikes_fn_merged']
         print 'Loading MPN spikes from:', spike_fn
         d_spikes = np.loadtxt(spike_fn)
@@ -131,6 +136,83 @@ class PlotTesting(MetaAnalysisClass):
         np.savetxt(output_fn, cmap_data)
 
 
+
+    def plot_retinal_displacement(self):
+#        self.plot_network_readout_as_colormap()
+
+        ################################
+        # PLOT 1: Stimulus trajectory: single trials and average
+        ################################
+        actions_taken = np.loadtxt(self.params['actions_taken_fn'])
+        stim_params = np.loadtxt(self.params['testing_stimuli_fn'])
+        trajectory = np.zeros(self.params['n_iterations'] + 1)
+        cnt_ = 0
+        all_displ = np.zeros((self.params['n_iterations_per_stim'], self.params['n_stim']))
+        avg_displ = np.zeros((self.params['n_iterations_per_stim'], 2))
+        for i_stim in xrange(len(self.params['test_stim_range'])):
+            trajectory[cnt_] = stim_params[i_stim, 0]
+            print 'stim_params:', stim_params[i_stim, 0]
+            for it_ in xrange(self.params['n_iterations_per_stim']):
+                trajectory[cnt_ + 1] = trajectory[cnt_] + (stim_params[i_stim, 2] - actions_taken[cnt_ + 1, 0]) * self.params['t_iteration'] / 1000.
+                all_displ[it_, i_stim] = np.abs(trajectory[cnt_ + 1] - .5)
+                cnt_ += 1
+            
+        for it_ in xrange(self.params['n_iterations_per_stim']):
+            avg_displ[it_, 0] = all_displ[it_, :].mean()
+            avg_displ[it_, 1] = all_displ[it_, :].std()
+        avg_displ[:, 1] /= np.sqrt(self.params['n_stim'])
+        fig = plt.figure()
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+        for i_stim in xrange(len(self.params['test_stim_range'])):
+            i0 = i_stim * self.params['n_iterations_per_stim']
+            i1 = (i_stim + 1) * self.params['n_iterations_per_stim']
+            if np.where(trajectory[i0:i1] > 1.0)[0].size > 0 or np.where(trajectory[i0:i1] < 0.)[0].size > 0:
+                lc = 'r'
+            else:
+                lc = 'k'
+            ax1.plot(range(self.params['n_iterations_per_stim']), trajectory[i0:i1], color=lc, lw=1)
+            #ax.plot(range(trajectory.size), trajectory)
+
+        new_xticklabels = []
+#        for i_, xtick in enumerate(xticks):
+#            new_xticklabels.append('')
+#            new_xticklabels.append('%d' % (xtick * self.params['t_iteration'] / float(n_time)))
+        ax1.set_xticklabels(new_xticklabels)
+        ax1.set_ylabel('Retinal\ndisplacement')
+        xlim = ax1.get_xlim()
+        ax1.plot((xlim[0], xlim[1]), (.5, .5), ls='--', c='k', lw=3)
+        ax1.set_ylim((0., 1.))
+
+
+        plt.errorbar(range(self.params['n_iterations_per_stim']), avg_displ[:, 0], yerr=avg_displ[:, 1], c='b', lw=4)
+        ax2.set_xlim(xlim) # set the same xlim as above, as these two axes share the x-ticks on the x-axis
+        ylim = ax2.get_ylim()
+        ax2.set_ylim((0., ylim[1]))
+        ax2.plot((xlim[0], xlim[1]), (0., 0.), '--', c='k', lw=3)
+
+        xticks = ax2.get_xticks() 
+        new_xticklabels = []
+        for i_, xtick in enumerate(xticks):
+            new_xticklabels.append('%d' % (xtick * self.params['t_iteration']))
+        ax2.set_xticklabels(new_xticklabels)
+        ax2.set_xlabel('Time [ms]')
+        ax2.set_ylabel('Average absolute\nretinal displacement')
+        ax2.set_ylim((0., .5))
+
+        # SAVING
+        output_fn = self.params['figures_folder'] + 'retinal_displacement_avg_%d-%d.png' % (self.stim_range[0], self.stim_range[-1])
+        print 'Saving figures to:', output_fn
+        plt.savefig(output_fn, dpi=300)
+        output_fn = self.params['data_folder'] + 'retinal_displacement_all_trj_%d-%d.dat' % (self.stim_range[0], self.stim_range[-1])
+        print 'Saving colormap data to:', output_fn
+        np.savetxt(output_fn, all_displ)
+        output_fn = self.params['data_folder'] + 'retinal_displacement_avg_displ_%d-%d.dat' % (self.stim_range[0], self.stim_range[-1])
+        print 'Saving colormap data to:', output_fn
+        np.savetxt(output_fn, avg_displ)
+
+
+        """
         ################################
         # PLOT 1: Vector average, single trials
         ################################
@@ -150,14 +232,11 @@ class PlotTesting(MetaAnalysisClass):
         ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', c='k', lw=3)
 
         # no xticks, because they are the same as ax2
-#        ax.set_xticklabels([])
-#        xticks = ax.get_xticks() 
         new_xticklabels = []
         for i_, xtick in enumerate(xticks):
             new_xticklabels.append('')
 #            new_xticklabels.append('%d' % (xtick * self.params['t_iteration'] / float(n_time)))
         ax.set_xticklabels(new_xticklabels)
-#        ax.set_xlabel('Time [ms]')
         ax.set_ylabel('Retinal\ndisplacement')
 
         ################################
@@ -194,7 +273,7 @@ class PlotTesting(MetaAnalysisClass):
         output_fn = self.params['data_folder'] + 'retinal_displacement_avg_%d-%d.dat' % (self.stim_range[0], self.stim_range[-1])
         print 'Saving colormap data to:', output_fn
         np.savetxt(output_fn, va_avg)
-
+        """
 
 
     def plot_matrix(self, d, title=None, clim=None):
@@ -227,3 +306,4 @@ if __name__ == '__main__':
 #    MAC = MetaAnalysisClass(sys.argv)
     P = PlotTesting(sys.argv, verbose=True)
     plt.show()
+

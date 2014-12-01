@@ -85,9 +85,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
 #        else:
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
-        self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
-
         self.params['n_steps_training_trajectory'] = 3
+        self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
         self.params['frac_training_samples_from_grid'] = 1.0
         self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
@@ -470,8 +469,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.5
-        self.params['gain_MT_d2'] = 0.5
+        self.params['gain_MT_d1'] = 0.3
+        self.params['gain_MT_d2'] = 0.3
         self.params['bias_gain'] = 0.
 
 
@@ -660,11 +659,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['mpn_exc_volt_fn'] = 'mpn_exc_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_exc_spikes_fn'] = 'mpn_exc_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_exc_spikes_fn_merged'] = 'mpn_exc_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
+        self.params['mpn_exc_spikes_fn_merged_full_path'] = self.params['spiketimes_folder'] + 'mpn_exc_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_volt_fn'] = 'mpn_inh_volt_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn'] = 'mpn_inh_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
         self.params['mpn_inh_spikes_fn_merged'] = 'mpn_inh_merged_spikes.dat' # data_path is already set to spiketimes_folder --> files will be in this subfolder
-        self.params['training_stimuli_fn'] = self.params['data_folder'] + 'training_stimuli_parameters.txt'
-        self.params['testing_stimuli_fn'] = self.params['data_folder'] + 'testing_stimuli_parameters.txt'
 
         # bg files:
         self.params['states_spikes_fn'] = 'states_spikes_' # data_path is already set to spiketimes_folder --> files will be in this subfolder
@@ -731,8 +729,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['activity_memory_fn'] = self.params['data_folder'] + 'activity_memory.txt' # contains (vx, vy, action_index)
         self.params['bg_action_bins_fn'] = self.params['data_folder'] + 'bg_actions_bins.txt'
         self.params['network_states_fn'] = self.params['data_folder'] + 'network_states.txt'
-        self.params['motion_params_training_fn'] = self.params['data_folder'] + 'motion_params_training.txt'
-        self.params['motion_params_testing_fn'] = self.params['data_folder'] + 'motion_params_testing.txt'
+        self.params['training_stimuli_fn'] = self.params['data_folder'] + 'training_stimuli_parameters.txt'  # the different stimuli parameters to be shown for several iterations
+        self.params['testing_stimuli_fn'] = self.params['data_folder'] + 'testing_stimuli_parameters.txt'   
+        self.params['motion_params_training_fn'] = self.params['data_folder'] + 'motion_params_training.txt' # motion parameters presented to the network during the training in each iteration
+        self.params['motion_params_testing_fn'] = self.params['data_folder'] + 'motion_params_testing.txt'   
         self.params['supervisor_states_fn'] = self.params['data_folder'] + 'supervisor_states.txt'
         self.params['action_indices_fn'] = self.params['data_folder'] + 'action_indices.txt'
         self.params['nspikes_action_fn'] = self.params['data_folder'] + 'action_activity.txt'
