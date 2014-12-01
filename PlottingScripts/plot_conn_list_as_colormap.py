@@ -158,8 +158,8 @@ if __name__ == '__main__':
 #    tgt_type = 'd1'
     tgt_type = 'd1'
     fns = sys.argv[1:] # 
-#    clim = None
-    clim = (-4.5, 4.5)
+    clim = None
+#    clim = (-4.5, 4.5)
 #    clim = (-200., 200.)
 
     xv = 'x'

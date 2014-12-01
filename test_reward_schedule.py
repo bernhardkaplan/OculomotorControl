@@ -215,7 +215,7 @@ def plot_reward_vs_relative_improvement(n_v):
     pass
 
 
-def plot_actions_and_rewards_for_single_stim(stim_params):
+def plot_actions_and_rewards_for_single_stim(stim_params, ax=None, x_offset=0.):
 
     GP = simulation_parameters.global_parameters()
     params = GP.params
@@ -226,7 +226,8 @@ def plot_actions_and_rewards_for_single_stim(stim_params):
     R = np.zeros(params['n_actions'])
     for i_a in xrange(params['n_actions']):
         x_new = utils.get_next_stim(params, stim_params, speeds[i_a])[0]
-        R[i_a] = utils.get_reward_from_perceived_states(x_old, x_new)
+        R[i_a] = utils.get_reward_gauss(x_new, stim_params)#, params)
+#        R[i_a] = utils.get_reward_from_perceived_states(x_old, x_new)
         x_post[i_a] = x_new
 
     min_val = np.min(R)
@@ -236,40 +237,73 @@ def plot_actions_and_rewards_for_single_stim(stim_params):
     m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
     m.set_array(np.arange(min_val, max_val, 0.01))
 
-
-    fig = pylab.figure(figsize=(8, 10))
-    ax = fig.add_subplot(111)
+    if ax == None:
+        fig = pylab.figure(figsize=(18, 12))
+        ax = fig.add_subplot(111)
 
     xa = 2.05
     for i_a in xrange(params['n_actions']):
         c_s = m.to_rgba(R[i_a])
-        ax.plot([1., 2.], [x_old, x_post[i_a]], c=c_s, lw=2)
+        ax.plot([1. + x_offset, 2. + x_offset], [x_old, x_post[i_a]], c=c_s, lw=2)
         print 'R(%d, v_eye=%.2f)= %.2f' % (i_a, BG.action_bins_x[i_a], R[i_a])
         ypos_label = x_post[i_a]
 
-    for i_a in [0, 1, 2, 3, 4, 6, 8, 10, 12, 13, 14, 15, 16]:
+    ax.text(x_offset - .1 + 1., stim_params[0] + .05, 'v=%.1f' % (stim_params[2]), color='k', fontsize=10)
+
+#    for i_a in [0, 1, 2, 3, 4, 6, 8, 10, 12, 13, 14, 15, 16]:
+    for i_a in [0, 1, 2, 3, 4, 9, 13, 14, 15, 16]:
+#    for i_a in range(params['n_actions']):
         c_s = m.to_rgba(R[i_a])
         ypos_label = x_post[i_a]
-        ax.text(xa, ypos_label, 'R(%d, v_eye=%.2f)= %.2f' % (i_a, BG.action_bins_x[i_a], R[i_a]), color=c_s, fontsize=8)
+        ax.text(xa + x_offset, ypos_label, 'R(%d, v_eye=%.2f)= %.2f' % (i_a, BG.action_bins_x[i_a], R[i_a]), color=c_s, fontsize=8)
 
-    ax.set_xlim((0.9, 3.1))
+    ax.set_xlim((0.9, 3.1 + x_offset))
     xlim = ax.get_xlim()
-    ax.plot([xlim[0], xlim[1]], [.5, .5], c='k', ls='--', lw=1)
+    ax.plot([xlim[0], xlim[1] + x_offset], [.5, .5], c='k', ls='--', lw=1)
     ax.set_title('Rewards for all actions, mp= (%.2f, %.2f)' % (stim_params[0], stim_params[2]))
     ax.set_ylabel('Retinal displacement')
-    cbar = fig.colorbar(m)
+    if ax == None:
+        cbar = fig.colorbar(m)
+        print 'setting colorbar'
+    return ax
 
 
 if __name__ == '__main__':
 
-    test_random_placements()
-    all_data = get_rewards_for_all_stimuli_and_actions(n_pos=20, n_v=4)
-    plot_4d(all_data)  
-    v_stim = 1.0
-    plot_rewards_for_one_speed(v_stim, n_pos=100)
+#    test_random_placements()
+#    all_data = get_rewards_for_all_stimuli_and_actions(n_pos=20, n_v=4)
+#    plot_4d(all_data)  
+#    v_stim = 1.0
+#    plot_rewards_for_one_speed(v_stim, n_pos=100)
 
-    mp = (0.5275, 0.5, -2.1605, 0.)
-    plot_actions_and_rewards_for_single_stim(mp)
+    motion_params = [(.9, .5, -2., 0.), \
+                    (.5, .5, .2, 0.), \
+                    (.1, .5, -2., 0.), \
+                    (.45, .5, .2, 0.), \
+                    (.45, .5, -2., 0.)]
+    ax = None
+    for i_, mp in enumerate(motion_params):
+        ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=1.2 * i_)
+
+
+#    mp = (0.9, 0.5, -2., 0.)
+#    ax = plot_actions_and_rewards_for_single_stim(mp, x_offset=0)
+
+#    mp = (0.45, 0.5, -2., 0.)
+#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=1.1)
+
+#    mp = (0.1, 0.5, -2., 0.)
+#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=2.2)
+
+
+#    mp = (0.45, 0.5, -.2, 0.)
+#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax, x_offset=3.3)
+
+#    mp = (0.01, 0.5, -2.0, 0.)
+#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax)
+
+#    mp = (0.4, 0.5, -2., 0.)
+#    ax = plot_actions_and_rewards_for_single_stim(mp, ax=ax)
 
     pylab.show()
 

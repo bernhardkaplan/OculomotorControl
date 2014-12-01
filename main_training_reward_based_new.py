@@ -105,6 +105,7 @@ class RewardBasedLearning(object):
             self.CC.connect_and_load_mt_to_bg(self.MT, self.BG, 'd2', old_params)
 
 
+
     def create_networks(self):
         self.VI = VisualInput.VisualInput(self.params, comm=self.comm)
         self.MT = MotionPrediction.MotionPrediction(self.params, self.VI, self.comm)
@@ -149,7 +150,8 @@ class RewardBasedLearning(object):
         x_old = stim_params[0]
         new_stim = utils.get_next_stim(params, stim_params, next_action[0])
 #        R = utils.get_reward_from_perceived_states(x_old, new_stim[0])
-        R = self.BG.get_binary_reward(stim_params, next_action[2])
+#        R = self.BG.get_binary_reward(stim_params, next_action[2])
+        R = utils.get_reward_gauss(new_stim[0], stim_params)#, params)
         self.rewards.append(R)
         self.actions_taken.append([next_action[0], next_action[1], next_action[2], R])
 #        print 'Reward:', R

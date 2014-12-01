@@ -102,7 +102,7 @@ class PlotEverything(MetaAnalysisClass):
             self.plot_retinal_displacement(stim_range, t_range)
         output_fn = self.params['figures_folder'] + 'super_plot_%d_%d.png' % (stim_range[0], stim_range[-1])
         print 'Saving figure to:', output_fn
-        plt.savefig(output_fn, dpi=200)
+        plt.savefig(output_fn, dpi=300)
 
 
 
@@ -123,14 +123,16 @@ class PlotEverything(MetaAnalysisClass):
             t_0 = start * self.params['n_iterations_per_stim'] * self.params['t_iteration']
             t_1 = stop * self.params['n_iterations_per_stim'] * self.params['t_iteration']
 
-#            text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
+            optimal_speed, vy, optimal_action_idx = utils.get_optimal_action(self.params, (x, .5, v, 0.))
+
+            text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
             text_pos_y = ylim[1] + 0.04 * (ylim[1] - ylim[0])
-            #ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop))
-            text_pos_x = t_0 + 0.2 * (t_1 - t_0) 
-            print 'debug text_pos:', text_pos_x, text_pos_y
+            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d\nOpt action:\n(%d. %.1f)' % (x, v, np.int(cnt + stim_offset), start, stop, optimal_action_idx, optimal_speed))
+#            text_pos_x = t_0 + 0.2 * (t_1 - t_0) 
+#            print 'debug text_pos:', text_pos_x, text_pos_y
             # for presentation
 #            ax.text(text_pos_x, text_pos_y, 'Stimulus parameters: \n(%.2f, %.2f)\n%d: iterations %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=14)
-            ax.text(text_pos_x, text_pos_y, 'Activity in BG during training\nStimulus parameters: (%.2f, %.2f) %d: iterations %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=28)
+#            ax.text(text_pos_x, text_pos_y, 'Activity in BG during training\nStimulus parameters: (%.2f, %.2f) %d: iterations %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=28)
             ax.plot((t_0, t_0), (ylim[0], text_pos_y), ls='-', c='k', lw=3)
             ax.plot((t_1, t_1), (ylim[0], text_pos_y), ls='-', c='k', lw=3)
 

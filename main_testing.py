@@ -99,6 +99,7 @@ if __name__ == '__main__':
         test_stim_params = np.loadtxt(training_params['training_stimuli_fn'])
     else:
         test_stim_params = VI.create_test_stimuli()
+
     np.savetxt(testing_params['motion_params_testing_fn'], test_stim_params[testing_params['test_stim_range'][0]:testing_params['test_stim_range'][-1] + 1])
 
     t1 = time.time() - t0
@@ -205,14 +206,15 @@ if __name__ == '__main__':
 #        else:
 #            n_stim = params['n_stim']
 
-        PlotTesting([testing_params['folder_name']], verbose=True) 
+        PlotTesting([testing_params['folder_name'], str(0), str(testing_params['n_stim_testing'] - 1)], verbose=True) 
 
         n_stim = testing_params['n_stim']
         run_plot_bg(testing_params, (0, n_stim))
         for i_stim in xrange(testing_params['test_stim_range'][0], testing_params['test_stim_range'][-1]):
             run_plot_bg(testing_params, (i_stim, i_stim + 1))
+            MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(i_stim), str(i_stim+1)])
 #        MAC = MetaAnalysisClass([testing_params['folder_name']])
-        MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
+#        MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
 
         #MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
         #run_plot_bg(testing_params, None)

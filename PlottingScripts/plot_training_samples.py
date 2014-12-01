@@ -177,6 +177,7 @@ class Plotter(object):
         output_fig = self.params['figures_folder'] + 'stimulus_state_space_with_precomputed_actions_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
         print 'Saving to:', output_fig
         pylab.savefig(output_fig, dpi=200)
+        return ax1
 
 
     def plot_training_sample_histograms(self):
