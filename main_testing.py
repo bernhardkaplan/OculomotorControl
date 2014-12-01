@@ -172,8 +172,8 @@ if __name__ == '__main__':
             network_states_net[iteration_cnt, :] = state_
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
 
-            #next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
-            next_action = BG.get_action_softmax()
+            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus 
+            #next_action = BG.get_action_softmax()
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             advance_iteration(MT, BG, VI)
