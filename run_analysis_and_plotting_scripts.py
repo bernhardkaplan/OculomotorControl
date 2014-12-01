@@ -17,7 +17,7 @@ if __name__ == '__main__':
             P = PlotEverything(sys.argv, verbose=True)
         else:
             P = PlotTesting(sys.argv)
-        run_plot_bg(sys.argv, None)
+        run_plot_bg(params, None)
         MAC = MetaAnalysisClass([params['folder_name']])
         n_stim = params['n_stim']
         MAC = MetaAnalysisClass(['dummy', params['folder_name'], str(0), str(n_stim)])

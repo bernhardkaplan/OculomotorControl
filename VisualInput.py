@@ -426,6 +426,7 @@ class VisualInput(object):
         action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
         motion_params_pre = np.zeros((self.params['n_stim'], 4))
 
+        print 'debug', self.params['n_stim']
         for i_stim in xrange(self.params['n_stim']):
             x_stim = (training_stimuli[i_stim, 2]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 0]
             y_stim = (training_stimuli[i_stim, 3]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 1]

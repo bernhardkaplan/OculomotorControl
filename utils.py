@@ -332,7 +332,6 @@ def convert_to_NEST_conform_dict(json_dict):
 def load_params(param_fn):
     if os.path.isdir(param_fn):
         param_fn = os.path.abspath(param_fn) + '/Parameters/simulation_parameters.json'
-    print 'debug param_fn', param_fn
     params = json.load(file(param_fn, 'r')) 
     return params
 

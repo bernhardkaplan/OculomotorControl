@@ -148,6 +148,7 @@ if __name__ == '__main__':
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     else:
         params = utils.load_params(sys.argv[1])
+    assert params['training'], 'Set training = True, otherwise you will get confused because of inconsistent n_stim values'
 
     print 'n_cycles', params['n_training_cycles']
     np.random.seed(params['visual_stim_seed'])
@@ -155,10 +156,10 @@ if __name__ == '__main__':
     print 'Saving training stimuli parameters to:', params['training_stimuli_fn']
 
 
-#    training_stimuli = create_stimuli_along_a_trajectory(params)
+    training_stimuli = create_stimuli_along_a_trajectory(params)
 #    training_stimuli = create_stimuli_from_grid_center_and_tuning_prop(params)
 
-    training_stimuli = create_non_overlapping_training_stimuli(params)
+#    training_stimuli = create_non_overlapping_training_stimuli(params)
 
     print 'debug', training_stimuli
     print 'Debug saving training_stimuli to:', params['training_stimuli_fn']

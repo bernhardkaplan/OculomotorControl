@@ -10,9 +10,8 @@ from matplotlib import cm
 from PlottingScripts.FigureCreator import plot_params, get_fig_size
 
 
-def plot_reward_schedule(x, R):
+def plot_reward_schedule_random(x, R):
 
-    
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
     ax2 = ax1.twinx()
@@ -79,7 +78,7 @@ def test_random_placements():
         print '%2d\t%.2f\t%.2f\t%.2f' % (i_-1, x[i_-1], dx[i_-1], dx_abs[i_-1])
         print '%2d\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f' % (i_, x[i_], dx[i_], dx_abs[i_], dj_di_abs[i_-1], R[i_-1])
         print '\n'
-    plot_reward_schedule(x, R)
+    plot_reward_schedule_random(x, R)
     pylab.savefig('Reward_schedule_with_random_positions_and_random_actions.png', dpi=200)
 
 
@@ -269,13 +268,10 @@ def plot_actions_and_rewards_for_single_stim(stim_params, ax=None, x_offset=0.):
     return ax
 
 
-def plot_reward_schedule(x_pre_action, ls='-', ax=None):
+def plot_reward_schedule(params, x_pre_action, ls='-', ax=None):
 
-#    plot_params['figure.subplot.right'] = 0.95
     pylab.rcParams.update(plot_params)
 
-    GP = simulation_parameters.global_parameters()
-    params = GP.params
 
     x_range_new = np.arange(0, 1., 0.01)
     v_range = np.arange(-2., 2., 0.4)
@@ -312,10 +308,56 @@ def plot_reward_schedule(x_pre_action, ls='-', ax=None):
     ylim = ax.get_ylim()
     xlim_mid = .5 * (xlim[1] - xlim[0]) + xlim[0]
     ylim_mid = .5 * (ylim[1] - ylim[0]) + ylim[0]
-    ax.plot((xlim_mid, xlim_mid), (ylim[0], ylim[1]), c='k', ls='-', lw=2)
-    ax.plot((xlim[0], xlim[1]), (ylim_mid, ylim_mid), c='k', ls='-', lw=2)
+    ax.plot((xlim_mid, xlim_mid), (ylim[0], ylim[1]), c='k', ls='-', lw=5)
+    ax.plot((xlim[0], xlim[1]), (ylim_mid, ylim_mid), c='k', ls='-', lw=5)
 
-    p, = ax.plot((x_pre_action, x_pre_action), (ylim[0], ylim[1]), ls=ls, c='k', lw=3)
+    p, = ax.plot((x_pre_action, x_pre_action), (ylim[0], ylim[1]), ls=ls, c='k', lw=2)
+
+    return ax, p
+
+
+def plot_reward_schedule_single_actions(params, x_pre_action, v_stim, ls='-', ax=None):
+
+    x_post_action = np.zeros(params['n_actions'])
+    BG = BasalGanglia.BasalGanglia(params, dummy=True)
+    actions_v = BG.action_bins_x
+    R = np.zeros(params['n_actions'])
+    for i_ in xrange(params['n_actions']):
+        stim_params = (x_pre_action, .5, v_stim, .0)
+        x_post_action[i_] = utils.get_next_stim(params, stim_params, actions_v[i_])[0]
+        R[i_] = utils.get_reward_gauss(x_post_action[i_], stim_params, params)
+
+#    bounds = np.abs(actions_v)
+    bounds = np.array(actions_v)
+    cmap = matplotlib.cm.jet
+#    norm = matplotlib.colors.BoundaryNorm(bounds_sorted, cmap.N)
+    norm = matplotlib.colors.Normalize(vmin=np.min(bounds), vmax=np.max(bounds))#, clip=True)
+    m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
+    m.set_array(np.arange(np.min(bounds), np.max(bounds), .1))
+    rgba_colors = m.to_rgba(bounds)
+
+    fontsize = 20
+    if ax == None:
+        fig = pylab.figure(figsize=get_fig_size(1000))
+        ax = fig.add_subplot(111)
+        cb = fig.colorbar(m)
+        cb.set_label('$|v_{action}|$', fontsize=fontsize)
+
+    for i_ in xrange(params['n_actions']):
+        p, = ax.plot((x_pre_action, x_post_action[i_]), (0., R[i_]), ls=ls, color=rgba_colors[i_], lw=2)
+
+    ax.set_xlabel('$x_{stim}$ before and after action', fontsize=fontsize)
+    ax.set_ylabel('Rewards', fontsize=fontsize)
+    ax.set_xlim((0., 1.))
+    ax.set_ylim((params['neg_kappa'], params['pos_kappa']))
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    xlim_mid = .5 * (xlim[1] - xlim[0]) + xlim[0]
+    ylim_mid = .5 * (ylim[1] - ylim[0]) + ylim[0]
+    ax.plot((xlim_mid, xlim_mid), (ylim[0], ylim[1]), c='k', ls='-', lw=5)
+    ax.plot((xlim[0], xlim[1]), (ylim_mid, ylim_mid), c='k', ls='-', lw=5)
+
+#    p, = ax.plot((x_pre_action, x_pre_action), (ylim[0], ylim[1]), ls=ls, c='k', lw=3)
 
     return ax, p
 
@@ -328,18 +370,32 @@ if __name__ == '__main__':
 #    v_stim = 1.0
 #    plot_rewards_for_one_speed(v_stim, n_pos=100)
 
+    GP = simulation_parameters.global_parameters()
+    params = GP.params
+
     x_pre_actions = [0.1, 0.3, 0.45]
-    linestyles = ['-', '--', ':']
+    linestyles = ['-.', '--', ':']
     plots = []
     labels = []
     ax = None
+    plots2 = []
+    labels2 = []
+    ax2 = None
+    stim_speeds = [0.1, 0.5, 1.0]
     for i_, x_pre_action in enumerate(x_pre_actions):
-        ax, p = plot_reward_schedule(x_pre_action, ls=linestyles[i_], ax=ax)
+        ax, p = plot_reward_schedule(params, x_pre_action, ls=linestyles[i_], ax=ax)
         label = '$x_{stim}$ before action: %.2f' % (x_pre_action)
         labels.append(label)
         plots.append(p)
+        for i_v, v_stim in enumerate(stim_speeds):
+            ax2, p2 = plot_reward_schedule_single_actions(params, x_pre_action, v_stim, ls=linestyles[i_], ax=ax2)
+            label2 = '$v_{stim}$ : %.2f' % (v_stim)
+            labels2.append(label2)
+            plots2.append(p2)
+
 
     ax.legend(plots, labels)
+    ax2.legend(plots2, labels2)
 
 
     # plot some examples 

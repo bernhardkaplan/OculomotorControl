@@ -13,7 +13,9 @@ d = np.loadtxt(fn)
 fig = pylab.figure()
 ax = fig.add_subplot(111)
 
-N = d[:, 0].size
+
+#N = d[:, 0].size
+N = 300
 bounds = range(N)
 
 cmap = matplotlib.cm.jet
@@ -22,8 +24,7 @@ m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
 m.set_array(np.arange(bounds[0], bounds[-1], 1.))
 rgba_colors = m.to_rgba(bounds)
 
-#for i_ in xrange(d[:, 0].size):
-for i_ in xrange(10):
+for i_ in xrange(N):
     ax.plot(d[i_, 0], d[i_, 2], 'o', color=rgba_colors[i_])
     ax.text(d[i_, 0], d[i_, 2], '%d' % i_, color=rgba_colors[i_])
 

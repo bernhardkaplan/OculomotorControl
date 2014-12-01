@@ -430,9 +430,9 @@ class ActivityPlotter(object):
             ax.set_ylim((tp[:, 2].min() - 0.02, tp[:, 2].max() + 0.02))
 
         if sort_idx == 0:
-            ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', lw=3, c='k')
+            ax.plot((xlim[0], xlim[1]), (.5, .5), ls='--', lw=3, c='r')
         elif sort_idx == 2:
-            ax.plot((xlim[0], xlim[1]), (.0, .0), ls='--', lw=3, c='k')
+            ax.plot((xlim[0], xlim[1]), (.0, .0), ls='--', lw=3, c='r')
         if t_range != None:
             ax.set_xlim(t_range)
 
