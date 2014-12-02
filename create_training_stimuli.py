@@ -84,7 +84,7 @@ def create_non_overlapping_training_stimuli(params):
     tp = VI.set_tuning_prop_1D_with_const_fovea(cell_type='exc')
 
     x_lim_frac = .95
-    v_lim_frac = .5
+    v_lim_frac = .5 #
     xlim = ((1. - x_lim_frac) * (np.max(tp[:, 0]) - np.min(tp[:, 0])), x_lim_frac * np.max(tp[:, 0]))
     vlim = (v_lim_frac * np.min(tp[:, 2]), v_lim_frac * np.max(tp[:, 2]))
 

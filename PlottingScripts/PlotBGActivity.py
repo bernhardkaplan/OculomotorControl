@@ -275,4 +275,4 @@ if __name__ == '__main__':
             params = utils.load_params(fn)
             run_plot_bg(params, stim_range)
 
-    pylab.show()
+#    pylab.show()

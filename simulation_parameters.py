@@ -451,8 +451,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 5.
-        self.params['neg_kappa'] = -5. # for the nonoptimal decision
+        self.params['pos_kappa'] = 2.
+        self.params['neg_kappa'] = -2. # for the nonoptimal decision
 
         # gain parameters
         if self.params['training']:
@@ -468,8 +468,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.3
-        self.params['gain_MT_d2'] = 0.3
+        self.params['gain_MT_d1'] = 1.0
+        self.params['gain_MT_d2'] = 1.0
         self.params['bias_gain'] = 0.
 
 
