@@ -141,7 +141,41 @@ def get_next_stim(params, stim_params, v_eye):
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
-def get_reward_gauss(x_new, stim_params, params=None, reward_width_min=1e-3):
+
+def get_sigmoid_params(params, x_pre, v_stim):
+    """
+    Based on the stimulus parameters, return the coefficients / parameters for a sigmoidal
+    reward function
+    """
+    x_pre_range = (0., 0.5) # absolute displacement
+    tau_range = (40., 100.) 
+    # tau_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
+    # tau_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
+#    tau = utils.transform_quadratic(x_pre, 'neg', tau_range, x_pre_range)
+    tau = utils.transform_linear(x_pre, tau_range, x_pre_range)
+
+    v_stim_max = 2.
+    abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
+#    tau *= abs_speed_factor
+    # take into account how far the stimulus moves
+    dx = v_stim * params['t_iteration'] / params['t_cross_visual_field']
+    c_range = (0.35 - np.sign(v_stim) * dx, 0.1 - np.sign(v_stim) * dx) 
+    # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
+    # c_raneg[1] --> determines tolerance for giving reward near center
+    c = utils.transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
+    c *= abs_speed_factor
+#    c = utils.transform_linear(x_pre, c_range, x_pre_range)
+    return c, tau
+
+def sigmoid(x, a, b, c, d, tau):
+    # d = limit value for x -> - infinity
+    # a, b = limit value for x -> + infinity
+    # tau, c = position for transition
+    f_x = a / (b + d * np.exp(-tau * (x - c)))
+    return f_x
+
+
+def get_reward_sigmoid(x_new, stim_params, params):
     """
     Computes the reward based on the resulting position
     """
@@ -151,7 +185,16 @@ def get_reward_gauss(x_new, stim_params, params=None, reward_width_min=1e-3):
     else:
         K_min = params['neg_kappa']
         K_max = params['pos_kappa']
+    a = 1.
+    b = 1.
+    d = 1.
+    x_center = 0.5 
+    c, tau = get_sigmoid_params(params, stim_params[0], stim_params[2])
+    R = K_max - (K_max - K_min) * sigmoid(np.abs(x_new - x_center), a, b, c, d, tau)
+    return R
 
+    """
+def get_reward_gauss()
     x_old = stim_params[0]
     v_stim = stim_params[2]
     dx_i = x_old - .5 
@@ -192,6 +235,7 @@ def get_reward_gauss(x_new, stim_params, params=None, reward_width_min=1e-3):
     R = (K_max - K_min) * np.exp(-(x_displ_new)**2 / (2 * reward_width)) + K_min
 
     return R, reward_width
+    """
 
 
 def get_reward_from_perceived_states(old_pos, new_pos, punish_overshoot=1., params=None):
@@ -914,7 +958,7 @@ def distribute_n(n, n_proc, pid):
 
 
 
-def linear_transformation(x, y_range, x_range=None):
+def transform_linear(x, y_range, x_range=None):
     """
     x: single value or x-range to be linearly mapped into y_range
     y_min, y_max : lower and upper boundaries for the range into which x

@@ -14,8 +14,8 @@ fig = pylab.figure()
 ax = fig.add_subplot(111)
 
 
-#N = d[:, 0].size
-N = 300
+N = d[:, 0].size
+#N = 300
 bounds = range(N)
 
 cmap = matplotlib.cm.jet
