@@ -463,8 +463,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.2
-        self.params['gain_MT_d2'] = 0.2
+        self.params['gain_MT_d1'] = 0.4
+        self.params['gain_MT_d2'] = 0.4
         self.params['bias_gain'] = 0.
 
 

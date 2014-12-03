@@ -141,7 +141,41 @@ def get_next_stim(params, stim_params, v_eye):
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
-def get_reward_gauss(x_new, stim_params, params=None, reward_width_min=1e-3):
+
+def get_sigmoid_params(params, x_pre, v_stim):
+    """
+    Based on the stimulus parameters, return the coefficients / parameters for a sigmoidal
+    reward function
+    """
+    x_pre_range = (0., 0.5) # absolute displacement
+    tau_range = (40., 100.) 
+    # tau_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
+    # tau_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
+#    tau = utils.transform_quadratic(x_pre, 'neg', tau_range, x_pre_range)
+    tau = utils.transform_linear(x_pre, tau_range, x_pre_range)
+
+    v_stim_max = 2.
+    abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
+#    tau *= abs_speed_factor
+    # take into account how far the stimulus moves
+    dx = v_stim * params['t_iteration'] / params['t_cross_visual_field']
+    c_range = (0.35 - np.sign(v_stim) * dx, 0.1 - np.sign(v_stim) * dx) 
+    # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
+    # c_raneg[1] --> determines tolerance for giving reward near center
+    c = utils.transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
+    c *= abs_speed_factor
+#    c = utils.transform_linear(x_pre, c_range, x_pre_range)
+    return c, tau
+
+def sigmoid(x, a, b, c, d, tau):
+    # d = limit value for x -> - infinity
+    # a, b = limit value for x -> + infinity
+    # tau, c = position for transition
+    f_x = a / (b + d * np.exp(-tau * (x - c)))
+    return f_x
+
+
+def get_reward_sigmoid(x_new, stim_params, params):
     """
     Computes the reward based on the resulting position
     """
@@ -151,16 +185,57 @@ def get_reward_gauss(x_new, stim_params, params=None, reward_width_min=1e-3):
     else:
         K_min = params['neg_kappa']
         K_max = params['pos_kappa']
+    a = 1.
+    b = 1.
+    d = 1.
+    x_center = 0.5 
+    c, tau = get_sigmoid_params(params, stim_params[0], stim_params[2])
+    R = K_max - (K_max - K_min) * sigmoid(np.abs(x_new - x_center), a, b, c, d, tau)
+    return R
 
+    """
+def get_reward_gauss()
     x_old = stim_params[0]
     v_stim = stim_params[2]
-    r_amp = np.abs(v_stim) / 2.
+    dx_i = x_old - .5 
+    dx_j = x_new - .5
+    dx_i_abs = np.abs(dx_i)
+    dx_j_abs = np.abs(dx_j)
+
+    x_fac = (np.abs(dx_i_abs  - dx_j_abs) / .5) ** 2
+#    x_fac = (dx_i_abs  - dx_j_abs) / .5
+    v_fac = np.abs(v_stim)
+
+
+#    A = 0.5
+
+    w_x = .1
+    w_v = .01
+
+    reward_width = w_x * x_fac + w_v * v_fac + reward_width_min
+    a = 1.
+    b = 1.
+    c = 5.    
+    d = 10.
+    tau = 1.
+    # tau * c determine the width 
+    # for x_fac * v_fac = 0 --> sigma_r = a / (b + d * exp(tau * c))
+
+#    r_amp = np.abs(v_stim) / 50.
 #    r_amp = 1.
-    reward_width = reward_width_min + r_amp * np.abs(x_old - .5)**3
+
+#    reward_width = reward_width_min + r_amp * np.abs(x_old - .5)**3
+#    reward_width = reward_width_min + r_amp * np.abs(x_old - .5)**3
+
+#    reward_width = a / (b + d * np.exp(- tau * (w_v * v_fac * w_x * x_fac - c)))
+
     x_displ_new = np.abs(x_new - .5)
+
 #    R = np.exp(-(x_displ_new)**2 / (2 * reward_width)) + K_min
     R = (K_max - K_min) * np.exp(-(x_displ_new)**2 / (2 * reward_width)) + K_min
-    return R
+
+    return R, reward_width
+    """
 
 
 def get_reward_from_perceived_states(old_pos, new_pos, punish_overshoot=1., params=None):
@@ -883,17 +958,76 @@ def distribute_n(n, n_proc, pid):
 
 
 
-def linear_transformation(x, y_min, y_max):
+def transform_linear(x, y_range, x_range=None):
     """
-    x : the range to be transformed
+    x: single value or x-range to be linearly mapped into y_range
     y_min, y_max : lower and upper boundaries for the range into which x
                    is transformed to
+    if x_range == None:
+        x must be a list or array with more than one element, other wise no mapping is possible into y-range
+
     Returns y = f(x), f(x) = m * x + b
     """
-    x_min = np.min(x)
-    x_max = np.max(x)
-    if x_min == x_max:
-        x_max = x_min * 1.0001
+    error_txt = 'Error: can not map a single value without x_range into the given y_range. \n \
+            Please give x_range or use an array (or list) for the x parameter when calling utils.linear_transformation!'
+    if x_range == None:
+        x_min = np.min(x)
+        x_max = np.max(x)
+        assert (x_min != x_max), error_txt
+    else:
+        x_min = np.min(x_range)
+        x_max = np.max(x_range)
+    y_min, y_max = y_range
+    assert (x_min != x_max), error_txt
     return (y_min + (y_max - y_min) / (x_max - x_min) * (x - x_min))
 
 
+def transform_quadratic(x, a, y_range, x_range=None):
+    """
+    Returns the function   f(x) = a * x**2 + b * x + c    for a value or interval.
+    (however, this function internally works with the vertex form f(x) = a * (x - h)**2 + k (where (h, k) are the vertex' (x, y) coordinates
+    The vertex coordinates are derived depending on x (or x_range), y_range and 'a'
+
+    x -- either a list or array of x-values to be mapped, or a single value
+        if x is a single value x_range can not be None
+    a -- 'pos' or 'neg' (if 
+        if a == 'pos': parabola is open upwards --> a > 0
+           a == 'neg': parabola is open downwards --> a < 0
+        if a > 0 and y_range[0] < y_range[1] --> quadratic increase from left (x_range[0]) to right x_range[1] (parabola open 'upwards')
+        if a < 0 and y_range[0] < y_range[1] --> quadratic approach from x_range[0] to x_range[1] (parabola open 'downwards')
+        if a > 0 and y_range[0] > y_range[1] --> quadratic decrease from left to right (parabola open upwards)
+        if a < 0 and y_range[0] > y_range[1] --> quadratic decrease from left to right (parabola open downwards)
+    """
+    
+    if a != 'pos' and a != 'neg':
+        raise ValueError('The parameter \'a\' must be either a \'neg\' or \'pos\' and determines whether the parabola implementing your quadratic fit is open upwards or downwards')
+    error_txt = 'Error: can not map a single value without x_range into the given y_range. \n \
+            Please give x_range or use an array (or list) for the x parameter when calling utils.linear_transformation!'
+    if x_range != None:
+        assert x_range[0] < x_range[1], 'Error: please give x_range as tuple with the smaller element first, e.g.  x_range = (0, 1) and NOT (1, 0)'
+    else:
+        x_range = (np.min(x), np.max(x))
+    assert (x_range[0] != x_range[1]), error_txt
+
+    assert a != 0, 'if you want a == 0, you should use utils.transform_linear'
+    # determine the vertex and the other point of the parabola
+    if a == 'neg' and y_range[0] < y_range[1]:
+        vertex = (x_range[1], y_range[1])
+        x0 = x_range[0]
+        y0 = y_range[0]
+    elif a == 'neg' and y_range[0] > y_range[1]:
+        vertex = (x_range[0], y_range[0])
+        x0 = x_range[1]
+        y0 = y_range[1]
+    elif a == 'pos' and y_range[0] < y_range[1]:
+        vertex = (x_range[0], y_range[0])
+        x0 = x_range[1]
+        y0 = y_range[1]
+    elif a == 'pos' and y_range[0] > y_range[1]:
+        vertex = (x_range[1], y_range[1])
+        x0 = x_range[0]
+        y0 = y_range[0]
+            
+    alpha = (y0 - vertex[1]) / (x0 - vertex[0])**2
+    f_x = alpha * (x - vertex[0])**2 + vertex[1]
+    return f_x

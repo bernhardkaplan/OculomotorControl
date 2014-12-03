@@ -29,7 +29,7 @@ class PlotTesting(MetaAnalysisClass):
 
 
         plot_params = {'backend': 'png',
-                      'axes.labelsize': 20,
+                      'axes.labelsize': 16,
                       'axes.titlesize': 20,
                       'text.fontsize': 20,
                       'xtick.labelsize': 16,
@@ -151,7 +151,6 @@ class PlotTesting(MetaAnalysisClass):
         avg_displ = np.zeros((self.params['n_iterations_per_stim'], 2))
         for i_stim in xrange(len(self.params['test_stim_range'])):
             trajectory[cnt_] = stim_params[i_stim, 0]
-            print 'stim_params:', stim_params[i_stim, 0]
             for it_ in xrange(self.params['n_iterations_per_stim']):
                 trajectory[cnt_ + 1] = trajectory[cnt_] + (stim_params[i_stim, 2] - actions_taken[cnt_ + 1, 0]) * self.params['t_iteration'] / 1000.
                 all_displ[it_, i_stim] = np.abs(trajectory[cnt_ + 1] - .5)
@@ -161,17 +160,27 @@ class PlotTesting(MetaAnalysisClass):
             avg_displ[it_, 0] = all_displ[it_, :].mean()
             avg_displ[it_, 1] = all_displ[it_, :].std()
         avg_displ[:, 1] /= np.sqrt(self.params['n_stim'])
-        fig = plt.figure()
-        ax1 = fig.add_subplot(211)
-        ax2 = fig.add_subplot(212)
+        fig = plt.figure(figsize=FigureCreator.get_fig_size(1200))
+        ax0 = fig.add_subplot(311)
+        ax1 = fig.add_subplot(312)
+        ax2 = fig.add_subplot(313)
+        problematic_stimuli = []
+        good_stimuli = []
         for i_stim in xrange(len(self.params['test_stim_range'])):
             i0 = i_stim * self.params['n_iterations_per_stim']
             i1 = (i_stim + 1) * self.params['n_iterations_per_stim']
-            if np.where(trajectory[i0:i1] > 1.0)[0].size > 0 or np.where(trajectory[i0:i1] < 0.)[0].size > 0:
+            mean_displ_end = np.abs(trajectory[i1-12:i1-2].mean() - .5)
+            if mean_displ_end > .15:
+#            if np.where(trajectory[i0:i1] > 1.0)[0].size > 0 or np.where(trajectory[i0:i1] < 0.)[0].size > 0:
                 lc = 'r'
+                problematic_stimuli.append(stim_params[i_stim, :])
+                #print 'debug bad', np.abs(trajectory[i0+4:i1-2].mean() - .5)
             else:
                 lc = 'k'
+                #print 'debug good', np.abs(trajectory[i0+4:i1-2].mean() - .5)
+                good_stimuli.append(stim_params[i_stim, :])
             ax1.plot(range(self.params['n_iterations_per_stim']), trajectory[i0:i1], color=lc, lw=1)
+            ax0.plot(range(i0, i1), trajectory[i0:i1], color=lc, lw=1)
             #ax.plot(range(trajectory.size), trajectory)
 
         new_xticklabels = []
@@ -183,6 +192,13 @@ class PlotTesting(MetaAnalysisClass):
         xlim = ax1.get_xlim()
         ax1.plot((xlim[0], xlim[1]), (.5, .5), ls='--', c='k', lw=3)
         ax1.set_ylim((0., 1.))
+
+        ax0.set_xticklabels(new_xticklabels)
+        ax0.set_ylabel('Retinal\ndisplacement')
+        xlim0 = ax0.get_xlim()
+        ax0.plot((xlim0[0], xlim0[1]), (.5, .5), ls='--', c='k', lw=3)
+        ax0.set_ylim((-0.1, 1.1))
+
 
 
         plt.errorbar(range(self.params['n_iterations_per_stim']), avg_displ[:, 0], yerr=avg_displ[:, 1], c='b', lw=4)
@@ -211,6 +227,12 @@ class PlotTesting(MetaAnalysisClass):
         print 'Saving colormap data to:', output_fn
         np.savetxt(output_fn, avg_displ)
 
+        output_fn = self.params['data_folder'] + 'problematic_stimuli.txt'
+        print 'Saving the problematic stimuli to:', output_fn
+        problematic_stimuli = np.array(problematic_stimuli)
+        np.savetxt(output_fn, problematic_stimuli)
+        print 'Problematic stimuli:', problematic_stimuli
+        print 'Good stimuli:', np.array(good_stimuli)
 
         """
         ################################

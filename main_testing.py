@@ -211,8 +211,8 @@ if __name__ == '__main__':
 
         n_stim = testing_params['n_stim']
         run_plot_bg(testing_params, (0, n_stim))
-        for i_stim in xrange(len(testing_params['test_stim_range'])):
-            run_plot_bg(testing_params, (i_stim, i_stim + 1))
+        #for i_stim in xrange(len(testing_params['test_stim_range'])):
+            #run_plot_bg(testing_params, (i_stim, i_stim + 1))
 #            MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(i_stim), str(i_stim+1)]) # single plot of each stimulus
         MAC = MetaAnalysisClass([testing_params['folder_name']])
 #        MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
