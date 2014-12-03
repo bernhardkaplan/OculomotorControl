@@ -4,6 +4,8 @@ import numpy as np
 import json
 import time
 import nest
+import matplotlib
+matplotlib.use('Agg')
 import VisualInput
 import MotionPrediction
 import BasalGanglia
@@ -209,7 +211,7 @@ if __name__ == '__main__':
 
         n_stim = testing_params['n_stim']
         run_plot_bg(testing_params, (0, n_stim))
-        for i_stim in testing_params['test_stim_range']:
+        for i_stim in xrange(len(testing_params['test_stim_range'])):
             run_plot_bg(testing_params, (i_stim, i_stim + 1))
 #            MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(i_stim), str(i_stim+1)]) # single plot of each stimulus
         MAC = MetaAnalysisClass([testing_params['folder_name']])

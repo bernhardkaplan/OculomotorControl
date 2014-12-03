@@ -9,7 +9,7 @@ import utils
 import re
 import numpy as np
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
 import pylab as plt
 import matplotlib.gridspec as gridspec
