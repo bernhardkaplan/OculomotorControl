@@ -4,6 +4,8 @@ import numpy as np
 import json
 import time
 import nest
+import matplotlib
+matplotlib.use('Agg')
 import VisualInput
 import MotionPrediction
 import BasalGanglia
@@ -165,8 +167,8 @@ if __name__ == '__main__':
             network_states_net[iteration_cnt, :] = state_
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
 
-            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus
-#            next_action = BG.get_action_softmax()
+            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus 
+            #next_action = BG.get_action_softmax()
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             advance_iteration(MT, BG, VI)
@@ -202,8 +204,9 @@ if __name__ == '__main__':
         PlotTesting([testing_params['folder_name'], str(0), str(testing_params['n_stim_testing'] - 1)], verbose=True) 
 
         n_stim = testing_params['n_stim']
-        for i_stim in xrange(len(testing_params['test_stim_range'])):
-            run_plot_bg(testing_params, (i_stim, i_stim + 1))
+        run_plot_bg(testing_params, (0, n_stim))
+        #for i_stim in xrange(len(testing_params['test_stim_range'])):
+            #run_plot_bg(testing_params, (i_stim, i_stim + 1))
 #            MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(i_stim), str(i_stim+1)]) # single plot of each stimulus
         MAC = MetaAnalysisClass([testing_params['folder_name']])
 #        MAC = MetaAnalysisClass(['dummy', testing_params['folder_name'], str(0), str(n_stim)])
