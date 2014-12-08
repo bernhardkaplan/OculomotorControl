@@ -76,12 +76,6 @@ if __name__ == '__main__':
     training_params = utils.load_params(training_folder)
     actions = np.zeros((testing_params['n_iterations'] + 1, 3)) # the first row gives the initial action, [0, 0] (vx, vy, action_index, reward)
     network_states_net = np.zeros((testing_params['n_iterations'], 4))
-    training_stimuli = np.zeros((training_params['n_stim_training'], 4))
-    training_stimuli_= np.loadtxt(training_params['motion_params_training_fn'])
-    training_stimuli = training_stimuli_
-#    print 'debug', training_stimuli.shape
-#    print 'debug', training_params['training_sequence_fn']
-#    training_stimuli.reshape((training_params['n_stim_training'], 4))
 
     if pc_id == 0:
         remove_files_from_folder(testing_params['spiketimes_folder'])
@@ -94,7 +88,7 @@ if __name__ == '__main__':
         training_stimuli = np.loadtxt(training_params['training_stimuli_fn'])
         test_stim_params = training_stimuli[np.array(testing_params['test_stim_range']), :]
     else:
-        test_stim_params = VI.create_test_stimuli()
+        test_stim_params = VI.create_test_stimuli() # TODO: check if this works
 
     np.savetxt(testing_params['testing_stimuli_fn'], test_stim_params)
     np.savetxt(testing_params['training_stimuli_fn'], training_stimuli)

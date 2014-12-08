@@ -151,20 +151,20 @@ def get_sigmoid_params(params, x_pre, v_stim):
     tau_range = (40., 100.) 
     # tau_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
     # tau_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
-#    tau = utils.transform_quadratic(x_pre, 'neg', tau_range, x_pre_range)
-    tau = utils.transform_linear(x_pre, tau_range, x_pre_range)
+#    tau = transform_quadratic(x_pre, 'neg', tau_range, x_pre_range)
+    tau = transform_linear(x_pre, tau_range, x_pre_range)
 
     v_stim_max = 2.
-    abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
+    abs_speed_factor = transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
 #    tau *= abs_speed_factor
     # take into account how far the stimulus moves
     dx = v_stim * params['t_iteration'] / params['t_cross_visual_field']
     c_range = (0.35 - np.sign(v_stim) * dx, 0.1 - np.sign(v_stim) * dx) 
     # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
     # c_raneg[1] --> determines tolerance for giving reward near center
-    c = utils.transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
+    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
     c *= abs_speed_factor
-#    c = utils.transform_linear(x_pre, c_range, x_pre_range)
+#    c = transform_linear(x_pre, c_range, x_pre_range)
     return c, tau
 
 def sigmoid(x, a, b, c, d, tau):
