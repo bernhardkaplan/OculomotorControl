@@ -72,7 +72,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 34 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 15 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1# number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
@@ -88,6 +88,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_steps_training_trajectory'] = 3
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
+        #self.params['stim_range'] = [6, 9] # will likely be overwritten
         self.params['frac_training_samples_from_grid'] = 1.0
         self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
         self.params['center_stim_width'] = .0 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
@@ -97,7 +98,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         #self.params['test_stim_range'] = [i * 3 for i in xrange(15)] #range(0, 10)
         #self.params['test_stim_range'] = self.params['test_stim_range'] + [285 + i * 3 for i in xrange(15)] #range(0, 10)
-        self.params['test_stim_range'] = [i * 3 for i in xrange(100)]
+        #self.params['test_stim_range'] = [i * 3 for i in xrange(100)]
+        self.params['test_stim_range'] = [0, 1]
         #self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
@@ -160,10 +162,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = '_gaussReward_cntProblStim_nIt%d_temp%.1f_nC%d_' % (self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = '_CNT6-9_%d_temp%.1f_nC%d_' % (self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_gaussRew_VA_fullTest_TrainingGain0.2_0.2_K2-2_' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_afterRetraining_SoftmaxSel_TrainingGain0.6_0.6_K2-2_temp%.1f_' % (self.params['t_iteration'], self.params['softmax_action_selection_temperature'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -463,8 +465,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.4
-        self.params['gain_MT_d2'] = 0.4
+        self.params['gain_MT_d1'] = 0.8
+        self.params['gain_MT_d2'] = 0.8
         self.params['bias_gain'] = 0.
 
 
