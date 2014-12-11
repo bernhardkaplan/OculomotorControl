@@ -9,7 +9,7 @@ import utils
 import re
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
 import pylab as plt
 import matplotlib.gridspec as gridspec
@@ -240,8 +240,10 @@ class PlotTesting(MetaAnalysisClass):
         print 'Problematic stimuli:', problematic_stimuli
         print 'Good stimuli:', good_stimuli
         ax = None
-        ax = self.plot_stimuli_scatter(problematic_stimuli, 'r', '^', ax, label_txt='Problematic stimuli')
-        ax = self.plot_stimuli_scatter(good_stimuli, 'b', 'o', ax, label_txt='Good stimuli')
+        if len(problematic_stimuli) > 0:
+            ax = self.plot_stimuli_scatter(problematic_stimuli, 'r', '^', ax, label_txt='Problematic stimuli')
+        if len(good_stimuli) > 0:
+            ax = self.plot_stimuli_scatter(good_stimuli, 'b', 'o', ax, label_txt='Good stimuli')
 
     def plot_stimuli_scatter(self, stim_params, color='b', marker='o', ax=None, label_txt=''):
         if ax == None:

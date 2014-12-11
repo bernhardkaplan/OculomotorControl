@@ -39,7 +39,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['training'] = True
+        self.params['training'] = False
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
@@ -96,10 +96,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # to generate the training samples, three methods are used: 1) sampling from the tuning properties, 2) sampling from a grid  3) sampling nearby the center (as these stimuli occur more frequently)
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
-        #self.params['test_stim_range'] = [i * 3 for i in xrange(15)] #range(0, 10)
+        self.params['test_stim_range'] = [i * 3 for i in xrange(10)] #range(0, 10)
         #self.params['test_stim_range'] = self.params['test_stim_range'] + [285 + i * 3 for i in xrange(15)] #range(0, 10)
-        self.params['test_stim_range'] = [i * 3 for i in xrange(100)]
-        #self.params['test_stim_range'] = range(0, 10)
+#        self.params['test_stim_range'] = [
+#        self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -421,7 +421,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['record_bg_volt'] = True
         self.params['record_bg_volt'] = False
         self.params['bg_cell_types'] = ['d1', 'd2', 'action', 'recorder']
-        self.params['n_actions'] = 7
+        self.params['n_actions'] = 17
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.20
         self.params['gids_to_record_bg'] = []

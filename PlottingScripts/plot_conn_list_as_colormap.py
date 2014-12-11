@@ -79,8 +79,8 @@ def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None, com
         src = data[c, 0] - src_min
         tgt = data[c, 1] - tgt_min
         if compute_weights:
-            #conn_mat[src, tgt] = np.log(data[c, 5] / (data[c, 3] * data[c, 4]))
-            conn_mat[src, tgt] = data[c, 5]
+            conn_mat[src, tgt] = np.log(data[c, 5] / (data[c, 3] * data[c, 4]))
+            #conn_mat[src, tgt] = data[c, 5]
         else:
             conn_mat[src, tgt] = data[c, 2]
 
@@ -133,8 +133,8 @@ def plot_conn_list_sorted_by_tp(conn_list_fn, params, clim=None, src_cell_type=N
         src = data[c, 0] - src_min
         tgt = data[c, 1] - tgt_min
         if compute_weights:
-#            conn_mat[src, tgt] = np.log(data[c, 5] / (data[c, 3] * data[c, 4]))
-            conn_mat[src, tgt] = data[c, 5]
+            conn_mat[src, tgt] = np.log(data[c, 5] / (data[c, 3] * data[c, 4]))
+#            conn_mat[src, tgt] = data[c, 5]
         else:
             conn_mat[src, tgt] = data[c, 2]
 
@@ -163,12 +163,12 @@ if __name__ == '__main__':
 
     src_type = 'mpn'
 #    src_type = 'd1'
-#    tgt_type = 'd1'
-    tgt_type = 'd2'
+    tgt_type = 'd1'
+#    tgt_type = 'd2'
     fns = sys.argv[1:] # 
     clim = None
 #    clim = (-0.5, .5)
-#    clim = (-200., 200.)
+#    clim = (-4., 4.)
 
     xv = 'x'
 
@@ -177,7 +177,7 @@ if __name__ == '__main__':
             params = utils.load_params(fn)
             tgt_type = 'd1'
             conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
-#            plot_conn_list_sorted_by_tp(conn_list_fn, params, clim=clim, xv=xv)
+            plot_conn_list_sorted_by_tp(conn_list_fn, params, clim=clim, xv=xv)
             plot_conn_list(conn_list_fn, params=params, clim=clim)
 
 #            if params['with_d2']:
@@ -192,7 +192,7 @@ if __name__ == '__main__':
                 conn_list_fn = params['mpn_bg%s_merged_conn_fn' % tgt_type]
             else:
                 conn_list_fn = params['%s_%s_merged_conn_fn' % (src_type, tgt_type)]
-#            plot_conn_list_sorted_by_tp(conn_list_fn, params, clim=clim, xv=xv)
+            plot_conn_list_sorted_by_tp(conn_list_fn, params, clim=clim, xv=xv)
             plot_conn_list(conn_list_fn, params=params, clim=clim)
 
 #            tgt_type = 'd2'
