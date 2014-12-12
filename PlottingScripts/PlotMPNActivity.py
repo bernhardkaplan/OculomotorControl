@@ -606,7 +606,7 @@ class MetaAnalysisClass(object):
             t_range = [0, 0]
             t_range[0] = stim_range[0] * params['t_iteration'] * params['n_iterations_per_stim']
             t_range[1] = stim_range[1] * params['t_iteration'] * params['n_iterations_per_stim']
-            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos_%03d-%03d.png' % (stim_range_label[0], stim_range_label[1])
         else:
             t_range = None
             output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_xpos.png' 
@@ -627,7 +627,7 @@ class MetaAnalysisClass(object):
             Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
 
         if stim_range != None:
-            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx_%03d-%03d.png' % (stim_range_label[0], stim_range_label[1])
         else:
             output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png' 
         print 'Saving to', output_fn

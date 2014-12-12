@@ -168,6 +168,8 @@ class PlotTesting(MetaAnalysisClass):
         ax1 = fig.add_subplot(312)
         ax2 = fig.add_subplot(313)
         problematic_stimuli = []
+        problematic_stimuli_idx = [] 
+
         good_stimuli = []
 #        for i_stim in xrange(len(self.params['test_stim_range'])):
         for i_stim in xrange(len(self.stim_range)):
@@ -179,6 +181,7 @@ class PlotTesting(MetaAnalysisClass):
                 lc = 'r'
                 print 'Problematic Stim id ', i_stim, stim_params[i_stim, :]
                 problematic_stimuli.append(stim_params[i_stim, :])
+                problematic_stimuli_idx.append(i_stim)
                 #print 'debug bad', np.abs(trajectory[i0+4:i1-2].mean() - .5)
             else:
                 lc = 'k'
@@ -202,7 +205,8 @@ class PlotTesting(MetaAnalysisClass):
         ax0.set_ylabel('Retinal\ndisplacement')
         xlim0 = ax0.get_xlim()
         ax0.plot((xlim0[0], xlim0[1]), (.5, .5), ls='--', c='k', lw=3)
-        ax0.set_ylim((-0.1, 1.1))
+        ax0.set_ylim((0.1, 0.9))
+#        ax0.set_ylim((-0.1, 1.1))
 
 
 
@@ -219,7 +223,7 @@ class PlotTesting(MetaAnalysisClass):
         ax2.set_xticklabels(new_xticklabels)
         ax2.set_xlabel('Time [ms]')
         ax2.set_ylabel('Average absolute\nretinal displacement')
-        ax2.set_ylim((0., .5))
+        ax2.set_ylim((0., .4))
 
         # SAVING
         output_fn = self.params['figures_folder'] + 'retinal_displacement_avg_%d-%d.png' % (self.stim_range[0], self.stim_range[-1])
@@ -232,6 +236,8 @@ class PlotTesting(MetaAnalysisClass):
         print 'Saving colormap data to:', output_fn
         np.savetxt(output_fn, avg_displ)
 
+        output_fn = self.params['data_folder'] + 'problematic_stimuli_idx.txt'
+        np.savetxt(output_fn, np.array(problematic_stimuli_idx, dtype=np.int))
         output_fn = self.params['data_folder'] + 'problematic_stimuli.txt'
         print 'Saving the problematic stimuli to:', output_fn
         problematic_stimuli = np.array(problematic_stimuli)
