@@ -225,7 +225,7 @@ def run_plot_bg(params, stim_range):
     PMPN = PlotMPNActivity.ActivityPlotter(params)
     PMPN.plot_vertical_lines(ax, params)
     if len(stim_range) > 1:
-        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%.2f_%.2f_stim%d-%d.png' % \
+        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%.2f_%.2f_stim%03d-%03d.png' % \
                 (params['gain_MT_d1'], params['gain_MT_d2'], stim_range[0], stim_range[1])
     else:
         output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%.2f_%.2f_stim%d.png' % \
@@ -247,10 +247,12 @@ if __name__ == '__main__':
         print '1\nPlotting the default parameters give in simulation_parameters.py\n'
         run_plot_bg(params, stim_range)
     elif len(sys.argv) == 2: # plot_ [FOLDER]
+        print 'Case 2'
         folder_name = sys.argv[1]
         params = utils.load_params(folder_name)
         run_plot_bg(params, stim_range)
     elif len(sys.argv) == 3: #  plot_ [STIM_1] [STIM_2]
+        print 'Case 3'
         if sys.argv[1].isdigit() and sys.argv[2].isdigit():
             stim_range = (int(sys.argv[1]), int(sys.argv[2]))
             network_params = simulation_parameters.global_parameters()  
@@ -261,6 +263,7 @@ if __name__ == '__main__':
                 params = utils.load_params(fn)
                 run_plot_bg(params, stim_range)
     elif len(sys.argv) == 4: #  PlotMPNActivity [FOLDER] [STIM_1] [STIM_2]
+        print 'Case 4'
         folder_name = sys.argv[1]
         if sys.argv[2].isdigit() and sys.argv[3].isdigit():
             stim_range = (int(sys.argv[2]), int(sys.argv[3]))
@@ -274,6 +277,7 @@ if __name__ == '__main__':
                 params = utils.load_params(fn)
                 run_plot_bg(params, stim_range)
     elif len(sys.argv) > 4: #  PlotMPNActivity [FOLDER_1] [FOLDER_2] .... [FOLDER_N]
+        print 'Case 5'
         for fn in sys.argv[1:]:
             params = utils.load_params(fn)
             run_plot_bg(params, stim_range)

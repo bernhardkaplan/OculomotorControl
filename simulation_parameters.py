@@ -89,7 +89,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_steps_training_trajectory'] = 3
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
-        #self.params['stim_range'] = [15, 15 + self.params['n_stim_training']]
         self.params['frac_training_samples_from_grid'] = 1.0
         self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
         self.params['center_stim_width'] = .0 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
@@ -97,7 +96,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # to generate the training samples, three methods are used: 1) sampling from the tuning properties, 2) sampling from a grid  3) sampling nearby the center (as these stimuli occur more frequently)
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
-        #self.params['test_stim_range'] = [i * 3 for i in xrange(15)] #range(0, 10)
+        #self.params['test_stim_range'] = [i * 3 for i in xrange(10)] #range(0, 10)
         #self.params['test_stim_range'] = self.params['test_stim_range'] + [285 + i * 3 for i in xrange(15)] #range(0, 10)
         self.params['test_stim_range'] = [300 + i * 3 for i in xrange(100)]
         #self.params['test_stim_range'] = [0, 1]

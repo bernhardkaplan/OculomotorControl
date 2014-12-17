@@ -9,7 +9,7 @@ import utils
 import re
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
 import pylab as plt
 import matplotlib.gridspec as gridspec
@@ -29,7 +29,7 @@ class PlotTesting(MetaAnalysisClass):
 
 
         plot_params = {'backend': 'png',
-                      'axes.labelsize': 16,
+                      'axes.labelsize': 20,
                       'axes.titlesize': 20,
                       'text.fontsize': 20,
                       'xtick.labelsize': 16,
@@ -45,7 +45,7 @@ class PlotTesting(MetaAnalysisClass):
                       'figure.subplot.bottom':.12,
                       'figure.subplot.right':.94,
                       'figure.subplot.top':.92,
-                      'figure.subplot.hspace':.08, 
+                      'figure.subplot.hspace':.12, 
                       'figure.subplot.wspace':.30}
         #              'figure.figsize': get_fig_size(800)}
         plt.rcParams.update(plot_params)
@@ -168,6 +168,8 @@ class PlotTesting(MetaAnalysisClass):
         ax1 = fig.add_subplot(312)
         ax2 = fig.add_subplot(313)
         problematic_stimuli = []
+        problematic_stimuli_idx = [] 
+
         good_stimuli = []
 #        for i_stim in xrange(len(self.params['test_stim_range'])):
         for i_stim in xrange(len(self.stim_range)):
@@ -179,14 +181,26 @@ class PlotTesting(MetaAnalysisClass):
                 lc = 'r'
                 print 'Problematic Stim id ', i_stim, stim_params[i_stim, :]
                 problematic_stimuli.append(stim_params[i_stim, :])
+                problematic_stimuli_idx.append(i_stim)
                 #print 'debug bad', np.abs(trajectory[i0+4:i1-2].mean() - .5)
             else:
                 lc = 'k'
                 #print 'debug good', np.abs(trajectory[i0+4:i1-2].mean() - .5)
                 good_stimuli.append(stim_params[i_stim, :])
-            ax1.plot(range(self.params['n_iterations_per_stim']), trajectory[i0:i1], color=lc, lw=1)
+            ax1.plot(range(self.params['n_iterations_per_stim']), trajectory[i0:i1], color=lc, lw=1, alpha=0.4)
             ax0.plot(range(i0, i1), trajectory[i0:i1], color=lc, lw=1)
             #ax.plot(range(trajectory.size), trajectory)
+
+        # restrict the x-range for some example stimuli
+        ax0_stim_range = (0, 15)
+        ax0_xlim = (ax0_stim_range[0] * self.params['n_iterations_per_stim'], ax0_stim_range[1] * self.params['n_iterations_per_stim'])
+        ax0.set_xlim((ax0_xlim[0], ax0_xlim[1]))
+        xticks0 = ax0.get_xticks() 
+        new_xticklabels = []
+        for i_, xtick in enumerate(xticks0):
+            new_xticklabels.append('%d' % (xtick * self.params['t_iteration']))
+        ax0.set_xticklabels(new_xticklabels)
+        ax0.set_title('Test performance: single trials and average')
 
         new_xticklabels = []
 #        for i_, xtick in enumerate(xticks):
@@ -198,11 +212,12 @@ class PlotTesting(MetaAnalysisClass):
         ax1.plot((xlim[0], xlim[1]), (.5, .5), ls='--', c='k', lw=3)
         ax1.set_ylim((0., 1.))
 
-        ax0.set_xticklabels(new_xticklabels)
+#        ax0.set_xticklabels(new_xticklabels)
         ax0.set_ylabel('Retinal\ndisplacement')
         xlim0 = ax0.get_xlim()
         ax0.plot((xlim0[0], xlim0[1]), (.5, .5), ls='--', c='k', lw=3)
-        ax0.set_ylim((-0.1, 1.1))
+        ax0.set_ylim((0.1, 0.9))
+#        ax0.set_ylim((-0.1, 1.1))
 
 
 
@@ -219,7 +234,7 @@ class PlotTesting(MetaAnalysisClass):
         ax2.set_xticklabels(new_xticklabels)
         ax2.set_xlabel('Time [ms]')
         ax2.set_ylabel('Average absolute\nretinal displacement')
-        ax2.set_ylim((0., .5))
+        ax2.set_ylim((0., .4))
 
         # SAVING
         output_fn = self.params['figures_folder'] + 'retinal_displacement_avg_%d-%d.png' % (self.stim_range[0], self.stim_range[-1])
@@ -232,6 +247,8 @@ class PlotTesting(MetaAnalysisClass):
         print 'Saving colormap data to:', output_fn
         np.savetxt(output_fn, avg_displ)
 
+        output_fn = self.params['data_folder'] + 'problematic_stimuli_idx.txt'
+        np.savetxt(output_fn, np.array(problematic_stimuli_idx, dtype=np.int))
         output_fn = self.params['data_folder'] + 'problematic_stimuli.txt'
         print 'Saving the problematic stimuli to:', output_fn
         problematic_stimuli = np.array(problematic_stimuli)
@@ -240,8 +257,13 @@ class PlotTesting(MetaAnalysisClass):
         print 'Problematic stimuli:', problematic_stimuli
         print 'Good stimuli:', good_stimuli
         ax = None
-        ax = self.plot_stimuli_scatter(problematic_stimuli, 'r', '^', ax, label_txt='Problematic stimuli')
-        ax = self.plot_stimuli_scatter(good_stimuli, 'b', 'o', ax, label_txt='Good stimuli')
+        if len(problematic_stimuli) > 0:
+            ax = self.plot_stimuli_scatter(problematic_stimuli, 'r', '^', ax, label_txt='Problematic stimuli')
+        if len(good_stimuli) > 0:
+            ax = self.plot_stimuli_scatter(good_stimuli, 'b', 'o', ax, label_txt='Good stimuli')
+        output_fn = self.params['figures_folder'] + 'good_and_problematic_stimuli_scatter.png'
+        print 'Saving stimuli scatter plot to:', output_fn
+        plt.savefig(output_fn, dpi=200)
 
     def plot_stimuli_scatter(self, stim_params, color='b', marker='o', ax=None, label_txt=''):
         if ax == None:
