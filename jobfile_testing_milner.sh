@@ -2,9 +2,9 @@
 # The -l above is required to get the full environment with modules
 
 # The name of the script is myjob
-#SBATCH -J test_after_RBL
+#SBATCH -J test_g4_K2_temp0.5
 
-#SBATCH -t 2:25:00
+#SBATCH -t 1:25:00
 
 # Number of cores to be allocated (multiple of 20)
 #SBATCH -n 80
@@ -28,12 +28,7 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-#aprun -n 120 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training__taup150000_nStim2000_it15-300000_wD14.0_wD210.0_bias1.00_K1.00 > delme_testing 2>&1
-#aprun -n 960 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py $1 $2 > delme_testing 2>&1
-
-#aprun -n 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training_SubOpt_2_titer25_nRF50_nV50_nStim4x400_nactions17_blurX0.05_V0.05_taup100000/ > delme_testing_before_rbl_2 2>&1
-
-aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training_RBL_titer25_TRJ_CNT__nStim12_48-60_gainD1_0.2_D2_0.2_K5_-5_seeds_111_2 > delme_testing_ 2>&1
+aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training__nactions13_30_temp0.5_nC1__nStim15_285-300_gainD1_0.8_D2_0.8_K2_-2_seeds_396_2 > delme_testing_g4_K2_temp0.5_VA 2>&1
 
 
 # RBL

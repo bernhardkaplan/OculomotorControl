@@ -157,11 +157,15 @@ class ActivityPlotter(object):
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
         t_stim = self.params['n_iterations_per_stim'] * self.params['t_iteration']
-        print 'debug', self.params['motion_params_testing_fn']
-        stim_params = np.loadtxt(self.params['motion_params_testing_fn'])
+#        print 'debug', self.params['testing_stimuli_fn']
+        if self.params['training']:
+            stim_params = np.loadtxt(self.params['training_stimuli_fn'])
+        else:
+            stim_params = np.loadtxt(self.params['testing_stimuli_fn'])
         if stim_params.ndim == 1:
             stim_params = stim_params.reshape((1, stim_params.size))
-        for i_ in xrange(stim_range[0], stim_range[1]):
+#        print 'debug stim_range', stim_range
+        for i_ in xrange(len(self.params['test_stim_range'])):
             x, y, u, v = stim_params[i_, :]
             xpos_txt = .5 * (i_ * t_stim + (i_ + 1) * t_stim)
             (best_speed, vy, best_action_idx) = utils.get_optimal_action(self.params, stim_params[i_, :])
@@ -221,7 +225,7 @@ def run_plot_bg(params, stim_range):
     PMPN = PlotMPNActivity.ActivityPlotter(params)
     PMPN.plot_vertical_lines(ax, params)
     if len(stim_range) > 1:
-        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%.2f_%.2f_stim%d-%d.png' % \
+        output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%.2f_%.2f_stim%03d-%03d.png' % \
                 (params['gain_MT_d1'], params['gain_MT_d2'], stim_range[0], stim_range[1])
     else:
         output_fig = params['bg_rasterplot_fig'][:params['bg_rasterplot_fig'].rfind('.')] + 'wD1-D2_%.2f_%.2f_stim%d.png' % \
@@ -243,10 +247,12 @@ if __name__ == '__main__':
         print '1\nPlotting the default parameters give in simulation_parameters.py\n'
         run_plot_bg(params, stim_range)
     elif len(sys.argv) == 2: # plot_ [FOLDER]
+        print 'Case 2'
         folder_name = sys.argv[1]
         params = utils.load_params(folder_name)
         run_plot_bg(params, stim_range)
     elif len(sys.argv) == 3: #  plot_ [STIM_1] [STIM_2]
+        print 'Case 3'
         if sys.argv[1].isdigit() and sys.argv[2].isdigit():
             stim_range = (int(sys.argv[1]), int(sys.argv[2]))
             network_params = simulation_parameters.global_parameters()  
@@ -257,6 +263,7 @@ if __name__ == '__main__':
                 params = utils.load_params(fn)
                 run_plot_bg(params, stim_range)
     elif len(sys.argv) == 4: #  PlotMPNActivity [FOLDER] [STIM_1] [STIM_2]
+        print 'Case 4'
         folder_name = sys.argv[1]
         if sys.argv[2].isdigit() and sys.argv[3].isdigit():
             stim_range = (int(sys.argv[2]), int(sys.argv[3]))
@@ -270,8 +277,9 @@ if __name__ == '__main__':
                 params = utils.load_params(fn)
                 run_plot_bg(params, stim_range)
     elif len(sys.argv) > 4: #  PlotMPNActivity [FOLDER_1] [FOLDER_2] .... [FOLDER_N]
+        print 'Case 5'
         for fn in sys.argv[1:]:
             params = utils.load_params(fn)
             run_plot_bg(params, stim_range)
 
-    pylab.show()
+#    pylab.show()

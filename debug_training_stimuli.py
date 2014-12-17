@@ -13,8 +13,11 @@ d = np.loadtxt(fn)
 fig = pylab.figure()
 ax = fig.add_subplot(111)
 
+
 N = d[:, 0].size
-bounds = range(N)
+N0 = 15
+N1 = 30
+bounds = range(N0, N1)
 
 cmap = matplotlib.cm.jet
 norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
@@ -22,10 +25,9 @@ m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
 m.set_array(np.arange(bounds[0], bounds[-1], 1.))
 rgba_colors = m.to_rgba(bounds)
 
-#for i_ in xrange(d[:, 0].size):
-for i_ in xrange(10):
-    ax.plot(d[i_, 0], d[i_, 2], 'o', color=rgba_colors[i_])
-    ax.text(d[i_, 0], d[i_, 2], '%d' % i_, color=rgba_colors[i_])
+for i_color, i_ in enumerate(range(N0, N1)):
+    ax.plot(d[i_, 0], d[i_, 2], 'o', color=rgba_colors[i_color])
+    ax.text(d[i_, 0], d[i_, 2], '%d' % i_, color=rgba_colors[i_color])
 
 ax.set_xlim((0, 1))
 ax.set_ylim((-2, 2))

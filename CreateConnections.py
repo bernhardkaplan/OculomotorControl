@@ -53,6 +53,7 @@ class CreateConnections(object):
                 p = training_params
             fn_out = p['mpn_bg%s_merged_conn_fn' % cell_type]
             merge_pattern = training_params['mpn_bg%s_conn_fn_base' % cell_type]
+            print 'debug merge pattern:', merge_pattern, ' fn_out:', fn_out
             #if not os.path.exists(p['mpn_bg%s_merged_conn_fn' % cell_type]):
             utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
 
@@ -184,6 +185,7 @@ class CreateConnections(object):
         """
         # get the merged connectivity file
         for cell_type in ['d1', 'd2']:
+            # removed to check if this causes the major bug
             if not os.path.exists(old_params['mpn_bg%s_merged_conn_fn' % cell_type]):
                 self.merge_connection_files(old_params, self.params)
             #else:
@@ -198,30 +200,32 @@ class CreateConnections(object):
         print 'Loading MPN - BG %s connections from: %s' % (target, old_params['mpn_bg%s_merged_conn_fn' % target])
         mpn_bg_conn_list = np.loadtxt(old_params['mpn_bg%s_merged_conn_fn' % target])
         n_lines = mpn_bg_conn_list[:, 0].size 
+        srcs = mpn_bg_conn_list[:, 0]
+        tgts = mpn_bg_conn_list[:, 1]
         w = mpn_bg_conn_list[:, 2]
         pi = mpn_bg_conn_list[:, 3]
         pj = mpn_bg_conn_list[:, 4]
         pij = mpn_bg_conn_list[:, 5]
-        w *= self.params['gain_MT_%s' % target]
+        #w *= self.params['gain_MT_%s' % target]
 #        pij = pi * pj * np.exp(w)
-        valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
-        srcs = list(mpn_bg_conn_list[valid_idx, 0].astype(np.int))
-        tgts = list(mpn_bg_conn_list[valid_idx, 1].astype(np.int))
-        weights = list(w[valid_idx])
-        pij = pi * pj * np.exp(w[valid_idx])
+        #valid_idx = np.nonzero(np.abs(w) > self.params['weight_threshold'])[0]
+        #srcs = list(mpn_bg_conn_list[valid_idx, 0].astype(np.int))
+        #tgts = list(mpn_bg_conn_list[valid_idx, 1].astype(np.int))
+        #weights = list(w[valid_idx])
+        #pij = pi * pj * np.exp(w[valid_idx])
 
-        delays = list(np.ones(len(weights)) * self.params['mpn_bg_delay'])
-        param_dict_list = [self.params['params_synapse_%s_MT_BG' % target] for i_ in xrange(valid_idx.size)]
+        delays = list(np.ones(w.size) * self.params['mpn_bg_delay'])
+        param_dict_list = [self.params['params_synapse_%s_MT_BG' % target] for i_ in xrange(n_lines)]
         model = self.params['synapse_%s_MT_BG' % target]
-        for i_ in xrange(valid_idx.size):
+        for i_ in xrange(n_lines):
             param_dict_list[i_]['p_i'] = pi[i_]
             param_dict_list[i_]['p_j'] = pj[i_]
             param_dict_list[i_]['p_ij'] = pij[i_]
-            param_dict_list[i_]['weight'] = weights[i_]
-            nest.Connect([srcs[i_]], [tgts[i_]], param_dict_list[i_], model=model)
+            param_dict_list[i_]['weight'] = 0. #weights[i_]
+            nest.Connect([int(srcs[i_])], [int(tgts[i_])], param_dict_list[i_], model=model)
+            # nest.SetStatus(nest.GetConnections([int(srcs[i_])], [int(tgts[i_])]), {'p_i' : pi[i_], 'p_j': pj[i_], 'p_ij' : pij[i_]})
 
         #conns = nest.GetConnections([srcs[i_]], [tgts[i_]], synapse_model=model)
-        #print 'CreateConnections.get_weights %d action n_conn %d (model) %s' % (self.pc_id, len(conns), model)
         #for nactions in xrange(self.params['n_actions']):
             #conns = nest.GetConnections(mpn_net.exc_pop, bg_net.strD1[nactions], synapse_model=model)
             #conns = nest.GetConnections(mpn_net.exc_pop, bg_net.strD1[nactions], synapse_model=self.params['synapse_%s_MT_BG' % target]) # get the list of connections stored on the current MPI node
@@ -431,6 +435,8 @@ class CreateConnections(object):
             D2_f.write(D2_conns)
             D2_f.close()
 
+        if self.comm != None:
+            self.comm.Barrier()
 
             #D2_conns = ''
             #bias_d2 = {}

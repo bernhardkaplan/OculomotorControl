@@ -15,6 +15,9 @@ from copy import deepcopy
 import pylab
 from PlottingScripts.plot_training_samples import Plotter
 import random
+import matplotlib 
+import matplotlib.patches as mpatches
+from matplotlib.collections import PatchCollection
 
 
 def create_stimuli_from_grid_center_and_tuning_prop(params):
@@ -72,6 +75,70 @@ def create_stimuli_along_a_trajectory(params):
     return output_array
 
 
+def create_non_overlapping_training_stimuli(params):
+
+    training_stim = np.zeros((params['n_stim_training'], 4))
+    i_stim = 0
+
+    VI = VisualInput.VisualInput(params)
+    tp = VI.set_tuning_prop_1D_with_const_fovea(cell_type='exc')
+
+    x_lim_frac = .95
+    v_lim_frac = .5 #
+    xlim = ((1. - x_lim_frac) * (np.max(tp[:, 0]) - np.min(tp[:, 0])), x_lim_frac * np.max(tp[:, 0]))
+    vlim = (v_lim_frac * np.min(tp[:, 2]), v_lim_frac * np.max(tp[:, 2]))
+
+#    n_x = np.int(np.round( 1. / params['blur_X']))
+    n_x = np.int(np.round((xlim[1] - xlim[0]) / params['blur_X']))
+    n_v = np.int(np.round((vlim[1] - vlim[0]) / params['blur_V']))
+    print 'create_non_overlapping_training_stimuli: n_x, n_v:', n_x, n_v
+    x_grid = np.linspace(xlim[0], xlim[1], n_x)
+    v_grid = np.linspace(vlim[0], vlim[1], n_v)
+    for i_cycle in xrange(params['n_training_cycles']):
+        for i_v in xrange(params['n_training_v']):
+            for i_x in xrange(params['n_training_x']):
+                training_stim[i_stim, 0] = x_grid[i_x % n_x]
+                training_stim[i_stim, 1] = .5
+                training_stim[i_stim, 2] = v_grid[i_v % n_v]
+                training_stim[i_stim, 3] = .0
+                i_stim += 1
+
+    return training_stim
+
+
+def plot_stim_after_action(params, mp, ax=None):
+    """
+    mp  --  training_stimuli (4 columns, n_training_stim rows)
+    ax  -- axis to plot on
+    """
+    if ax == None:
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+
+
+
+    bounds = range(params['n_actions'])
+    cmap = matplotlib.cm.jet
+    norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+    m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
+    m.set_array(np.arange(bounds[0], bounds[-1], 1.))
+    colors = m.to_rgba(range(params['n_actions']))
+
+    patches = []
+    for i_ in xrange(params['n_stim_training']):
+
+        (best_speed, vy, best_action_idx) = utils.get_optimal_action(params, mp[i_, :])
+        mp_next = utils.get_next_stim(params, mp[i_, :], best_speed)
+        print 'Stim %d mp: (%.2f, %.2f) requires action %d' % (i_, mp[i_, 0], mp[i_, 2], best_action_idx)
+        ax.plot(mp_next[0], mp_next[2], '*', markersize=10, color=colors[best_action_idx], markeredgewidth=1)
+        ellipse = mpatches.Ellipse((mp_next[0], mp_next[2]), params['blur_X'], params['blur_V'], linewidth=0, alpha=0.1)
+        ellipse.set_facecolor('r')
+        patches.append(ellipse)
+        ax.add_artist(ellipse)
+    collection = PatchCollection(patches)#, alpha=0.1)
+    ax1.add_collection(collection)
+
+
 if __name__ == '__main__':
 
 
@@ -81,6 +148,7 @@ if __name__ == '__main__':
         GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
     else:
         params = utils.load_params(sys.argv[1])
+    assert params['training'], 'Set training = True, otherwise you will get confused because of inconsistent n_stim values'
 
     print 'n_cycles', params['n_training_cycles']
     np.random.seed(params['visual_stim_seed'])
@@ -89,8 +157,9 @@ if __name__ == '__main__':
 
 
     training_stimuli = create_stimuli_along_a_trajectory(params)
-
 #    training_stimuli = create_stimuli_from_grid_center_and_tuning_prop(params)
+
+#    training_stimuli = create_non_overlapping_training_stimuli(params)
 
     print 'debug', training_stimuli
     print 'Debug saving training_stimuli to:', params['training_stimuli_fn']
@@ -116,12 +185,28 @@ if __name__ == '__main__':
 #    np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
 
+    n_bins = params['n_actions'] - 1
+    cnt, bins = np.histogram(action_indices, bins=n_bins, range=(np.min(action_indices), np.max(action_indices)))
+    idx_never_done = np.nonzero(cnt == 0)[0]
+    print 'Actions never done:', idx_never_done
+
+    fig = pylab.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.bar(bins[:-1], cnt, width=bins[1]-bins[0])
+    ax1.set_xlabel('Actions taken')
+    ax1.set_ylabel('Count')
+    ax1.set_xlim((0, params['n_actions']))
 
     Plotter = Plotter(params)#, it_max=1)
-    Plotter.plot_training_sample_space(plot_process=False, motion_params_fn=params['training_stimuli_fn'])
-    output_fn = params['figures_folder'] + 'training_stimuli.png'
-    pylab.savefig(output_fn, dpi=200)
+#    Plotter.plot_training_sample_space(plot_process=False, motion_params_fn=params['training_stimuli_fn'])
+#    output_fn = params['figures_folder'] + 'training_stimuli.png'
+#    pylab.savefig(output_fn, dpi=200)
+    ax = Plotter.plot_precomputed_actions(plot_cells=True)
+#    ax = None
+    plot_stim_after_action(params, training_stimuli, ax=ax)
+
+
 #    Plotter.plot_training_sample_space(plot_process=True)
-    Plotter.plot_precomputed_actions(plot_cells=True)
+
 
     pylab.show()

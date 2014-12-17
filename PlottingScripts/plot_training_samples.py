@@ -89,10 +89,10 @@ class Plotter(object):
                 ellipse.set_facecolor('r')
                 patches.append(ellipse)
                 ax1.add_artist(ellipse)
-        collection = PatchCollection(patches)#, alpha=0.1)
+        collection = PatchCollection(patches, alpha=0.1)
         ax1.add_collection(collection)
 
-        ax1.text(.4, ylim[0] + .1 * (ylim[1] - ylim[0]), 'Visual field center', fontsize=16)
+#        ax1.text(.4, ylim[0] + .1 * (ylim[1] - ylim[0]), 'Visual field center', fontsize=16)
 
         ax1.set_title('Training stimuli state space')
         ax1.set_xlabel('Stimulus position') 
@@ -139,15 +139,14 @@ class Plotter(object):
                 patches.append(ellipse)
                 ax1.add_artist(ellipse)
 
+        print 'type action_indices', type(action_indices)
         colors = m.to_rgba(action_indices)
 #        print 'debug colors', colors, '\n\n', action_indices
 
         if self.params['reward_based_learning']:
             for i_ in xrange(len(action_indices)):
-#                stim_idx = (i_ + 1) * (self.params['suboptimal_training'] + 1) - 1
                 stim_idx = i_
                 mp = d[stim_idx, :]
-#                print 'stim_idx:', stim_idx, mp, action_indices[i_]
                 ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
                 ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
                 ellipse.set_facecolor('r')
@@ -166,17 +165,20 @@ class Plotter(object):
 
 #        ax2 = fig.add_axes([0.95, 0.1, 0.03, 0.8])
 #        cb = matplotlib.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')
-        collection = PatchCollection(patches)
+
+#        collection = PatchCollection(patches)
         ylim = ax1.get_ylim()
+#        xlim = ax1.get_ylim()
         ax1.plot((.5, .5), (ylim[0], ylim[1]), ls='--', c='k', lw=3)
-        ax1.text(.4, ylim[0] + .1 * (ylim[1] - ylim[0]), 'Visual field center', fontsize=16)
-        ax1.add_collection(collection)
+#        ax1.text(.4, ylim[0] + .1 * (ylim[1] - ylim[0]), 'Visual field center', fontsize=16)
+#        ax1.add_collection(collection)
         ax1.set_title('Training stimuli state space')
         ax1.set_xlabel('Stimulus position') 
         ax1.set_ylabel('Stimulus speed vx') 
         output_fig = self.params['figures_folder'] + 'stimulus_state_space_with_precomputed_actions_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
         print 'Saving to:', output_fig
         pylab.savefig(output_fig, dpi=200)
+        return ax1
 
 
     def plot_training_sample_histograms(self):

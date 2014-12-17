@@ -52,7 +52,7 @@ def check_is_it_d1(fn):
 
 
 
-def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
+def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None, compute_weights=True):
     if not os.path.exists(conn_list_fn):
         print 'Merging default connection files...'
         merge_pattern = params['mpn_bgd1_conn_fn_base']
@@ -78,7 +78,11 @@ def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
     for c in xrange(data[:,0].size):
         src = data[c, 0] - src_min
         tgt = data[c, 1] - tgt_min
-        conn_mat[src, tgt] = data[c, 2]
+        if compute_weights:
+            conn_mat[src, tgt] = np.log(data[c, 5] / (data[c, 3] * data[c, 4]))
+            #conn_mat[src, tgt] = data[c, 5]
+        else:
+            conn_mat[src, tgt] = data[c, 2]
 
     ax = plot_matrix(conn_mat, clim=clim)
     print 'connmat min max', np.min(conn_mat), np.max(conn_mat)
@@ -92,7 +96,7 @@ def plot_conn_list(conn_list_fn, params=None, clim=None, src_cell_type=None):
     return conn_mat
 
 
-def plot_conn_list_sorted_by_tp(conn_list_fn, params, clim=None, src_cell_type=None, xv='x'):
+def plot_conn_list_sorted_by_tp(conn_list_fn, params, clim=None, src_cell_type=None, xv='x', compute_weights=True):
 
     if not os.path.exists(conn_list_fn):
         print 'Merging default connection files...'
@@ -128,7 +132,11 @@ def plot_conn_list_sorted_by_tp(conn_list_fn, params, clim=None, src_cell_type=N
     for c in xrange(data[:,0].size):
         src = data[c, 0] - src_min
         tgt = data[c, 1] - tgt_min
-        conn_mat[src, tgt] = data[c, 2]
+        if compute_weights:
+            conn_mat[src, tgt] = np.log(data[c, 5] / (data[c, 3] * data[c, 4]))
+#            conn_mat[src, tgt] = data[c, 5]
+        else:
+            conn_mat[src, tgt] = data[c, 2]
 
     conn_mat_sorted = conn_mat[idx, :]
     ax = plot_matrix(conn_mat_sorted, clim=clim)
@@ -155,12 +163,12 @@ if __name__ == '__main__':
 
     src_type = 'mpn'
 #    src_type = 'd1'
-#    tgt_type = 'd1'
     tgt_type = 'd1'
+#    tgt_type = 'd2'
     fns = sys.argv[1:] # 
     clim = None
-#    clim = (-4.5, 4.5)
-#    clim = (-200., 200.)
+#    clim = (-0.5, .5)
+#    clim = (-4., 4.)
 
     xv = 'x'
 
