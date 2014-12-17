@@ -158,7 +158,10 @@ class ActivityPlotter(object):
         ylim = ax.get_ylim()
         t_stim = self.params['n_iterations_per_stim'] * self.params['t_iteration']
 #        print 'debug', self.params['testing_stimuli_fn']
-        stim_params = np.loadtxt(self.params['testing_stimuli_fn'])
+        if self.params['training']:
+            stim_params = np.loadtxt(self.params['training_stimuli_fn'])
+        else:
+            stim_params = np.loadtxt(self.params['testing_stimuli_fn'])
         if stim_params.ndim == 1:
             stim_params = stim_params.reshape((1, stim_params.size))
 #        print 'debug stim_range', stim_range

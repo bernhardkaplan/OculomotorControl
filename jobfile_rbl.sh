@@ -2,7 +2,7 @@
 # The -l above is required to get the full environment with modules
 
 # The name of the script is myjob
-#SBATCH -J cnt_tr_g8_K2
+#SBATCH -J g8_tmp0.5
 
 # Only 1 hour wall-clock time will be given to this job
 #SBATCH -t 03:59:00
@@ -28,7 +28,7 @@ export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/pytho
 
 aprun -n 200 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py  training_stim_params_3steps300stim.txt 0 > delme_reward_g8_K2_tmp0.5 2>&1
 
-#aprun -n 200 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py Training__CNT_30_temp1.0_nC1__nStim6_0-6_gainD1_0.8_D2_0.8_K2_-2_seeds_111_2 training_stim_params_3steps300stim.txt 6 > delme_reward_g8_K2_continue 2>&1
+#aprun -n 200 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py Training__30_temp1.0_nC1__nStim15_0-15_gainD1_0.8_D2_0.8_K2_-2_seeds_111_2 training_stim_params_3steps300stim.txt 15 > delme_reward_g8_K2_continue 2>&1
 
 #aprun -n 200 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py Training__sigmRew_CNT_nIt30_temp1.0_nC1__nStim15_0-15_gainD1_0.6_D2_0.6_K2_-2_seeds_111_2/ training_stim_params_3steps300stim.txt 15 > delme_training_g0.8_K2 2>&1
 

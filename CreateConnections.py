@@ -53,6 +53,7 @@ class CreateConnections(object):
                 p = training_params
             fn_out = p['mpn_bg%s_merged_conn_fn' % cell_type]
             merge_pattern = training_params['mpn_bg%s_conn_fn_base' % cell_type]
+            print 'debug merge pattern:', merge_pattern, ' fn_out:', fn_out
             #if not os.path.exists(p['mpn_bg%s_merged_conn_fn' % cell_type]):
             utils.merge_and_sort_files(merge_pattern, fn_out, sort=True)
 
@@ -183,10 +184,10 @@ class CreateConnections(object):
         target -- either 'd1' or 'd2'
         """
         # get the merged connectivity file
-        #for cell_type in ['d1', 'd2']:
+        for cell_type in ['d1', 'd2']:
             # removed to check if this causes the major bug
-            #if not os.path.exists(old_params['mpn_bg%s_merged_conn_fn' % cell_type]):
-                #self.merge_connection_files(old_params, self.params)
+            if not os.path.exists(old_params['mpn_bg%s_merged_conn_fn' % cell_type]):
+                self.merge_connection_files(old_params, self.params)
             #else:
                 # copy the merged file to the new directory
                 #cmd = 'cp %s %s' % (old_params['mpn_bg%s_old_merged_conn_fn' % cell_type], self.params['mpn_bg%s_merged_conn_fn' % cell_type])
@@ -222,6 +223,7 @@ class CreateConnections(object):
             param_dict_list[i_]['p_ij'] = pij[i_]
             param_dict_list[i_]['weight'] = 0. #weights[i_]
             nest.Connect([int(srcs[i_])], [int(tgts[i_])], param_dict_list[i_], model=model)
+            # nest.SetStatus(nest.GetConnections([int(srcs[i_])], [int(tgts[i_])]), {'p_i' : pi[i_], 'p_j': pj[i_], 'p_ij' : pij[i_]})
 
         #conns = nest.GetConnections([srcs[i_]], [tgts[i_]], synapse_model=model)
         #for nactions in xrange(self.params['n_actions']):
@@ -433,6 +435,8 @@ class CreateConnections(object):
             D2_f.write(D2_conns)
             D2_f.close()
 
+        if self.comm != None:
+            self.comm.Barrier()
 
             #D2_conns = ''
             #bias_d2 = {}

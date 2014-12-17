@@ -73,8 +73,10 @@ class PlotTesting(MetaAnalysisClass):
             self.stim_range = range(len(self.params['test_stim_range']))
 #            self.stim_range = self.params['test_stim_range']
         else:
-            self.stim_range = stim_range
+            self.stim_range = range(stim_range[0], stim_range[1])
 
+        print 'debug self.stim_range:', self.stim_range
+        self.n_stim = self.stim_range[-1] - self.stim_range[0] + 1
         self.it_range = [0, 0]
         self.it_range[0] = self.stim_range[0] * self.params['n_iterations_per_stim']
         self.it_range[1] = (self.stim_range[-1] + 1) * self.params['n_iterations_per_stim']
@@ -147,9 +149,10 @@ class PlotTesting(MetaAnalysisClass):
         stim_params = np.loadtxt(self.params['testing_stimuli_fn'])
         trajectory = np.zeros(self.params['n_iterations'] + 1)
         cnt_ = 0
-        all_displ = np.zeros((self.params['n_iterations_per_stim'], self.params['n_stim']))
+        all_displ = np.zeros((self.params['n_iterations_per_stim'], self.n_stim))
         avg_displ = np.zeros((self.params['n_iterations_per_stim'], 2))
-        for i_stim in xrange(len(self.params['test_stim_range'])):
+#        for i_stim in xrange(len(self.params['test_stim_range'])):
+        for i_stim in xrange(len(self.stim_range)):
             trajectory[cnt_] = stim_params[i_stim, 0]
             for it_ in xrange(self.params['n_iterations_per_stim']):
                 trajectory[cnt_ + 1] = trajectory[cnt_] + (stim_params[i_stim, 2] - actions_taken[cnt_ + 1, 0]) * self.params['t_iteration'] / 1000.
@@ -166,13 +169,15 @@ class PlotTesting(MetaAnalysisClass):
         ax2 = fig.add_subplot(313)
         problematic_stimuli = []
         good_stimuli = []
-        for i_stim in xrange(len(self.params['test_stim_range'])):
+#        for i_stim in xrange(len(self.params['test_stim_range'])):
+        for i_stim in xrange(len(self.stim_range)):
             i0 = i_stim * self.params['n_iterations_per_stim']
             i1 = (i_stim + 1) * self.params['n_iterations_per_stim']
             mean_displ_end = np.abs(trajectory[i1-12:i1-2].mean() - .5)
             if mean_displ_end > .15:
 #            if np.where(trajectory[i0:i1] > 1.0)[0].size > 0 or np.where(trajectory[i0:i1] < 0.)[0].size > 0:
                 lc = 'r'
+                print 'Problematic Stim id ', i_stim, stim_params[i_stim, :]
                 problematic_stimuli.append(stim_params[i_stim, :])
                 #print 'debug bad', np.abs(trajectory[i0+4:i1-2].mean() - .5)
             else:
@@ -230,9 +235,24 @@ class PlotTesting(MetaAnalysisClass):
         output_fn = self.params['data_folder'] + 'problematic_stimuli.txt'
         print 'Saving the problematic stimuli to:', output_fn
         problematic_stimuli = np.array(problematic_stimuli)
+        good_stimuli = np.array(good_stimuli)
         np.savetxt(output_fn, problematic_stimuli)
         print 'Problematic stimuli:', problematic_stimuli
-        print 'Good stimuli:', np.array(good_stimuli)
+        print 'Good stimuli:', good_stimuli
+        ax = None
+        ax = self.plot_stimuli_scatter(problematic_stimuli, 'r', '^', ax, label_txt='Problematic stimuli')
+        ax = self.plot_stimuli_scatter(good_stimuli, 'b', 'o', ax, label_txt='Good stimuli')
+
+    def plot_stimuli_scatter(self, stim_params, color='b', marker='o', ax=None, label_txt=''):
+        if ax == None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+        ax.plot(stim_params[:, 0], stim_params[:, 2], color=color, marker=marker, linestyle='', markersize=10, label=label_txt)
+        ax.set_xlabel('$x_{stim}$')
+        ax.set_ylabel('$v_{stim}$')
+        if label_txt != '':
+            ax.legend()
+        return ax
 
         """
         ################################

@@ -82,8 +82,8 @@ class RewardBasedLearning(object):
 
     def save_data_structures(self):
         if pc_id == 0:
-            print 'DEBUG, removing files from:', self.params['connections_folder']
-            print 'DEBUG, removing files from:', self.params['spiketimes_folder']
+            print 'DEBUG, removing empty files from:', self.params['connections_folder']
+            print 'DEBUG, removing empty files from:', self.params['spiketimes_folder']
             utils.remove_empty_files(self.params['connections_folder'])
             utils.remove_empty_files(self.params['spiketimes_folder'])
             np.savetxt(self.params['actions_taken_fn'], np.array(self.actions_taken))
@@ -392,9 +392,12 @@ if __name__ == '__main__':
     params['d1_actions_trained'] = d1_actions_trained
     params['d2_actions_trained'] = d2_actions_trained
     params['training_stim_offset'] = continue_training_idx
+    if comm != None:
+        comm.Barrier()
     if pc_id == 0:
         GP.write_parameters_to_file(params['params_fn_json'], params)
-
+    if comm != None:
+        comm.Barrier()
 
     ######################################
     #    TRIGGER SPIKES
@@ -431,6 +434,8 @@ if __name__ == '__main__':
     print 'n_iterations: BG', RBL.BG.iteration
     print 'n_iterations: VI', RBL.VI.iteration
     print 'TimeEND %d: %.2f [sec] %.2f [min]' % (pc_id, t1, t1 / 60.)
+    if comm != None:
+        comm.Barrier()
 
     #####################
     #   P L O T T I N G 
@@ -442,7 +447,7 @@ if __name__ == '__main__':
         if pc_id == 0:
             n_stim = 1
             print 'Running analysis...'
-            P = PlotEverything(sys.argv, verbose=True)
+            P = PlotEverything(['dummy_cmd', params['folder_name']], verbose=True)
             run_plot_bg(params, None)
     #        run_plot_bg(params, (0, n_stim))
             MAC = MetaAnalysisClass([params['folder_name']])

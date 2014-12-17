@@ -112,7 +112,7 @@ class PlotEverything(MetaAnalysisClass):
         trained_stim -- is a dictionary with (x, v) as key and {'start': <int>, 'stop': <int>, 'cnt': <int> } as value, indicating 
         the start and stop iteration (line in the motion_params_fn) during which the stimulus has been trained.
         """
-        print 'debug trained_stim', trained_stim
+#        print 'debug trained_stim', trained_stim
 #        print 'debug stim_range', stim_range
         ylim = ax.get_ylim()
 #        if self.params['training']:

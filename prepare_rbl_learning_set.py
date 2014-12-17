@@ -57,7 +57,7 @@ if __name__ == '__main__':
     n_stimuli_per_run = 15
     stim_offset = 15
     
-    seed_folder = "Training__sigmRew_CNT_nIt30_temp0.8_nC1__nStim15_0-15_gainD1_0.6_D2_0.6_K2_-2_seeds_111_2 "
+    seed_folder = "Training__nactions13_30_temp0.5_nC1__nStim15_0-15_gainD1_0.8_D2_0.8_K2_-2_seeds_111_2 "
 
 
     aprun_cmd_base = 'aprun -n 200 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
@@ -71,7 +71,7 @@ if __name__ == '__main__':
             exit(1)
         stim_range = (i_ * n_stimuli_per_run + stim_offset, (i_ + 1) * n_stimuli_per_run + stim_offset) 
         params['stim_range'] = [stim_range[0], stim_range[1]]
-
+        params['master_seed'] = 111 + params['stim_range'][0]
         folder_name = 'Training_%s_nStim%d_%d-%d_gainD1_%.1f_D2_%.1f_K%d_%d_seeds_%d_%d/' % (params['sim_id'], \
                 params['n_stim_training'], params['stim_range'][0], params['stim_range'][1], 
                 params['gain_MT_d1'], params['gain_MT_d2'], params['pos_kappa'], params['neg_kappa'], params['master_seed'], params['visual_stim_seed'])
