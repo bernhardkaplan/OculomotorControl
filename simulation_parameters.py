@@ -41,7 +41,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
-        self.params['total_num_virtual_procs'] = 8
+        self.params['total_num_virtual_procs'] = 4
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 200
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
@@ -49,7 +49,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.params['softmax_action_selection_temperature'] = 2.0
-        self.params['training'] = True
+        self.params['training'] = False
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -95,7 +95,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
 #        self.params['train_iteratively'] = False
         #self.params['test_stim_range'] = range(3, 4)
-        self.params['test_stim_range'] = [0, 3]
+        self.params['test_stim_range'] = [0, 3, 6, 9, 12]
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -167,7 +167,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #                    self.params['sim_id'] = 'RBL_NoNoise_block_titer%d' % (self.params['t_iteration'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_longTraining_' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_5x3TrainingStim_' % (self.params['t_iteration'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 

@@ -621,16 +621,15 @@ class MetaAnalysisClass(object):
         fig.savefig(output_fn, dpi=200)
 
         # plot vx - sorting
-        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
-        if params['debug_mpn']:
-            Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
-
-        if stim_range != None:
-            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
-        else:
-            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png' 
-        print 'Saving to', output_fn
-        fig.savefig(output_fn, dpi=200)
+#        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
+#        if params['debug_mpn']:
+#            Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+#        if stim_range != None:
+#            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
+#        else:
+#            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png' 
+#        print 'Saving to', output_fn
+#        fig.savefig(output_fn, dpi=200)
 
         del Plotter
 
