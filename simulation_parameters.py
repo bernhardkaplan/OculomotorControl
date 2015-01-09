@@ -39,7 +39,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['training'] = True
+        self.params['training'] = False
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
@@ -88,7 +88,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_steps_training_trajectory'] = 3
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
-        #self.params['stim_range'] = [2, 2 + self.params['n_stim_training']] # will likely be overwritten
         self.params['frac_training_samples_from_grid'] = 1.0
         self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
         self.params['center_stim_width'] = .0 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
@@ -96,10 +95,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # to generate the training samples, three methods are used: 1) sampling from the tuning properties, 2) sampling from a grid  3) sampling nearby the center (as these stimuli occur more frequently)
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
 
-        self.params['test_stim_range'] = [i * 3 for i in xrange(10)] #range(0, 10)
+        #self.params['test_stim_range'] = [i * 3 for i in xrange(10)] #range(0, 10)
         #self.params['test_stim_range'] = self.params['test_stim_range'] + [285 + i * 3 for i in xrange(15)] #range(0, 10)
-#        self.params['test_stim_range'] = [
-#        self.params['test_stim_range'] = range(0, 10)
+        self.params['test_stim_range'] = [300 + i * 3 for i in xrange(100)]
+        #self.params['test_stim_range'] = [0, 1]
+        #self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
         else:
@@ -107,7 +107,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
-            self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
+            self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         self.params['n_iterations_RBL_training'] = 2 # one noise at the beginning, one after stimulus, one after training
         self.params['n_silent_iterations'] = 2
         if self.params['training']:
@@ -115,7 +115,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['n_iterations_per_stim'] = 4 + self.params['n_iterations_RBL_training']  
                 # noise, stim, noise, training, noise
         else:
-            self.params['n_iterations_per_stim'] = 20 + self.params['n_silent_iterations']
+            self.params['n_iterations_per_stim'] = 40 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 
@@ -161,10 +161,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = '_Show_nIt%d_temp%.1f_nC%d_' % (self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = '_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_gaussRew_VA_fullTest_TrainingGain0.2_0.2_K2-2_' % (self.params['t_iteration'])
+            self.params['sim_id'] = '%d_nactions%d_VA_TrainingGain0.8_0.8_K2-2_temp%.1f_' % (self.n_actions, self.params['t_iteration'], self.params['softmax_action_selection_temperature'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -421,7 +421,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['record_bg_volt'] = True
         self.params['record_bg_volt'] = False
         self.params['bg_cell_types'] = ['d1', 'd2', 'action', 'recorder']
-        self.params['n_actions'] = 17
+        self.params['n_actions'] = self.n_actions
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.20
         self.params['gids_to_record_bg'] = []

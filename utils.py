@@ -669,12 +669,12 @@ def merge_and_sort_files(merge_pattern, fn_out, sort=True, verbose=True):
     # sort according to cell id
     if sort:
         sort_cmd = "sort -gk 1 %s > %s" % (tmp_file, fn_out)
-#        print 'DEBUG utils.merge_and_sort_files:', sort_cmd
+        print 'DEBUG utils.merge_and_sort_files:', sort_cmd
         os.system(sort_cmd)
         os.system("rm %s" % (tmp_file))
     else:
         mv_cmd = 'mv %s %s' % (tmp_file, fn_out)
-#        print 'DEBUG utils.merge_and_sort_files:', mv_cmd
+        print 'DEBUG utils.merge_and_sort_files:', mv_cmd
         os.system(mv_cmd)
 
     if verbose:
