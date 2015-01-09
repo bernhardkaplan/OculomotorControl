@@ -167,6 +167,7 @@ def get_sigmoid_params(params, x_pre, v_stim):
 #    c = transform_linear(x_pre, c_range, x_pre_range)
     return c, tau
 
+
 def sigmoid(x, a, b, c, d, tau):
     # d = limit value for x -> - infinity
     # a, b = limit value for x -> + infinity

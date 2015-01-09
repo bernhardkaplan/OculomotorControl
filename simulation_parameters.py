@@ -52,7 +52,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-        self.params['softmax_action_selection_temperature'] = 1.0
+        self.params['softmax_action_selection_temperature'] = 0.5
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -72,9 +72,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 2 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 1# number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 30 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -177,7 +177,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['master_seed'] = 111 + self.params['stim_range'][0]
+        self.params['master_seed'] = 321 + self.params['stim_range'][0]
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
         self.params['visual_stim_seed'] = 2
@@ -421,7 +421,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['record_bg_volt'] = True
         self.params['record_bg_volt'] = False
         self.params['bg_cell_types'] = ['d1', 'd2', 'action', 'recorder']
-        self.params['n_actions'] = 13
+        self.params['n_actions'] = 17
         self.params['random_divconnect_poisson'] = 0.75
         self.params['random_connect_voltmeter'] = 0.20
         self.params['gids_to_record_bg'] = []
@@ -463,8 +463,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.4
-        self.params['gain_MT_d2'] = 0.4
+        self.params['gain_MT_d1'] = 0.8
+        self.params['gain_MT_d2'] = 0.8
         self.params['bias_gain'] = 0.
 
 

@@ -426,7 +426,6 @@ class VisualInput(object):
         action_indices = np.zeros(self.params['n_stim'], dtype=np.int)
         motion_params_pre = np.zeros((self.params['n_stim'], 4))
 
-        print 'debug', self.params['n_stim']
         for i_stim in xrange(self.params['n_stim']):
             x_stim = (training_stimuli[i_stim, 2]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 0]
             y_stim = (training_stimuli[i_stim, 3]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * training_stimuli[i_stim, 1]
@@ -785,18 +784,6 @@ class VisualInput(object):
         RF_x[idx_upper:] = RF_x_log[n_rf_x_log / 2:]
         RF_x[n_rf_x_log / 2 : n_rf_x_log / 2 + self.params['n_rf_x_fovea']] = RF_x_const
 
-
-
-#        print '------------------------------\nDEBUG'
-#        print 'v_rho:', v_rho
-#        print 'v_rho_half:', v_rho_half
-#        print 'n_rf_x: ', n_rf_x
-#        print 'n_rf_x_log: ', n_rf_x_log
-#        print 'n_rf_x_fovea: ', self.params['n_rf_x_fovea']
-#        print 'RF_x_const:', RF_x_const
-#        print 'RF_x_log:', RF_x_log
-#        print 'RF_x:', RF_x
-
         index = 0
         tuning_prop = np.zeros((n_cells, 4))
         rf_sizes_x = utils.get_receptive_field_sizes_x(self.params, RF_x)
@@ -804,13 +791,12 @@ class VisualInput(object):
         for i_RF in xrange(n_rf_x):
             for i_v_rho, rho in enumerate(v_rho):
                 for i_in_mc in xrange(self.params['n_exc_per_state']):
-                    x = RF_x[i_RF]
+#                    x = RF_x[i_RF]
 #                    tuning_prop[index, 0] = (x + np.abs(x - .5) / .5 * self.RNG_tp.uniform(-self.params['sigma_rf_pos'] , self.params['sigma_rf_pos'])) % 1.
                     tuning_prop[index, 0] = RF_x[i_RF]
                     tuning_prop[index, 0] += self.RNG_tp.normal(.0, self.params['sigma_rf_pos'] / 2) # add some extra noise to the neurons representing the fovea (because if their noise is only a percentage of their distance from the center, it's too small
                     tuning_prop[index, 0] = tuning_prop[index, 0] % 1.0
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
-#                    tuning_prop[index, 2] = (-1)**(i_v_rho % 2) * rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
                     tuning_prop[index, 3] = 0. 
                     self.rf_sizes[index, 0] = rf_sizes_x[i_RF]

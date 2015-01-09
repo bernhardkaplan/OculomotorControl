@@ -373,8 +373,8 @@ class BasalGanglia(object):
 #            cnt_u, bins = np.histogram(speed, binning)
 #            action_index = cnt_u.nonzero()[0][0]
 
-        if xy == 'x':
-            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : supervisor_speed=%.3f --> action: %d output_speed= %.3f' % (self.pc_id, self.iteration, speed, action_index, binning[action_index])
+#        if xy == 'x':
+#            print 'BG.map_speed_to_action (pc_id=%d, iteration=%d) : supervisor_speed=%.3f --> action: %d output_speed= %.3f' % (self.pc_id, self.iteration, speed, action_index, binning[action_index])
 
         return action_index
 
