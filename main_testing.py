@@ -93,7 +93,8 @@ if __name__ == '__main__':
         test_stim_params = VI.create_test_stimuli() # TODO: check if this works
 
     np.savetxt(testing_params['testing_stimuli_fn'], test_stim_params)
-    np.savetxt(testing_params['training_stimuli_fn'], training_stimuli)
+    if testing_params['use_training_stim_for_testing']:
+        np.savetxt(testing_params['training_stimuli_fn'], training_stimuli)
 
     t1 = time.time() - t0
     print 'Time2: %.2f [sec] %.2f [min]' % (t1, t1 / 60.)
@@ -139,7 +140,10 @@ if __name__ == '__main__':
 
     motion_params_testing = []
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
-        VI.current_motion_params = deepcopy(training_stimuli[i_stim, :])
+        if testing_params['use_training_stim_for_testing']:
+            VI.current_motion_params = deepcopy(training_stimuli[i_stim, :])
+        else:
+            VI.current_motion_params = deepcopy(test_stim_params[i_stim, :])
 
         for it in xrange(testing_params['n_iterations_per_stim']):
             motion_params_testing.append(VI.current_motion_params)

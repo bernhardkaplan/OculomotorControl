@@ -39,26 +39,26 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['training'] = False
+        self.params['training'] = True
         self.params['Cluster'] = True
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             if self.params['training']:
-                self.params['total_num_virtual_procs'] = 200
+                self.params['total_num_virtual_procs'] = 240
             else:
                 self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-        self.n_actions = 13
+        self.n_actions = 17
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
 #        self.params['reward_based_learning'] = False
-        self.params['use_training_stim_for_testing'] = True
+        self.params['use_training_stim_for_testing'] = False
 #        self.params['mixed_training_cycles'] = False
         self.params['n_training_cycles'] = 1 # how often each stimulus is presented during training # should be two cycles because there is a test cycle at the end of the training in order
         # to trigger an update of the weights that have been trained in the last training cycle
@@ -98,7 +98,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         #self.params['test_stim_range'] = [i * 3 for i in xrange(10)] #range(0, 10)
         #self.params['test_stim_range'] = self.params['test_stim_range'] + [285 + i * 3 for i in xrange(15)] #range(0, 10)
-        self.params['test_stim_range'] = [300 + i * 3 for i in xrange(100)]
+        #self.params['test_stim_range'] = [300 + i * 3 for i in xrange(100)]
+        #self.params['test_stim_range'] = [i * 3 for i in xrange(100)]
+        self.params['test_stim_range'] = [0 + i for i in xrange(100)]
         #self.params['test_stim_range'] = [0, 1]
         #self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
@@ -108,7 +110,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
-            self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
+            self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         self.params['n_iterations_RBL_training'] = 2 # one noise at the beginning, one after stimulus, one after training
         self.params['n_silent_iterations'] = 2
         if self.params['training']:
@@ -162,10 +164,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = '_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = '_NewRewardFct_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_nactions%d_VA_TrainingGain0.8_0.8_K2-2_temp%.1f_' % (self.n_actions, self.params['t_iteration'], self.params['softmax_action_selection_temperature'])
+            self.params['sim_id'] = '%d_ShowNewTestStim_nactions%d_VA_TrainingGain0.8_0.8_K2-2_temp%.1f_' % (self.params['t_iteration'], self.n_actions, self.params['softmax_action_selection_temperature'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -178,12 +180,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['master_seed'] = 111 + self.params['stim_range'][0]
+        self.params['master_seed'] = 222 + self.params['stim_range'][0]
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 2
-        self.params['tuning_prop_seed'] = 0
-        self.params['basal_ganglia_seed'] = 6 + self.params['stim_range'][0]
+        self.params['visual_stim_seed'] = 4
+        self.params['tuning_prop_seed'] = 123
+        self.params['basal_ganglia_seed'] = 7 + self.params['stim_range'][0]
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
 #        self.params['debug_mpn'] = False
         self.params['debug_mpn'] = not self.params['Cluster']
@@ -464,8 +466,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.4
-        self.params['gain_MT_d2'] = 0.4
+        self.params['gain_MT_d1'] = 0.8
+        self.params['gain_MT_d2'] = 0.8
         self.params['bias_gain'] = 0.
 
 

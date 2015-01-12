@@ -50,17 +50,16 @@ if __name__ == '__main__':
 
     #training_params_fn = 'training_stimuli_900_3step_nonshuffled.txt'
     #training_params_fn = 'training_stim_params_3steps300stim.txt'
-    training_params_fn = 'training_stim_params_3steps300stim.txt' #non_overlapping_training_stimuli_9x8_shuffled.txt'
+    training_params_fn = 'training_stim_params_3steps300stim.txt'
     ps = simulation_parameters.global_parameters()
 
     n_jobs = 19
     n_stimuli_per_run = 15
     stim_offset = 15
     
-    seed_folder = "Training__nactions13_30_temp0.5_nC1__nStim15_0-15_gainD1_0.8_D2_0.8_K2_-2_seeds_111_2 "
+    seed_folder = "Training__nactions5_30_temp0.5_nC1__nStim15_0-15_gainD1_0.8_D2_0.8_K2_-2_seeds_222_4"
 
-
-    aprun_cmd_base = 'aprun -n 200 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
+    aprun_cmd_base = 'aprun -n 240 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 
     run_commands = []
     old_folder = seed_folder

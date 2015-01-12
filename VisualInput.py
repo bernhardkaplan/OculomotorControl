@@ -105,13 +105,14 @@ class VisualInput(object):
         test_stim_params[:, 1] = .5
         for i_stim in xrange(self.params['n_stim_testing']):
             pm = utils.get_plus_minus(self.RNG)
-            if pm > 0:
-                test_stim_params[i_stim, 0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
-            else:
-                test_stim_params[i_stim, 0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+            test_stim_params[i_stim, 0] = self.RNG.uniform(0., 1.)
+            #if pm > 0:
+                #test_stim_params[i_stim, 0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            #else:
+                #test_stim_params[i_stim, 0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
             test_stim_params[i_stim, 2] = self.RNG.uniform( -self.params['v_max_tp'], self.params['v_max_tp'])
 
-        output_fn = self.params['testing_sequence_fn']
+        output_fn = self.params['testing_stimuli_fn']
         print 'VisualInput saves testing stimulus parameters to:', output_fn
         np.savetxt(output_fn, test_stim_params)
         return test_stim_params
