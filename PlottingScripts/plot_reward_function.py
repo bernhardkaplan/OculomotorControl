@@ -13,37 +13,12 @@ import simulation_parameters
 import BasalGanglia
 import matplotlib.gridspec as gridspec
 
-def f(x, a, b, c, d, tau):
+def sigmoid(x, a, b, c, d, tau):
     # d = limit value for x -> - infinity
     # a, b = limit value for x -> + infinity
     # tau, c = position for transition
     f_x = a / (b + d * np.exp(-tau * (x - c)))
     return f_x
-
-def get_sigmoid_params(params, x_pre, v_stim):
-    """
-    Linearly map x_pre (= stimulus position) to two parameters for the reward function
-    """
-    x_pre_range = (0., 0.5) # absolute displacement
-    tau_range = (40., 100.) 
-    # tau_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
-    # tau_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
-#    tau = utils.transform_quadratic(x_pre, 'neg', tau_range, x_pre_range)
-    tau = utils.transform_linear(x_pre, tau_range, x_pre_range)
-
-    v_stim_max = 2.
-    abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
-#    tau *= abs_speed_factor
-    # take into account how far the stimulus moves
-    dx = v_stim * params['t_iteration'] / params['t_cross_visual_field']
-    c_range = (0.35 - np.sign(v_stim) * dx, 0.1 - np.sign(v_stim) * dx) 
-    # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
-    # c_raneg[1] --> determines tolerance for giving reward near center
-    c = utils.transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
-    c *= abs_speed_factor
-#    c = utils.transform_linear(x_pre, c_range, x_pre_range)
-    return c, tau
-
 
 def update_rcParams():
 
@@ -79,7 +54,7 @@ if __name__ == '__main__':
     actions_v = [all_actions_v[0], all_actions_v[1], all_actions_v[2],  \
                 all_actions_v[9], \
                 all_actions_v[-1], all_actions_v[-2], all_actions_v[-3]]
-#    actions_v = all_actions_v
+    actions_v = all_actions_v
     n_actions_to_plot = len(actions_v)
 
     plot_params = update_rcParams()
@@ -93,7 +68,8 @@ if __name__ == '__main__':
     K_min = -2.
 #    stim_speeds = [-2., 0., 2.]
 #    stim_speeds = [-2., 2.]
-    stim_speeds = [-1.5, -.1]
+#    stim_speeds = [-1.5, -.1]
+    stim_speeds = [-1.5, -.1, 1.0]
 #    stim_speeds = np.linspace(-2., 2., 4, endpoint=True)
 
 #    n_x_pre = 3
@@ -108,7 +84,8 @@ if __name__ == '__main__':
 #        rgba_colors = m.to_rgba(bounds)
 
 
-    x_pre_range = [0.05, 0.2, 0.5]
+#    x_pre_range = [0.05, 0.2, 0.5]
+    x_pre_range = [0.00, 0.2, 0.5]
     linecolors = ['b', 'g', 'r', 'k']
     n_curves = len(x_pre_range)
 
@@ -120,6 +97,7 @@ if __name__ == '__main__':
     rgba_colors_actions = m_actions.to_rgba(action_idx)
 
     linestyles = ['-', ':', '--', '-.']
+    markers = ['o', '*', 'D', '^']
 
 
 
@@ -184,13 +162,15 @@ if __name__ == '__main__':
             for i_a in xrange(n_actions_to_plot):
                 x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a])[0]
 
-                R = K_max - (K_max - K_min) * f(np.abs(x_post_action[i_a] - x_center), a, b, c, d, tau)
+                R = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x_post_action[i_a] - x_center), a, b, c, d, tau)
                 if R > 0:
-                    print '\tPos reward R=%.1f\tfor v_stim %.1f\tx_pre: %1f\taction %d (%.1f) --> x_post: %.1f' % (R, v_stim, x_pre_action, i_a, actions_v[i_a], x_post_action[i_a])
+                    print '\tPos reward R=%.1e\tfor v_stim %.1f\tx_pre: %1f\taction %d (%.1f) --> x_post: %.1f' % (R, v_stim, x_pre_action, i_a, actions_v[i_a], x_post_action[i_a])
                     n_pos_reward[i_stim, i_] += 1
-                elif R < 0:
+                elif R <= 0:
                     n_neg_reward[i_stim, i_] += 1
-                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker='*', ls=linestyles[i_stim % len(linestyles)], markersize=10, mfc=color, color=color, lw=2)
+                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker=markers[i_stim % len(markers)], ls=linestyles[i_stim % len(linestyles)], markersize=10, markeredgewidth=1, mfc=color, color=color, lw=2)
+#                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=1.0, marker='*', ls=linestyles[i_stim % len(linestyles)], markersize=20, markeredgewidth=1, mfc=color, color=color, lw=2)
+
     #            p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), ls=ls, marker='o', markersize=5, mfc=color, color=rgba_colors_actions[i_a], lw=2)
 
     #            if n_curves > 1:
@@ -213,9 +193,9 @@ if __name__ == '__main__':
             else:
                 n_soft_thresh = 6
             if n_pos_reward[i_stim, i_] < 1: 
-                problematic_stimuli_hard.append((v_stim, x_pre_action))
+                problematic_stimuli_hard.append((x_pre_action, v_stim))
             elif n_pos_reward[i_stim, i_] > n_soft_thresh: 
-                problematic_stimuli_soft.append((v_stim, x_pre_action))
+                problematic_stimuli_soft.append((x_pre_action, v_stim))
             print 'Number of positive (negative) rewards = %d (%d)\tfor v_stim %.1f\tx_pre: %1f' % (n_pos_reward[i_stim, i_], n_neg_reward[i_stim, i_], v_stim, x_pre_action)
             print 'Number of positive (negative) rewards = %d (%d)\tfor v_stim %.1f\tx_pre: %1f' % (n_pos_reward[i_stim, i_], n_neg_reward[i_stim, i_], v_stim, x_pre_action)
     print 'Stimuli that got rewarded too little:\n', np.array(problematic_stimuli_hard)
@@ -247,16 +227,18 @@ if __name__ == '__main__':
     # TAU vs x
     x_pre_range = np.linspace(0., 0.5, 100)
 #    x_pre_range = (0., 0.5) # absolute displacement
-    tau_range = (40., 100.) 
-    # tau_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
-    # tau_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
-#    tau = transform_quadratic(x_pre, 'neg', tau_range, x_pre_range)
-    tau = utils.transform_linear(x_pre_range, tau_range)
+    k_range = params['k_range']
+    # k_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
+    # k_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
+#    tau = transform_quadratic(x_pre, 'neg', k_range, x_pre_range)
+#    tau = utils.transform_linear(x_pre_range, k_range)
+    k = k_range[0]
 
     ax2.set_title('Sigmoid parameters')
     ax2.set_ylabel('$\\tau\ (x_{pre})$')
     ax2.set_xlabel('$x_{pre}$')
-    ax2.plot(x_pre_range, tau)
+#    ax2.plot(x_pre_range, tau)
+    ax2.plot((x_pre_range[0], x_pre_range[-1]), k_range)
 
     yticks = ax2.get_yticks()
 #    print 'delme', yticks[0].get_text()
@@ -268,9 +250,16 @@ if __name__ == '__main__':
     stim_speeds = [-1.5, -.1, 1.0]
     linestyles = ['-', ':', '--', '-.']
     for i_v, v_stim in enumerate(stim_speeds):
-        abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
-        dx = v_stim * params['t_iteration'] / params['t_cross_visual_field']
-        c_range = (0.35 - np.sign(v_stim) * dx, 0.1 - np.sign(v_stim) * dx) 
+#        abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
+
+        abs_speed_factor = np.abs(v_stim)
+
+        dx = 20 * v_stim * params['t_iteration'] / params['t_cross_visual_field']
+#        c_range = (0.5 - np.sign(v_stim) * dx, 0.02 - np.sign(v_stim) * dx) 
+#        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field']
+        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
+        tolerance = 0.02
+        c_range = (best_case, tolerance)
 
         # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
         # c_raneg[1] --> determines tolerance for giving reward near center

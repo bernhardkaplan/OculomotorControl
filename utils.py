@@ -148,24 +148,32 @@ def get_sigmoid_params(params, x_pre, v_stim):
     reward function
     """
     x_pre_range = (0., 0.5) # absolute displacement
-    tau_range = (40., 100.) 
-    # tau_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
-    # tau_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
-#    tau = transform_quadratic(x_pre, 'neg', tau_range, x_pre_range)
-    tau = transform_linear(x_pre, tau_range, x_pre_range)
+    
+#    k_range = params['k_range']
+    # k_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
+    # k_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
+#    tau = transform_quadratic(x_pre, 'neg', k_range, x_pre_range)
+#    tau = transform_linear(x_pre, k_range, x_pre_range)
+    k_ = 1000.
 
     v_stim_max = 2.
     abs_speed_factor = transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
-#    tau *= abs_speed_factor
     # take into account how far the stimulus moves
     dx = v_stim * params['t_iteration'] / params['t_cross_visual_field']
-    c_range = (0.35 - np.sign(v_stim) * dx, 0.1 - np.sign(v_stim) * dx) 
+    c_range = (0.35 - np.sign(v_stim) * dx, 0.05 - np.sign(v_stim) * dx) 
     # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
     # c_raneg[1] --> determines tolerance for giving reward near center
     c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
     c *= abs_speed_factor
+
+    best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
+    tolerance = 0.02
+    c_range = (best_case, tolerance)
+    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
+
+
 #    c = transform_linear(x_pre, c_range, x_pre_range)
-    return c, tau
+    return c, k_
 
 
 def sigmoid(x, a, b, c, d, tau):
@@ -999,7 +1007,7 @@ def transform_quadratic(x, a, y_range, x_range=None):
         if a > 0 and y_range[0] > y_range[1] --> quadratic decrease from left to right (parabola open upwards)
         if a < 0 and y_range[0] > y_range[1] --> quadratic decrease from left to right (parabola open downwards)
     """
-    
+
     if a != 'pos' and a != 'neg':
         raise ValueError('The parameter \'a\' must be either a \'neg\' or \'pos\' and determines whether the parabola implementing your quadratic fit is open upwards or downwards')
     error_txt = 'Error: can not map a single value without x_range into the given y_range. \n \
