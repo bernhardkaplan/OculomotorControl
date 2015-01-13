@@ -69,7 +69,10 @@ ax.plot((-1, params['n_actions']), (0., 0.), ls='--', c='k', lw=3)
 ax.set_xlim((0 - 0.50, params['n_actions'] - 1 + 0.50))
 ax.set_ylim((min(action_mapping) - 0.50, max(action_mapping) + 0.50))
 output_fn = params['figures_folder'] + 'vx_output_action.png'
-print 'Saving output action mapping to:', output_fn
-fig.savefig(output_fn, dpi=200)
+try:
+    print 'Saving output action mapping to:', output_fn
+    fig.savefig(output_fn, dpi=200)
+except:
+    pass
 
 pylab.show()

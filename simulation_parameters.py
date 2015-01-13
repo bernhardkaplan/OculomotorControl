@@ -50,6 +50,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
+        self.params['delay_input'] = 80.
+        self.params['delay_output'] = 70.
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.n_actions = 17
@@ -317,7 +319,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['v_lim_training'] = (-self.params['v_max_tp'] * 0.7, self.params['v_max_tp'] * 0.7)
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['blur_X'], self.params['blur_V'] = .10, .30
+        self.params['blur_X'], self.params['blur_V'] = .00, .00
         self.params['training_stim_noise_x'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0

@@ -37,6 +37,7 @@ class VisualInput(object):
         if self.pc_id == 0:
             print 'Saving tuning properties exc to:', self.params['tuning_prop_exc_fn']
             np.savetxt(self.params['tuning_prop_exc_fn'], self.tuning_prop_exc)
+            print 'Saving receptive fields sizes to:', self.params['receptive_fields_exc_fn']
             np.savetxt(self.params['receptive_fields_exc_fn'], self.rf_sizes)
             if self.params['with_inh_mpn']:
                 print 'Saving tuning properties inh to:', self.params['tuning_prop_inh_fn']
@@ -364,7 +365,7 @@ class VisualInput(object):
         return mp_training 
 
 
-    def compute_input(self, local_gids, v_eye):
+    def compute_input(self, local_gids, v_eye, use_additive_beta=True):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
@@ -373,12 +374,11 @@ class VisualInput(object):
         v_eye -- a tuple representing the action (direction of eye movement)
         network_state --  perceived motion parameters, as given by the MPN network [x, y, u, v]
         """
-
         print 'DEBUG VI compute_input action iteration %d current_motion_params' % self.iteration, self.current_motion_params, ' action:', v_eye
 #        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(v_eye)
         self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(v_eye) # motion_params update is done in update_stimulus_trajectory_static
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
-        self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
+        self.create_spike_trains_for_trajectory(local_gids, self.trajectory, use_additive_beta=use_additive_beta)
         return self.stim, supervisor_state
 
 
@@ -518,7 +518,7 @@ class VisualInput(object):
 
 
 
-    def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False):
+    def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False, use_additive_beta=False):
         """
         Arguments:
         local_gids -- list of gids for which a stimulus shall be created
@@ -536,8 +536,12 @@ class VisualInput(object):
             y_stim = trajectory[1][i_time]
             motion_params = (x_stim, y_stim, self.current_motion_params[2], self.current_motion_params[3])
             # get the envelope of the Poisson process for this timestep
-            L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
-                    self.params['blur_X'], self.params['blur_V']) 
+            if use_additive_beta:
+                L_input[:, i_time] = self.get_input_additive_blur(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
+                        self.params['blur_X'], self.params['blur_V']) 
+            else:
+                L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
+                        self.params['blur_X'], self.params['blur_V']) 
             L_input[:, i_time] *= self.params['f_max_stim']
 #            L_input[:, i_time] = self.get_input(self.tuning_prop_exc[local_gids, :], motion_params) 
 
@@ -606,39 +610,28 @@ class VisualInput(object):
                        -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v * blur_v))**2)
         return L
 
-
-    def update_stimulus_trajectory_new(self, action_code):
+    def get_input_additive_blur(self, tuning_prop, rfs_x, rfs_v, motion_params, blur_x, blur_v):
         """
-        Update the motion parameters based on the action
-
-        Keyword arguments:
-        action_code -- a tuple representing the action (direction of eye movement)
+        Arguments:
+        tuning_prop: the 4-dim tuning properties of local cells
+        rfs_x: the tuning widths (receptive field sizes) of local cells (corresponding to the tuning prop)
+        motion_params: 4-element tuple with the current stimulus position and direction
         """
-        time_axis = np.arange(0, self.params['t_iteration'], self.params['dt_input_mpn'])
 
-        # calculate where the stimulus will move according to the current_motion_params
-        x_stim = (self.current_motion_params[2] - action_code[0]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[0]
-        y_stim = (self.current_motion_params[3] - action_code[1]) * time_axis / self.params['t_cross_visual_field'] + np.ones(time_axis.size) * self.current_motion_params[1]
-        trajectory = (x_stim, y_stim)
-
-        # update the current motion parameters based on the action that was selected for this iteration
-        self.current_motion_params[0] = x_stim[-1]
-        self.current_motion_params[1] = y_stim[-1]
-
-        # compute the supervisor signal taking into account:
-        # - the trajectory position at the end of the iteration
-        # - the knowledge about the motion (current_motion_params
-        delta_x_end = (x_stim[-1] - .5)
-        delta_y_end = (y_stim[-1] - .5)
-        delta_t = (self.params['t_iteration'] / self.params['t_cross_visual_field'])
-        k = self.params['supervisor_amp_param']
-
-        # omniscient supervisor computes the 'correct' action to take
-        self.supervisor_state[0] = k * delta_x_end / delta_t + self.current_motion_params[2]
-        self.supervisor_state[1] = k * delta_y_end / delta_t + self.current_motion_params[3]
-
-
-        return trajectory, self.supervisor_state
+        # TODO: 
+        # iteration over cells, look up tuning width (blur_x/v) for cell_gid
+        n_cells = tuning_prop[:, 0].size
+        x_stim, y_stim, u_stim, v_stim = motion_params[0], motion_params[1], motion_params[2], motion_params[3]
+        if self.params['n_grid_dimensions'] == 2:
+            d_ij = visual_field_distance2D_vec(tuning_prop[:, 0], x_stim * np.ones(n_cells), tuning_prop[:, 1], y_stim * np.ones(n_cells))
+            L = np.exp(-.5 * (d_ij)**2 / (rfs_x + blur_x)**2 \
+                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v + blur_v))**2
+                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (np.sqrt(rfs_v + blur_v))**2)
+        else:
+            d_ij = np.abs(tuning_prop[:, 0] - x_stim)
+            L = np.exp(-.5 * (d_ij)**2 / (np.sqrt(rfs_x + blur_x))**2 \
+                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v + blur_v))**2)
+        return L
 
 
     def update_stimulus_trajectory_OLD(self, action_code, v_eye, network_state):
