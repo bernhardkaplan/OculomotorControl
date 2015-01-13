@@ -206,7 +206,7 @@ def run_plot_bg(params, stim_range):
 #                MS.merge_spiketimes_files(merge_pattern, output_fn)
 
     Plotter = ActivityPlotter(params)#, it_max=1)
-    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+    colors = ['g', 'r', 'b', 'c', 'm', 'y', 'k']
     markers = ['o']
 #    markers = ['|', '-', 'o', 'D', '+', '4', 'v', 's']
 
@@ -268,9 +268,11 @@ if __name__ == '__main__':
         if sys.argv[2].isdigit() and sys.argv[3].isdigit():
             stim_range = (int(sys.argv[2]), int(sys.argv[3]))
             params = utils.load_params(folder_name)
-            run_plot_bg(params, stim_range)
-            for i_stim in xrange(stim_range[0], stim_range[1]):
-                run_plot_bg(params, (i_stim, i_stim + 1))
+            if stim_range[1] - stim_range[0] == 1:
+                run_plot_bg(params, stim_range)
+            else:
+                for i_stim in xrange(stim_range[0], stim_range[1]):
+                    run_plot_bg(params, (i_stim, i_stim + 1))
 
         else:
             for fn in sys.argv[1:]:

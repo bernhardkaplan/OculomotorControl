@@ -64,25 +64,9 @@ if __name__ == '__main__':
     x = np.linspace(x_start, x_stop, n_x)
     x_center = 0.5
 
-    K_max = 2.
-    K_min = -2.
-#    stim_speeds = [-2., 0., 2.]
-#    stim_speeds = [-2., 2.]
-#    stim_speeds = [-1.5, -.1]
-    stim_speeds = [-1.5, -.1, 1.0]
-#    stim_speeds = np.linspace(-2., 2., 4, endpoint=True)
-
-#    n_x_pre = 3
-#    x_pre_range = np.linspace(0.05, 0.5, n_curves, endpoint=True)
-    # map number of parameters to colors
-#    if n_curves > 1:
-#        bounds = np.array(x_pre_range)
-#        cmap = matplotlib.cm.jet
-#        norm = matplotlib.colors.Normalize(vmin=np.min(bounds), vmax=np.max(bounds))#, clip=True)
-#        m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
-#        m.set_array(np.arange(np.min(bounds), np.max(bounds), .1))
-#        rgba_colors = m.to_rgba(bounds)
-
+    K_max = params['pos_kappa']
+    K_min = params['neg_kappa']
+    stim_speeds = [-1.5, -.1]
 
 #    x_pre_range = [0.05, 0.2, 0.5]
     x_pre_range = [0.00, 0.2, 0.5]
@@ -99,58 +83,41 @@ if __name__ == '__main__':
     linestyles = ['-', ':', '--', '-.']
     markers = ['o', '*', 'D', '^']
 
-
-
     fig = pylab.figure()
     gs = gridspec.GridSpec(2, 2, width_ratios=[3, 1],
                           height_ratios=[1,1])
-
-#    ax1 = plt.subplot(gs[:, 0])
-#    ax2 = plt.subplot(gs[0, 1])
-#    ax3 = plt.subplot(gs[1, 1])
     ax1 = fig.add_subplot(gs[:, 0])
     ax2 = fig.add_subplot(gs[0, 1])
     ax3 = fig.add_subplot(gs[1, 1])
-
-
-
-#    ax1 = fig.add_subplot(121)
-#    ax2 = fig.add_subplot(222)
-#    ax3 = fig.add_subplot(224)
-
-#    if n_curves > 1:
-#        cb = fig.colorbar(m)
-#        cb.set_label('$|x_{stim}^{pre action}|$')
 
     n_pos_reward = np.zeros((len(stim_speeds), n_curves))
     n_neg_reward = np.zeros((len(stim_speeds), n_curves))
     problematic_stimuli_hard = []
     problematic_stimuli_soft = []
 
+    plots = []
+    labels = []
     for i_stim, v_stim in enumerate(stim_speeds):
-    #    title = 'Reward function, $v_{stim}=%.1f$' % v_stim
-    #    ax1.set_title(title)
-
-
         a = 1.
         b = 1.
         d = 1.
         ls = '-'
         lw = 3
-        print '\nNew v_stim: %.1f' % (v_stim)
         for i_, x_pre_action in enumerate(x_pre_range): 
             print '\n\tNew x_pre_action: %.1f' % (x_pre_action)
             c, tau = utils.get_sigmoid_params(params, x_pre_action, v_stim)
             y = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x - x_center), a, b, c, d, tau)
 #            label_txt = '$\\tau=%.1f, c=%.2f, x_{stim}^{pre action}=%.1f v_{stim}=%.1f$ ' % (tau, c, x_pre_action, v_stim)
             label_txt = '$v_{stim}=%.1f\ \\tau=%.1f\ c=%.2f$' % (v_stim, tau, c)
+            label_txt = '$v_{stim}=%.1f$' % (v_stim)
             if n_curves > 1:
 #                color = rgba_colors[i_]
                 color = linecolors[i_]
             else:
                 color = 'b'
-            ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)])
+#            ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)])
 #            ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)], label=label_txt)
+            p, = ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)])
 
             stim_params = (x_pre_action, .5, v_stim, .0)
 
@@ -168,7 +135,14 @@ if __name__ == '__main__':
                     n_pos_reward[i_stim, i_] += 1
                 elif R <= 0:
                     n_neg_reward[i_stim, i_] += 1
-                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker=markers[i_stim % len(markers)], ls=linestyles[i_stim % len(linestyles)], markersize=10, markeredgewidth=1, mfc=color, color=color, lw=2)
+#                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker='o', ls=linestyles[i_stim % len(linestyles)], markersize=12, mfc=color, color=color)#, lw=2)
+                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, ls=linestyles[i_stim % len(linestyles)], color=color)#, lw=2)
+#                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker=markers[i_stim % len(markers)], ls=linestyles[i_stim % len(linestyles)], markersize=10, markeredgewidth=1, mfc=color, color=color, lw=2)
+                ax1.plot(x_post_action[i_a], R, marker='o', markersize=10, mfc=color)
+                ax1.plot(x_pre_action, 0., marker='*', markersize=25, mfc=color, markeredgewidth=1)
+
+        plots.append(p)
+        labels.append(label_txt)
 #                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=1.0, marker='*', ls=linestyles[i_stim % len(linestyles)], markersize=20, markeredgewidth=1, mfc=color, color=color, lw=2)
 
     #            p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), ls=ls, marker='o', markersize=5, mfc=color, color=rgba_colors_actions[i_a], lw=2)
@@ -205,21 +179,25 @@ if __name__ == '__main__':
 #    ax1.plot((x_center - c[0], x_center - c[0]), (ylim[0], ylim[1]), c='k', ls='--', label = '$c = %.1f$' % c[0])
 #    ax1.plot((x_center - c[1], x_center - c[1]), (ylim[0], ylim[1]), c='k', ls='--', label = '$c = %.1f$' % c[1])
 
-    ax1.legend(loc='upper left')
-    ax1.set_xlabel('Stimulus position $x$')
+#    ax1.legend(loc='upper left')
+#    ax1.legend((labels), loc='upper left')
+    ax1.set_xlabel('Stimulus position before $x_{pre}$ and after $x\'$ action')
     ax1.set_ylabel('Reward')
     ax1.set_title('Reward function based on sigmoidals')
 
-    ax1.set_xlim((-0.3, 0.9))
-#    function_txt = '$R(x_{post}) = \\frac{1}{1 + exp(-\\ta(|x_{post} - .5| - c(x_{pre}, v_{stim})))}$'
-#    function_txt = '$R(x\') = \\frac{1}{1 + exp(-\\ta(|x\' - .5| - c(x_{pre}, v_{stim})))}$'
-    function_txt = '$R(x\') = \\frac{1}{1 + exp(-\\tau\cdot(|x\' - .5| - c))}$'
-    ax1.annotate(function_txt, xy=(-.2, 1.5),  xycoords='data',
-                            xytext=(-40, 30), textcoords='offset points',
-                                    bbox=dict(boxstyle="round", fc="1.0", alpha=0.3), fontsize=28)
-
+    ax1.set_xlim((-0.2, 0.9))
+    ax1.set_ylim((K_min - 0.1, K_max + 0.1))
     ylim = ax1.get_ylim()
     xlim = ax1.get_xlim()
+#    function_txt = '$R(x_{post}) = \\frac{1}{1 + exp(-\\ta(|x_{post} - .5| - c(x_{pre}, v_{stim})))}$'
+#    function_txt = '$R(x\') = \\frac{1}{1 + exp(-\\ta(|x\' - .5| - c(x_{pre}, v_{stim})))}$'
+#    function_txt = '$R(x\') = \\frac{1}{1 + exp(-\\tau\cdot(|x\' - .5| - c))}$'
+    function_txt = '$R = \\frac{1}{1 + exp(-\\tau\cdot(|x\' - .5| - c))}$'
+    ax1.annotate(function_txt, xy=(xlim[0]+0.04, 1.6),  xycoords='data',
+                            xytext=(-0, 30), textcoords='offset points',
+                                    bbox=dict(boxstyle="round", fc="1.0", alpha=1.0), fontsize=28)
+
+
     ax1.plot((xlim[0], xlim[1]), (0., 0.), ls='-', c='k', lw=3)
     ax1.plot((0.5, 0.5), (ylim[0], ylim[1]), ls='-', c='k', lw=3)
 
@@ -249,6 +227,7 @@ if __name__ == '__main__':
     v_stim_max = 2.
     stim_speeds = [-1.5, -.1, 1.0]
     linestyles = ['-', ':', '--', '-.']
+
     for i_v, v_stim in enumerate(stim_speeds):
 #        abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
 
@@ -265,7 +244,7 @@ if __name__ == '__main__':
         # c_raneg[1] --> determines tolerance for giving reward near center
         c = utils.transform_quadratic(x_pre_range, 'pos', c_range)
         c *= abs_speed_factor
-        ax3.plot(x_pre_range, c, ls=linestyles[i_v], label='$v_{stim}=%.1f$' % v_stim)
+        ax3.plot(x_pre_range, c, ls=linestyles[i_v], label='$v_{stim}=%.1f$' % v_stim, color='k')
 
     ax3.set_ylabel('$c\ (x_{pre}, v_{stim})$')
     ax3.set_xlabel('$x_{pre}$')

@@ -29,24 +29,33 @@ class PlotTesting(MetaAnalysisClass):
 
 
         plot_params = {'backend': 'png',
-                      'axes.labelsize': 20,
-                      'axes.titlesize': 20,
+                      'axes.labelsize': 22,
+                      'axes.titlesize': 24,
                       'text.fontsize': 20,
                       'xtick.labelsize': 16,
                       'ytick.labelsize': 16,
                       'legend.pad': 0.2,     # empty space around the legend box
-                      'legend.fontsize': 14,
+                      'legend.fontsize': 20,
                        'lines.markersize': 1,
                        'lines.markeredgewidth': 0.,
                        'lines.linewidth': 1,
                       'font.size': 12,
                       'path.simplify': False,
-                      'figure.subplot.left':.17,
-                      'figure.subplot.bottom':.12,
+
+                      'figure.subplot.left':.20,
+                      'figure.subplot.bottom':.07,
                       'figure.subplot.right':.94,
-                      'figure.subplot.top':.92,
-                      'figure.subplot.hspace':.12, 
-                      'figure.subplot.wspace':.30}
+                      'figure.subplot.top':.95,
+                      'figure.subplot.hspace':.04, 
+                      'figure.subplot.wspace':.32}
+
+#                      'figure.subplot.left':.12,
+#                      'figure.subplot.bottom':.12,
+#                      'figure.subplot.right':.94,
+#                      'figure.subplot.top':.97,
+#                      'figure.subplot.hspace':.06, 
+#                      'figure.subplot.wspace':.32}
+
         #              'figure.figsize': get_fig_size(800)}
         plt.rcParams.update(plot_params)
 
@@ -151,48 +160,83 @@ class PlotTesting(MetaAnalysisClass):
         cnt_ = 0
         all_displ = np.zeros((self.params['n_iterations_per_stim'], self.n_stim))
         avg_displ = np.zeros((self.params['n_iterations_per_stim'], 2))
-#        for i_stim in xrange(len(self.params['test_stim_range'])):
+        avg_displ_good = np.zeros((self.params['n_iterations_per_stim'], 2)) # the avg only of the good stimuli
+        problematic_stimuli_idx = [] 
+        problematic_stimuli = [] # stim params
+        good_stimuli_idx = []
+        good_stimuli = [] 
+
         for i_stim in xrange(len(self.stim_range)):
             trajectory[cnt_] = stim_params[i_stim, 0]
             for it_ in xrange(self.params['n_iterations_per_stim']):
                 trajectory[cnt_ + 1] = trajectory[cnt_] + (stim_params[i_stim, 2] - actions_taken[cnt_ + 1, 0]) * self.params['t_iteration'] / 1000.
-                all_displ[it_, i_stim] = np.abs(trajectory[cnt_ + 1] - .5)
+                #all_displ[it_, i_stim] = np.abs(trajectory[cnt_ + 1] - .5)
+                all_displ[it_, i_stim] = np.abs(trajectory[cnt_] - .5)
                 cnt_ += 1
-            
-        for it_ in xrange(self.params['n_iterations_per_stim']):
-            avg_displ[it_, 0] = all_displ[it_, :].mean()
-            avg_displ[it_, 1] = all_displ[it_, :].std()
-        avg_displ[:, 1] /= np.sqrt(self.params['n_stim'])
-        fig = plt.figure(figsize=FigureCreator.get_fig_size(1200))
-        ax0 = fig.add_subplot(311)
-        ax1 = fig.add_subplot(312)
-        ax2 = fig.add_subplot(313)
-        problematic_stimuli = []
-        problematic_stimuli_idx = [] 
-
-        good_stimuli = []
-#        for i_stim in xrange(len(self.params['test_stim_range'])):
-        for i_stim in xrange(len(self.stim_range)):
-            i0 = i_stim * self.params['n_iterations_per_stim']
+            # distinguish if stimulus is 'problematic' or if it is OK
             i1 = (i_stim + 1) * self.params['n_iterations_per_stim']
             mean_displ_end = np.abs(trajectory[i1-12:i1-2].mean() - .5)
             if mean_displ_end > .15:
+                problematic_stimuli_idx.append(i_stim)
+            else:
+                good_stimuli_idx.append(i_stim)
+            
+        print 'Problematic_stimuli_idx:', problematic_stimuli_idx
+        print 'good_stimuli_idx:', good_stimuli_idx
+
+        for it_ in xrange(self.params['n_iterations_per_stim']):
+            avg_displ[it_, 0] = all_displ[it_, :].mean()
+            avg_displ[it_, 1] = all_displ[it_, :].std()
+            avg_displ_good[it_, 0] = all_displ[it_, np.array(good_stimuli_idx)].mean()
+            avg_displ_good[it_, 1] = all_displ[it_, np.array(good_stimuli_idx)].std()
+
+        avg_displ[:, 1] /= np.sqrt(self.params['n_stim'])
+        avg_displ_good[:, 1] /= np.sqrt(len(good_stimuli_idx))
+        fig0 = plt.figure(figsize=FigureCreator.get_fig_size(800, portrait=True))
+        ax0 = fig0.add_subplot(111)
+        fig = plt.figure(figsize=FigureCreator.get_fig_size(800, portrait=True))
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+
+        ax1.set_title('Test performance')
+#        ax0 = fig.add_subplot(311)
+#        ax1 = fig.add_subplot(312)
+#        ax2 = fig.add_subplot(313)
+
+        clim = (min(np.abs(stim_params[:, 2])), max(np.abs(stim_params[:, 2])))
+        norm = matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1])#, clip=True)
+        m = matplotlib.cm.ScalarMappable(norm=norm, cmap=matplotlib.cm.jet)
+        m.set_array(np.arange(clim[0], clim[1], 0.01))
+        v_colors = m.to_rgba(np.abs(stim_params[:, 2]))
+
+#        for i_stim in xrange(len(self.params['test_stim_range'])):
+        for i_stim in xrange(len(self.stim_range)):
+            problematic_stimulus = False
+            i0 = i_stim * self.params['n_iterations_per_stim']
+            i1 = (i_stim + 1) * self.params['n_iterations_per_stim']
+            mean_displ_end = np.abs(trajectory[i1-12:i1-2].mean() - .5)
+
+            lc = v_colors[i_stim]
+
+            if mean_displ_end > .15:
 #            if np.where(trajectory[i0:i1] > 1.0)[0].size > 0 or np.where(trajectory[i0:i1] < 0.)[0].size > 0:
-                lc = 'r'
+#                lc = 'k'
                 print 'Problematic Stim id ', i_stim, stim_params[i_stim, :]
                 problematic_stimuli.append(stim_params[i_stim, :])
-                problematic_stimuli_idx.append(i_stim)
+#                problematic_stimuli_idx.append(i_stim)
+                problematic_stimulus = True
                 #print 'debug bad', np.abs(trajectory[i0+4:i1-2].mean() - .5)
             else:
-                lc = 'k'
+                problematic_stimulus = False
+#                lc = 'k'
                 #print 'debug good', np.abs(trajectory[i0+4:i1-2].mean() - .5)
                 good_stimuli.append(stim_params[i_stim, :])
-            ax1.plot(range(self.params['n_iterations_per_stim']), trajectory[i0:i1], color=lc, lw=1, alpha=0.4)
+            ax1.plot(range(self.params['n_iterations_per_stim']), trajectory[i0:i1], color=lc, lw=1, alpha=0.6)
             ax0.plot(range(i0, i1), trajectory[i0:i1], color=lc, lw=1)
             #ax.plot(range(trajectory.size), trajectory)
 
         # restrict the x-range for some example stimuli
-        ax0_stim_range = (0, 15)
+        ax0_stim_range = (0, 100)
         ax0_xlim = (ax0_stim_range[0] * self.params['n_iterations_per_stim'], ax0_stim_range[1] * self.params['n_iterations_per_stim'])
         ax0.set_xlim((ax0_xlim[0], ax0_xlim[1]))
         xticks0 = ax0.get_xticks() 
@@ -203,29 +247,39 @@ class PlotTesting(MetaAnalysisClass):
         ax0.set_title('Test performance: single trials and average')
 
         new_xticklabels = []
-#        for i_, xtick in enumerate(xticks):
-#            new_xticklabels.append('')
-#            new_xticklabels.append('%d' % (xtick * self.params['t_iteration'] / float(n_time)))
         ax1.set_xticklabels(new_xticklabels)
+#        ax1.set_xlabel('Time [ms]')
         ax1.set_ylabel('Retinal\ndisplacement')
+        ax1.set_xlim((0., self.params['n_iterations_per_stim']))# * self.params['t_iteration']))
         xlim = ax1.get_xlim()
-        ax1.plot((xlim[0], xlim[1]), (.5, .5), ls='--', c='k', lw=3)
+        ax1.plot((xlim[0], xlim[1]), (.5, .5), ls='--', c='k', lw=4)
+        ax1.plot((xlim[0], xlim[1]), (.5 + self.params['blur_X'], .5 + self.params['blur_X']), ls='-.', c='k', lw=2)
+        ax1.plot((xlim[0], xlim[1]), (.5 - self.params['blur_X'], .5 - self.params['blur_X']), ls='-.', c='k', lw=2)
         ax1.set_ylim((0., 1.))
+#        cb = fig.colorbar(m, ax=ax1)
+#        cb.set_label('$|v_{stim}|$')#, fontsize=24)
 
 #        ax0.set_xticklabels(new_xticklabels)
-        ax0.set_ylabel('Retinal\ndisplacement')
+        ax0.set_ylabel('Stimulus position')
         xlim0 = ax0.get_xlim()
-        ax0.plot((xlim0[0], xlim0[1]), (.5, .5), ls='--', c='k', lw=3)
+        ax0.plot((xlim0[0], xlim0[1]), (.5, .5), ls='--', c='k', lw=3, label='Stimulus radius $\\beta_X$')
         ax0.set_ylim((0.1, 0.9))
 #        ax0.set_ylim((-0.1, 1.1))
+        ax0.set_xlabel('Time [ms]')
 
+        plt.legend()
 
-
-        plt.errorbar(range(self.params['n_iterations_per_stim']), avg_displ[:, 0], yerr=avg_displ[:, 1], c='b', lw=4)
+#        plt.errorbar(range(self.params['n_iterations_per_stim']), avg_displ[:, 0], yerr=avg_displ[:, 1], c='g', lw=4)
+#        avg_label = '$\\frac{1}{N_{test}} \sum_{i=1}^{N_{test}} |x^{stim}_{i}(t) - 0.5|$'
+        avg_label = '$\\frac{1}{N_{test}} \sum_{i=1}^{N_{test}} |x^{stim}_{i}(t) - 0.5|$'
+        plt.errorbar(range(self.params['n_iterations_per_stim']), avg_displ_good[:, 0], yerr=avg_displ_good[:, 1], c='b', lw=3, label=avg_label)
         ax2.set_xlim(xlim) # set the same xlim as above, as these two axes share the x-ticks on the x-axis
         ylim = ax2.get_ylim()
-        ax2.set_ylim((0., ylim[1]))
-        ax2.plot((xlim[0], xlim[1]), (0., 0.), '--', c='k', lw=3)
+        ax2.set_ylim((0., 0.3))
+#        ax2.set_ylim((0., ylim[1]))
+#        ax2.plot((xlim[0], xlim[1]), (0., 0.), '--', c='k', lw=3)
+        ax2.plot((xlim[0], xlim[1]), (self.params['blur_X'], self.params['blur_X']), ls='-.', c='k', lw=2, label='Stimulus radius $\\beta_X$')
+        plt.legend()
 
         xticks = ax2.get_xticks() 
         new_xticklabels = []
@@ -234,17 +288,16 @@ class PlotTesting(MetaAnalysisClass):
         ax2.set_xticklabels(new_xticklabels)
         ax2.set_xlabel('Time [ms]')
         ax2.set_ylabel('Average absolute\nretinal displacement')
-        ax2.set_ylim((0., .4))
 
         # SAVING
         output_fn = self.params['figures_folder'] + 'retinal_displacement_avg_%d-%d.png' % (self.stim_range[0], self.stim_range[-1])
         print 'Saving figures to:', output_fn
-        plt.savefig(output_fn, dpi=300)
+        plt.savefig(output_fn, dpi=200)
         output_fn = self.params['data_folder'] + 'retinal_displacement_all_trj_%d-%d.dat' % (self.stim_range[0], self.stim_range[-1])
-        print 'Saving colormap data to:', output_fn
+        print 'Saving all data (single runs) to:', output_fn
         np.savetxt(output_fn, all_displ)
         output_fn = self.params['data_folder'] + 'retinal_displacement_avg_displ_%d-%d.dat' % (self.stim_range[0], self.stim_range[-1])
-        print 'Saving colormap data to:', output_fn
+        print 'Saving avg displacement data to:', output_fn
         np.savetxt(output_fn, avg_displ)
 
         output_fn = self.params['data_folder'] + 'problematic_stimuli_idx.txt'
@@ -255,7 +308,7 @@ class PlotTesting(MetaAnalysisClass):
         good_stimuli = np.array(good_stimuli)
         np.savetxt(output_fn, problematic_stimuli)
         print 'Problematic stimuli:', problematic_stimuli
-        print 'Good stimuli:', good_stimuli
+#        print 'Good stimuli:', good_stimuli
         ax = None
         if len(problematic_stimuli) > 0:
             ax = self.plot_stimuli_scatter(problematic_stimuli, 'r', '^', ax, label_txt='Problematic stimuli')
