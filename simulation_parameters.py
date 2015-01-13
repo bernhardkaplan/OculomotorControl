@@ -39,7 +39,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['training'] = False
+        self.params['training'] = True
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
@@ -52,10 +52,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['total_num_virtual_procs'] = 96
         self.params['delay_input'] = 80.
         self.params['delay_output'] = 70.
-        self.params['n_rf'] = 50
-        self.params['n_v'] = 50
-        self.n_actions = 17
+        self.params['n_rf'] = 40
+        self.params['n_v'] = 40
+        self.n_actions = 13
         self.params['softmax_action_selection_temperature'] = 0.5
+        self.params['reward_tolerance'] = 0.05
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -164,10 +165,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = '_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = 'DEBUG_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_nactions%d_VA_TrainingGain0.8_0.8_K2-2_temp%.1f_' % (self.n_actions, self.params['t_iteration'], self.params['softmax_action_selection_temperature'])
+            self.params['sim_id'] = 'DEBUG_%d_nactions%d_VA_TrainingGain0.8_0.8_K2-2_temp%.1f_' % (self.n_actions, self.params['t_iteration'], self.params['softmax_action_selection_temperature'])
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 

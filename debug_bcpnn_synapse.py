@@ -53,6 +53,7 @@ syn_params  = {'p_i': p_i, 'p_j': p_j, 'p_ij': p_ij, 'gain': 1.0, 'K': 0.0, \
         'tau_i': tau_i, 'tau_j': tau_j, 'tau_e': tau_e, 'tau_p': tau_p}
 print 'syn_params init:', syn_params
 nest.Connect([nrns[0]], [nrns[1]], syn_params, model='bcpnn_synapse')
+nest.Connect(source_0, source_1, syn_params, model='bcpnn_synapse')
 
 
 # 0 - 150
@@ -61,6 +62,20 @@ nest.Connect([nrns[0]], [nrns[1]], syn_params, model='bcpnn_synapse')
 #nest.SetStatus(nest.GetConnections([nrns[0]], [nrns[1]]), {'K': 0., 'gain': 0., 't_k': nest.GetKernelStatus()['time']})
 nest.Simulate(150.)
 t_sim_total = 150.
+
+conns = nest.GetConnections(source_0, source_1, synapse_model='bcpnn_synapse') # get the list of connections stored on the current MPI node
+print 'connections between spike sources:', conns
+if len(conns) > 0:
+#    print 'len conns', len(conns)
+    print 'conns[0]', conns[0][0]
+    cp = nest.GetStatus([conns[0]])  # retrieve the dictionary for this connection
+    print 'cp', cp
+    pi = cp[0]['p_i']
+    pj = cp[0]['p_j']
+    pij = cp[0]['p_ij']
+    w = np.log(pij / (pi * pj))
+    print 'spike sources weight after simulation:', w
+
 
 # 150 - 250: no presynaptic activity
 # Kappa ON: 150 - 250 only post-synaptic spikes
