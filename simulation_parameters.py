@@ -50,9 +50,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
-        self.params['n_rf'] = 50
-        self.params['n_v'] = 50
-        self.n_actions = 5
+        self.params['delay_input'] = 80.
+        self.params['delay_output'] = 70.
+        self.params['n_rf'] = 40
+        self.params['n_v'] = 40
+        self.n_actions = 7
         self.blur_x = 0.0
         self.blur_v = 0.0
         self.params['softmax_action_selection_temperature'] = 0.5
