@@ -39,7 +39,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['training'] = True
+        self.params['training'] = False
         self.params['Cluster'] = True
         self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
@@ -53,6 +53,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.n_actions = 17
+        self.blur_x = 0.10
+        self.blur_v = 0.3
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
@@ -75,7 +77,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['trained_stimuli'] = []
         self.params['n_training_x'] = 15 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 1# number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 30 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -164,10 +166,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = '_NewRewardFct_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = '_OptRewFct_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = '%d_ShowNewTestStim_nactions%d_VA_TrainingGain0.8_0.8_K2-2_temp%.1f_' % (self.params['t_iteration'], self.n_actions, self.params['softmax_action_selection_temperature'])
+            self.params['sim_id'] = '%d_nactions%d_VA_bX%.1f_bV%.1f' % (self.params['t_iteration'], self.n_actions, \
+                    self.blur_x, self.blur_v)
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -180,10 +183,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         as it affects how connections are set up between the MotionPrediction and the BasalGanglia module
         """
 
-        self.params['master_seed'] = 222 + self.params['stim_range'][0]
+        self.params['master_seed'] = 321 + self.params['stim_range'][0]
         np.random.seed(self.params['master_seed'])
         # one global seed for calculating the tuning properties and the visual stim properties (not the spiketrains)
-        self.params['visual_stim_seed'] = 4
+        self.params['visual_stim_seed'] = 5
         self.params['tuning_prop_seed'] = 123
         self.params['basal_ganglia_seed'] = 7 + self.params['stim_range'][0]
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
@@ -319,7 +322,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['v_lim_training'] = (-self.params['v_max_tp'] * 0.7, self.params['v_max_tp'] * 0.7)
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
-        self.params['blur_X'], self.params['blur_V'] = .10, .30
+        self.params['blur_X'], self.params['blur_V'] = self.blur_x, self.blur_v
         self.params['training_stim_noise_x'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
         self.params['blur_theta'] = 1.0
@@ -451,6 +454,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.K = 0.
         self.params['pos_kappa'] = 2.
         self.params['neg_kappa'] = -2. # for the nonoptimal decision
+        self.params['k_range'] = [1000., 1000.]
 
         # gain parameters
         if self.params['training']:
@@ -466,8 +470,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.8
-        self.params['gain_MT_d2'] = 0.8
+        self.params['gain_MT_d1'] = 0.4
+        self.params['gain_MT_d2'] = 0.4
         self.params['bias_gain'] = 0.
 
 

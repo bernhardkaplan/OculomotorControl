@@ -2,7 +2,7 @@
 # The -l above is required to get the full environment with modules
 
 # The name of the script is myjob
-#SBATCH -J test_9actions
+#SBATCH -J test_bx0.05
 
 #SBATCH -t 1:25:00
 
@@ -28,7 +28,7 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training__nactions9_30_temp0.5_nC1__nStim15_285-300_gainD1_0.8_D2_0.8_K2_-2_seeds_396_4  > delme_testing_g4_K2_temp0.5_VA 2>&1
+aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training__OptRewFct_nactions17_30_temp0.5_nC1__nStim15_285-300_gainD1_0.8_D2_0.8_K2_-2_seeds_396_4  > delme_testing_g4_K2_temp0.5_VA 2>&1
 #aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training__nactions13_30_temp0.5_nC1__nStim15_285-300_gainD1_0.8_D2_0.8_K2_-2_seeds_396_2 > delme_testing_g4_K2_temp0.5_VA 2>&1
 
 

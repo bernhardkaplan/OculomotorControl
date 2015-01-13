@@ -2,7 +2,7 @@
 # The -l above is required to get the full environment with modules
 
 # The name of the script is myjob
-#SBATCH -J g8_tmp0.5
+#SBATCH -J new_rew_fct
 
 # Only 1 hour wall-clock time will be given to this job
 #SBATCH -t 03:59:00

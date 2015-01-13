@@ -15,6 +15,9 @@ import utils
 import matplotlib.patches as mpatches
 from matplotlib.collections import PatchCollection
 from FigureCreator import plot_params
+import VisualInput
+import BasalGanglia
+import FigureCreator as FC
 
 plot_params['figure.subplot.right'] = 0.95
 
@@ -32,7 +35,7 @@ class Plotter(object):
         self.mp_training = None
 
 
-    def plot_training_sample_space(self, plot_process=False, motion_params_fn=None):
+    def plot_training_sample_space(self, plot_process=False, motion_params_fn=None, n_samples_to_plot=None):
         if plot_process:
             try:
                 if motion_params_fn == None:
@@ -69,7 +72,10 @@ class Plotter(object):
         ylim = ax1.get_ylim()
         ax1.plot((.5, .5), (ylim[0], ylim[1]), ls='--', c='k', lw=3)
 
-        for i_ in xrange(d[:, 0].size):
+        if n_samples_to_plot == None:
+            n_samples_to_plot = d[:, 0].size
+
+        for i_ in xrange(n_samples_to_plot):
             if plot_process:
 #                idx = i_ * self.params['n_iterations_per_stim']
 #                mp = d[idx, :]
@@ -97,21 +103,31 @@ class Plotter(object):
         ax1.set_title('Training stimuli state space')
         ax1.set_xlabel('Stimulus position') 
         ax1.set_ylabel('Stimulus speed vx') 
-        output_fig = self.params['figures_folder'] + 'stimulus_state_space_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
+        output_fig = self.params['figures_folder'] + 'stimulus_state_space_%.2f_%.2f_n%d.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'], n_samples_to_plot)
         print 'Saving to:', output_fig
         pylab.savefig(output_fig, dpi=200)
 
 
 
-    def plot_precomputed_actions(self, plot_cells=True):
+    def plot_precomputed_actions(self, training_stim_fn=None, plot_cells=True, n_samples_to_plot=None):
 
-        action_indices = np.loadtxt(self.params['action_indices_fn'])
-#        d = np.loadtxt(self.params['motion_params_precomputed_fn'])
-        d = np.loadtxt(self.params['training_stimuli_fn'])
+        print 'Loading actions taken from:', self.params['actions_taken_fn']
+
+
+#        actions_taken = np.loadtxt(self.params['actions_taken_fn'])
+#        action_indices = actions_taken[:, 2]
+        if training_stim_fn == None:
+            training_stim_fn = self.params['training_stimuli_fn']
+        print 'Loading training stimuli from:', training_stim_fn
+        d = np.loadtxt(training_stim_fn)
+        VI = VisualInput.VisualInput(params)
+        BG = BasalGanglia.BasalGanglia(params, dummy=True)
+        supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(d, BG)
         self.mp_training = d
 
         patches = []
-        fig = pylab.figure(figsize=(10, 10))
+#        fig = pylab.figure(figsize=(10, 10))
+        fig = pylab.figure(figsize=FC.get_fig_size(800, portrait=False))
         ax1 = fig.add_subplot(111)
 
         # define the colormap
@@ -128,8 +144,8 @@ class Plotter(object):
         m = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
         m.set_array(np.arange(bounds[0], bounds[-1], 1.))
         rgba_colors = m.to_rgba(bounds)
-        cb = fig.colorbar(m)
-        cb.set_label('Action indices')#, fontsize=24)
+#        cb = fig.colorbar(m)
+#        cb.set_label('Action indices')#, fontsize=24)
 
         if plot_cells:
             for gid in xrange(self.params['n_exc_mpn']):
@@ -143,24 +159,28 @@ class Plotter(object):
         colors = m.to_rgba(action_indices)
 #        print 'debug colors', colors, '\n\n', action_indices
 
-        if self.params['reward_based_learning']:
-            for i_ in xrange(len(action_indices)):
-                stim_idx = i_
-                mp = d[stim_idx, :]
-                ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
-                ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
-                ellipse.set_facecolor('r')
-                patches.append(ellipse)
-                ax1.add_artist(ellipse)
+        if n_samples_to_plot == None:
+            n_samples_to_plot = d[:, 0].size
+#        if self.params['reward_based_learning']:
+#            for i_ in xrange(len(action_indices)):
+#                stim_idx = i_
+#                mp = d[stim_idx, :]
+#                ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
+#                ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
+#                ellipse.set_facecolor('r')
+#                patches.append(ellipse)
+#                ax1.add_artist(ellipse)
 
-        else:
-            for i_ in xrange(self.params['n_stim']):
-                mp = d[i_, :]
-                ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
-                ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
-                ellipse.set_facecolor('r')
-                patches.append(ellipse)
-                ax1.add_artist(ellipse)
+#        else:
+        for i_ in xrange(n_samples_to_plot):
+            mp = d[i_, :]
+            ax1.plot(mp[0], mp[2], '*', markersize=10, color=colors[i_], markeredgewidth=1)
+            ax1.text(mp[0] + 0.01, mp[2] + 0.04, '%d' % action_indices[i_], fontsize=12)
+
+            ellipse = mpatches.Ellipse((mp[0], mp[2]), self.params['blur_X'], self.params['blur_V'], linewidth=0, alpha=0.2)
+            ellipse.set_facecolor('r')
+            patches.append(ellipse)
+            ax1.add_artist(ellipse)
 
 
 #        ax2 = fig.add_axes([0.95, 0.1, 0.03, 0.8])
@@ -170,12 +190,13 @@ class Plotter(object):
         ylim = ax1.get_ylim()
 #        xlim = ax1.get_ylim()
         ax1.plot((.5, .5), (ylim[0], ylim[1]), ls='--', c='k', lw=3)
+        ax1.set_ylim((0.8 * ylim[0], 0.8 * ylim[1]))
 #        ax1.text(.4, ylim[0] + .1 * (ylim[1] - ylim[0]), 'Visual field center', fontsize=16)
 #        ax1.add_collection(collection)
-        ax1.set_title('Training stimuli state space')
-        ax1.set_xlabel('Stimulus position') 
-        ax1.set_ylabel('Stimulus speed vx') 
-        output_fig = self.params['figures_folder'] + 'stimulus_state_space_with_precomputed_actions_%.2f_%.2f.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'])
+        ax1.set_title('Stimulus and tuning property space')
+        ax1.set_xlabel('Stimulus and receptive field position $x$') 
+        ax1.set_ylabel('Stimulus and preferred speed $v_x$') 
+        output_fig = self.params['figures_folder'] + 'stimulus_state_space_with_precomputed_actions_%.2f_%.2f_n%d.png' % (self.params['training_stim_noise_x'], self.params['training_stim_noise_v'], n_samples_to_plot)
         print 'Saving to:', output_fig
         pylab.savefig(output_fig, dpi=200)
         return ax1
@@ -223,16 +244,9 @@ class Plotter(object):
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
-        if os.path.isdir(sys.argv[1]):
-            param_fn = sys.argv[1]
-            training_stim_fn = None
-            if os.path.isdir(param_fn):
-                param_fn += '/Parameters/simulation_parameters.json'
-            import json
-            f = file(param_fn, 'r')
-            print 'Loading parameters from', param_fn
-            params = json.load(f)
-        else: # assume the file given is the file with the motion parameters of the training stimuli
+        try: 
+            params = utils.load_params_from_file(sys.argv[1])
+        except:
             training_stim_fn = sys.argv[1]
             import simulation_parameters
             param_tool = simulation_parameters.global_parameters()
@@ -244,9 +258,11 @@ if __name__ == '__main__':
         training_stim_fn = None
 
     Plotter = Plotter(params)#, it_max=1)
-    Plotter.plot_training_sample_space(plot_process=False, motion_params_fn=training_stim_fn)
+    N = 30
+#    N = None
+#    Plotter.plot_training_sample_space(plot_process=False, motion_params_fn=training_stim_fn, n_samples_to_plot=N)
 #    Plotter.plot_training_sample_space(plot_process=True)
-#    Plotter.plot_precomputed_actions(plot_cells=True)
+    Plotter.plot_precomputed_actions(training_stim_fn=training_stim_fn, plot_cells=True, n_samples_to_plot=N)
 #    Plotter.plot_training_sample_histograms()
 
     pylab.show()

@@ -153,7 +153,6 @@ if __name__ == '__main__':
     print 'n_cycles', params['n_training_cycles']
     np.random.seed(params['visual_stim_seed'])
     BG = BasalGanglia.BasalGanglia(params, dummy=True)
-    print 'Saving training stimuli parameters to:', params['training_stimuli_fn']
 
 
     training_stimuli = create_stimuli_along_a_trajectory(params)
@@ -172,10 +171,10 @@ if __name__ == '__main__':
 
     VI = VisualInput.VisualInput(params)
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
-    output_array = np.zeros((len(action_indices), 2))
+    output_array = np.zeros((len(action_indices), 4))
     print 'action_indices', action_indices
-    output_array[:, 0] = action_indices
-    output_array[:, 1] = np.array(BG.action_bins_x)[action_indices]
+    output_array[:, 0] = np.array(BG.action_bins_x)[action_indices]
+    output_array[:, 2] = action_indices
 #    output_array[:, 2] = BG.action_bins_x[action_indices]
     print 'supervisor_states:', supervisor_states
     print 'action_indices:', action_indices
@@ -201,7 +200,7 @@ if __name__ == '__main__':
 #    Plotter.plot_training_sample_space(plot_process=False, motion_params_fn=params['training_stimuli_fn'])
 #    output_fn = params['figures_folder'] + 'training_stimuli.png'
 #    pylab.savefig(output_fn, dpi=200)
-    ax = Plotter.plot_precomputed_actions(plot_cells=True)
+    ax = Plotter.plot_precomputed_actions(plot_cells=True, n_samples_to_plot=params['n_stim'])
 #    ax = None
     plot_stim_after_action(params, training_stimuli, ax=ax)
 
@@ -209,4 +208,5 @@ if __name__ == '__main__':
 #    Plotter.plot_training_sample_space(plot_process=True)
 
 
+    print 'Saving training stimuli parameters to:', params['training_stimuli_fn']
     pylab.show()
