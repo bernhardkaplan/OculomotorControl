@@ -51,9 +51,9 @@ if __name__ == '__main__':
     params = GP.params
     BG = BasalGanglia.BasalGanglia(params, dummy=True)
     all_actions_v = BG.action_bins_x
-    actions_v = [all_actions_v[0], all_actions_v[1], all_actions_v[2],  \
-                all_actions_v[9], \
-                all_actions_v[-1], all_actions_v[-2], all_actions_v[-3]]
+#    actions_v = [all_actions_v[0], all_actions_v[1], all_actions_v[2],  \
+#                all_actions_v[9], \
+#                all_actions_v[-1], all_actions_v[-2], all_actions_v[-3]]
     actions_v = all_actions_v
     n_actions_to_plot = len(actions_v)
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     K_max = params['pos_kappa']
     K_min = params['neg_kappa']
-    stim_speeds = [-1.5, -.1]
+    stim_speeds = [-1.5, -.1, 1.]
 
 #    x_pre_range = [0.05, 0.2, 0.5]
     x_pre_range = [0.00, 0.2, 0.5]
@@ -231,19 +231,27 @@ if __name__ == '__main__':
     for i_v, v_stim in enumerate(stim_speeds):
 #        abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
 
-        abs_speed_factor = np.abs(v_stim)
 
         dx = 20 * v_stim * params['t_iteration'] / params['t_cross_visual_field']
 #        c_range = (0.5 - np.sign(v_stim) * dx, 0.02 - np.sign(v_stim) * dx) 
 #        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field']
-        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
-        tolerance = 0.02
-        c_range = (best_case, tolerance)
+#        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
+#        tolerance = params['reward_tolerance']
+#        c_range = (best_case, tolerance)
 
         # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
         # c_raneg[1] --> determines tolerance for giving reward near center
-        c = utils.transform_quadratic(x_pre_range, 'pos', c_range)
-        c *= abs_speed_factor
+#        c = utils.transform_quadratic(x_pre_range, 'pos', c_range)
+#        abs_speed_factor = np.abs(v_stim)
+#        c *= abs_speed_factor
+
+
+        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
+        tolerance = params['reward_tolerance']
+        c_range = (best_case, tolerance)
+    #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
+        c = utils.transform_linear(x_pre_range, c_range)
+
         ax3.plot(x_pre_range, c, ls=linestyles[i_v], label='$v_{stim}=%.1f$' % v_stim, color='k')
 
     ax3.set_ylabel('$c\ (x_{pre}, v_{stim})$')
