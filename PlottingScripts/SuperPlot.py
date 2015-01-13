@@ -22,10 +22,9 @@ class PlotEverything(MetaAnalysisClass):
 
     def __init__(self, argv, verbose=False):
         self.verbose = verbose
-        self.rp_markersize = 2
+        self.rp_markersize = 3
         self.tick_interval = 8
-
-
+        self.stim_color = 'c'
 
         plot_params = {'backend': 'png',
                       'axes.labelsize': 20,
@@ -40,7 +39,7 @@ class PlotEverything(MetaAnalysisClass):
                        'lines.linewidth': 1,
                       'font.size': 12,
                       'path.simplify': False,
-                      'figure.subplot.left':.08,
+                      'figure.subplot.left':.10,
                       'figure.subplot.bottom':.08,
                       'figure.subplot.right':.94,
                       'figure.subplot.top':.88,
@@ -82,7 +81,7 @@ class PlotEverything(MetaAnalysisClass):
 
         print 'xlim:', t_range
 
-        figsize = FigureCreator.get_fig_size(1400, portrait=False)
+        figsize = FigureCreator.get_fig_size(1200, portrait=False)
         self.fig = plt.figure(figsize=figsize)
         self.gs = gridspec.GridSpec(4, 1, height_ratios=(2, 1, 1, 1))
 #        self.gs = gridspec.GridSpec(3, 1, height_ratios=(2, 1, 1))
@@ -127,7 +126,7 @@ class PlotEverything(MetaAnalysisClass):
 
             text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
             text_pos_y = ylim[1] + 0.04 * (ylim[1] - ylim[0])
-            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d\nOpt action:\n(%d. %.1f)' % (x, v, np.int(cnt + stim_offset), start, stop, optimal_action_idx, optimal_speed))
+#            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d\nOpt action:\n(%d. %.1f)' % (x, v, np.int(cnt + stim_offset), start, stop, optimal_action_idx, optimal_speed))
 #            text_pos_x = t_0 + 0.2 * (t_1 - t_0) 
 #            print 'debug text_pos:', text_pos_x, text_pos_y
             # for presentation
@@ -147,7 +146,7 @@ class PlotEverything(MetaAnalysisClass):
         ax0 = plt.subplot(self.gs[self.fig_cnt])
 
         marker = 'o'
-        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+        colors = ['g', 'r', 'b', 'c', 'm', 'y', 'k']
         cell_types = ['d1', 'd2', 'action']
         for z_, cell_type in enumerate(cell_types):
 
@@ -176,7 +175,7 @@ class PlotEverything(MetaAnalysisClass):
             text_pos_y = gid_min + .5 * (gid_max - gid_min)
             text_pos_x = t_range[0] - .02 * (t_range[1] - t_range[0])
 #            print 'debug', ct, gid_min, gid_max, text_pos_x, text_pos_y
-            ax0.text(text_pos_x, text_pos_y, '%s' % (ct.capitalize()), color=color, fontsize=16, rotation=90)
+            ax0.text(text_pos_x, text_pos_y, '%s' % (ct.capitalize()), color=color, fontsize=18, rotation=90)
 
         if t_range != None:
             ax0.set_xlim(t_range)
@@ -234,7 +233,8 @@ class PlotEverything(MetaAnalysisClass):
 
         if sort_idx == 0:
             ax1.set_ylim((0., 1.))
-            ax1.set_ylabel('Receptive\nfield position')
+            ax1.set_ylabel('MPP cells\nsorted by\nRF position')
+#            ax1.set_ylabel('Receptive\nfield position')
         if sort_idx == 1:
             ax1.set_ylim((np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])))
             ax1.set_ylabel('Preferred speed')
@@ -259,7 +259,7 @@ class PlotEverything(MetaAnalysisClass):
                 y_pos_of_cell = tp[gid, sort_idx]
                 fn_ = self.params['input_folder_mpn'] + fn
                 d = np.loadtxt(fn_)
-                ax.plot(d, y_pos_of_cell * np.ones(d.size), 'o', markersize=self.rp_markersize, alpha=.1, color='b')
+                ax.plot(d, y_pos_of_cell * np.ones(d.size), 'o', markersize=self.rp_markersize, alpha=.1, color=self.stim_color)
 
 
 
@@ -287,7 +287,7 @@ class PlotEverything(MetaAnalysisClass):
         ax2 = plt.subplot(self.gs[self.fig_cnt])
         self.fig_cnt += 1
 
-        color = 'b'
+        color = self.stim_color
         ylim_ax2 = (-.05, 1.05)
         for i_stim in xrange(stim_range[0], stim_range[-1] + 1):
             t0 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 1 * self.params['t_iteration'] # + 1 because stimulus appears in iteration 1 (not 0) within a stimulus
@@ -299,10 +299,10 @@ class PlotEverything(MetaAnalysisClass):
             action_idx = np.int(actions[i_stim, 2])
             x_after = utils.get_next_stim(self.params, mp[i_stim, :], v_eye)[0]
             r_test = utils.get_reward_from_perceived_states(x_stim, x_after)
-            ax2.plot(np.array([t0, t1]), np.array([x_stim, x_after]), color=color, lw=3)
+            ax2.plot(np.array([t0, t1]), np.array([x_stim, x_after]), color=color, lw=5)
             if plot_action_idx:
-                text_pos_x = t0 - 0.1 * self.params['t_iteration']
-                ax2.text(text_pos_x, 0.95, '%d' % action_idx, color='k', fontsize=12)
+                text_pos_x = t0 - 0.25 * self.params['t_iteration']
+                ax2.text(text_pos_x, 0.90, '%d' % action_idx, color='k', fontsize=18)
                 print 'Action %d:' % action_idx, self.bg_gids['action'][action_idx]
 
         ax2.set_ylim(ylim_ax2)
@@ -310,11 +310,12 @@ class PlotEverything(MetaAnalysisClass):
         self.set_xticks(ax2, tick_interval=self.tick_interval)
         self.remove_xtick_labels(ax2)
         ax2.set_xlim(t_range)
-        ax2.set_ylabel('Retinal\ndisplacement')
+        ax2.set_ylabel('Stimulus\nposition')
+#        ax2.set_ylabel('Retinal\ndisplacement')
 
         # plot horizontal line for retinal displacement
         xlim2 = ax2.get_xlim()
-        ax2.plot((xlim2[0], xlim2[1]), (.5, .5), ls='-', c='k')
+        ax2.plot((xlim2[0], xlim2[1]), (.5, .5), ls='-', c='k', lw=2)
         return ax2
 
         # plot the K_vec with transitions
@@ -338,7 +339,22 @@ class PlotEverything(MetaAnalysisClass):
             y_ = K_vec[it_] * np.ones(self.params['t_iteration'])
             x_k = np.r_[x_k, x_]
             y_k = np.r_[y_k, y_]
-        ax3.plot(x_k, y_k, c='k', lw=3)
+        ax3.plot(x_k, y_k, c='k', lw=5)
+
+        x_k = np.array([])
+        y_k = np.array([])
+        for it_ in xrange(it_0, it_1):
+            x_ = np.arange(it_ * self.params['t_iteration'], (it_ + 1) * self.params['t_iteration'])
+            y_ = K_vec[it_] * np.ones(self.params['t_iteration'])
+            if K_vec[it_] > 0:
+                c = 'g'
+            elif K_vec[it_] < 0:
+                c = 'r'
+            else:
+                c = 'k'
+            ax3.plot(x_, y_, c=c, lw=5)
+
+
         ax3.set_xlim((it_0 * self.params['t_iteration'], it_1 * self.params['t_iteration']))
         ylim_ax3 = (-np.max(np.abs(K_vec)) * 1.05, np.max(np.abs(K_vec)) * 1.05)
         ax3.set_ylim(ylim_ax3)

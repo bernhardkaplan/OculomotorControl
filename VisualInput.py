@@ -104,11 +104,12 @@ class VisualInput(object):
         test_stim_params = np.zeros((self.params['n_stim_testing'], 4))
         test_stim_params[:, 1] = .5
         for i_stim in xrange(self.params['n_stim_testing']):
-            pm = utils.get_plus_minus(self.RNG)
-            if pm > 0:
-                test_stim_params[i_stim, 0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
-            else:
-                test_stim_params[i_stim, 0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
+            test_stim_params[i_stim, 0] = np.random.uniform(0., 1.)
+            #pm = utils.get_plus_minus(self.RNG)
+            #if pm > 0:
+                #test_stim_params[i_stim, 0] = np.random.uniform(.5 + self.params['center_stim_width'], 1.)
+            #else:
+                #test_stim_params[i_stim, 0] = np.random.uniform(0, .5 - self.params['center_stim_width'])
             test_stim_params[i_stim, 2] = self.RNG.uniform( -self.params['v_max_tp'], self.params['v_max_tp'])
 
         output_fn = self.params['testing_sequence_fn']
@@ -797,7 +798,7 @@ class VisualInput(object):
                     tuning_prop[index, 0] += self.RNG_tp.normal(.0, self.params['sigma_rf_pos'] / 2) # add some extra noise to the neurons representing the fovea (because if their noise is only a percentage of their distance from the center, it's too small
                     tuning_prop[index, 0] = tuning_prop[index, 0] % 1.0
                     tuning_prop[index, 1] = 0.5 # i_RF / float(n_rf_x) # y-pos 
-                    tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * np.random.randn())
+                    tuning_prop[index, 2] = rho * (1. + self.params['sigma_rf_speed'] * self.RNG_tp.randn())
                     tuning_prop[index, 3] = 0. 
                     self.rf_sizes[index, 0] = rf_sizes_x[i_RF]
                     self.rf_sizes[index, 2] = rf_sizes_v[i_v_rho]

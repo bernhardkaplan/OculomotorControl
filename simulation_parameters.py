@@ -52,6 +52,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
+        self.n_actions = 13
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
@@ -107,7 +108,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         if self.params['training']:
             self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         else:
-            self.params['t_iteration'] = 15.   # [ms] stimulus integration time, after this time the input stimulus will be updated
+            self.params['t_iteration'] = 25.   # [ms] stimulus integration time, after this time the input stimulus will be updated
         self.params['n_iterations_RBL_training'] = 2 # one noise at the beginning, one after stimulus, one after training
         self.params['n_silent_iterations'] = 2
         if self.params['training']:
