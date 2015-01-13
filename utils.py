@@ -166,7 +166,7 @@ def get_sigmoid_params(params, x_pre, v_stim):
 #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
 #    c *= abs_speed_factor
 
-    best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
+    best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + params['reward_tolerance']
     tolerance = params['reward_tolerance']
     c_range = (best_case, tolerance)
 #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
