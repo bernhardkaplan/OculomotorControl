@@ -52,7 +52,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['total_num_virtual_procs'] = 96
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-        self.n_actions = 13
+        self.n_actions = 17
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
@@ -449,6 +449,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.K = 0.
         self.params['pos_kappa'] = 2.
         self.params['neg_kappa'] = -2. # for the nonoptimal decision
+        self.params['k_range'] = [1000., 1000.]
 
         # gain parameters
         if self.params['training']:
