@@ -66,10 +66,10 @@ if __name__ == '__main__':
 
     K_max = params['pos_kappa']
     K_min = params['neg_kappa']
-    stim_speeds = [-1.5, -.1, 1.]
+    stim_speeds = [-1.5, -.1, 1.1]
 
 #    x_pre_range = [0.05, 0.2, 0.5]
-    x_pre_range = [0.00, 0.2, 0.5]
+    x_pre_range = [0.01, 0.2, 0.5]
     linecolors = ['b', 'g', 'r', 'k']
     n_curves = len(x_pre_range)
 
@@ -246,7 +246,8 @@ if __name__ == '__main__':
 #        c *= abs_speed_factor
 
 
-        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
+#        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
+        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + params['reward_tolerance']
         tolerance = params['reward_tolerance']
         c_range = (best_case, tolerance)
     #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
