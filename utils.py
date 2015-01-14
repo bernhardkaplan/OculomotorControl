@@ -137,7 +137,8 @@ def get_next_stim(params, stim_params, v_eye):
     """
     Returns the stimulus parameters for a given action (v_eye) in x-direction
     """
-    x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field']
+#    x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field']
+    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
@@ -147,17 +148,41 @@ def get_sigmoid_params(params, x_pre, v_stim):
     Based on the stimulus parameters, return the coefficients / parameters for a sigmoidal
     reward function
     """
+
+    k_ = 40.
+    x_displ = np.abs(x_pre - 0.5)
+
     x_pre_range = (0., 0.5) # absolute displacement
+
+#    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field'] - 0.02
+    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field'] - params['reward_tolerance']
+    worst_case = 0.5 - dx_best
+#    print 'worst case:', worst_case
+    tolerance = params['reward_tolerance']
+    c_range = (worst_case, tolerance)
+
+#    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
+#    c = transform_linear(x_pre, c_range, x_pre_range)
+
+    c_range = (tolerance, worst_case)
+    c = transform_linear(x_displ, c_range, x_pre_range)
+
+#    best_case = x_pre_range[1] - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
+#    best_case = x_displ - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
+
+#    if x_pre <= 0.5:
+#        x_pre_range = (0., 0.5) # absolute displacement
+#    else:
+#        x_pre_range = (0.5, 1.0) # absolute displacement
     
 #    k_range = params['k_range']
     # k_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
     # k_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
 #    tau = transform_quadratic(x_pre, 'neg', k_range, x_pre_range)
 #    tau = transform_linear(x_pre, k_range, x_pre_range)
-    k_ = 1000.
 
-    v_stim_max = 2.
-    abs_speed_factor = transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
+#    v_stim_max = 2.
+#    abs_speed_factor = transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
     # take into account how far the stimulus moves
 #    dx = v_stim * params['t_iteration'] / params['t_cross_visual_field']
 #    c_range = (0.35 - np.sign(v_stim) * dx, 0.05 - np.sign(v_stim) * dx) 
@@ -166,11 +191,23 @@ def get_sigmoid_params(params, x_pre, v_stim):
 #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
 #    c *= abs_speed_factor
 
-    best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + params['reward_tolerance']
-    tolerance = params['reward_tolerance']
-    c_range = (best_case, tolerance)
+#    best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field']
+
+#    best_case = x_pre_range[1] - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
+
+#    best_case = 0.5 - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
+#    best_case = 0.5 - np.abs(v_stim - params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - 0.01 # + params['reward_tolerance']
+#    best_case = 0.5 - np.abs(v_stim - params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - 0.01 # + params['reward_tolerance']
+#    best_case = 0.5 - (v_stim + np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] #+ np.sign(v_stim) * params['reward_tolerance']
+#    best_outcome_in_worstcase = 
+#    tolerance = params['reward_tolerance']
+#    c_range = (best_case, tolerance)
 #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
-    c = transform_linear(x_pre, c_range, x_pre_range)
+
+    # linear transformation
+#    if x_pre > 0.5:
+#        c_range = (tolerance, best_case)
+#    c = transform_linear(x_pre, c_range, x_pre_range)
 
 
 #    c = transform_linear(x_pre, c_range, x_pre_range)

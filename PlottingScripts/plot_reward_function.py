@@ -66,11 +66,21 @@ if __name__ == '__main__':
 
     K_max = params['pos_kappa']
     K_min = params['neg_kappa']
-    stim_speeds = [-1.5, -.1, 1.1]
+#    stim_speeds = [-1.5, 1.5]
+#    stim_speeds = [-0.4]
+#    stim_speeds = [-1.3]
+    v0 = -0.5
+#    stim_speeds = np.arange(v0, v0 + 0.5, 0.1)
+    stim_speeds = np.arange(-1.5, 1.6, 0.1)
+#    print 'stim_speeds)
 
 #    x_pre_range = [0.05, 0.2, 0.5]
-    x_pre_range = [0.01, 0.2, 0.5]
-    linecolors = ['b', 'g', 'r', 'k']
+#    x_pre_range = [0.01, 0.2, 0.5]
+#    x_pre_range = [0.35, 0.65]
+    x_pre_range = np.arange(0., 1.05, 0.05)
+#    x_pre_range = np.arange(0.5, 1.05, 0.10)
+#    x_pre_range = [0., 1.0]
+    linecolors = ['b', 'g', 'r', 'k', 'c', 'y', 'orange', 'magenta', 'darkblue', 'lightgray', 'olive', 'sandybrown', 'pink', 'darkcyan']
     n_curves = len(x_pre_range)
 
     action_idx = range(params['n_actions'])
@@ -104,26 +114,21 @@ if __name__ == '__main__':
         ls = '-'
         lw = 3
         for i_, x_pre_action in enumerate(x_pre_range): 
-            print '\n\tNew x_pre_action: %.1f' % (x_pre_action)
+#            print '\n\tNew x_pre_action: %.1f' % (x_pre_action)
             c, tau = utils.get_sigmoid_params(params, x_pre_action, v_stim)
+#            print 'debug sigmoid params for v_stim %.1f, x_pre_action=%.1f' % (v_stim, x_pre_action), c, tau
             y = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x - x_center), a, b, c, d, tau)
 #            label_txt = '$\\tau=%.1f, c=%.2f, x_{stim}^{pre action}=%.1f v_{stim}=%.1f$ ' % (tau, c, x_pre_action, v_stim)
             label_txt = '$v_{stim}=%.1f\ \\tau=%.1f\ c=%.2f$' % (v_stim, tau, c)
             label_txt = '$v_{stim}=%.1f$' % (v_stim)
             if n_curves > 1:
 #                color = rgba_colors[i_]
-                color = linecolors[i_]
+                color = linecolors[i_ % len(linecolors)]
             else:
                 color = 'b'
-#            ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)])
-#            ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)], label=label_txt)
-            p, = ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)])
 
+            p, = ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)]) # straight line
             stim_params = (x_pre_action, .5, v_stim, .0)
-
-#            x_post_action = np.zeros(params['n_actions'])
-#            for i_a in xrange(params['n_actions']):
-#                x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a])[0]
 
             x_post_action = np.zeros(n_actions_to_plot)
             for i_a in xrange(n_actions_to_plot):
@@ -131,7 +136,7 @@ if __name__ == '__main__':
 
                 R = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x_post_action[i_a] - x_center), a, b, c, d, tau)
                 if R > 0:
-                    print '\tPos reward R=%.1e\tfor v_stim %.1f\tx_pre: %1f\taction %d (%.1f) --> x_post: %.1f' % (R, v_stim, x_pre_action, i_a, actions_v[i_a], x_post_action[i_a])
+#                    print '\tPos reward R=%.1e\tfor v_stim %.1f\tx_pre: %1f\taction %d (%.1f) --> x_post: %.1f' % (R, v_stim, x_pre_action, i_a, actions_v[i_a], x_post_action[i_a])
                     n_pos_reward[i_stim, i_] += 1
                 elif R <= 0:
                     n_neg_reward[i_stim, i_] += 1
@@ -185,7 +190,7 @@ if __name__ == '__main__':
     ax1.set_ylabel('Reward')
     ax1.set_title('Reward function based on sigmoidals')
 
-    ax1.set_xlim((-0.2, 0.9))
+#    ax1.set_xlim((-0.2, 0.9))
     ax1.set_ylim((K_min - 0.1, K_max + 0.1))
     ylim = ax1.get_ylim()
     xlim = ax1.get_xlim()
@@ -203,7 +208,8 @@ if __name__ == '__main__':
 
 
     # TAU vs x
-    x_pre_range = np.linspace(0., 0.5, 100)
+#    x_pre_range = np.linspace(0., 0.5, 100)
+    x_pre_range = np.linspace(0., 1.0, 500)
 #    x_pre_range = (0., 0.5) # absolute displacement
     k_range = params['k_range']
     # k_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
@@ -225,16 +231,26 @@ if __name__ == '__main__':
 
     # take into account how far the stimulus moves
     v_stim_max = 2.
-    stim_speeds = [-1.5, -.1, 1.0]
     linestyles = ['-', ':', '--', '-.']
 
     for i_v, v_stim in enumerate(stim_speeds):
+
+        c_curve = np.zeros(x_pre_range.size)
+
+        for i_x in xrange(x_pre_range.size):
+
+            c, k_ = utils.get_sigmoid_params(params, x_pre_range[i_x], v_stim)
+            c_curve[i_x] = c
+
 #        abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
 
 
-        dx = 20 * v_stim * params['t_iteration'] / params['t_cross_visual_field']
+#        dx = 20 * v_stim * params['t_iteration'] / params['t_cross_visual_field']
 #        c_range = (0.5 - np.sign(v_stim) * dx, 0.02 - np.sign(v_stim) * dx) 
+
 #        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field']
+#        best_case = 0.5 - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
+
 #        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
 #        tolerance = params['reward_tolerance']
 #        c_range = (best_case, tolerance)
@@ -247,13 +263,14 @@ if __name__ == '__main__':
 
 
 #        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
-        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + params['reward_tolerance']
-        tolerance = params['reward_tolerance']
-        c_range = (best_case, tolerance)
-    #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
-        c = utils.transform_linear(x_pre_range, c_range)
+#        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field']# + params['reward_tolerance']
+#        best_case = 0.5 - (np.sign(v_stim) * params['v_max_out'] - v_stim) * params['t_iteration'] / params['t_cross_visual_field'] #+ np.sign(v_stim) * params['reward_tolerance']
+#        tolerance = params['reward_tolerance']
+#        c_range = (best_case, tolerance)
+#        c = utils.transform_quadratic(x_pre_range, 'pos', c_range)
+#        c = utils.transform_linear(x_pre_range, c_range)
 
-        ax3.plot(x_pre_range, c, ls=linestyles[i_v], label='$v_{stim}=%.1f$' % v_stim, color='k')
+        ax3.plot(x_pre_range, c_curve, ls=linestyles[i_v % len(linestyles)], label='$v_{stim}=%.1f$' % v_stim, color='k')
 
     ax3.set_ylabel('$c\ (x_{pre}, v_{stim})$')
     ax3.set_xlabel('$x_{pre}$')
@@ -262,4 +279,5 @@ if __name__ == '__main__':
     output_fn = 'reward_function.png'
     print 'Saving figure to:', output_fn
     pylab.savefig(output_fn, dpi=200)
+    print 'stim_speeds:', stim_speeds
     pylab.show()

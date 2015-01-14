@@ -54,7 +54,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['delay_output'] = 70.
         self.params['n_rf'] = 40
         self.params['n_v'] = 40
-        self.n_actions = 13
+        self.n_actions = 17
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['reward_tolerance'] = 0.05
         self.params['continue_training'] = True
