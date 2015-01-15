@@ -365,7 +365,7 @@ class VisualInput(object):
         return mp_training 
 
 
-    def compute_input(self, local_gids, v_eye, use_additive_beta=True):
+    def compute_input(self, local_gids, v_eye):
         """
         Integrate the real world trajectory and the eye direction and compute spike trains from that.
 
@@ -378,7 +378,7 @@ class VisualInput(object):
 #        self.trajectory, supervisor_state = self.update_stimulus_trajectory_new(v_eye)
         self.trajectory, supervisor_state = self.update_stimulus_trajectory_static(v_eye) # motion_params update is done in update_stimulus_trajectory_static
         local_gids = np.array(local_gids) - 1 # because PyNEST uses 1-aligned GIDS 
-        self.create_spike_trains_for_trajectory(local_gids, self.trajectory, use_additive_beta=use_additive_beta)
+        self.create_spike_trains_for_trajectory(local_gids, self.trajectory)
         return self.stim, supervisor_state
 
 
@@ -518,7 +518,7 @@ class VisualInput(object):
 
 
 
-    def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False, use_additive_beta=False):
+    def create_spike_trains_for_trajectory(self, local_gids, trajectory, save_rate_files=False):
         """
         Arguments:
         local_gids -- list of gids for which a stimulus shall be created
@@ -536,12 +536,12 @@ class VisualInput(object):
             y_stim = trajectory[1][i_time]
             motion_params = (x_stim, y_stim, self.current_motion_params[2], self.current_motion_params[3])
             # get the envelope of the Poisson process for this timestep
-            if use_additive_beta:
-                L_input[:, i_time] = self.get_input_additive_blur(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
-                        self.params['blur_X'], self.params['blur_V']) 
-            else:
-                L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
-                        self.params['blur_X'], self.params['blur_V']) 
+#            if use_additive_beta:
+            L_input[:, i_time] = self.get_input_additive_blur(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
+                    self.params['blur_X'], self.params['blur_V']) 
+#            else:
+#                L_input[:, i_time] = self.get_input_new(self.tuning_prop_exc[local_gids, :], self.rf_sizes[local_gids, 0], self.rf_sizes[local_gids, 2], motion_params, \
+#                        self.params['blur_X'], self.params['blur_V']) 
             L_input[:, i_time] *= self.params['f_max_stim']
 #            L_input[:, i_time] = self.get_input(self.tuning_prop_exc[local_gids, :], motion_params) 
 
@@ -602,13 +602,14 @@ class VisualInput(object):
         if self.params['n_grid_dimensions'] == 2:
             d_ij = visual_field_distance2D_vec(tuning_prop[:, 0], x_stim * np.ones(n_cells), tuning_prop[:, 1], y_stim * np.ones(n_cells))
             L = np.exp(-.5 * (d_ij)**2 / (rfs_x * blur_x)**2 \
-                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v * blur_v))**2
-                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (np.sqrt(rfs_v * blur_v))**2)
+                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v * blur_v)
+                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (rfs_v * blur_v))
         else:
             d_ij = np.abs(tuning_prop[:, 0] - x_stim)
             L = np.exp(-.5 * (d_ij)**2 / (np.sqrt(rfs_x * blur_x))**2 \
-                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v * blur_v))**2)
+                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v * blur_v)**2)
         return L
+
 
     def get_input_additive_blur(self, tuning_prop, rfs_x, rfs_v, motion_params, blur_x, blur_v):
         """
@@ -625,12 +626,12 @@ class VisualInput(object):
         if self.params['n_grid_dimensions'] == 2:
             d_ij = visual_field_distance2D_vec(tuning_prop[:, 0], x_stim * np.ones(n_cells), tuning_prop[:, 1], y_stim * np.ones(n_cells))
             L = np.exp(-.5 * (d_ij)**2 / (rfs_x + blur_x)**2 \
-                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v + blur_v))**2
-                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (np.sqrt(rfs_v + blur_v))**2)
+                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v + blur_v)**2
+                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (rfs_v + blur_v)**2)
         else:
             d_ij = np.abs(tuning_prop[:, 0] - x_stim)
             L = np.exp(-.5 * (d_ij)**2 / (np.sqrt(rfs_x + blur_x))**2 \
-                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (np.sqrt(rfs_v + blur_v))**2)
+                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v + blur_v)**2)
         return L
 
 

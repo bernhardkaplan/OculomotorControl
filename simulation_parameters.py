@@ -56,7 +56,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_v'] = 50
         self.blur_x = 0.0
         self.blur_v = 0.0
-        self.n_actions = 17
+        self.n_actions = 15
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['reward_tolerance'] = 0.05
         self.params['continue_training'] = True
@@ -237,7 +237,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # input parameters
         self.params['w_input_exc_mpn'] = 15. #30. # [nS]
         self.params['w_trigger_spikes_mpn'] = 30.
-        self.params['f_max_stim'] = 2000.       # [Hz] Max rate of the inhomogenous Poisson process
+        self.params['f_max_stim'] = 1000.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
         #                  .05  .05     5000    100
