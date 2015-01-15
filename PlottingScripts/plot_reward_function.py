@@ -67,11 +67,14 @@ if __name__ == '__main__':
 
     K_max = params['pos_kappa']
     K_min = params['neg_kappa']
+
 #    stim_speeds = [-1.5, 0., 1.5]
     stim_speeds = np.arange(-1.5, 1.6, 0.1)
+#    stim_speeds = [0., -.5, -1.49]
 
-#    x_pre_range = [0.05, 0.2, 0.5]
-    x_pre_range = [0., 1.0]
+#    x_pre_range = [0.5]
+
+#    x_pre_range = [0., 1.0]
     x_pre_range = np.arange(0., 1.05, 0.05)
 #    x_pre_range = np.arange(0.5, 1.05, 0.10)
     linecolors = ['b', 'g', 'r', 'k', 'c', 'y', 'orange', 'magenta', 'darkblue', 'lightgray', 'olive', 'sandybrown', 'pink', 'darkcyan']
@@ -103,22 +106,24 @@ if __name__ == '__main__':
         for i_, x_pre_action in enumerate(x_pre_range): 
 
             # the stimulus is actually at a different position when the perception stimulus reaches the cortex
-            x_pre_action -= v_stim * params['delay_input'] / params['t_cross_visual_field']
-            c, tau = utils.get_sigmoid_params(params, x_pre_action, v_stim)
+            x_pre_action_with_delay = x_pre_action - v_stim * params['delay_input'] / params['t_cross_visual_field']
+            c, tau = utils.get_sigmoid_params(params, x_pre_action_with_delay, v_stim)
 
             y = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x - x_center), a, b, c, d, tau)
-            label_txt = '$v_{stim}=%.1f\ \\tau=%.1f\ c=%.2f$' % (v_stim, tau, c)
-            label_txt = '$v_{stim}=%.1f$' % (v_stim)
+#            label_txt = '$v_{stim}=%.1f\ \\tau=%.1f\ c=%.2f$' % (v_stim, tau, c)
+#            label_txt = '$v_{stim}=%.1f$' % (v_stim)
             color = linecolors[i_ % len(linecolors)]
 
-            p, = ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)]) # straight line
+            ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)]) # straight line
             stim_params = (x_pre_action, .5, v_stim, .0)
+            stim_params_evaluation = (x_pre_action_with_delay, stim_params[1], stim_params[2], stim_params[3]) # the reward function 'knows' that a delay_input exists
 
             x_post_action = np.zeros(n_actions_to_plot)
             for i_a in xrange(n_actions_to_plot):
-                x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a])[0]
+                x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a])[0] # the next stimulus position takes into account both delay_input and delay_output
 
-                R = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x_post_action[i_a] - x_center), a, b, c, d, tau)
+#                R = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x_post_action[i_a] - x_center), a, b, c, d, tau)
+                R = utils.get_reward_sigmoid(x_post_action[i_a], stim_params_evaluation, params)  # the reward function needs to operate on the updated positions, taking into account both delay_input, delay_output
 
                 if R > 0:
 #                    print '\tPos reward R=%.1e\tfor v_stim %.1f\tx_pre: %1f\taction %d (%.1f) --> x_post: %.1f' % (R, v_stim, x_pre_action, i_a, actions_v[i_a], x_post_action[i_a])
@@ -126,16 +131,19 @@ if __name__ == '__main__':
                 elif R <= 0:
                     n_neg_reward[i_stim, i_] += 1
 #                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker='o', ls=linestyles[i_stim % len(linestyles)], markersize=12, mfc=color, color=color)#, lw=2)
-                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, ls=linestyles[i_stim % len(linestyles)], color=color)#, lw=2)
+
+                ax1.plot((x_pre_action_with_delay, x_post_action[i_a]), (0., R), alpha=0.4, ls=linestyles[i_stim % len(linestyles)], color=color)#, lw=2)
+
 #                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker=markers[i_stim % len(markers)], ls=linestyles[i_stim % len(linestyles)], markersize=10, markeredgewidth=1, mfc=color, color=color, lw=2)
                 ax1.plot(x_post_action[i_a], R, marker='o', markersize=10, mfc=color)
-                ax1.plot(x_pre_action, 0., marker='D', markersize=15, mfc=color, markeredgewidth=1)
+                p, = ax1.plot(x_pre_action_with_delay, 0., marker='D', markersize=15, mfc=color, markeredgewidth=1)
+                ax1.plot(x_pre_action, 0., marker='*', markersize=20, mfc=color, markeredgewidth=1)
 
                 # relative error
 #                R_rel = (np.abs(x_pre_action - 0.5) - np.abs(x_post_action[i_a] - 0.5))/ np.abs(x_pre_action - 0.5)
 #                ax1.plot((x_pre_action, x_post_action[i_a]), (0, R_rel), marker='*', markersize=25, color=color, mfc=color, markeredgewidth=1)
 
-
+        label_txt = '$x_{pre}^{with input delay}$'
         plots.append(p)
         labels.append(label_txt)
 #                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=1.0, marker='*', ls=linestyles[i_stim % len(linestyles)], markersize=20, markeredgewidth=1, mfc=color, color=color, lw=2)
@@ -171,7 +179,7 @@ if __name__ == '__main__':
     print 'Stimuli that got rewarded too little:\n', np.array(problematic_stimuli_hard)
      
 #    ax1.legend(loc='upper left')
-#    ax1.legend((labels), loc='upper left')
+    ax1.legend((labels), loc='upper left')
     ax1.set_xlabel('Stimulus position before $x_{pre}$ and after $x\'$ action')
     ax1.set_ylabel('Reward')
     ax1.set_title('Reward function based on sigmoidals')
@@ -202,7 +210,7 @@ if __name__ == '__main__':
     k = k_range[0]
 
     ax2.set_title('Sigmoid parameters')
-    ax2.set_ylabel('$\\tau\ (x_{pre})$')
+#    ax2.set_ylabel('Speed-tolerance-increase')
     ax2.set_xlabel('$x_{pre}$')
 #    ax2.plot(x_pre_range, tau)
     ax2.plot((x_pre_range[0], x_pre_range[-1]), k_range)
@@ -225,34 +233,6 @@ if __name__ == '__main__':
             c, k_ = utils.get_sigmoid_params(params, x_pre_range[i_x], v_stim)
             c_curve[i_x] = c
 
-#        abs_speed_factor = utils.transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
-
-
-#        dx = 20 * v_stim * params['t_iteration'] / params['t_cross_visual_field']
-#        c_range = (0.5 - np.sign(v_stim) * dx, 0.02 - np.sign(v_stim) * dx) 
-
-#        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field']
-#        best_case = 0.5 - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
-
-#        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
-#        tolerance = params['reward_tolerance']
-#        c_range = (best_case, tolerance)
-
-        # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
-        # c_raneg[1] --> determines tolerance for giving reward near center
-#        c = utils.transform_quadratic(x_pre_range, 'pos', c_range)
-#        abs_speed_factor = np.abs(v_stim)
-#        c *= abs_speed_factor
-
-
-#        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] + 0.01
-#        best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field']# + params['reward_tolerance']
-#        best_case = 0.5 - (np.sign(v_stim) * params['v_max_out'] - v_stim) * params['t_iteration'] / params['t_cross_visual_field'] #+ np.sign(v_stim) * params['reward_tolerance']
-#        tolerance = params['reward_tolerance']
-#        c_range = (best_case, tolerance)
-#        c = utils.transform_quadratic(x_pre_range, 'pos', c_range)
-#        c = utils.transform_linear(x_pre_range, c_range)
-
         ax3.plot(x_pre_range, c_curve, ls=linestyles[i_v % len(linestyles)], label='$v_{stim}=%.1f$' % v_stim, color='k')
 
     ax3.set_ylabel('$c\ (x_{pre}, v_{stim})$')
@@ -263,4 +243,4 @@ if __name__ == '__main__':
     print 'Saving figure to:', output_fn
     pylab.savefig(output_fn, dpi=200)
     print 'stim_speeds:', stim_speeds
-    pylab.show()
+#    pylab.show()

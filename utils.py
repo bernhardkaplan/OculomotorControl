@@ -163,7 +163,12 @@ def get_sigmoid_params(params, x_pre, v_stim):
     dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field']
     worst_case = 0.5 - dx_best
 #    print 'worst case:', worst_case
-    tolerance = params['reward_tolerance']
+
+    v_stim_max = 1.5
+    multiplicator_range = [1., 2.0]  # factor range with which the tolerance interval will be increased
+    abs_speed_factor = transform_linear(np.abs(v_stim), multiplicator_range, [0., v_stim_max])
+    
+    tolerance = abs_speed_factor * params['reward_tolerance']
     c_range = (worst_case, tolerance)
 
 #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
@@ -171,51 +176,6 @@ def get_sigmoid_params(params, x_pre, v_stim):
 
     c_range = (tolerance, worst_case)
     c = transform_linear(x_displ, c_range, x_pre_range)
-
-#    best_case = x_pre_range[1] - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
-#    best_case = x_displ - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
-
-#    if x_pre <= 0.5:
-#        x_pre_range = (0., 0.5) # absolute displacement
-#    else:
-#        x_pre_range = (0.5, 1.0) # absolute displacement
-    
-#    k_range = params['k_range']
-    # k_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
-    # k_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
-#    tau = transform_quadratic(x_pre, 'neg', k_range, x_pre_range)
-#    tau = transform_linear(x_pre, k_range, x_pre_range)
-
-#    v_stim_max = 2.
-#    abs_speed_factor = transform_linear(np.abs(v_stim), [0.5, 1.], [0., v_stim_max])
-    # take into account how far the stimulus moves
-#    dx = v_stim * params['t_iteration'] / params['t_cross_visual_field']
-#    c_range = (0.35 - np.sign(v_stim) * dx, 0.05 - np.sign(v_stim) * dx) 
-    # c_range --> determines the transition point from neg->pos reward (exactly if |K_min| == K_max)
-    # c_raneg[1] --> determines tolerance for giving reward near center
-#    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
-#    c *= abs_speed_factor
-
-#    best_case = 0.5 - (v_stim + params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field']
-
-#    best_case = x_pre_range[1] - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
-
-#    best_case = 0.5 - (v_stim - np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - np.sign(x_pre - 0.5) * 0.01 # + params['reward_tolerance']
-#    best_case = 0.5 - np.abs(v_stim - params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - 0.01 # + params['reward_tolerance']
-#    best_case = 0.5 - np.abs(v_stim - params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] - 0.01 # + params['reward_tolerance']
-#    best_case = 0.5 - (v_stim + np.sign(v_stim) * params['v_max_out']) * params['t_iteration'] / params['t_cross_visual_field'] #+ np.sign(v_stim) * params['reward_tolerance']
-#    best_outcome_in_worstcase = 
-#    tolerance = params['reward_tolerance']
-#    c_range = (best_case, tolerance)
-#    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
-
-    # linear transformation
-#    if x_pre > 0.5:
-#        c_range = (tolerance, best_case)
-#    c = transform_linear(x_pre, c_range, x_pre_range)
-
-
-#    c = transform_linear(x_pre, c_range, x_pre_range)
     return c, k_
 
 
@@ -244,6 +204,7 @@ def get_reward_sigmoid(x_new, stim_params, params):
     c, tau = get_sigmoid_params(params, stim_params[0], stim_params[2])
     R = K_max - (K_max - K_min) * sigmoid(np.abs(x_new - x_center), a, b, c, d, tau)
     return R
+
 
     """
 def get_reward_gauss()
@@ -1083,3 +1044,13 @@ def transform_quadratic(x, a, y_range, x_range=None):
     alpha = (y0 - vertex[1]) / (x0 - vertex[0])**2
     f_x = alpha * (x - vertex[0])**2 + vertex[1]
     return f_x
+
+def save_spike_trains(params, iteration, stim_list, gid_list):
+    assert (len(stim_list) == len(gid_list))
+    n_units = len(stim_list)
+    fn_base = params['input_st_fn_mpn']
+    for i_, nest_gid in enumerate(gid_list):
+        if len(stim_list[i_]) > 0:
+            fn = fn_base + '%d_%d.dat' % (iteration, nest_gid - 1)
+            np.savetxt(fn, stim_list[i_])
+

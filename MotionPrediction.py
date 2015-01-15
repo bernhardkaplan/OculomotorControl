@@ -278,32 +278,3 @@ class MotionPrediction(object):
         idx_in_mc = (gid - 1) - mc_idx * self.params['n_exc_per_mc']
         return mc_idx, idx_in_mc
 
-        # with hypercolumns:
-#        n_per_hc = self.params['n_mc_per_hc'] * self.params['n_exc_per_mc']
-#        mc_idx = (gid - 1) / self.params['n_exc_per_mc']
-#        hc_idx = (gid - 1) / n_per_hc
-#        mc_idx_in_hc = mc_idx - hc_idx * self.params['n_mc_per_hc']
-#        idx_in_mc = (gid - 1) - mc_idx * self.params['n_exc_per_mc']
-
-#        return hc_idx, mc_idx_in_hc, idx_in_mc
-
-
-#    def create_dummy_network(self):
-
-#        cell_params = self.params['cell_params_exc_mpn'].copy()
-
-#        for state in xrange(self.params['n_states']):
-#            pop = nest.Create(self.params['neuron_model_mpn'], self.params['n_exc_per_mc'], params=cell_params)
-#            self.list_of_populations.append(pop)
-#            self.local_idx_exc += self.get_local_indices(pop) # get the GIDS of the neurons that are local to the process
-
-#        self.n_local_exc = len(self.local_idx_exc)
-#        self.stimulus = nest.Create('spike_generator', self.n_local_exc)
-#        for i_ in xrange(self.n_local_exc):
-#            gid = self.local_idx_exc[i_]
-#            mc_idx = (gid - 1) / self.params['n_exc_per_mc']
-#            idx_in_mc = (gid - 1) - mc_idx * self.params['n_exc_per_mc']
-#            nest.Connect([self.stimulus[i_]], [self.list_of_populations[mc_idx][idx_in_mc]], model='input_exc_0')
-
-#        self.spike_times_container = [ [] for i in xrange(len(self.local_idx_exc))]
-

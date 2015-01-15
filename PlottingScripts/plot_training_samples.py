@@ -120,8 +120,8 @@ class Plotter(object):
             training_stim_fn = self.params['training_stimuli_fn']
         print 'Loading training stimuli from:', training_stim_fn
         d = np.loadtxt(training_stim_fn)
-        VI = VisualInput.VisualInput(params)
-        BG = BasalGanglia.BasalGanglia(params, dummy=True)
+        VI = VisualInput.VisualInput(self.params)
+        BG = BasalGanglia.BasalGanglia(self.params, dummy=True)
         supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(d, BG)
         self.mp_training = d
 
