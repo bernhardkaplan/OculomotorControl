@@ -11,7 +11,7 @@ import utils
 import re
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import pylab
 import simulation_parameters
 import matplotlib
@@ -528,7 +528,7 @@ class MetaAnalysisClass(object):
     different plot functions are called
     """
 
-    def __init__(self, argv, plot_training_folder=None):
+    def __init__(self, argv, plot_training_folder=None, show=False):
         print 'Argv:', len(argv), argv
         stim_range = None
 
@@ -581,6 +581,8 @@ class MetaAnalysisClass(object):
             # do the same operation for many folders
             self.run_analysis_for_folders(argv[1:], training_params=training_params, stim_range=stim_range)
 
+        if show:
+            pylab.show()
 
     def run_xdisplacement_analysis(self, params, stim_range):
         Plotter = ActivityPlotter(params)#, it_max=1)

@@ -48,6 +48,8 @@ def create_stimuli_along_a_trajectory(params):
     """
     For all params in stim_params_start, create a trajectory with params['n_steps_training_trajectory']
     """
+    assert params['n_steps_training_trajectory'] > 1, 'If n_steps_training_trajectory == 1: please use another function'
+
     VI = VisualInput.VisualInput(params)
     stim_params_grid = VI.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
 
@@ -57,13 +59,11 @@ def create_stimuli_along_a_trajectory(params):
 
     stim_params_start = stim_params_grid[shuffled_idx, :]
 
-    print 'debug stim_params_start', stim_params_start
-    print 'debug stim_params_start', stim_params_start.shape
+#    print 'debug stim_params_start', stim_params_start
+#    print 'debug stim_params_start', stim_params_start.shape
     BG = BasalGanglia.BasalGanglia(params, dummy=True)
     output_array = np.zeros((n_stim * params['n_steps_training_trajectory'], 4))
     for i_stim in xrange(n_stim):
-
-        print 'debug', i_stim
         [x, y, u, v] = stim_params_start[i_stim, :]
         for it_ in xrange(params['n_steps_training_trajectory'] - 1):
             output_array[i_stim * params['n_steps_training_trajectory'] + it_, :] = [x, y, u, v]
@@ -155,10 +155,15 @@ if __name__ == '__main__':
     BG = BasalGanglia.BasalGanglia(params, dummy=True)
 
 
-    training_stimuli = create_stimuli_along_a_trajectory(params)
-#    training_stimuli = create_stimuli_from_grid_center_and_tuning_prop(params)
-
 #    training_stimuli = create_non_overlapping_training_stimuli(params)
+    if params['n_steps_training_trajectory'] > 1:
+        training_stimuli = create_stimuli_along_a_trajectory(params)
+    else:
+        VI = VisualInput.VisualInput(params)
+        tp = VI.set_tuning_prop_1D_with_const_fovea(cell_type='exc')
+        training_stimuli = create_stimuli_from_grid_center_and_tuning_prop(params)
+#        training_stimuli = VI.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
+
 
     print 'debug', training_stimuli
     print 'Debug saving training_stimuli to:', params['training_stimuli_fn']
@@ -184,7 +189,7 @@ if __name__ == '__main__':
 #    np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
 
 
-    n_bins = params['n_actions'] - 1
+    n_bins = params['n_actions']
     cnt, bins = np.histogram(action_indices, bins=n_bins, range=(np.min(action_indices), np.max(action_indices)))
     idx_never_done = np.nonzero(cnt == 0)[0]
     print 'Actions never done:', idx_never_done
@@ -197,12 +202,16 @@ if __name__ == '__main__':
     ax1.set_xlim((0, params['n_actions']))
 
     Plotter = Plotter(params)#, it_max=1)
-#    Plotter.plot_training_sample_space(plot_process=False, motion_params_fn=params['training_stimuli_fn'])
+#    ax = Plotter.plot_precomputed_actions(plot_cells=True, n_samples_to_plot=params['n_stim'])
+#    plot_stim_after_action(params, training_stimuli, ax=ax)
+
+    Plotter.plot_training_sample_space(plot_process=False, motion_params_fn=params['training_stimuli_fn'])
 #    output_fn = params['figures_folder'] + 'training_stimuli.png'
 #    pylab.savefig(output_fn, dpi=200)
-    ax = Plotter.plot_precomputed_actions(plot_cells=True, n_samples_to_plot=params['n_stim'])
+
+#    ax = Plotter.plot_precomputed_actions(plot_cells=True, n_samples_to_plot=params['n_stim'])
 #    ax = None
-    plot_stim_after_action(params, training_stimuli, ax=ax)
+#    plot_stim_after_action(params, training_stimuli, ax=ax)
 
 
 #    Plotter.plot_training_sample_space(plot_process=True)

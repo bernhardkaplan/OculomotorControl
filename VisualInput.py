@@ -272,7 +272,11 @@ class VisualInput(object):
 #        v_lim_frac = 1.
 #        x_lim = ((1. - x_lim_frac) * (self.params['x_max_tp'] - self.params['x_min_tp']), x_lim_frac * self.params['x_max_tp'])
 #        v_lim = (- v_lim_frac * (self.params['v_max_tp'] - self.params['v_min_tp']), v_lim_frac * self.params['v_max_tp'])
-        x_lim = ((1. - x_lim_frac) * (np.max(self.tuning_prop_exc[:, 0]) - np.min(self.tuning_prop_exc[:, 0])), x_lim_frac * np.max(self.tuning_prop_exc[:, 0]))
+        # previously used:
+#        x_lim = ((1. - x_lim_frac) * (np.max(self.tuning_prop_exc[:, 0]) - np.min(self.tuning_prop_exc[:, 0])), x_lim_frac * np.max(self.tuning_prop_exc[:, 0]))
+        # new 
+        x_lim = (0.5 - x_lim_frac * self.params['x_max_tp'], 0.5 + x_lim_frac * self.params['x_max_tp'])
+    
         v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
 
         if self.params['reward_based_learning']:
@@ -281,8 +285,8 @@ class VisualInput(object):
         else:
             print 'Set params[reward_based_learning] = True!'
             exit(1)
-        x_grid = np.linspace(x_lim[0], x_lim[1], n_training_x)
-        v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
+        x_grid = np.linspace(x_lim[0], x_lim[1], n_training_x, endpoint=True)
+        v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'], endpoint=True)
         training_states_x = range(0, n_training_x)
         training_states_v = range(0, self.params['n_training_v'])
         training_states = []

@@ -127,8 +127,9 @@ class RewardBasedLearning(object):
         ######################################
         # 2   S T I M    P R E S E N T A T I O N 
         #######################################
-        self.VI.current_motion_params = deepcopy(stim_params)
-        self.motion_params.append(deepcopy(stim_params))
+        stim_params_with_delay = stim_params[0] - stim_params[2] * self.params['t_iteration'] / self.params['t_cross_visual_field']
+        self.VI.current_motion_params = deepcopy(stim_params_with_delay)
+        self.motion_params.append(deepcopy(stim_params_with_delay))
         stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.]) # assume a still eye with speed = [0., 0.]
         if params['debug_mpn']:
             print 'Saving spike trains...'
@@ -149,7 +150,7 @@ class RewardBasedLearning(object):
         # For evaluation of the action, shift the stimulus back in time
         # this is the trick: the system knows about delay_input
         # If it was: R = utils.get_reward_sigmoid(new_stim[0], stim_params, params) delay_input would not be taken into account
-        x_pre_action = stim_params[0] - self.params['delay_input'] * stim_params[2] / 1000. 
+        x_pre_action = stim_params_with_delay[0]
         stim_params_evaluation = (x_pre_action, stim_params[1], stim_params[2], stim_params[3]) # the reward function 'knows' that a delay_input exists
         new_stim = utils.get_next_stim(params, stim_params, next_action[0]) # the next stimulus position takes into account both delay_input and delay_output
         R = utils.get_reward_sigmoid(new_stim[0], stim_params_evaluation, params)  # the reward function needs to operate on the updated positions, taking into account both delay_input, delay_output

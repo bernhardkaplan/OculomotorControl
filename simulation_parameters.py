@@ -40,8 +40,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['training'] = True
-        self.params['Cluster'] = True
-        self.params['Cluster_Milner'] = True
+        self.params['Cluster'] = False
+        self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             if self.params['training']:
@@ -56,7 +56,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_v'] = 50
         self.blur_x = 0.0
         self.blur_v = 0.0
-        self.n_actions = 15
+        self.n_actions = 17
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['reward_tolerance'] = 0.05
         self.params['continue_training'] = True
@@ -80,7 +80,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['trained_stimuli'] = []
         self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 30 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -91,12 +91,12 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
 #        else:
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
-        self.params['n_steps_training_trajectory'] = 3
+        self.params['n_steps_training_trajectory'] = 1
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
-        self.params['frac_training_samples_from_grid'] = 1.0
-        self.params['frac_training_samples_center'] = .0 # fraction of training samples drawn from the center
-        self.params['center_stim_width'] = .0 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
+        self.params['frac_training_samples_from_grid'] = 0.8
+        self.params['frac_training_samples_center'] = .2 # fraction of training samples drawn from the center
+        self.params['center_stim_width'] = .05 # width from which the center training samples are drawn OR if reward_based_learning: stimuli positions are sampled from .5 +- center_stim_width
         assert (1.0 >= self.params['frac_training_samples_center'] + self.params['frac_training_samples_from_grid'])
         # to generate the training samples, three methods are used: 1) sampling from the tuning properties, 2) sampling from a grid  3) sampling nearby the center (as these stimuli occur more frequently)
         # then the frac_training_samples_from_grid determines how many training stimuli are taken from the grid sample
@@ -105,8 +105,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #self.params['test_stim_range'] = self.params['test_stim_range'] + [285 + i * 3 for i in xrange(15)] #range(0, 10)
         #self.params['test_stim_range'] = [300 + i * 3 for i in xrange(100)]
         #self.params['test_stim_range'] = [i * 3 for i in xrange(100)]
-        self.params['test_stim_range'] = [0 + i for i in xrange(100)]
-        #self.params['test_stim_range'] = [0, 1]
+#        self.params['test_stim_range'] = [0 + i for i in xrange(100)]
+        self.params['test_stim_range'] = [0, 1]
         #self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
@@ -174,7 +174,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['sim_id'] = 'NEW_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = 'NEW_%d_nactions%d_VA_' % (self.params['t_iteration'], self.n_actions)
+            self.params['sim_id'] = 'NEW_%d_nactions%d_VA_bX%.1f_bV%.1x' % (self.params['t_iteration'], self.n_actions, self.blur_x, self.blur_v)
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
