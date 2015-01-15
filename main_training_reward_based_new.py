@@ -314,6 +314,8 @@ if __name__ == '__main__':
     if comm != None:
         comm.Barrier()
     t0 = time.time()
+    sim_time = params['simulated_time']
+    n_stim_trained = params['n_stim_trained']
 
     ###################
     #    S E T   U P 
@@ -370,7 +372,9 @@ if __name__ == '__main__':
             while (cnt_trial < params['n_max_trials_same_stim']): # independent of rewards
 
                 v_and_action, R = RBL.present_stimulus_and_train(stim_params)
+                n_stim_trained += 1
                 n_training_trials += 1
+                simulated_time += 5 * self.params['t_iteration']
                 trained_action = v_and_action[2]
                 actions_per_stim[i_stim][trained_action] += 1
 
@@ -391,6 +395,8 @@ if __name__ == '__main__':
         np.savetxt(params['data_folder'] + 'unsuccessfully_trained_stimuli.dat', np.array(unsuccessfully_trained_stimuli))
 
     # update the trained_stimuli parameter in the Parameters/simulation_parameters.json file
+    params['n_stim_trained'] = n_stim_trained
+    params['simulated_time'] = simulated_time
     params['n_training_trials'] = n_training_trials
     params['trained_stimuli'] = trained_stimuli
     params['d1_actions_trained'] = d1_actions_trained

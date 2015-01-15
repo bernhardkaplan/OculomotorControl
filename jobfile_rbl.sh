@@ -2,7 +2,7 @@
 # The -l above is required to get the full environment with modules
 
 # The name of the script is myjob
-#SBATCH -J new_rew_fct
+#SBATCH -J 13actions
 
 # Only 1 hour wall-clock time will be given to this job
 #SBATCH -t 03:59:00
@@ -26,7 +26,7 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-aprun -n 240 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py  training_stim_params_3steps300stim.txt  0 > delme_reward_g8_K2_tmp0.5 2>&1
+aprun -n 240 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py  training_stim_params_3steps300stim.txt  0 > delme_13actions  2>&1
 
 #aprun -n 200 -N 40 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py Training__30_temp1.0_nC1__nStim15_0-15_gainD1_0.8_D2_0.8_K2_-2_seeds_111_2 training_stim_params_3steps300stim.txt 15 > delme_reward_g8_K2_continue 2>&1
 

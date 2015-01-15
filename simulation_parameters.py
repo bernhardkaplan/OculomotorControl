@@ -52,11 +52,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['total_num_virtual_procs'] = 96
         self.params['delay_input'] = 80.
         self.params['delay_output'] = 70.
-        self.params['n_rf'] = 40
-        self.params['n_v'] = 40
-        self.n_actions = 13
+        self.params['n_rf'] = 50
+        self.params['n_v'] = 50
         self.blur_x = 0.0
         self.blur_v = 0.0
+        self.n_actions = 17
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['reward_tolerance'] = 0.05
         self.params['continue_training'] = True
@@ -78,7 +78,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 20 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
@@ -155,6 +155,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['dt'] = 0.1            # [ms] simulation time step
         self.params['dt_input_mpn'] = 0.1  # [ms] time step for the inhomogenous Poisson process for input spike train generation
         self.params['dt_volt'] = 0.1       # [ms] time step for volt / multimeter
+        self.params['simulated_time'] = 0. # [ms] will be updated after the simulation
+        self.params['n_stim_trained'] = 0
 
         # the first stimulus parameters
         self.params['initial_state'] = (.8, .5, 0.7, .0)
@@ -439,23 +441,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.tau_j = 1.
         self.tau_e = .1
 #        self.au_p = max(1000., self.params['t_sim'])
-        if self.params['reward_based_learning']:
-            self.tau_p = 200000.
-            # should be n_stim * [time of a stimulus trial], otherwise learned mapping will be forgotten
-        else:
-            self.tau_p = .5 * self.params['t_sim']
+        self.tau_p = 100000.
         self.params['fmax'] = 200.
         self.epsilon = 1. / (self.params['fmax'] * self.tau_p)
-        if self.params['training']:# and not self.params['reward_based_learning']:
+        if self.params['training']:
             self.params['gain'] = 0.
-            if self.params['reward_based_learning']:
-                self.K = 1.
-            else:
-                self.K = 1.
+            self.K = 1.
         else:
             self.K = 0.
-        self.params['pos_kappa'] = 2.
-        self.params['neg_kappa'] = -2. # for the nonoptimal decision
+        self.params['pos_kappa'] = 1.
+        self.params['neg_kappa'] = -1. # for the nonoptimal decision
         self.params['k_range'] = [1000., 1000.]
 
         # gain parameters
