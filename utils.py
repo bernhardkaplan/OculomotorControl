@@ -138,7 +138,11 @@ def get_next_stim(params, stim_params, v_eye):
     Returns the stimulus parameters for a given action (v_eye) in x-direction
     """
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field']
-    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
+#    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
+    x_stim = stim_params[0] + stim_params[2] * (params['delay_input'] + params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
+            - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
+
+
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
 
 
@@ -155,7 +159,8 @@ def get_sigmoid_params(params, x_pre, v_stim):
     x_pre_range = (0., 0.5) # absolute displacement
 
 #    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field'] - 0.02
-    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field'] - params['reward_tolerance']
+#    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field'] - params['reward_tolerance']
+    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field']
     worst_case = 0.5 - dx_best
 #    print 'worst case:', worst_case
     tolerance = params['reward_tolerance']

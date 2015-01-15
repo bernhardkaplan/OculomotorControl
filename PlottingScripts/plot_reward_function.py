@@ -45,6 +45,7 @@ def update_rcParams():
     pylab.rcParams.update(plot_params)
     return plot_params
 
+
 if __name__ == '__main__':
 
     GP = simulation_parameters.global_parameters()
@@ -60,35 +61,21 @@ if __name__ == '__main__':
     plot_params = update_rcParams()
     x_start = .0
     x_stop = 1.0
-    n_x = 1000
+    n_x = 100
     x = np.linspace(x_start, x_stop, n_x)
     x_center = 0.5
 
     K_max = params['pos_kappa']
     K_min = params['neg_kappa']
-#    stim_speeds = [-1.5, 1.5]
-#    stim_speeds = [-0.4]
-#    stim_speeds = [-1.3]
-    v0 = -0.5
-#    stim_speeds = np.arange(v0, v0 + 0.5, 0.1)
+#    stim_speeds = [-1.5, 0., 1.5]
     stim_speeds = np.arange(-1.5, 1.6, 0.1)
-#    print 'stim_speeds)
 
 #    x_pre_range = [0.05, 0.2, 0.5]
-#    x_pre_range = [0.01, 0.2, 0.5]
-#    x_pre_range = [0.35, 0.65]
+    x_pre_range = [0., 1.0]
     x_pre_range = np.arange(0., 1.05, 0.05)
 #    x_pre_range = np.arange(0.5, 1.05, 0.10)
-#    x_pre_range = [0., 1.0]
     linecolors = ['b', 'g', 'r', 'k', 'c', 'y', 'orange', 'magenta', 'darkblue', 'lightgray', 'olive', 'sandybrown', 'pink', 'darkcyan']
     n_curves = len(x_pre_range)
-
-    action_idx = range(params['n_actions'])
-    cmap_actions = matplotlib.cm.copper
-    norm_actions = matplotlib.colors.Normalize(vmin=np.min(action_idx), vmax=np.max(action_idx))#, clip=True)
-    m_actions = matplotlib.cm.ScalarMappable(norm=norm_actions, cmap=cmap_actions)
-    m_actions.set_array(np.arange(np.min(action_idx), np.max(action_idx), .1))
-    rgba_colors_actions = m_actions.to_rgba(action_idx)
 
     linestyles = ['-', ':', '--', '-.']
     markers = ['o', '*', 'D', '^']
@@ -114,18 +101,15 @@ if __name__ == '__main__':
         ls = '-'
         lw = 3
         for i_, x_pre_action in enumerate(x_pre_range): 
-#            print '\n\tNew x_pre_action: %.1f' % (x_pre_action)
+
+            # the stimulus is actually at a different position when the perception stimulus reaches the cortex
+            x_pre_action -= v_stim * params['delay_input'] / params['t_cross_visual_field']
             c, tau = utils.get_sigmoid_params(params, x_pre_action, v_stim)
-#            print 'debug sigmoid params for v_stim %.1f, x_pre_action=%.1f' % (v_stim, x_pre_action), c, tau
+
             y = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x - x_center), a, b, c, d, tau)
-#            label_txt = '$\\tau=%.1f, c=%.2f, x_{stim}^{pre action}=%.1f v_{stim}=%.1f$ ' % (tau, c, x_pre_action, v_stim)
             label_txt = '$v_{stim}=%.1f\ \\tau=%.1f\ c=%.2f$' % (v_stim, tau, c)
             label_txt = '$v_{stim}=%.1f$' % (v_stim)
-            if n_curves > 1:
-#                color = rgba_colors[i_]
-                color = linecolors[i_ % len(linecolors)]
-            else:
-                color = 'b'
+            color = linecolors[i_ % len(linecolors)]
 
             p, = ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)]) # straight line
             stim_params = (x_pre_action, .5, v_stim, .0)
@@ -135,6 +119,7 @@ if __name__ == '__main__':
                 x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a])[0]
 
                 R = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x_post_action[i_a] - x_center), a, b, c, d, tau)
+
                 if R > 0:
 #                    print '\tPos reward R=%.1e\tfor v_stim %.1f\tx_pre: %1f\taction %d (%.1f) --> x_post: %.1f' % (R, v_stim, x_pre_action, i_a, actions_v[i_a], x_post_action[i_a])
                     n_pos_reward[i_stim, i_] += 1
@@ -144,7 +129,12 @@ if __name__ == '__main__':
                 p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, ls=linestyles[i_stim % len(linestyles)], color=color)#, lw=2)
 #                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker=markers[i_stim % len(markers)], ls=linestyles[i_stim % len(linestyles)], markersize=10, markeredgewidth=1, mfc=color, color=color, lw=2)
                 ax1.plot(x_post_action[i_a], R, marker='o', markersize=10, mfc=color)
-                ax1.plot(x_pre_action, 0., marker='*', markersize=25, mfc=color, markeredgewidth=1)
+                ax1.plot(x_pre_action, 0., marker='D', markersize=15, mfc=color, markeredgewidth=1)
+
+                # relative error
+#                R_rel = (np.abs(x_pre_action - 0.5) - np.abs(x_post_action[i_a] - 0.5))/ np.abs(x_pre_action - 0.5)
+#                ax1.plot((x_pre_action, x_post_action[i_a]), (0, R_rel), marker='*', markersize=25, color=color, mfc=color, markeredgewidth=1)
+
 
         plots.append(p)
         labels.append(label_txt)
@@ -177,30 +167,23 @@ if __name__ == '__main__':
                 problematic_stimuli_soft.append((x_pre_action, v_stim))
             print 'Number of positive (negative) rewards = %d (%d)\tfor v_stim %.1f\tx_pre: %1f' % (n_pos_reward[i_stim, i_], n_neg_reward[i_stim, i_], v_stim, x_pre_action)
             print 'Number of positive (negative) rewards = %d (%d)\tfor v_stim %.1f\tx_pre: %1f' % (n_pos_reward[i_stim, i_], n_neg_reward[i_stim, i_], v_stim, x_pre_action)
-    print 'Stimuli that got rewarded too little:\n', np.array(problematic_stimuli_hard)
     print 'Stimuli that got rewarded too often (more than 1, or 6 than times):\n', np.array(problematic_stimuli_soft)
+    print 'Stimuli that got rewarded too little:\n', np.array(problematic_stimuli_hard)
      
-    
-#    ax1.plot((x_center - c[0], x_center - c[0]), (ylim[0], ylim[1]), c='k', ls='--', label = '$c = %.1f$' % c[0])
-#    ax1.plot((x_center - c[1], x_center - c[1]), (ylim[0], ylim[1]), c='k', ls='--', label = '$c = %.1f$' % c[1])
-
 #    ax1.legend(loc='upper left')
 #    ax1.legend((labels), loc='upper left')
     ax1.set_xlabel('Stimulus position before $x_{pre}$ and after $x\'$ action')
     ax1.set_ylabel('Reward')
     ax1.set_title('Reward function based on sigmoidals')
 
-#    ax1.set_xlim((-0.2, 0.9))
+    ax1.set_xlim((-0.2, 1.2))
     ax1.set_ylim((K_min - 0.1, K_max + 0.1))
     ylim = ax1.get_ylim()
     xlim = ax1.get_xlim()
-#    function_txt = '$R(x_{post}) = \\frac{1}{1 + exp(-\\ta(|x_{post} - .5| - c(x_{pre}, v_{stim})))}$'
-#    function_txt = '$R(x\') = \\frac{1}{1 + exp(-\\ta(|x\' - .5| - c(x_{pre}, v_{stim})))}$'
-#    function_txt = '$R(x\') = \\frac{1}{1 + exp(-\\tau\cdot(|x\' - .5| - c))}$'
-    function_txt = '$R = \\frac{1}{1 + exp(-\\tau\cdot(|x\' - .5| - c))}$'
-    ax1.annotate(function_txt, xy=(xlim[0]+0.04, 1.6),  xycoords='data',
-                            xytext=(-0, 30), textcoords='offset points',
-                                    bbox=dict(boxstyle="round", fc="1.0", alpha=1.0), fontsize=28)
+#    function_txt = '$R = \\frac{1}{1 + exp(-\\tau\cdot(|x\' - .5| - c))}$'
+#    ax1.annotate(function_txt, xy=(xlim[0]+0.04, 1.6),  xycoords='data',
+#                            xytext=(-0, 30), textcoords='offset points',
+#                                    bbox=dict(boxstyle="round", fc="1.0", alpha=1.0), fontsize=28)
 
 
     ax1.plot((xlim[0], xlim[1]), (0., 0.), ls='-', c='k', lw=3)
