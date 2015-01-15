@@ -311,7 +311,7 @@ if __name__ == '__main__':
     if comm != None:
         comm.Barrier()
     t0 = time.time()
-    sim_time = params['simulated_time']
+    simulated_time = params['simulated_time']
     n_stim_trained = params['n_stim_trained']
 
     ###################
@@ -371,7 +371,7 @@ if __name__ == '__main__':
                 v_and_action, R = RBL.present_stimulus_and_train(stim_params)
                 n_stim_trained += 1
                 n_training_trials += 1
-                simulated_time += 5 * self.params['t_iteration']
+                simulated_time += 5 * params['t_iteration']
                 trained_action = v_and_action[2]
                 actions_per_stim[i_stim][trained_action] += 1
 

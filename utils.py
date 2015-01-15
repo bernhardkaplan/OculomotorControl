@@ -245,50 +245,6 @@ def get_reward_sigmoid(x_new, stim_params, params):
     R = K_max - (K_max - K_min) * sigmoid(np.abs(x_new - x_center), a, b, c, d, tau)
     return R
 
-    """
-def get_reward_gauss()
-    x_old = stim_params[0]
-    v_stim = stim_params[2]
-    dx_i = x_old - .5 
-    dx_j = x_new - .5
-    dx_i_abs = np.abs(dx_i)
-    dx_j_abs = np.abs(dx_j)
-
-    x_fac = (np.abs(dx_i_abs  - dx_j_abs) / .5) ** 2
-#    x_fac = (dx_i_abs  - dx_j_abs) / .5
-    v_fac = np.abs(v_stim)
-
-
-#    A = 0.5
-
-    w_x = .1
-    w_v = .01
-
-    reward_width = w_x * x_fac + w_v * v_fac + reward_width_min
-    a = 1.
-    b = 1.
-    c = 5.    
-    d = 10.
-    tau = 1.
-    # tau * c determine the width 
-    # for x_fac * v_fac = 0 --> sigma_r = a / (b + d * exp(tau * c))
-
-#    r_amp = np.abs(v_stim) / 50.
-#    r_amp = 1.
-
-#    reward_width = reward_width_min + r_amp * np.abs(x_old - .5)**3
-#    reward_width = reward_width_min + r_amp * np.abs(x_old - .5)**3
-
-#    reward_width = a / (b + d * np.exp(- tau * (w_v * v_fac * w_x * x_fac - c)))
-
-    x_displ_new = np.abs(x_new - .5)
-
-#    R = np.exp(-(x_displ_new)**2 / (2 * reward_width)) + K_min
-    R = (K_max - K_min) * np.exp(-(x_displ_new)**2 / (2 * reward_width)) + K_min
-
-    return R, reward_width
-    """
-
 
 def get_reward_from_perceived_states(old_pos, new_pos, punish_overshoot=1., params=None):
     """
