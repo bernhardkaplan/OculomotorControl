@@ -764,8 +764,8 @@ class BasalGanglia(object):
         return d
 
 
-    def advance_iteration(self):
-        self.t_current += self.params['t_iteration']
+    def advance_iteration(self, t_sim):
+        self.t_current += t_sim
         self.iteration += 1
 
 

@@ -92,6 +92,9 @@ def get_start_and_stop_iteration_for_stimulus_from_motion_params(motion_params_f
         if not trained_stim.has_key(stim_params):
             trained_stim[stim_params] = {}
             trained_stim[stim_params]['start'] = i_
+            # should be overwritten by the following, but if n_steps_training_trajectory == 1, there needs to be a 'stop' and 'cnt' entry
+            trained_stim[stim_params]['stop'] = i_ + 1 
+            trained_stim[stim_params]['cnt'] = cnt
             cnt += 1
         else:
             trained_stim[stim_params]['stop'] = i_ + 1
@@ -133,14 +136,24 @@ def draw_from_discrete_distribution(prob_dist, size=1):
     return R
 
 
-def get_next_stim(params, stim_params, v_eye):
+def get_next_stim(params, stim_params, v_eye, with_input_delay=True, with_output_delay=True):
     """
     Returns the stimulus parameters for a given action (v_eye) in x-direction
     """
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field']
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
-    x_stim = stim_params[0] + stim_params[2] * (params['delay_input'] + params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
-            - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
+
+
+    if with_input_delay and with_output_delay:
+        x_stim = stim_params[0] + stim_params[2] * (params['delay_input'] + params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
+                - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
+    elif with_input_delay and not with_output_delay:
+        x_stim = stim_params[0] + stim_params[2] * (params['delay_input'] + params['t_iteration']) / params['t_cross_visual_field']
+    elif not with_input_delay and with_output_delay:
+        x_stim = stim_params[0] + stim_params[2] * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
+                - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
+    elif not with_input_delay and not with_output_delay:
+        x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
 
 
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
@@ -160,7 +173,8 @@ def get_sigmoid_params(params, x_pre, v_stim):
 
 #    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field'] - 0.02
 #    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field'] - params['reward_tolerance']
-    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field']
+    dx_best = (params['v_max_out'] - 1.5) * params['t_iteration'] / params['t_cross_visual_field'] 
+    # -1.5 as this is the assumed maximum velocity of a stimulus moving in the opposite direction
     worst_case = 0.5 - dx_best
 #    print 'worst case:', worst_case
 
@@ -174,7 +188,6 @@ def get_sigmoid_params(params, x_pre, v_stim):
 #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
 #    c = transform_linear(x_pre, c_range, x_pre_range)
 
-    c_range = (tolerance, worst_case)
     c = transform_linear(x_displ, c_range, x_pre_range)
     return c, k_
 

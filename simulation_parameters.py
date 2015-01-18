@@ -54,8 +54,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['delay_output'] = 70.
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
-        self.blur_x = 0.0
-        self.blur_v = 0.0
+        self.blur_x = 0.00
+        self.blur_v = 0.00
         self.n_actions = 17
         self.params['reward_threshold'] = 0.0
         self.params['softmax_action_selection_temperature'] = 0.5
@@ -79,7 +79,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 30 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
@@ -238,7 +238,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # input parameters
         self.params['w_input_exc_mpn'] = 20. #30. # [nS]
         self.params['w_trigger_spikes_mpn'] = 30.
-        self.params['f_max_stim'] = 1500.       # [Hz] Max rate of the inhomogenous Poisson process
+        self.params['f_max_stim'] = 2000.       # [Hz] Max rate of the inhomogenous Poisson process
         # rough values to be chosed for f_max   w_input_exc_mpn
         # for blur_x, v = 0.1, 0.1      4000    50
         #                  .05  .05     5000    100
@@ -513,7 +513,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_cells_per_action'] = 5
         self.params['param_bg_output'] = {'C_m': 250.0, 'E_L': -70.0, 'E_ex': 0.0, \
                 'E_in': -80.0, 'I_e': 0.0, 'V_m': -70.0, 'V_reset': -80.0, 'V_th': -50.0, \
-                'g_L': self.params['g_leak'], 't_ref': 1.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
+                'g_L': self.params['g_leak'], 't_ref': 2.0, 'tau_syn_ex': 5.0, 'tau_syn_in': 5.0}
         #{'V_reset': -70.0} # to adapt parms to aif_cond_alpha neuron model
 
         

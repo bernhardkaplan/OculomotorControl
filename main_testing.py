@@ -30,10 +30,10 @@ except:
     print "MPI not used"
 
 
-def advance_iteration(MT, BG, VI):
-    MT.advance_iteration()
-    BG.advance_iteration()
-    VI.advance_iteration()
+def advance_iteration(MT, BG, VI, t_sim):
+    MT.advance_iteration(t_sim)
+    BG.advance_iteration(t_sim)
+    VI.advance_iteration(t_sim)
 
 
 
@@ -153,9 +153,40 @@ if __name__ == '__main__':
             else:
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
                 # and get the state information BEFORE MPN perceives anything
-                # in order to set a supervisor signal
-                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :])
+                # computes input between t0 and t2
+                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :]) 
 
+            if testing_params['debug_mpn']:
+                print 'Iteration %d: Saving spike trains...' % iteration_cnt
+                save_spike_trains(testing_params, iteration_cnt, stim, MT.local_idx_exc)
+            MT.update_input(stim)
+
+            if comm != None:
+                comm.Barrier()
+            nest.Simulate(testing_params['t_iteration'])
+            if comm != None:
+                comm.Barrier()
+
+            state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
+            network_states_net[iteration_cnt, :] = state_
+            print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
+            next_action = BG.get_action() # BG returns the network_states_net of the next stimulus 
+            #next_action = BG.get_action_softmax()
+            actions[iteration_cnt + 1, :] = next_action
+            print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
+            advance_iteration(MT, BG, VI, testing_params['delay_input'] + testing_params['t_iteration'])
+            iteration_cnt += 1
+            if comm != None:
+                comm.Barrier()
+
+            # compute input for t2 -- t3 (output delay period)
+            if it >= (testing_params['n_iterations_per_stim'] - testing_params['n_silent_iterations']):
+                stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
+            else:
+                # integrate the real world trajectory and the eye direction and compute spike trains from that
+                # and get the state information BEFORE MPN perceives anything
+                # computes input between t0 and t2
+                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, next_action) 
             if testing_params['debug_mpn']:
                 print 'Iteration %d: Saving spike trains...' % iteration_cnt
                 save_spike_trains(testing_params, iteration_cnt, stim, MT.local_idx_exc)
@@ -165,20 +196,18 @@ if __name__ == '__main__':
             nest.Simulate(testing_params['t_iteration'])
             if comm != None:
                 comm.Barrier()
-
             state_ = MT.get_current_state(VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
-
             network_states_net[iteration_cnt, :] = state_
             print 'Iteration: %d\t%d\tState before action: ' % (iteration_cnt, pc_id), state_
-
             next_action = BG.get_action() # BG returns the network_states_net of the next stimulus 
             #next_action = BG.get_action_softmax()
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
-            advance_iteration(MT, BG, VI)
-            iteration_cnt += 1
+            advance_iteration(MT, BG, VI, testing_params['delay_output'])
             if comm != None:
                 comm.Barrier()
+
+
 
     # DEEEEEEEEEBUG
 #    CC.debug_mpn_connections(MT.exc_pop)
