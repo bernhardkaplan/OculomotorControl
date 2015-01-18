@@ -40,8 +40,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # SIMULATION PARAMETERS
         # ######################
         self.params['training'] = True
-        self.params['Cluster'] = False
-        self.params['Cluster_Milner'] = False
+        self.params['Cluster'] = True
+        self.params['Cluster_Milner'] = True
         self.params['total_num_virtual_procs'] = 8
         if self.params['Cluster'] or self.params['Cluster_Milner']:
             if self.params['training']:
@@ -57,6 +57,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.blur_x = 0.0
         self.blur_v = 0.0
         self.n_actions = 17
+        self.params['reward_threshold'] = 0.0
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['reward_tolerance'] = 0.05
         self.params['continue_training'] = True
@@ -78,9 +79,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 4 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 30 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 30 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 30 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
@@ -105,8 +106,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #self.params['test_stim_range'] = self.params['test_stim_range'] + [285 + i * 3 for i in xrange(15)] #range(0, 10)
         #self.params['test_stim_range'] = [300 + i * 3 for i in xrange(100)]
         #self.params['test_stim_range'] = [i * 3 for i in xrange(100)]
-#        self.params['test_stim_range'] = [0 + i for i in xrange(100)]
-        self.params['test_stim_range'] = [0, 1]
+        self.params['test_stim_range'] = range(100)
+        #self.params['test_stim_range'] = [0, 1]
         #self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
@@ -171,10 +172,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'NEW_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = 'NEW3_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = 'NEW_%d_nactions%d_VA_bX%.1f_bV%.1x' % (self.params['t_iteration'], self.n_actions, self.blur_x, self.blur_v)
+            self.params['sim_id'] = 'NEW2_%d_nactions%d_VA_bX%.1f_bV%.1x' % (self.params['t_iteration'], self.n_actions, self.blur_x, self.blur_v)
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -467,8 +468,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 0.4
-        self.params['gain_MT_d2'] = 0.4
+        self.params['gain_MT_d1'] = 1.2
+        self.params['gain_MT_d2'] = 1.2
         self.params['bias_gain'] = 0.
 
 
@@ -609,7 +610,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['spike_detector_test_rp'] = {'withgid':True, 'withtime':True}
         self.params['spike_detector_supervisor'] = {'withgid':True, 'withtime':True}
 
-        self.params['str_to_output_exc_w'] = 4.
+        self.params['str_to_output_exc_w'] = 5.
         self.params['str_to_output_inh_w'] = -10.
         self.params['str_to_output_exc_delay'] = 1.
         self.params['str_to_output_inh_delay'] = 1.
@@ -774,16 +775,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
                         self.params['n_stim_training'], self.params['stim_range'][0], self.params['stim_range'][1], 
                         self.params['gain_MT_d1'], self.params['gain_MT_d2'], self.params['pos_kappa'], self.params['neg_kappa'], self.params['master_seed'], self.params['visual_stim_seed'])
             else:
-                if self.params['connect_d1_after_training']:
+                if self.params['connect_d1_after_training']:# WTA among D1
                     folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
                     folder_name += '_wampD1%.1f_wampD2%.1f_d1d1wap%.1f_d1d1wan%.1fseeds_%d_%d/' % \
                             ( self.params['gain_MT_d1'], self.params['gain_MT_d2'], \
                              self.params['gain_d1_d1_pos'], self.params['gain_d1_d1_neg'], self.params['master_seed'], self.params['visual_stim_seed'])
-                else: # WTA among D1
+                else: 
                     folder_name = 'Test_%s_%d-%d' % (self.params['sim_id'], self.params['test_stim_range'][0], self.params['test_stim_range'][-1])
-                    folder_name += '_wampD1%.1f_wampD2%.1f_d1d1exc%.1f_d1d1inh%.1fseeds_%d_%d/' % \
+                    folder_name += '_wampD1%.1f_wampD2%.1f_wD1OAP%.1f_%d_%d/' % \
                             ( self.params['gain_MT_d1'], self.params['gain_MT_d2'], \
-                             self.params['w_d1_d1_exc'], self.params['w_d1_d1_inh'], self.params['master_seed'], self.params['visual_stim_seed'])
+                             self.params['str_to_output_exc_w'], self.params['master_seed'], self.params['visual_stim_seed'])
 
         assert(folder_name[-1] == '/'), 'ERROR: folder_name must end with a / '
 

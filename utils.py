@@ -169,7 +169,7 @@ def get_sigmoid_params(params, x_pre, v_stim):
     abs_speed_factor = transform_linear(np.abs(v_stim), multiplicator_range, [0., v_stim_max])
     
     tolerance = abs_speed_factor * params['reward_tolerance']
-    c_range = (worst_case, tolerance)
+    c_range = (tolerance, worst_case)
 
 #    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
 #    c = transform_linear(x_pre, c_range, x_pre_range)

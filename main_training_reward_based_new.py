@@ -127,7 +127,7 @@ class RewardBasedLearning(object):
         ######################################
         # 2   S T I M    P R E S E N T A T I O N 
         #######################################
-        stim_params_with_delay = stim_params[0] - stim_params[2] * self.params['t_iteration'] / self.params['t_cross_visual_field']
+        stim_params_with_delay = [stim_params[0] - stim_params[2] * self.params['t_iteration'] / self.params['t_cross_visual_field'], stim_params[1], stim_params[2], stim_params[3]]
         self.VI.current_motion_params = deepcopy(stim_params_with_delay)
         self.motion_params.append(deepcopy(stim_params_with_delay))
         stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.]) # assume a still eye with speed = [0., 0.]
@@ -379,7 +379,7 @@ if __name__ == '__main__':
                 cnt_trial += 1
                 if cnt_trial >= params['n_max_trials_same_stim']:
                     unsuccessfully_trained_stimuli.append(i_stim)
-                if (actions_per_stim[i_stim][trained_action] >= params['n_max_trials_pos_rew'] and R > 0): 
+                if (actions_per_stim[i_stim][trained_action] >= params['n_max_trials_pos_rew'] and R > params['reward_threshold']): 
                     d1_actions_trained[i_stim].append(trained_action)
                     # new stimulus!
                     i_stim += 1

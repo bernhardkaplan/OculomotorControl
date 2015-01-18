@@ -50,14 +50,14 @@ if __name__ == '__main__':
 
     #training_params_fn = 'training_stimuli_900_3step_nonshuffled.txt'
     #training_params_fn = 'training_stim_params_3steps300stim.txt'
-    training_params_fn = 'training_stim_params_3steps300stim.txt'
+    training_params_fn = 'training_stimuli_900_0.3center_0.7center.txt'
     ps = simulation_parameters.global_parameters()
 
-    n_jobs = 19
-    n_stimuli_per_run = 15
-    stim_offset = 15
+    n_jobs = 9
+    n_stimuli_per_run = 30
+    stim_offset = 30
     
-    seed_folder = "Training__OptRewFct_nactions17_30_temp0.5_nC1__nStim15_0-15_gainD1_0.8_D2_0.8_K2_-2_seeds_321_4"
+    seed_folder = "Training_NEW3_nactions17_30_temp0.5_nC1__nStim30_0-30_gainD1_1.2_D2_1.2_K1_-1_seeds_321_5"
 
     aprun_cmd_base = 'aprun -n 240 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
         params['folder_name'] = folder_name
         print 'folder_name:', folder_name
         assert (params['n_stim_training'] == n_stimuli_per_run), 'ERROR: make sure that n_training_x/v match your desired number of simulations to be run!'
-        #prepare_simulation(ps, params)
+        prepare_simulation(ps, params)
 
         stim_idx = stim_offset + i_ * n_stimuli_per_run
         new_cmd = ' %s %s %s %d > delme_rbl_gD1%.1f_gD2%.1fK%d_%d_tmp%.1f_%d_%dactions 2>&1' % (old_folder, folder_name, training_params_fn, stim_idx, params['gain_MT_d1'], params['gain_MT_d2'], \
