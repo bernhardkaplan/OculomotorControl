@@ -69,13 +69,13 @@ if __name__ == '__main__':
     K_min = params['neg_kappa']
 
 #    stim_speeds = [-1.5, 0., 1.5]
-    stim_speeds = np.arange(-1.5, 1.6, 0.1)
-#    stim_speeds = [0., -.5, -1.49]
+#    stim_speeds = np.arange(-1.5, 1.6, 0.1)
+    stim_speeds = [-.5]
 
 #    x_pre_range = [0.5]
 
-#    x_pre_range = [0., 1.0]
-    x_pre_range = np.arange(0., 1.05, 0.05)
+    x_pre_range = [0., 0.5, 1.0]
+#    x_pre_range = np.arange(0., 1.05, 0.05)
 #    x_pre_range = np.arange(0.5, 1.05, 0.10)
     linecolors = ['b', 'g', 'r', 'k', 'c', 'y', 'orange', 'magenta', 'darkblue', 'lightgray', 'olive', 'sandybrown', 'pink', 'darkcyan']
     n_curves = len(x_pre_range)
@@ -107,13 +107,11 @@ if __name__ == '__main__':
 
             # the stimulus is actually at a different position when the perception stimulus reaches the cortex
             x_pre_action_with_delay = x_pre_action - v_stim * params['delay_input'] / params['t_cross_visual_field']
+            p, = ax1.plot(x_pre_action_with_delay, 0., marker='D', markersize=15, mfc=color, markeredgewidth=1) # with delay
+            p2, = ax1.plot(x_pre_action, 0., marker='*', markersize=20, mfc=color, markeredgewidth=1) # without delay
             c, tau = utils.get_sigmoid_params(params, x_pre_action_with_delay, v_stim)
-
             y = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x - x_center), a, b, c, d, tau)
-#            label_txt = '$v_{stim}=%.1f\ \\tau=%.1f\ c=%.2f$' % (v_stim, tau, c)
-#            label_txt = '$v_{stim}=%.1f$' % (v_stim)
             color = linecolors[i_ % len(linecolors)]
-
             ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)]) # straight line
             stim_params = (x_pre_action, .5, v_stim, .0)
             stim_params_evaluation = (x_pre_action_with_delay, stim_params[1], stim_params[2], stim_params[3]) # the reward function 'knows' that a delay_input exists
@@ -121,45 +119,27 @@ if __name__ == '__main__':
             x_post_action = np.zeros(n_actions_to_plot)
             for i_a in xrange(n_actions_to_plot):
                 x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a])[0] # the next stimulus position takes into account both delay_input and delay_output
-
-#                R = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x_post_action[i_a] - x_center), a, b, c, d, tau)
                 R = utils.get_reward_sigmoid(x_post_action[i_a], stim_params_evaluation, params)  # the reward function needs to operate on the updated positions, taking into account both delay_input, delay_output
-
                 if R > 0:
-#                    print '\tPos reward R=%.1e\tfor v_stim %.1f\tx_pre: %1f\taction %d (%.1f) --> x_post: %.1f' % (R, v_stim, x_pre_action, i_a, actions_v[i_a], x_post_action[i_a])
                     n_pos_reward[i_stim, i_] += 1
                 elif R <= 0:
                     n_neg_reward[i_stim, i_] += 1
-#                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker='o', ls=linestyles[i_stim % len(linestyles)], markersize=12, mfc=color, color=color)#, lw=2)
-
                 ax1.plot((x_pre_action_with_delay, x_post_action[i_a]), (0., R), alpha=0.4, ls=linestyles[i_stim % len(linestyles)], color=color)#, lw=2)
-
-#                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=0.4, marker=markers[i_stim % len(markers)], ls=linestyles[i_stim % len(linestyles)], markersize=10, markeredgewidth=1, mfc=color, color=color, lw=2)
                 ax1.plot(x_post_action[i_a], R, marker='o', markersize=10, mfc=color)
-                p, = ax1.plot(x_pre_action_with_delay, 0., marker='D', markersize=15, mfc=color, markeredgewidth=1)
-                ax1.plot(x_pre_action, 0., marker='*', markersize=20, mfc=color, markeredgewidth=1)
-
                 # relative error
 #                R_rel = (np.abs(x_pre_action - 0.5) - np.abs(x_post_action[i_a] - 0.5))/ np.abs(x_pre_action - 0.5)
 #                ax1.plot((x_pre_action, x_post_action[i_a]), (0, R_rel), marker='*', markersize=25, color=color, mfc=color, markeredgewidth=1)
 
-        label_txt = '$x_{pre}^{with input delay}$'
-        plots.append(p)
-        labels.append(label_txt)
-#                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), alpha=1.0, marker='*', ls=linestyles[i_stim % len(linestyles)], markersize=20, markeredgewidth=1, mfc=color, color=color, lw=2)
+    label_txt = '$x_{pre}^{with\ input\ delay}$'
+    plots.append(p)
+    labels.append(label_txt)
+    label_txt = '$x_{pre}^{without\ delay}$'
+    plots.append(p2)
+    labels.append(label_txt)
 
-    #            p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), ls=ls, marker='o', markersize=5, mfc=color, color=rgba_colors_actions[i_a], lw=2)
+    ax1.legend(plots, labels, loc='upper left', numpoints=1)
 
-    #            if n_curves > 1:
-    #            else:
-    #                p, = ax1.plot((x_pre_action, x_post_action[i_a]), (0., R), ls=ls, color='b', lw=lw)
 
-    #        R[i_v, i_], sigma_r = utils.get_reward_gauss(x_post_action[i_v, i_], stim_params, params)
-
-    #        y0 = f(0, a, b, c, d, tau) # y0 = a / (b + d * np.exp( tau * c))
-    #        y_max = np.max(y)
-    #        print 'f(0) = %.3e\t check: a / (b + d * exp(tau * c)) = %.3e ' % (y0, a / (b + d * np.exp( tau[0] * c[0])))
-    #        print 'f_max = %.3f' % (y_max)
 
     # evaluate the reward function based on the number of actions that have been
     # rewarded positively or negatively 
@@ -179,7 +159,6 @@ if __name__ == '__main__':
     print 'Stimuli that got rewarded too little:\n', np.array(problematic_stimuli_hard)
      
 #    ax1.legend(loc='upper left')
-    ax1.legend((labels), loc='upper left')
     ax1.set_xlabel('Stimulus position before $x_{pre}$ and after $x\'$ action')
     ax1.set_ylabel('Reward')
     ax1.set_title('Reward function based on sigmoidals')
@@ -243,4 +222,4 @@ if __name__ == '__main__':
     print 'Saving figure to:', output_fn
     pylab.savefig(output_fn, dpi=200)
     print 'stim_speeds:', stim_speeds
-#    pylab.show()
+    pylab.show()

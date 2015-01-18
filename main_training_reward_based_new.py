@@ -121,7 +121,7 @@ class RewardBasedLearning(object):
         stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
         self.MT.update_input(stim) 
         nest.Simulate(self.params['t_iteration'])
-        self.advance_iteration()
+        self.advance_iteration(self.params['t_iteration'])
         self.K_vec.append(0)
 
         ######################################
@@ -130,18 +130,18 @@ class RewardBasedLearning(object):
         stim_params_with_delay = stim_params[0] - stim_params[2] * self.params['t_iteration'] / self.params['t_cross_visual_field']
         self.VI.current_motion_params = deepcopy(stim_params_with_delay)
         self.motion_params.append(deepcopy(stim_params_with_delay))
-        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.]) # assume a still eye with speed = [0., 0.]
+        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.], self.params['t_iteration'] + self.params['delay_input']) # assume a still eye with speed = [0., 0.]
         if params['debug_mpn']:
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
         self.MT.update_input(stim) 
-        nest.Simulate(params['t_iteration'])
+        nest.Simulate(params['t_iteration'] + self.params['delay_input'])
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
         self.network_states.append(state_)
 #        next_action = self.BG.get_action(WTA=True) # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
         next_action = self.BG.get_action_softmax()
         self.network_states.append(state_)
-        self.advance_iteration()
+        self.advance_iteration(self.params['t_iteration'] + self.params['delay_input'])
         self.K_vec.append(0)
 
         ##############################################
@@ -168,7 +168,7 @@ class RewardBasedLearning(object):
         nest.Simulate(self.params['t_iteration'])
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
         self.network_states.append(state_)
-        self.advance_iteration()
+        self.advance_iteration(self.params['t_iteration'])
         self.K_vec.append(0)
 
         #######################
@@ -183,7 +183,7 @@ class RewardBasedLearning(object):
             self.BG.set_kappa_and_gain(self.MT.exc_pop, self.BG.strD2, -R, 0., 0.)
         nest.Simulate(self.params['n_iterations_RBL_training'] * params['t_iteration']) 
         for i_ in xrange(self.params['n_iterations_RBL_training']):
-            self.advance_iteration()
+            self.advance_iteration(self.params['t_iteration'])
             self.K_vec.append(R)
 
         #######################################
@@ -199,7 +199,7 @@ class RewardBasedLearning(object):
         nest.Simulate(self.params['t_iteration'])
 #        state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
 #        self.network_states.append(state_)
-        self.advance_iteration()
+        self.advance_iteration(self.params['t_iteration'])
         self.K_vec.append(0)
         return next_action, R
         if self.comm != None:
@@ -216,7 +216,7 @@ class RewardBasedLearning(object):
         stim, supervisor_state = self.VI.set_empty_input(self.MT.local_idx_exc)
         self.MT.update_input(stim) 
         nest.Simulate(self.params['t_iteration'])
-        self.advance_iteration()
+        self.advance_iteration(self.params['t_iteration'])
 
 
     def trigger_pre_spikes(self):
@@ -233,14 +233,14 @@ class RewardBasedLearning(object):
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
         nest.Simulate(self.params['t_iteration'])
-        self.advance_iteration()
+        self.advance_iteration(self.params['t_iteration'])
         self.K_vec.append(0)
 
 
-    def advance_iteration(self):
-        self.MT.advance_iteration()
-        self.BG.advance_iteration()
-        self.VI.advance_iteration()
+    def advance_iteration(self, t_sim):
+        self.MT.advance_iteration(t_sim)
+        self.BG.advance_iteration(t_sim)
+        self.VI.advance_iteration(t_sim)
         self.iteration_cnt += 1
 
 

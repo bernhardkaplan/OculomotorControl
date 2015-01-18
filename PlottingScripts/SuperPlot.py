@@ -111,12 +111,17 @@ class PlotEverything(MetaAnalysisClass):
         trained_stim -- is a dictionary with (x, v) as key and {'start': <int>, 'stop': <int>, 'cnt': <int> } as value, indicating 
         the start and stop iteration (line in the motion_params_fn) during which the stimulus has been trained.
         """
-#        print 'debug trained_stim', trained_stim
+        print 'debug trained_stim', trained_stim
 #        print 'debug stim_range', stim_range
         ylim = ax.get_ylim()
 #        if self.params['training']:
         stim_offset = utils.get_stim_offset(self.params)
-        for (x, v) in trained_stim.keys():
+        for i_, (x, v) in enumerate(trained_stim.keys()):
+
+#            if self.params['n_steps_training_trajectory'] == 1:
+#                start = i_
+#                stop = i_ + 1
+#            else:
             start, stop = trained_stim[(x, v)]['start'], trained_stim[(x, v)]['stop']
             cnt = trained_stim[(x, v)]['cnt']
             t_0 = start * self.params['n_iterations_per_stim'] * self.params['t_iteration']
@@ -126,6 +131,7 @@ class PlotEverything(MetaAnalysisClass):
 
             text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
             text_pos_y = ylim[1] + 0.04 * (ylim[1] - ylim[0])
+
 #            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d\nOpt action:\n(%d. %.1f)' % (x, v, np.int(cnt + stim_offset), start, stop, optimal_action_idx, optimal_speed))
 #            text_pos_x = t_0 + 0.2 * (t_1 - t_0) 
 #            print 'debug text_pos:', text_pos_x, text_pos_y
