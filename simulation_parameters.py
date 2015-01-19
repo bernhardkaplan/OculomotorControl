@@ -59,6 +59,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.n_actions = 17
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['reward_tolerance'] = 0.05
+        self.params['reward_function_speed_multiplicator_range'] = [1., 2.]
+        self.params['reward_transition'] = 40
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False

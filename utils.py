@@ -166,7 +166,8 @@ def get_sigmoid_params(params, x_pre, v_stim):
     reward function
     """
 
-    k_ = 40.
+#    k_ = 40.
+    k_ = params['reward_transition']
     x_displ = np.abs(x_pre - 0.5)
 
     x_pre_range = (0., 0.5) # absolute displacement
@@ -179,7 +180,9 @@ def get_sigmoid_params(params, x_pre, v_stim):
 #    print 'worst case:', worst_case
 
     v_stim_max = 1.5
-    multiplicator_range = [1., 2.0]  # factor range with which the tolerance interval will be increased
+#    multiplicator_range = [1., 2.0]  # factor range with which the tolerance interval will be increased
+    multiplicator_range = params['reward_function_speed_multiplicator_range']
+
     abs_speed_factor = transform_linear(np.abs(v_stim), multiplicator_range, [0., v_stim_max])
     
     tolerance = abs_speed_factor * params['reward_tolerance']

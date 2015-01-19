@@ -107,11 +107,11 @@ if __name__ == '__main__':
 
             # the stimulus is actually at a different position when the perception stimulus reaches the cortex
             x_pre_action_with_delay = x_pre_action - v_stim * params['delay_input'] / params['t_cross_visual_field']
+            color = linecolors[i_ % len(linecolors)]
             p, = ax1.plot(x_pre_action_with_delay, 0., marker='D', markersize=15, mfc=color, markeredgewidth=1) # with delay
             p2, = ax1.plot(x_pre_action, 0., marker='*', markersize=20, mfc=color, markeredgewidth=1) # without delay
             c, tau = utils.get_sigmoid_params(params, x_pre_action_with_delay, v_stim)
             y = K_max - (K_max - K_min) * utils.sigmoid(np.abs(x - x_center), a, b, c, d, tau)
-            color = linecolors[i_ % len(linecolors)]
             ax1.plot(x, y, color=color, ls=linestyles[i_stim % len(linestyles)]) # straight line
             stim_params = (x_pre_action, .5, v_stim, .0)
             stim_params_evaluation = (x_pre_action_with_delay, stim_params[1], stim_params[2], stim_params[3]) # the reward function 'knows' that a delay_input exists

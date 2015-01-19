@@ -133,7 +133,8 @@ class PlotEverything(MetaAnalysisClass):
             text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
             text_pos_y = ylim[1] + 0.04 * (ylim[1] - ylim[0])
 
-            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d\nOpt action:\n(%d. %.1f)' % (x, v, np.int(cnt + stim_offset), start, stop, optimal_action_idx, optimal_speed))
+#            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d\nOpt action:\n(%d. %.1f)' % (x, v, np.int(cnt + stim_offset), start, stop, optimal_action_idx, optimal_speed))
+
 #            text_pos_x = t_0 + 0.2 * (t_1 - t_0) 
 #            print 'debug text_pos:', text_pos_x, text_pos_y
             # for presentation
@@ -194,6 +195,7 @@ class PlotEverything(MetaAnalysisClass):
         self.plot_vertical_lines(ax0)
         self.set_xticks(ax0, tick_interval=self.tick_interval)
 
+        ax0.set_title('Gain MPP-D1 (D2): %.1f (%.1f)' % (self.params['gain_MT_d1'], self.params['gain_MT_d2']))
         ax0.set_ylabel('BG cells\n')#D1  D2  Actions')
         self.remove_xtick_labels(ax0)
         self.remove_ytick_labels(ax0)
@@ -305,7 +307,6 @@ class PlotEverything(MetaAnalysisClass):
             t1 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 2 * self.params['t_iteration'] # + 2 for the consequence of the action
             t0 += .5 * self.params['t_iteration'] # shift to the middle of the iteration
             t1 += .5 * self.params['t_iteration']
-            print 'debug i_stim:', i_stim
             x_stim = mp[i_stim, 0]
             v_eye = actions[i_stim, 0]
             action_idx = np.int(actions[i_stim, 2])
