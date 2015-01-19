@@ -52,8 +52,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['total_num_virtual_procs'] = 96
         self.params['delay_input'] = 80.
         self.params['delay_output'] = 70.
-        self.params['n_rf'] = 30
-        self.params['n_v'] = 30
+        self.params['n_rf'] = 50
+        self.params['n_v'] = 50
         self.blur_x = 0.00
         self.blur_v = 0.00
         self.n_actions = 17

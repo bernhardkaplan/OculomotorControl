@@ -608,12 +608,12 @@ class VisualInput(object):
         if self.params['n_grid_dimensions'] == 2:
             d_ij = visual_field_distance2D_vec(tuning_prop[:, 0], x_stim * np.ones(n_cells), tuning_prop[:, 1], y_stim * np.ones(n_cells))
             L = np.exp(-.5 * (d_ij)**2 / (rfs_x + blur_x)**2 \
-                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v + blur_v)**2
-                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (rfs_v + blur_v)**2)
+                    -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v**2 + blur_v**2)
+                    -.5 * (tuning_prop[:, 3] - v_stim)**2 / (rfs_v**2 + blur_v**2))
         else:
             d_ij = np.abs(tuning_prop[:, 0] - x_stim)
-            L = np.exp(-.5 * (d_ij)**2 / (rfs_x + blur_x)**2 \
-                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v + blur_v)**2)
+            L = np.exp(-.5 * (d_ij)**2 / (rfs_x**2 + blur_x**2) \
+                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v**2 + blur_v**2))
         return L
 
 
