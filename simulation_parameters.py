@@ -79,7 +79,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 2# how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 30 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
         self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
@@ -123,6 +123,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             if self.params['reward_based_learning']:
                 self.params['n_iterations_per_stim'] = 4 + self.params['n_iterations_RBL_training']  
                 # noise, stim, noise, training, noise
+            self.params['t_training_stim'] = self.params['n_iterations_per_stim'] * self.params['t_iteration'] + self.params['delay_input']
         else:
             self.params['n_iterations_per_stim'] = 40 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
@@ -195,8 +196,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['tuning_prop_seed'] = 123
         self.params['basal_ganglia_seed'] = 7 + self.params['stim_range'][0]
         self.params['dt_stim'] = 1.     # [ms] temporal resolution with which the stimulus trajectory is computed
-#        self.params['debug_mpn'] = False
-        self.params['debug_mpn'] = not self.params['Cluster']
+        if self.params['n_training_x'] < 10:
+            self.params['debug_mpn'] = True
+        else:
+            self.params['debug_mpn'] = not self.params['Cluster']
         self.params['t_cross_visual_field'] = 1000. # [ms] time in ms for a stimulus with speed 1.0 to cross the whole visual field
 
 
