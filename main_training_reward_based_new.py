@@ -127,21 +127,21 @@ class RewardBasedLearning(object):
         ######################################
         # 2   S T I M    P R E S E N T A T I O N 
         #######################################
-        stim_params_with_delay = stim_params[0] - stim_params[2] * self.params['t_iteration'] / self.params['t_cross_visual_field']
+        stim_params_with_delay = [stim_params[0] - stim_params[2] * self.params['t_iteration'] / self.params['t_cross_visual_field'], stim_params[1], stim_params[2], stim_params[3]]
         self.VI.current_motion_params = deepcopy(stim_params_with_delay)
         self.motion_params.append(deepcopy(stim_params_with_delay))
-        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.], self.params['t_iteration'] + self.params['delay_input']) # assume a still eye with speed = [0., 0.]
+        stim, supervisor_state = self.VI.compute_input(self.MT.local_idx_exc, [0., 0.], self.params['t_iteration']) # assume a still eye with speed = [0., 0.]
         if params['debug_mpn']:
             print 'Saving spike trains...'
             utils.save_spike_trains(self.params, self.iteration_cnt, stim, self.MT.local_idx_exc)
         self.MT.update_input(stim) 
-        nest.Simulate(params['t_iteration'] + self.params['delay_input'])
+        nest.Simulate(params['t_iteration'])
         state_ = self.MT.get_current_state(self.VI.tuning_prop_exc) # returns (x, y, v_x, v_y, orientation)
         self.network_states.append(state_)
-#        next_action = self.BG.get_action(WTA=True) # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
-        next_action = self.BG.get_action_softmax()
+#        next_action = self.BG.get_action(WTA=True) 
+        next_action = self.BG.get_action_softmax() # read out the activity of the action population, necessary to fill the activity memory --> used for efference copy
         self.network_states.append(state_)
-        self.advance_iteration(self.params['t_iteration'] + self.params['delay_input'])
+        self.advance_iteration(self.params['t_iteration'])
         self.K_vec.append(0)
 
         ##############################################
@@ -312,7 +312,7 @@ if __name__ == '__main__':
     if comm != None:
         comm.Barrier()
     t0 = time.time()
-    sim_time = params['simulated_time']
+    simulated_time = params['simulated_time']
     n_stim_trained = params['n_stim_trained']
 
     ###################
@@ -372,7 +372,8 @@ if __name__ == '__main__':
                 v_and_action, R = RBL.present_stimulus_and_train(stim_params)
                 n_stim_trained += 1
                 n_training_trials += 1
-                simulated_time += 5 * self.params['t_iteration']
+                simulated_time += 3 * params['t_iteration'] + params['n_iterations_RBL_training'] * params['t_iteration']
+#                simulated_time += params['delay_input']
                 trained_action = v_and_action[2]
                 actions_per_stim[i_stim][trained_action] += 1
 

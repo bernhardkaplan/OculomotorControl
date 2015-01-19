@@ -52,8 +52,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['total_num_virtual_procs'] = 96
         self.params['delay_input'] = 80.
         self.params['delay_output'] = 70.
-        self.params['n_rf'] = 50
-        self.params['n_v'] = 50
+        self.params['n_rf'] = 30
+        self.params['n_v'] = 30
         self.blur_x = 0.00
         self.blur_v = 0.00
         self.n_actions = 17
@@ -84,7 +84,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_divide_training_space_v'] = 20 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 30 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
-        self.params['n_max_trials_pos_rew'] = 3 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
+        self.params['n_max_trials_pos_rew'] = 1 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
 #        self.params['suboptimal_training'] = 1
 #        if self.params['reward_based_learning']:
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
@@ -122,6 +122,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
             if self.params['reward_based_learning']:
                 self.params['n_iterations_per_stim'] = 4 + self.params['n_iterations_RBL_training']  
                 # noise, stim, noise, training, noise
+            self.params['t_training_stim'] = self.params['n_iterations_per_stim'] * self.params['t_iteration'] + self.params['delay_input']
         else:
             self.params['n_iterations_per_stim'] = 40 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations

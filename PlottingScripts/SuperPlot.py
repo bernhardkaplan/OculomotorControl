@@ -78,6 +78,7 @@ class PlotEverything(MetaAnalysisClass):
         self.it_range = [0, 0]
         self.it_range[0] = stim_range[0] * self.params['n_iterations_per_stim']
         self.it_range[1] = (stim_range[-1] + 1) * self.params['n_iterations_per_stim']
+        self.stim_range = stim_range
 
         print 'xlim:', t_range
 
@@ -132,7 +133,7 @@ class PlotEverything(MetaAnalysisClass):
             text_pos_x = t_0 + 0.1 * (t_1 - t_0) 
             text_pos_y = ylim[1] + 0.04 * (ylim[1] - ylim[0])
 
-#            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d\nOpt action:\n(%d. %.1f)' % (x, v, np.int(cnt + stim_offset), start, stop, optimal_action_idx, optimal_speed))
+            ax.text(text_pos_x, text_pos_y, '(%.2f, \n%.2f)\n%d: %d-%d\nOpt action:\n(%d. %.1f)' % (x, v, np.int(cnt + stim_offset), start, stop, optimal_action_idx, optimal_speed))
 #            text_pos_x = t_0 + 0.2 * (t_1 - t_0) 
 #            print 'debug text_pos:', text_pos_x, text_pos_y
             # for presentation
@@ -278,10 +279,12 @@ class PlotEverything(MetaAnalysisClass):
             fn = self.params['motion_params_testing_fn']
 
 
+        print 'debug loading from:', fn
         mp = np.loadtxt(fn)
         if len(mp.shape) == 1: # only one stimulus
             mp = mp.reshape((1, 4))
 
+        print 'DEBUG mp:', mp , '\n shape', mp.shape
         actions = np.loadtxt(self.params['actions_taken_fn'])
         if len(actions.shape) == 1: # only one stimulus
             actions = actions.reshape((1, 4))
@@ -295,11 +298,14 @@ class PlotEverything(MetaAnalysisClass):
 
         color = self.stim_color
         ylim_ax2 = (-.05, 1.05)
+        print 'debug stim_range:', stim_range
         for i_stim in xrange(stim_range[0], stim_range[-1] + 1):
+#        for i_stim in xrange(stim_range[0], stim_range[-1]):
             t0 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 1 * self.params['t_iteration'] # + 1 because stimulus appears in iteration 1 (not 0) within a stimulus
             t1 = i_stim * self.params['t_iteration'] * self.params['n_iterations_per_stim'] + 2 * self.params['t_iteration'] # + 2 for the consequence of the action
             t0 += .5 * self.params['t_iteration'] # shift to the middle of the iteration
             t1 += .5 * self.params['t_iteration']
+            print 'debug i_stim:', i_stim
             x_stim = mp[i_stim, 0]
             v_eye = actions[i_stim, 0]
             action_idx = np.int(actions[i_stim, 2])
@@ -413,6 +419,22 @@ class PlotEverything(MetaAnalysisClass):
     def plot_vertical_lines(self, ax):
 
         (ymin, ymax) = ax.get_ylim()
+
+#        t_training_stim = self.params['n_iterations_per_stim'] * self.params['t_iteration'] + self.params['delay_input']
+#        print 'DEBUG plot_vertical_lines: stim_range', self.stim_range[0], self.stim_range[-1]
+#        t_ = 0
+#        for i_stim in xrange(self.stim_range[0], self.stim_range[-1]):
+#            t0 = self.params['t_iteration'] + i_stim * t_training_stim
+#            ax.plot((t0, t0), (ymin, ymax), ls='--', lw=1, c='k')
+#            t_ += t0
+#            t0 = (self.params['t_iteration'] + self.params['delay_input']) + i_stim * t_training_stim + t_
+#            ax.plot((t0, t0), (ymin, ymax), ls='--', lw=1, c='k')
+#            t_ += t0
+#            for it_ in xrange(2 + self.params['n_iterations_RBL_training']):
+#                t0 = self.params['t_iteration'] + i_stim * t_training_stim + t_
+#                ax.plot((t0, t0), (ymin, ymax), ls='--', lw=1, c='k')
+#                t_ += t0
+
         for it_ in xrange(self.it_range[0], self.it_range[1]):
             t0 = it_ * self.params['t_iteration']
             ax.plot((t0, t0), (ymin, ymax), ls='--', lw=1, c='k')

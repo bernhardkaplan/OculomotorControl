@@ -394,7 +394,9 @@ class VisualInput(object):
         """
         n_steps = t_sim / self.params['dt_input_mpn']
         time_axis = np.arange(0, t_sim, self.params['dt_input_mpn'])
-        x_stim = self.current_motion_params[0] + (self.current_motion_params[2] - v_eye[0]) 
+        #x_stim = self.current_motion_params[0] + (self.current_motion_params[2] - v_eye[0]) 
+        print 'debug cmp', self.current_motion_params
+        print 'debug v_eye', v_eye
         x_stim = self.current_motion_params[0] + (time_axis * self.current_motion_params[2] - v_eye[0] * t_sim * np.ones(n_steps)) / self.params['t_cross_visual_field']
         y_stim = self.current_motion_params[1] + (time_axis * self.current_motion_params[3] - v_eye[1] * t_sim * np.ones(n_steps)) / self.params['t_cross_visual_field']
 
