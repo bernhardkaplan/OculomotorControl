@@ -152,7 +152,7 @@ class RewardBasedLearning(object):
         # If it was: R = utils.get_reward_sigmoid(new_stim[0], stim_params, params) delay_input would not be taken into account
         x_pre_action = stim_params_with_delay[0]
         stim_params_evaluation = (x_pre_action, stim_params[1], stim_params[2], stim_params[3]) # the reward function 'knows' that a delay_input exists
-        new_stim = utils.get_next_stim(params, stim_params, next_action[0]) # the next stimulus position takes into account both delay_input and delay_output
+        new_stim = utils.get_next_stim(params, stim_params, next_action[0], with_input_delay=self.params['with_input_delay'], with_output_delay=self.params['with_output_delay']) # the next stimulus position takes into account both delay_input and delay_output
         R = utils.get_reward_sigmoid(new_stim[0], stim_params_evaluation, params)  # the reward function needs to operate on the updated positions, taking into account both delay_input, delay_output
 
         self.rewards.append(R)
