@@ -612,8 +612,7 @@ class VisualInput(object):
                     -.5 * (tuning_prop[:, 3] - v_stim)**2 / (rfs_v**2 + blur_v**2))
         else:
             d_ij = np.abs(tuning_prop[:, 0] - x_stim)
-            L = np.exp(-.5 * (d_ij)**2 / (rfs_x**2 + blur_x**2) \
-                       -.5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v**2 + blur_v**2))
+            L = np.exp(-.5 * (d_ij)**2 / (rfs_x**2 + blur_x**2) - .5 * (tuning_prop[:, 2] - u_stim)**2 / (rfs_v**2 + blur_v**2))
         return L
 
 

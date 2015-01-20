@@ -189,10 +189,8 @@ def get_sigmoid_params(params, x_pre, v_stim):
 #    c_range = (worst_case, tolerance)
     c_range = (tolerance, worst_case)
 
-#    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
-#    c = transform_linear(x_pre, c_range, x_pre_range)
-
-    c = transform_linear(x_displ, c_range, x_pre_range)
+    c = transform_quadratic(x_displ, 'pos', c_range, x_pre_range)
+#    c = transform_linear(x_displ, c_range, x_pre_range)
     return c, k_
 
 
@@ -731,7 +729,7 @@ def get_grid_index_mapping(values, bins):
     """
     Returns a 2-dim array (gid, grid_pos) mapping with values.size length, i.e. the indices of values 
     and the bin index to which each value belongs.
-    values -- the values to be put in a grid
+    values -- the values to be put in a grid (e.g. the tuning properties of a certain dimension)
     bins -- list or array with the 1-dim grid bins 
     """
 

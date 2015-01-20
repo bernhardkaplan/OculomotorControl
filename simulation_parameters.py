@@ -316,8 +316,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
-#        self.params['sigma_rf_pos'] = .0 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
-#        self.params['sigma_rf_speed'] = .0 # some variability in the speed of RFs
+#        self.params['sigma_rf_pos'] = .001 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
+#        self.params['sigma_rf_speed'] = .001 # some variability in the speed of RFs
 #        self.params['sigma_rf_direction'] = .0
 #        self.params['sigma_rf_orientation'] = .0
 

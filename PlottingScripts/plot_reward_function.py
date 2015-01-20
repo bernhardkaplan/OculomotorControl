@@ -97,14 +97,13 @@ if __name__ == '__main__':
 
     plots = []
     labels = []
-    for i_stim, v_stim in enumerate(stim_speeds):
-        a = 1.
-        b = 1.
-        d = 1.
-        ls = '-'
-        lw = 3
-        for i_, x_pre_action in enumerate(x_pre_range): 
-
+    a = 1.
+    b = 1.
+    d = 1.
+    ls = '-'
+    lw = 3
+    for i_, x_pre_action in enumerate(x_pre_range): 
+        for i_stim, v_stim in enumerate(stim_speeds):
             # the stimulus is actually at a different position when the perception stimulus reaches the cortex
             x_pre_action_with_delay = x_pre_action - v_stim * params['delay_input'] / params['t_cross_visual_field']
             color = linecolors[i_ % len(linecolors)]
