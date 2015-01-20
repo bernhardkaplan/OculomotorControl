@@ -173,7 +173,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'NEW4_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = 'NEW5_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
             self.params['sim_id'] = 'NEW2_%d_nactions%d_VA_bX%.1f_bV%.1x' % (self.params['t_iteration'], self.n_actions, self.blur_x, self.blur_v)
@@ -471,8 +471,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['kappa_d1_d1'] = 0.
             self.params['kappa_d2_d2'] = 0.
 
-        self.params['gain_MT_d1'] = 1.2
-        self.params['gain_MT_d2'] = 1.2
+        self.params['gain_MT_d1'] = 0.2
+        self.params['gain_MT_d2'] = 0.2
         self.params['bias_gain'] = 0.
 
 
