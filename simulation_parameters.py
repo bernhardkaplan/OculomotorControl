@@ -50,8 +50,11 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
-        self.params['delay_input'] = 80.
-        self.params['delay_output'] = 70.
+        self.params['delay_input'] = 0.
+        self.params['delay_output'] = 0.
+        self.params['with_input_delay'] = not (self.params['delay_input'] == 0)
+        self.params['with_output_delay'] = not (self.params['delay_output'] == 0)
+
         self.params['n_rf'] = 50
         self.params['n_v'] = 50
         self.blur_x = 0.00
@@ -60,6 +63,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['reward_threshold'] = 0.0
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['reward_tolerance'] = 0.05
+        self.params['reward_function_speed_multiplicator_range'] = [1., 2.]
+        self.params['reward_transition'] = 40
+        self.params['reward_transition_range'] = [100, 10]
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -317,8 +323,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
         self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
         self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
-#        self.params['sigma_rf_pos'] = .0 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
-#        self.params['sigma_rf_speed'] = .0 # some variability in the speed of RFs
+#        self.params['sigma_rf_pos'] = .001 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
+#        self.params['sigma_rf_speed'] = .001 # some variability in the speed of RFs
 #        self.params['sigma_rf_direction'] = .0
 #        self.params['sigma_rf_orientation'] = .0
 

@@ -28,52 +28,116 @@ class ActivityPlotter(object):
         else:
             self.it_max = it_max
 
-        self.n_bins_y = 200
+        self.n_bins_v = 50 # number of bins for activity colormap 
+        self.n_bins_x = 50
         self.n_y_ticks = 10
-        self.y_ticks = np.linspace(0, self.n_bins_y, self.n_y_ticks)
+        self.n_x_ticks = 10
         self.load_tuning_prop()
         self.n_cells = self.params['n_exc_mpn']
         self.spiketrains = [[] for i in xrange(self.n_cells)]
         self.d = {}
+        self.spiketimes_binned = False
 #        self.training_stimuli = np.loadtxt(self.params['training_stimuli_fn'])
 
     def load_tuning_prop(self):
         print 'ActivityPlotter.load_tuning_prop ...'
         self.tuning_prop_exc = np.loadtxt(self.params['tuning_prop_exc_fn'])
         vmin, vmax = np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])
-        self.y_grid_x = np.linspace(0, 1, self.n_bins_y, endpoint=False)
-        self.y_grid_vx = np.linspace(vmin, vmax, self.n_bins_y, endpoint=False)
+        self.y_grid_x = np.linspace(0, 1, self.n_bins_x, endpoint=False)
+        self.y_grid_vx = np.linspace(vmin, vmax, self.n_bins_v, endpoint=False)
         self.gid_to_posgrid_mapping_x = utils.get_grid_index_mapping(self.tuning_prop_exc[:, 0], self.y_grid_x)
         self.gid_to_posgrid_mapping_vx = utils.get_grid_index_mapping(self.tuning_prop_exc[:, 2], self.y_grid_vx)
 
 
 
-    def plot_input(self, v_or_x='x'):
+    def plot_input_cmap(self, iteration=0, stim_params=None):
+        if stim_params == None:
+            stim_params = self.params['initial_state']
+        x_grid = self.y_grid_x
+        y_grid = self.y_grid_vx
+        gid_to_posgrid_mapping_x = self.gid_to_posgrid_mapping_x
+        gid_to_posgrid_mapping_y = self.gid_to_posgrid_mapping_vx
+        xlabel = '$x_{preferred}$'
+        ylabel = '$v_x$'
+
+        d = np.zeros((self.n_bins_x, self.n_bins_v))
+        nspikes_thresh = 0
+        ncells_above_nspikes_thresh = np.zeros((self.n_bins_x, self.n_bins_v))
+        for fn in os.listdir(self.params['input_folder_mpn']):
+            m = re.match('input_spikes_%d_(\d+).dat' % iteration, fn)
+            if m:
+                gid = int(m.groups()[0])
+                fn_ = self.params['input_folder_mpn'] + fn
+#                print 'DEBUG Loading:', fn
+                dspikes = np.loadtxt(fn_)
+                nspikes = dspikes.size
+                ypos = gid_to_posgrid_mapping_x[gid, 1]
+                xpos = gid_to_posgrid_mapping_y[gid, 1]
+                d[xpos, ypos] += nspikes
+                if nspikes > nspikes_thresh:
+                    ncells_above_nspikes_thresh[xpos, ypos] += 1
+
+        for i_ in xrange(x_grid.size):
+            for j_ in xrange(y_grid.size):
+                if ncells_above_nspikes_thresh[i_, j_] > 0:
+                    d[i_, j_] /= ncells_above_nspikes_thresh[i_, j_]
+
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        cax = ax.pcolormesh(d)#, cmap='binary')
+
+        title = 'Input spikes for $x_{stim}=%.2f\ v_{stim}=%.2f$\n $\\beta_X=%.2f\ \\beta_V=%.2f$' % \
+                (stim_params[0], stim_params[2], self.params['blur_X'], self.params['blur_V'])
+
+        ax.set_title(title)
+        ax.set_xlim((0, d.shape[0]))
+        ax.set_ylim((0, d.shape[1]))
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        cbar = pylab.colorbar(cax)
+        cbar.set_label('Input rate [Hz]')
+
+        x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
+        xlabels = ['%.1f' % (float(xtick) / self.n_bins_x) for xtick in x_ticks]
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels(xlabels)
+
+        y_ticks = np.linspace(0, self.n_bins_v, self.n_y_ticks)
+        vmin, vmax = np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])
+        ylabels = ['%.1f' % (float(ytick) * (vmax - vmin) / self.n_bins_v + vmin) for ytick in y_ticks]
+        ax.set_yticks(y_ticks)
+        ax.set_yticklabels(ylabels)
+
+        output_fig = 'mpn_input_spike_distribution_stim_x%.2f_v%.2f_blurX%.2f_bV%.2f.png' % \
+                (stim_params[0], stim_params[2], self.params['blur_X'], self.params['blur_V'])
+        print 'Saving figure to:', output_fig
+        pylab.savefig(output_fig, dpi=200)
+
+
+                
+
+    def plot_input(self, iteration=0, v_or_x='x'):
         if v_or_x == 'x':
             y_grid = self.y_grid_x
+            n_bins_y = self.n_bins_x
         else:
             y_grid = self.y_grid_vx
+            n_bins_y = self.n_bins_v
+
         d = np.zeros((y_grid.size, self.it_max)) 
 
-        for iteration in xrange(self.it_max):
-            print 'Plot input iteration', iteration
-            fn_to_match = (self.params['input_nspikes_fn_mpn'] + 'it%d_' % iteration).rsplit('/')[-1]
-            list_of_files = utils.find_files(self.params['input_folder_mpn'], fn_to_match)
-            for fn_ in list_of_files:
-                fn = self.params['input_folder_mpn'] + fn_
-                print 'Loading:', fn
-                d_it = np.loadtxt(fn, dtype=np.int)
-                nspikes = d_it[:, 1]
+#        for iteration in xrange(self.it_max):
 
-                for i_gid in xrange(d_it[:, 0].size):
-                    gid = d_it[i_gid, 0]
-                    # map the gids to their position in the xgrid
-#                    ypos = self.gid_to_posgrid_mapping_vx[gid, 1]
-                    ypos = self.gid_to_posgrid_mapping_x[gid, 1]
-                    d[xpos, iteration] += d_it[i_gid, 1]
-#                    if d_it[i_gid, 1] > 0:
-#                        print 'gid %d xpos %d nspikes_input %d' % (gid, xpos, d_it[i_gid, 1])
-                    
+        for fn in os.listdir(self.params['input_folder_mpn']):
+            m = re.match('input_spikes_%d_(\d+).dat' % iteration, fn)
+            if m:
+                gid = int(m.groups()[0])
+                fn_ = self.params['input_folder_mpn'] + fn
+#                print 'DEBUG Loading:', fn
+                dspikes = np.loadtxt(fn_)
+                nspikes = dspikes.size
+                ypos = self.gid_to_posgrid_mapping_x[gid, 1]
+                d[ypos, iteration] += nspikes
 
         d /= self.params['t_iteration'] / 1000.
         fig = pylab.figure()
@@ -94,9 +158,26 @@ class ActivityPlotter(object):
         cbar = pylab.colorbar(cax)
         cbar.set_label('Output rate [Hz]')
 
-        ylabels = ['%.1f' % (float(xtick) / self.n_bins_y) for xtick in self.x_ticks]
-        ax.set_yticks(self.y_ticks)
-        ax.set_yticklabels(ylabels)
+#        ylabels = ['%.1f' % (float(xtick) / n_bins_y) for xtick in y_grid]
+#        y_ticks = np.linspace(0, n_bins_y, self.n_y_ticks)
+#        ax.set_yticks(y_ticks)
+#        ax.set_yticklabels(ylabels)
+
+        if v_or_x == 'x':
+            n_bins_y = self.n_bins_x
+            y_ticks = np.linspace(0, n_bins_y, self.n_y_ticks)
+            ylabels = ['%.1f' % (float(xtick) / n_bins_y) for xtick in y_ticks]
+            ax.set_yticks(y_ticks)
+            ax.set_yticklabels(ylabels)
+
+        if v_or_x == 'v':
+            n_bins_y = self.n_bins_v
+            y_ticks = np.linspace(0, n_bins_y, self.n_y_ticks)
+            vmin, vmax = np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])
+            ylabels = ['%.1f' % (float(xtick) * (vmax - vmin) / n_bins_y + vmin) for xtick in y_ticks]
+            ax.set_yticks(y_ticks)
+            ax.set_yticklabels(ylabels)
+
 
         output_fn = self.params['data_folder'] + 'mpn_input_activity.dat'
         print 'Saving data to:', output_fn
@@ -134,10 +215,83 @@ class ActivityPlotter(object):
             if (nspikes > 0):
                 count, bins = np.histogram(self.spiketrains[gid], bins=n_bins_time, range=(0, self.params['t_sim']))
                 self.nspikes_binned[gid, :] = count
+        self.spiketimes_binned = True
         return self.nspikes_binned
 
 
-    def plot_output(self, stim_range=(0, 1), v_or_x='x', compute_state_differences=None):
+    def plot_output_xv_cmap(self, stim_params=None):
+        """
+        Requires bin_spiketimes() to be called before
+        """
+        assert (self.spiketimes_binned == True), 'Please call bin_spiketimes() before calling plot_output_xv_map'
+        if stim_params == None:
+            stim_params = self.params['initial_state']
+        x_grid = self.y_grid_x
+        gid_to_posgrid_mapping_x = self.gid_to_posgrid_mapping_x
+        xlabel = '$x_{preferred}$'
+        y_grid = self.y_grid_vx
+
+        gid_to_posgrid_mapping_y = self.gid_to_posgrid_mapping_vx
+        ylabel = '$v_x$'
+
+        nspikes_thresh = 0
+        d = np.zeros((self.n_bins_x, self.n_bins_v))
+        ncells_above_nspikes_thresh = np.zeros((self.n_bins_x, self.n_bins_v))
+        for gid in xrange(self.params['n_exc_mpn']):
+#            print 'DEBUG gid %d tp_x = %.2f gid_to_posgrid_mapping_x:' % (gid, self.tuning_prop_exc[gid, 0]), gid_to_posgrid_mapping_x[gid, 1]
+            ypos = gid_to_posgrid_mapping_x[gid, 1]
+            xpos = gid_to_posgrid_mapping_y[gid, 1]
+            nspikes = len(self.spiketrains[gid])
+            d[xpos, ypos] += nspikes
+            if nspikes > nspikes_thresh:
+                ncells_above_nspikes_thresh[xpos, ypos] += 1
+
+        for i_ in xrange(x_grid.size):
+            for j_ in xrange(y_grid.size):
+                if ncells_above_nspikes_thresh[i_, j_] > 0:
+                    d[i_, j_] /= ncells_above_nspikes_thresh[i_, j_]
+
+
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        cax = ax.pcolormesh(d)#, cmap='binary')
+
+        title = 'Output spikes for $x_{stim}=%.2f\ v_{stim}=%.2f$\n $\\beta_X=%.2f\ \\beta_V=%.2f$' % \
+                (stim_params[0], stim_params[2], self.params['blur_X'], self.params['blur_V'])
+        ax.set_title(title)
+        ax.set_xlim((0, d.shape[0]))
+        ax.set_ylim((0, d.shape[1]))
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        cbar = pylab.colorbar(cax)
+        cbar.set_label('Output rate [Hz]')
+
+#        y_ticks = np.linspace(0, 10, self.n_y_ticks)
+#        ylabels = ['%.1f' % (float(tick) / self.n_bins_v) for tick in y_ticks]
+#        ax.set_yticks(y_ticks)
+#        ax.set_yticklabels(ylabels)
+
+        x_ticks = np.linspace(0, self.n_bins_x, self.n_x_ticks)
+        xlabels = ['%.1f' % (float(xtick) / self.n_bins_x) for xtick in x_ticks]
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels(xlabels)
+
+        y_ticks = np.linspace(0, self.n_bins_v, self.n_y_ticks)
+        vmin, vmax = np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])
+        ylabels = ['%.1f' % (float(ytick) * (vmax - vmin) / self.n_bins_v + vmin) for ytick in y_ticks]
+#        ylabels = ['%.1f' % (float(self.tuning_prop_exc[i_, 2])) for i_ in y_ticks]
+        ax.set_yticks(y_ticks)
+        ax.set_yticklabels(ylabels)
+
+        output_fig = 'mpn_output_spike_distribution_stim_x%.2f_v%.2f_blurX%.2f_bV%.2f.png' % \
+                (stim_params[0], stim_params[2], self.params['blur_X'], self.params['blur_V'])
+        print 'Saving figure to:', output_fig
+        pylab.savefig(output_fig, dpi=200)
+
+
+
+    def plot_output(self, iter_range=(0, 1), v_or_x='x', compute_state_differences=None):
+        assert (self.spiketimes_binned == True), 'Please call bin_spiketimes() before calling plot_output!'
         
         # adjust for VX  /  X - plotting and training, testing
         if self.params['training']:
@@ -162,8 +316,7 @@ class ActivityPlotter(object):
             title = 'Output spikes during %s' % testtraining
             ylabel = 'GID'
 
-        n_iter = self.params['n_iterations_per_stim'] * stim_range[1] - stim_range[0]
-        iter_range = (self.params['n_iterations_per_stim'] * stim_range[0], self.params['n_iterations_per_stim'] * stim_range[1])
+        n_iter = iter_range[1] - iter_range[0]
 
         self.d[v_or_x] = np.zeros((y_grid.size, n_iter))
         nspikes_thresh = 0
@@ -216,14 +369,18 @@ class ActivityPlotter(object):
         cbar.set_label('Output rate [Hz]')
 
         if v_or_x == 'x':
-            ylabels = ['%.1f' % (float(xtick) / self.n_bins_y) for xtick in self.y_ticks]
-            ax.set_yticks(self.y_ticks)
+            n_bins_y = self.n_bins_x
+            y_ticks = np.linspace(0, n_bins_y, self.n_y_ticks)
+            ylabels = ['%.1f' % (float(xtick) / n_bins_y) for xtick in y_ticks]
+            ax.set_yticks(y_ticks)
             ax.set_yticklabels(ylabels)
 
         if v_or_x == 'v':
+            n_bins_y = self.n_bins_v
+            y_ticks = np.linspace(0, n_bins_y, self.n_y_ticks)
             vmin, vmax = np.min(self.tuning_prop_exc[:, 2]), np.max(self.tuning_prop_exc[:, 2])
-            ylabels = ['%.1f' % (float(xtick) * (vmax - vmin) / self.n_bins_y + vmin) for xtick in self.y_ticks]
-            ax.set_yticks(self.y_ticks)
+            ylabels = ['%.1f' % (float(xtick) * (vmax - vmin) / n_bins_y + vmin) for xtick in y_ticks]
+            ax.set_yticks(y_ticks)
             ax.set_yticklabels(ylabels)
 
         output_fn = self.params['data_folder'] + 'mpn_output_activity_%s-sorting.dat' % (v_or_x)
@@ -232,7 +389,7 @@ class ActivityPlotter(object):
 
         output_fig = self.params['figures_folder'] + 'mpn_output_activity_%s-sorting.png' % (v_or_x)
         print 'Saving figure to:', output_fig
-        pylab.savefig(output_fig)
+        pylab.savefig(output_fig, dpi=200)
 
 
         if compute_state_differences:
@@ -624,15 +781,15 @@ class MetaAnalysisClass(object):
         fig.savefig(output_fn, dpi=200)
 
         # plot vx - sorting
-#        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
-#        if params['debug_mpn']:
-#            Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
-#        if stim_range != None:
-#            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
-#        else:
-#            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png' 
-#        print 'Saving to', output_fn
-#        fig.savefig(output_fn, dpi=200)
+        fig, ax = Plotter.plot_raster_sorted(title='Exc cells sorted by preferred speed', sort_idx=2, t_range=t_range)
+        if params['debug_mpn']:
+            Plotter.plot_input_spikes_sorted(ax, sort_idx=2)
+        if stim_range != None:
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx_%d-%d.png' % (stim_range_label[0], stim_range_label[1])
+        else:
+            output_fn = params['figures_folder'] + 'rasterplot_mpn_in_and_out_vx.png' 
+        print 'Saving to', output_fn
+        fig.savefig(output_fn, dpi=200)
 
         del Plotter
 

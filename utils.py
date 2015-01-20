@@ -70,7 +70,7 @@ def get_optimal_action(params, stim_params):
 
     all_outcomes = np.zeros(len(action_bins))
     for i_, action in enumerate(action_bins):    
-        all_outcomes[i_] = get_next_stim(params, stim_params, action)[0]
+        all_outcomes[i_] = get_next_stim(params, stim_params, action, params['with_input_delay'], params['with_output_delay'])[0]
     best_action_idx = np.argmin(np.abs(all_outcomes - .5))
     best_speed = action_bins[best_action_idx ]
     return (best_speed, 0, best_action_idx)
@@ -143,7 +143,6 @@ def get_next_stim(params, stim_params, v_eye, with_input_delay=True, with_output
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field']
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
 
-
     if with_input_delay and with_output_delay:
         x_stim = stim_params[0] + stim_params[2] * (params['delay_input'] + params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
                 - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
@@ -165,9 +164,15 @@ def get_sigmoid_params(params, x_pre, v_stim):
     Based on the stimulus parameters, return the coefficients / parameters for a sigmoidal
     reward function
     """
+    v_stim_max = 1.5
 
-    k_ = 40.
+#    k_ = 40.
+#    k_ = params['reward_transition']
     x_displ = np.abs(x_pre - 0.5)
+    k_range = params['reward_transition_range']
+    dx_max =  v_stim_max * params['delay_input'] / params['t_cross_visual_field']
+    k_ = 40 # transform_linear(x_displ, k_range, [0., 0.5 + dx_max])
+#    print 'debug x pre vstim k_', x_pre, v_stim, k_
 
     x_pre_range = (0., 0.5) # absolute displacement
 
@@ -178,17 +183,16 @@ def get_sigmoid_params(params, x_pre, v_stim):
     worst_case = 0.5 - dx_best
 #    print 'worst case:', worst_case
 
-    v_stim_max = 1.5
-    multiplicator_range = [1., 2.0]  # factor range with which the tolerance interval will be increased
+#    multiplicator_range = [1., 2.0]  # factor range with which the tolerance interval will be increased
+    multiplicator_range = params['reward_function_speed_multiplicator_range']
+
     abs_speed_factor = transform_linear(np.abs(v_stim), multiplicator_range, [0., v_stim_max])
     
     tolerance = abs_speed_factor * params['reward_tolerance']
     c_range = (tolerance, worst_case)
 
-#    c = transform_quadratic(x_pre, 'pos', c_range, x_pre_range)
-#    c = transform_linear(x_pre, c_range, x_pre_range)
-
-    c = transform_linear(x_displ, c_range, x_pre_range)
+    c = transform_quadratic(x_displ, 'pos', c_range, x_pre_range)
+#    c = transform_linear(x_displ, c_range, x_pre_range)
     return c, k_
 
 
@@ -214,8 +218,8 @@ def get_reward_sigmoid(x_new, stim_params, params):
     b = 1.
     d = 1.
     x_center = 0.5 
-    c, tau = get_sigmoid_params(params, stim_params[0], stim_params[2])
-    R = K_max - (K_max - K_min) * sigmoid(np.abs(x_new - x_center), a, b, c, d, tau)
+    c, k_ = get_sigmoid_params(params, stim_params[0], stim_params[2])
+    R = K_max - (K_max - K_min) * sigmoid(np.abs(x_new - x_center), a, b, c, d, k_)
     return R
 
 def get_reward_from_perceived_states(old_pos, new_pos, punish_overshoot=1., params=None):
@@ -681,7 +685,7 @@ def get_grid_index_mapping(values, bins):
     """
     Returns a 2-dim array (gid, grid_pos) mapping with values.size length, i.e. the indices of values 
     and the bin index to which each value belongs.
-    values -- the values to be put in a grid
+    values -- the values to be put in a grid (e.g. the tuning properties of a certain dimension)
     bins -- list or array with the 1-dim grid bins 
     """
 
