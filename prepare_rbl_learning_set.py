@@ -57,7 +57,7 @@ if __name__ == '__main__':
     n_stimuli_per_run = 30
     stim_offset = 30
     
-    seed_folder = "Training_NEW4_nactions17_30_temp0.5_nC1__nStim30_0-30_gainD1_1.2_D2_1.2_K1_-1_seeds_321_5"
+    seed_folder = "Training_NEW6_nactions17_30_temp0.5_nC1__nStim30_0-30_gainD1_0.4_D2_0.4_K1_-1_seeds_321_5"
 
     aprun_cmd_base = 'aprun -n 240 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_training_reward_based_new.py'
 
