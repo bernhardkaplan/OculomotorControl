@@ -45,14 +45,12 @@ if __name__ == '__main__':
 
     GP = simulation_parameters.global_parameters()
     params = GP.params
-    BG = BasalGanglia.BasalGanglia(params, dummy=True)
-    all_actions_v = BG.action_bins_x
-    actions_v = all_actions_v
-    n_actions_to_plot = len(actions_v)
 
     plot_params = update_rcParams()
-    stim_speeds = np.arange(-1.5, 1.6, 0.05)
-    x_pre_range = np.arange(0., 1.05, 0.025)
+    n_x, n_v = 40, 40
+    stim_speeds = np.linspace(-1.5, 1.5, n_v, endpoint=True)
+    x_pre_range = np.linspace(0., 1.00, n_x, endpoint=True)
+
     a = 1.
     b = 1.
     d = 1.
@@ -65,18 +63,19 @@ if __name__ == '__main__':
     output_data = {}
     
     cnt_ = 0 
-    plot = True
-#    for speed_mult in [[0.5, 1.], [0.5, 1.5], [0.5, 2.], [1., 1.5], [1., 2.]]:
-    for speed_mult in [[0.5, 2.0]]:
+    plot = False
+    for speed_mult in [[0.5, 1.0], [0.5, 1.5], [0.5, 2.0], [1.0, 1.5], [1.0, 2.0]]:
         params['reward_function_speed_multiplicator_range'] = speed_mult
-        for n_actions in np.arange(17, 19, 2):
+        for n_actions in np.arange(15, 29, 2):
             params['n_actions'] = n_actions
-            for k_ in [20, 40, 200]:      
-                params['reward_transition'] = k_
-                for rew_tol in np.arange(0.04, 0.08, 0.01):
-
+            BG = BasalGanglia.BasalGanglia(params, dummy=True)
+            all_actions_v = BG.action_bins_x
+            actions_v = all_actions_v
+            n_actions_to_plot = len(actions_v)
+            for k_range in [[100, 100]]:#, [100, 10], [100, 5]]:
+                params['reward_transition_range'] = k_range
+                for rew_tol in np.arange(0.03, 0.08, 0.01):
                     params['reward_tolerance'] = rew_tol
-
                     n_pos_reward = np.zeros((len(stim_speeds), len(x_pre_range)))
                     n_neg_reward = np.zeros((len(stim_speeds), len(x_pre_range)))
                     for i_stim, v_stim in enumerate(stim_speeds):
@@ -84,10 +83,8 @@ if __name__ == '__main__':
                             x_pre_action_with_delay = x_pre_action - v_stim * params['delay_input'] / params['t_cross_visual_field']
                             x_post_action = np.zeros(n_actions_to_plot)
                             c, tau = utils.get_sigmoid_params(params, x_pre_action_with_delay, v_stim)
-
                             stim_params = (x_pre_action, .5, v_stim, .0)
                             stim_params_evaluation = (x_pre_action_with_delay, stim_params[1], stim_params[2], stim_params[3]) # the reward function 'knows' that a delay_input exists
-
                             for i_a in xrange(n_actions_to_plot):
                                 x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a], params['with_input_delay'], params['with_output_delay'])[0] # the next stimulus position takes into account both delay_input and delay_output
                                 R = utils.get_reward_sigmoid(x_post_action[i_a], stim_params_evaluation, params)  # the reward function needs to operate on the updated positions, taking into account both delay_input, delay_output
@@ -96,17 +93,15 @@ if __name__ == '__main__':
                                 elif R <= 0:
                                     n_neg_reward[i_stim, i_x] += 1
 
-                    print 'Set %d no positive reward given for: (stim_speed, stim_pos)' % (cnt_)
                     xidx, yidx = np.where(n_pos_reward == 0)
-#                    for x, y in zip(xidx, yidx):
-#                        print 'v_, x_:', stim_speeds[x], x_pre_range[y]
                     n_no_pos_reward = xidx.size
                     xidx_, yid_ = np.where(n_pos_reward > too_much_reward_thresh)
                     n_too_much_reward = xidx_.size
 
-                    output_data[cnt_] = {'reward_transition': k_, 'reward_tolerance': rew_tol, 'n_actions': params['n_actions'], 'too_much_reward_thresh': too_much_reward_thresh, \
+                    output_data[cnt_] = {'reward_transition_range': k_range, 'reward_tolerance': rew_tol, 'n_actions': params['n_actions'], 'too_much_reward_thresh': too_much_reward_thresh, \
                             'reward_function_speed_multiplicator_range': params['reward_function_speed_multiplicator_range'], 'n_no_pos_reward': n_no_pos_reward, 'n_too_much_reward' : n_too_much_reward, \
-                            'n_stim_tested': n_pos_reward.size}
+                            'n_stim_tested': n_pos_reward.size, 'reward_transition': params['reward_transition'], 'map_reward_transition_speed': params['map_reward_transition_speed'], \
+                            'map_reward_transition_point': params['map_reward_transition_point'], 'delay_input': params['delay_input'], 'delay_output': params['delay_output'], 't_iteration': params['t_iteration']}
                     print 'cnt %d' % cnt_, output_data[cnt_]
 
                     if plot:
@@ -119,6 +114,8 @@ if __name__ == '__main__':
                         cbar1 = pylab.colorbar(cax1)
                         cbar1.set_label('Num positive rewards')
                         ax1.set_ylabel('$v_{stim}$')
+                        for x, y in zip(xidx, yidx):
+                            ax1.plot(y+.5, x+.5, 'v', markersize=10, color='b')
 
                         ax2 = fig.add_subplot(223)
                         cax2 = ax2.pcolormesh(n_neg_reward, cmap='hot', vmin=0, vmax=params['n_actions'])
@@ -157,7 +154,7 @@ if __name__ == '__main__':
                         ax2.set_yticklabels(new_yticklabels)
 
                         ax3 = fig.add_subplot(122)
-                        x = np.linspace(0.0, 1.0, 100)
+                        x = np.linspace(0.0, 1.0, 1000)
                         x_center = 0.5
                         K_max = params['pos_kappa']
                         K_min = params['neg_kappa']
@@ -170,16 +167,27 @@ if __name__ == '__main__':
                                 ax3.plot(x, y, label='$x_{stim}^{delayed}=%.2f,\ v_{stim}=%.1f$' % (x_pre_action_with_delay, v_stim), c=linecolors[i_x % len(linecolors)], ls=linestyles[i_v % len(linestyles)])
                                 pylab.legend()
                                 i_c += 1
+                        xlim = ax3.get_xlim()
+                        ylim = ax3.get_ylim()
+                        ax3.plot((xlim[0], xlim[1]), (0., 0.), c='k', ls='--', lw=3)
+                        ax3.plot((.5, .5), (ylim[0], ylim[1]), c='k', ls='--', lw=3)
+                        ax3.set_xlabel('$x_{pre\ action}$')
+                        ax3.set_ylabel('Reward')
                         output_fn = 'reward_distribution_quadraticCmapping_nactions%d_rewTolerance_%.2f_speedMult_%.1f-%.1f_k%d_cnt%d.png' % (params['n_actions'], params['reward_tolerance'], \
                                 params['reward_function_speed_multiplicator_range'][0], params['reward_function_speed_multiplicator_range'][1], \
                                 params['reward_transition'], cnt_)
                         print 'Saving to:', output_fn
                         pylab.savefig(output_fn)
-                        del fig
+
+#                        output_fn = 'delme_debug_pd_cnt%d_maps.json' % cnt_
+#                        f = file(output_fn, 'w')
+#                        json.dump(params, f, indent=2)
+#                        f.close()
+#                        del fig
 
                     cnt_ += 1
 
-    output_fn = 'reward_function_qMap_parameter_sweep_set0.json'
+    output_fn = 'reward_function_quadrMap_parameter_sweep_delayIn%d_delayOut%d.json' % (params['delay_input'], params['delay_output'])
     print 'Saving output data to:', output_fn
     f = file(output_fn, 'w')
     json.dump(output_data, f, indent=2)

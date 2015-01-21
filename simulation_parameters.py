@@ -60,11 +60,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.blur_x = 0.00
         self.blur_v = 0.00
         self.n_actions = 17
+        # Reward function parameters:
         self.params['softmax_action_selection_temperature'] = 0.5
         self.params['reward_tolerance'] = 0.05
         self.params['reward_function_speed_multiplicator_range'] = [1., 2.]
-        self.params['reward_transition'] = 40
+        self.params['reward_transition'] = 100 # only used if map_reward_transition_speed != 'linear'
         self.params['reward_transition_range'] = [100, 10]
+        self.params['map_reward_transition_speed'] = 'linear' # determines how x_displ determines k (or tau) in the reward function
+        # if map_reward_transition_speed is not linear --> k = reward_transition 
+        self.params['map_reward_transition_point'] = 'quadratic' # determines how x_displ determines c in the reward function
+
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -458,7 +463,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.K = 0.
         self.params['pos_kappa'] = 1.
         self.params['neg_kappa'] = -1. # for the nonoptimal decision
-        self.params['k_range'] = [1000., 1000.]
 
         # gain parameters
         if self.params['training']:
