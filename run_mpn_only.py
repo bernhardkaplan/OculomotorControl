@@ -89,44 +89,46 @@ def plot_spike_histogram(params):
 if __name__ == '__main__':
 
     plotting = True
-    stim_params = [0.5, 0.5, 0.05, 0.]
-    blur = [0.0, 0.5]
+    run = True
+    stim_params = [0.5, 0.5, 1.0, 0.]
+    blur = [0.0, 0.0]
 
     GP = simulation_parameters.global_parameters()
     params = GP.params
-    params['initial_state'] = stim_params
-    params['blur_X'] = blur[0]
-    params['blur_V'] = blur[1]
-    GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
+    if run:
+        params['initial_state'] = stim_params
+        params['blur_X'] = blur[0]
+        params['blur_V'] = blur[1]
+        GP.write_parameters_to_file(params['params_fn_json'], params) # write_parameters_to_file MUST be called before every simulation
 
-    if pc_id == 0:
-        utils.remove_files_from_folder(params['spiketimes_folder'])
-        utils.remove_files_from_folder(params['input_folder_mpn'])
-    if comm != None:
-        comm.Barrier()
-    VI = VisualInput.VisualInput(params, comm=comm)
-    MT = MotionPrediction.MotionPrediction(params, VI, comm)
-    VI.current_motion_params = deepcopy(stim_params)
-    stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
-    MT.update_input(stim)
-    if comm != None:
-        comm.Barrier()
-    nest.Simulate(params['t_iteration'])
-    MT.advance_iteration(params['t_iteration'])
-    VI.advance_iteration(params['t_iteration'])
-    if comm != None:
-        comm.Barrier()
-    v_eye = [0., 0.]
-    stim, supervisor_state = VI.compute_input(MT.local_idx_exc, v_eye, params['t_iteration'])
-    print 'Saving spike trains...'
-    iteration_cnt = 0
-    utils.save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
-    MT.update_input(stim)
-    if comm != None:
-        comm.Barrier()
-    nest.Simulate(params['t_iteration'])
-    if comm != None:
-        comm.Barrier()
+        if pc_id == 0:
+            utils.remove_files_from_folder(params['spiketimes_folder'])
+            utils.remove_files_from_folder(params['input_folder_mpn'])
+        if comm != None:
+            comm.Barrier()
+        VI = VisualInput.VisualInput(params, comm=comm)
+        MT = MotionPrediction.MotionPrediction(params, VI, comm)
+        VI.current_motion_params = deepcopy(stim_params)
+        stim, supervisor_state = VI.set_empty_input(MT.local_idx_exc)
+        MT.update_input(stim)
+        if comm != None:
+            comm.Barrier()
+        nest.Simulate(params['t_iteration'])
+        MT.advance_iteration(params['t_iteration'])
+        VI.advance_iteration(params['t_iteration'])
+        if comm != None:
+            comm.Barrier()
+        v_eye = [0., 0.]
+        stim, supervisor_state = VI.compute_input(MT.local_idx_exc, v_eye, params['t_iteration'])
+        print 'Saving spike trains...'
+        iteration_cnt = 0
+        utils.save_spike_trains(params, iteration_cnt, stim, MT.local_idx_exc)
+        MT.update_input(stim)
+        if comm != None:
+            comm.Barrier()
+        nest.Simulate(params['t_iteration'])
+        if comm != None:
+            comm.Barrier()
 
     if pc_id == 0 and plotting:
 
@@ -159,11 +161,12 @@ if __name__ == '__main__':
         AP.bin_spiketimes()
         AP.plot_input(v_or_x='x')
         AP.plot_input(v_or_x='v')
-        AP.plot_input_cmap(iteration=0)
+        AP.plot_input_cmap(iteration=0, t_plot=params['t_iteration'])
         AP.plot_output(iter_range, v_or_x='x', compute_state_differences=False)
-        AP.plot_output_xv_cmap()
+        AP.plot_output_xv_cmap(t_plot=params['t_iteration'])
         MAC = MetaAnalysisClass([params['folder_name']], show=True)
 
     else:
         print 'Waiting for plotting...'
+
     pylab.show()

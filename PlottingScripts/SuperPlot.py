@@ -310,7 +310,7 @@ class PlotEverything(MetaAnalysisClass):
             x_stim = mp[i_stim, 0]
             v_eye = actions[i_stim, 0]
             action_idx = np.int(actions[i_stim, 2])
-            x_after = utils.get_next_stim(self.params, mp[i_stim, :], v_eye)[0]
+            x_after = utils.get_next_stim(self.params, mp[i_stim, :], v_eye, self.params['delay_input'], self.params['delay_output'])[0]
             r_test = utils.get_reward_from_perceived_states(x_stim, x_after)
             ax2.plot(np.array([t0, t1]), np.array([x_stim, x_after]), color=color, lw=5)
             if plot_action_idx:

@@ -41,6 +41,27 @@ def update_rcParams():
     pylab.rcParams.update(plot_params)
     return plot_params
 
+
+
+def plot_action_cmap(params, cnt_action_trained_d1, cnt_action_trained_d2):#, action_idx=0):
+
+
+    fig = pylab.figure()
+
+    for action_idx in xrange(params['n_actions']/2):
+        ax = fig.add_subplot(2, params['n_actions']/2, action_idx + 1, aspect=1)
+        cax = ax.pcolormesh(cnt_action_trained_d1[action_idx], cmap='jet')#, vmin=0, vmax=too_much_reward_thresh)
+        ax.set_ylabel('$v_{stim}$')
+        ax.set_xlabel('$x_{stim}$')
+        ax.set_title('%d' % action_idx)
+
+        ax = fig.add_subplot(2, params['n_actions']/2, action_idx + params['n_actions'] / 2 + 1, aspect=1)
+        cax = ax.pcolormesh(cnt_action_trained_d2[action_idx], cmap='jet')#, vmin=0, vmax=too_much_reward_thresh)
+        ax.set_ylabel('$v_{stim}$')
+        ax.set_xlabel('$x_{stim}$')
+        ax.set_title('%d' % action_idx)
+
+
 if __name__ == '__main__':
 
     GP = simulation_parameters.global_parameters()
@@ -58,15 +79,17 @@ if __name__ == '__main__':
     speed_mult_1 = 2.0
     n_actions = 17
     k_ = 100
-    rew_tol = 0.03
+    rew_tol = 0.04
     speed_mult = [speed_mult_0, speed_mult_1]
     params['reward_function_speed_multiplicator_range'] = speed_mult
     params['n_actions'] = n_actions
     params['reward_transition'] = k_
-    params['reward_transition_range'] = [100, 100]
+    params['reward_transition_range'] = [100, 20]
     params['reward_tolerance'] = rew_tol
     params['pos_kappa'] = 1.
     params['neg_kappa'] = -1.
+    params['delay_input'] = 0.
+    params['delay_output'] = 0.
 
     BG = BasalGanglia.BasalGanglia(params, dummy=True)
     all_actions_v = BG.action_bins_x
@@ -85,7 +108,7 @@ if __name__ == '__main__':
     b = 1.
     d = 1.
 
-    too_much_reward_thresh = 10
+    too_much_reward_thresh = 4
     linecolors = ['b', 'g', 'r', 'k', 'c', 'y', 'orange', 'magenta', 'darkblue', 'lightgray', 'olive', 'sandybrown', 'pink', 'darkcyan']
     linestyles = ['-', ':', '--', '-.']
 
@@ -94,6 +117,8 @@ if __name__ == '__main__':
     
     n_pos_reward = np.zeros((len(stim_speeds), len(x_pre_range)))
     n_neg_reward = np.zeros((len(stim_speeds), len(x_pre_range)))
+    d1_trained = [np.zeros((len(stim_speeds), len(x_pre_range))) for i in xrange(params['n_actions'])]
+    d2_trained = [np.zeros((len(stim_speeds), len(x_pre_range))) for i in xrange(params['n_actions'])]
     for i_stim, v_stim in enumerate(stim_speeds):
         for i_x, x_pre_action in enumerate(x_pre_range): 
             x_pre_action_with_delay = x_pre_action - v_stim * params['delay_input'] / params['t_cross_visual_field']
@@ -106,8 +131,14 @@ if __name__ == '__main__':
                 R = utils.get_reward_sigmoid(x_post_action[i_a], stim_params_evaluation, params)  # the reward function needs to operate on the updated positions, taking into account both delay_input, delay_output
                 if R > 0:
                     n_pos_reward[i_stim, i_x] += 1
+                    d1_trained[i_a][i_stim, i_x] += 1
                 elif R <= 0:
                     n_neg_reward[i_stim, i_x] += 1
+                    d2_trained[i_a][i_stim, i_x] += 1
+
+    plot_action_cmap(params, d1_trained, d2_trained)
+#    plot_action_cmap(d2_trained)
+#    pylab.show()
 
     fig = pylab.figure()
     ax1 = fig.add_subplot(221)

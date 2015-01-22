@@ -50,7 +50,7 @@ class ActivityPlotter(object):
 
 
 
-    def plot_input_cmap(self, iteration=0, stim_params=None):
+    def plot_input_cmap(self, iteration=0, stim_params=None, t_plot=None):
         if stim_params == None:
             stim_params = self.params['initial_state']
         x_grid = self.y_grid_x
@@ -81,6 +81,9 @@ class ActivityPlotter(object):
             for j_ in xrange(y_grid.size):
                 if ncells_above_nspikes_thresh[i_, j_] > 0:
                     d[i_, j_] /= ncells_above_nspikes_thresh[i_, j_]
+
+        if t_plot != None:
+            d /= t_plot / 1000.
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
@@ -156,7 +159,7 @@ class ActivityPlotter(object):
         ax.set_xlabel('Iteration')
         ax.set_ylabel('x-pos')
         cbar = pylab.colorbar(cax)
-        cbar.set_label('Output rate [Hz]')
+        cbar.set_label('Input rate [Hz]')
 
 #        ylabels = ['%.1f' % (float(xtick) / n_bins_y) for xtick in y_grid]
 #        y_ticks = np.linspace(0, n_bins_y, self.n_y_ticks)
@@ -219,7 +222,7 @@ class ActivityPlotter(object):
         return self.nspikes_binned
 
 
-    def plot_output_xv_cmap(self, stim_params=None):
+    def plot_output_xv_cmap(self, stim_params=None, t_plot=None):
         """
         Requires bin_spiketimes() to be called before
         """
@@ -251,6 +254,8 @@ class ActivityPlotter(object):
                 if ncells_above_nspikes_thresh[i_, j_] > 0:
                     d[i_, j_] /= ncells_above_nspikes_thresh[i_, j_]
 
+        if t_plot != None:
+            d /= t_plot / 1000.
 
         fig = pylab.figure()
         ax = fig.add_subplot(111)
