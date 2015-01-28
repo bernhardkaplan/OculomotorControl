@@ -160,7 +160,7 @@ if __name__ == '__main__':
         training_stimuli = create_stimuli_along_a_trajectory(params)
     else:
         VI = VisualInput.VisualInput(params)
-        tp = VI.set_tuning_prop_1D_with_const_fovea(cell_type='exc')
+        tp = VI.set_tuning_prop_1D_with_const_fovea_and_const_velocity(cell_type='exc')
         training_stimuli = create_stimuli_from_grid_center_and_tuning_prop(params)
 #        training_stimuli = VI.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
 

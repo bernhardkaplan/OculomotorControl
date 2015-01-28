@@ -24,6 +24,7 @@ class Plotter(object):
     def __init__(self, params, it_max=None):
         self.params = params
         tp_fn = self.params['tuning_prop_exc_fn']
+        assert (os.path.exists(tp_fn)), 'plot_tuning_properties can only be run on a folder that has created and written the tuning properties to file already.'
         print 'Loading', tp_fn
         self.tp = np.loadtxt(tp_fn)
         print 'Loading', self.params['receptive_fields_exc_fn']
