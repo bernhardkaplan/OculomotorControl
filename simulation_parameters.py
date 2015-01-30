@@ -55,8 +55,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['with_input_delay'] = not (self.params['delay_input'] == 0)
         self.params['with_output_delay'] = not (self.params['delay_output'] == 0)
 
-        self.params['n_rf'] = 50
-        self.params['n_v'] = 50
+        self.params['n_rf'] = 40
+        self.params['n_v'] = 40
         self.blur_x = 0.00
         self.blur_v = 0.00
         self.n_actions = 17
@@ -103,7 +103,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
 #        else:
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
-        self.params['n_steps_training_trajectory'] = 1
+        self.params['n_steps_training_trajectory'] = 3
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
         self.params['frac_training_samples_from_grid'] = 0.8
@@ -184,9 +184,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = '_nactions%d_delayIn%d_out%d' % (self.n_actions, self.params['delay_input'], self.params['delay_output'])
+                self.params['sim_id'] = 'NewTP_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
-            self.params['sim_id'] = '_%d_nactions%d_VA_delayIn%d_out%d_bX%.2f_bV%.2f' % (self.params['t_iteration'], self.n_actions, self.params['delay_input'], self.params['delay_output'], self.blur_x, self.blur_v)
+#            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
+            self.params['sim_id'] = 'NewTP_%d_nactions%d_VA_bX%.1f_bV%.1x' % (self.params['t_iteration'], self.n_actions, self.blur_x, self.blur_v)
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -228,10 +229,18 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_rf_y'] = 1
             self.params['n_theta'] = 1 # 2 because it's rightwards or leftwards 
 
-        self.params['frac_rf_x_fovea'] = 0.5 # this fraction of all n_rf_x cells will have constant (minimum) RF size
+
+        self.params['frac_rf_x_fovea'] = 0.3 # this fraction of all n_rf_x cells will have constant (minimum) RF size
         self.params['n_rf_x_fovea'] = np.int(np.round(self.params['frac_rf_x_fovea'] * self.params['n_rf_x']))
         if self.params['n_rf_x_fovea'] % 2:
             self.params['n_rf_x_fovea'] += 1
+
+        self.params['n_rf_v'] = self.params['n_v']
+        self.params['frac_rf_v_fovea'] = 0.3 # this fraction of all n_rf_v cells will have constant (minimum) RF size
+        self.params['n_rf_v_fovea'] = np.int(np.round(self.params['frac_rf_v_fovea'] * self.params['n_rf_v']))
+        if self.params['n_rf_v_fovea'] % 2:
+            self.params['n_rf_v_fovea'] += 1
+
 
         
 
@@ -323,20 +332,21 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #        self.params['gids_to_record_bg'] = [57006, 57007, 57011, 57013, 57030, 57032, 57033, 57034, 57035, 57036, 57037, 57038, 57041, 57042, 57043, 57089, 57090, 57091, 57092, 57093, 57096, 57097, 57098, 57102, 57103, 57107, 57108]
 
         self.params['log_scale'] = 2.0 # base of the logarithmic tiling of particle_grid; linear if equal to one
-        self.params['sigma_rf_pos'] = .10 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
-        self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
-        self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
-        self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
-#        self.params['sigma_rf_pos'] = .001 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
-#        self.params['sigma_rf_speed'] = .001 # some variability in the speed of RFs
-#        self.params['sigma_rf_direction'] = .0
-#        self.params['sigma_rf_orientation'] = .0
+#        self.params['sigma_rf_pos'] = .10 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
+#        self.params['sigma_rf_speed'] = .20 # some variability in the speed of RFs
+#        self.params['sigma_rf_direction'] = .25 * 2 * np.pi # some variability in the direction of RFs
+#        self.params['sigma_rf_orientation'] = .1 * np.pi # some variability in the direction of RFs
+        self.params['sigma_rf_pos'] = .001 # RF are drawn from a normal distribution centered at 0.5 with this sigma as standard deviation
+        self.params['sigma_rf_speed'] = .001 # some variability in the speed of RFs
+        self.params['sigma_rf_direction'] = .0
+        self.params['sigma_rf_orientation'] = .0
 
         self.params['n_exc_to_record_mpn'] = 0
         self.params['x_max_tp'] = 0.45 # [a.u.] minimal distance to the center  
-        self.params['x_min_tp'] = 0.1  # [a.u.] all cells with abs(rf_x - .5) < x_min_tp are considered to be in the center and will have constant, minimum RF size (--> see n_rf_x_fovea)
+        self.params['x_min_tp'] = 0.05  # [a.u.] all cells with abs(rf_x - .5) < x_min_tp are considered to be in the center and will have constant, minimum RF size (--> see n_rf_x_fovea)
         self.params['v_max_tp'] = 1.5   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
-        self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
+        self.params['v_min_tp'] = 0.20  # [a.u.] minimal velocity in visual space for tuning property distribution
+#        self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 
         self.params['v_lim_training'] = (-self.params['v_max_tp'] * 0.7, self.params['v_max_tp'] * 0.7)
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))

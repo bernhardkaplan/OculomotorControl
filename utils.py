@@ -870,6 +870,25 @@ def get_xpos_log_distr(logscale, n_x, x_min=1e-6, x_max=.5):
 
 
 
+#def get_rf_v_log_distr(logscale, n_v, v_min, v_max):
+#    logspace = np.logspace(np.log(v_min) / np.log(logscale), np.log(v_max) / np.log(logscale), n_v / 2 + 1, base=logscale)
+#    logspace = list(logspace)
+#    logspace.reverse()
+#    v_lower = -np.array(logspace)
+#    logspace = np.logspace(np.log(v_min) / np.log(logscale), np.log(v_max) / np.log(logscale), n_v / 2 + 1, base=logscale)
+#    v_upper =  logspace + .5
+#    v_rho = np.zeros(n_v)
+#    v_rho[:n_v/2] = v_lower[:-1]
+#    if n_v % 2:
+#        v_rho[n_v/2+1:] = v_upper[1:]
+#    else:
+#        v_rho[n_v/2:] = v_upper[1:]
+#    return v_rho
+
+
+
+
+
 def get_receptive_field_sizes_x(params, rf_x):
     idx = np.argsort(rf_x)
     rf_size_x = np.zeros(rf_x.size)
@@ -895,6 +914,7 @@ def get_receptive_field_sizes_v(params, rf_v):
 
 #    print 'rf_v', rf_v
     idx = np.argsort(rf_v)
+#    print 'sorted rf_v', rf_v[idx]
     rf_size_v = np.zeros(rf_v.size)
     pos_idx = (rf_v[idx] > 0.0).nonzero()[0]
     neg_idx = (rf_v[idx] < 0.0).nonzero()[0]
@@ -902,15 +922,30 @@ def get_receptive_field_sizes_v(params, rf_v):
     dv_neg_half = np.zeros(neg_idx.size)
     dv_pos_half = rf_v[idx][pos_idx][1:] - rf_v[idx][pos_idx][:-1]
     dv_neg_half = np.abs(rf_v[idx][neg_idx][1:] - rf_v[idx][neg_idx][:-1])
+
+#    print 'dv_pos_half', dv_pos_half
+#    print 'dv_neg_half', dv_neg_half
+    #old 
     dv_neg_reverse = list(dv_neg_half)
     dv_neg_reverse.reverse()
-    rf_size_v[:neg_idx.size-1] = dv_neg_reverse
-    rf_size_v[pos_idx.size+1:] = dv_pos_half
+#    rf_size_v[:neg_idx.size-1] = dv_neg_reverse
+#    rf_size_v[pos_idx.size+1:] = dv_pos_half
+#    rf_size_v[pos_idx.size] = dv_pos_half[0]
+#    rf_size_v[idx.size / 2 - 1] = dv_neg_half[0]
+
+    # new
+    rf_size_v[:neg_idx.size-1] = dv_neg_half
+    rf_size_v[neg_idx.size] = dv_neg_half[-1]
+    if params['n_rf_v'] % 2:
+        rf_size_v[pos_idx.size+2:] = dv_pos_half # for 21
+    else:
+        rf_size_v[pos_idx.size+1:] = dv_pos_half # for 20
     rf_size_v[pos_idx.size] = dv_pos_half[0]
-    rf_size_v[idx.size / 2 - 1] = dv_neg_half[0]
+    rf_size_v[idx.size / 2 - 1] = dv_pos_half[0]
+
 
     rf_size_v *= params['rf_size_v_multiplicator']
-    #print 'rf_size_v', rf_size_v
+#    print 'rf_size_v', rf_size_v
     return rf_size_v
 
 

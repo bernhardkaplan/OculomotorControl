@@ -28,7 +28,7 @@ module add python
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cfs/milner/scratch/b/bkaplan/BCPNN-Module/build-module-100725
 export PYTHONPATH=/pdc/vol/nest/2.2.2/lib/python2.7/site-packages:/pdc/vol/python/2.7.6-gnu/lib/python2.7/site-packages
 
-aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training_NEW6_nactions17_30_temp0.5_nC1__nStim30_270-300_gainD1_0.4_D2_0.4_K1_-1_seeds_381_5  > delme_testing_ 2>&1
+aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training_NEW7_nactions17_30_temp0.5_nC1__nStim30_270-300_gainD1_0.2_D2_0.2_K1_-1_seeds_381_5  > delme_testing_ 2>&1
 #aprun -n 80 python /cfs/milner/scratch/b/bkaplan/OculomotorControl/main_testing.py Training__nactions13_30_temp0.5_nC1__nStim15_285-300_gainD1_0.8_D2_0.8_K2_-2_seeds_396_2 > delme_testing_g4_K2_temp0.5_VA 2>&1
 
 

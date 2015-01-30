@@ -2,10 +2,10 @@
 # The -l above is required to get the full environment with modules
 
 # The name of the script is myjob
-#SBATCH -J 17actions_gain0.2
+#SBATCH -J noDelG0.8
 
 # Only 1 hour wall-clock time will be given to this job
-#SBATCH -t 03:59:00
+#SBATCH -t 00:59:00
 
 # Number of cores to be allocated (multiple of 40)
 #SBATCH -N 6
