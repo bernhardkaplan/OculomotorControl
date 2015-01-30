@@ -227,13 +227,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.params['n_theta'] = 1 # 2 because it's rightwards or leftwards 
 
 
-        self.params['frac_rf_x_fovea'] = 0.5 # this fraction of all n_rf_x cells will have constant (minimum) RF size
+        self.params['frac_rf_x_fovea'] = 0.3 # this fraction of all n_rf_x cells will have constant (minimum) RF size
         self.params['n_rf_x_fovea'] = np.int(np.round(self.params['frac_rf_x_fovea'] * self.params['n_rf_x']))
         if self.params['n_rf_x_fovea'] % 2:
             self.params['n_rf_x_fovea'] += 1
 
         self.params['n_rf_v'] = self.params['n_v']
-        self.params['frac_rf_v_fovea'] = 0.5 # this fraction of all n_rf_v cells will have constant (minimum) RF size
+        self.params['frac_rf_v_fovea'] = 0.3 # this fraction of all n_rf_v cells will have constant (minimum) RF size
         self.params['n_rf_v_fovea'] = np.int(np.round(self.params['frac_rf_v_fovea'] * self.params['n_rf_v']))
         if self.params['n_rf_v_fovea'] % 2:
             self.params['n_rf_v_fovea'] += 1
@@ -340,9 +340,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
 
         self.params['n_exc_to_record_mpn'] = 0
         self.params['x_max_tp'] = 0.45 # [a.u.] minimal distance to the center  
-        self.params['x_min_tp'] = 0.1  # [a.u.] all cells with abs(rf_x - .5) < x_min_tp are considered to be in the center and will have constant, minimum RF size (--> see n_rf_x_fovea)
+        self.params['x_min_tp'] = 0.05  # [a.u.] all cells with abs(rf_x - .5) < x_min_tp are considered to be in the center and will have constant, minimum RF size (--> see n_rf_x_fovea)
         self.params['v_max_tp'] = 1.5   # [a.u.] maximal velocity in visual space for tuning properties (for each component), 1. means the whole visual field is traversed within 1 second
-        self.params['v_min_tp'] = 0.30  # [a.u.] minimal velocity in visual space for tuning property distribution
+        self.params['v_min_tp'] = 0.20  # [a.u.] minimal velocity in visual space for tuning property distribution
 #        self.params['v_min_tp'] = 0.01  # [a.u.] minimal velocity in visual space for tuning property distribution
 
         self.params['v_lim_training'] = (-self.params['v_max_tp'] * 0.7, self.params['v_max_tp'] * 0.7)

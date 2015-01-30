@@ -5,6 +5,7 @@ print 'cmd_subfolder', cmd_subfolder
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
+import simulation_parameters
 import numpy as np
 import pylab
 import matplotlib
@@ -18,18 +19,40 @@ import matplotlib.patches as mpatches
 from matplotlib.collections import PatchCollection
 from FigureCreator import plot_params
 pylab.rcParams.update(plot_params)
+import VisualInput
 
 class Plotter(object):
 
     def __init__(self, params, it_max=None):
         self.params = params
         tp_fn = self.params['tuning_prop_exc_fn']
-        assert (os.path.exists(tp_fn)), 'plot_tuning_properties can only be run on a folder that has created and written the tuning properties to file already.'
-        print 'Loading', tp_fn
-        self.tp = np.loadtxt(tp_fn)
-        print 'Loading', self.params['receptive_fields_exc_fn']
-        self.rfs = np.loadtxt(self.params['receptive_fields_exc_fn'])
+        if not os.path.exists(tp_fn):
+            if os.path.exists(params['folder_name']):
+                yn = raw_input("Tuning property file not found.\nOverwrite parameters in this folder? \n%s\n" % (params['folder_name']))
+                if yn.capitalize() == 'Y':
+                    self.set_tuning_prop()
+                else:
+                    print 'not Y\nwill now quit'
+    #                assert (os.path.exists(tp_fn)), 'plot_tuning_properties can only be run on a folder that has created and written the tuning properties to file already.'
+                    exit(1)
+            else:
+                self.set_tuning_prop()
+        else:
+            print 'Loading', tp_fn
+            self.tp = np.loadtxt(tp_fn)
+            print 'Loading', self.params['receptive_fields_exc_fn']
+            self.rfs = np.loadtxt(self.params['receptive_fields_exc_fn'])
 
+    def set_tuning_prop(self):
+
+        PT = simulation_parameters.global_parameters()
+        params = PT.params
+        PT.write_parameters_to_file()
+        VI = VisualInput.VisualInput(self.params)
+        self.tp = VI.set_tuning_prop('exc')
+#        self.rfs = VI.
+        self.rfs = VI.rf_sizes
+#        self.tuning_prop_exc = self.set_tuning_prop('exc')
 
     def plot_tuning_prop(self):
 
@@ -213,7 +236,6 @@ if __name__ == '__main__':
         params = json.load(f)
 
     else:
-        import simulation_parameters
         param_tool = simulation_parameters.global_parameters()
         params = param_tool.params
 
@@ -225,8 +247,8 @@ if __name__ == '__main__':
 #    Plotter.plot_tuning_curves(2)
     Plotter.plot_tuning_width_distribution()
 
-    Plotter.plot_relative_pos_error()
-    Plotter.plot_relative_v_error()
+#    Plotter.plot_relative_pos_error()
+#    Plotter.plot_relative_v_error()
 
 #    Plotter.plot_rf_size_vs_pos()
 #    Plotter.plot_rf_size_vs_speed()

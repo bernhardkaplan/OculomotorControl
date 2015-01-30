@@ -715,9 +715,14 @@ class VisualInput(object):
         n_cells = self.params['n_exc_mpn']
         rfs = np.zeros((n_cells, 4))
         rfs[:, 0] = utils.get_receptive_field_sizes_x(self.params, self.tuning_prop_exc[:, 0])
-        rfs[:, 1] = utils.get_receptive_field_sizes_x(self.params, self.tuning_prop_exc[:, 1])
         rfs[:, 2] = utils.get_receptive_field_sizes_v(self.params, self.tuning_prop_exc[:, 2])
-        rfs[:, 3] = utils.get_receptive_field_sizes_v(self.params, self.tuning_prop_exc[:, 3])
+        if self.params['n_grid_dimensions'] == 2:
+            rfs[:, 1] = utils.get_receptive_field_sizes_x(self.params, self.tuning_prop_exc[:, 1])
+            rfs[:, 3] = utils.get_receptive_field_sizes_v(self.params, self.tuning_prop_exc[:, 3])
+        else:
+            rfs[:, 1] = 0.
+            rfs[:, 3] = 0.
+
 #        rfs[:, 0] = self.params['rf_size_x_gradient'] * np.abs(self.tuning_prop_exc[:, 0] - .5) + self.params['rf_size_x_min']
 #        rfs[:, 1] = self.params['rf_size_y_gradient'] * np.abs(self.tuning_prop_exc[:, 1] - .5) + self.params['rf_size_y_min']
 #        rfs[:, 2] = self.params['rf_size_vx_gradient'] * np.abs(self.tuning_prop_exc[:, 2]) + self.params['rf_size_vx_min']
@@ -797,12 +802,12 @@ class VisualInput(object):
 #        v_rho[:n_v/2] = -v_rho_half
 #        v_rho[n_v/2:] = v_rho_half
 
-        print 'DEBUG\n'
-        print 'n_rf_v', n_rf_v
+#        print 'DEBUG\n'
+#        print 'n_rf_v', n_rf_v
         n_rf_v_log = self.params['n_rf_v'] - self.params['n_rf_v_fovea']
 #        RF_v_log = utils.get_vpos_log_distr(self.params['log_scale'], n_rf_v_log, x_min=self.params['x_min_tp'], x_max=self.params['x_max_tp'])
 #        RF_v_const = np.linspace(.5 - self.params['x_min_tp'], .5 + self.params['x_min_tp'], self.params['n_rf_v_fovea'])
-        RF_v_const = np.linspace(-self.params['v_min_tp'], self.params['v_min_tp'], self.params['n_rf_v_fovea'])
+        RF_v_const = np.linspace(-self.params['v_min_tp'], self.params['v_min_tp'], self.params['n_rf_v_fovea'] + 1, endpoint=False)[1:]
         RF_v = np.zeros(n_rf_v)
         idx_upper = n_rf_v_log / 2 + self.params['n_rf_v_fovea']
         if self.params['log_scale']==1:
@@ -811,7 +816,14 @@ class VisualInput(object):
             v_rho_half = np.logspace(np.log(v_min)/np.log(self.params['log_scale']),
                             np.log(v_max)/np.log(self.params['log_scale']), num=n_rf_v_log/2,
                             endpoint=True, base=self.params['log_scale'])
-        RF_v[:n_rf_v_log / 2] = v_rho_half
+#        print 'n_rf_log:', n_rf_v_log
+#        print 'n_rf_v_fovea:', self.params['n_rf_v_fovea']
+#        print 'v_rho_half', v_rho_half.size, v_rho_half
+#        print 'n_rf_v_log / 2:', n_rf_v_log / 2
+#        print 'RF_v_const:', RF_v_const
+        v_rho_half_ = list(v_rho_half)
+        v_rho_half_.reverse()
+        RF_v[:n_rf_v_log / 2] = v_rho_half_
         RF_v[idx_upper:] = -v_rho_half
         RF_v[n_rf_v_log / 2 : n_rf_v_log / 2 + self.params['n_rf_v_fovea']] = RF_v_const
 
@@ -840,9 +852,8 @@ class VisualInput(object):
                 tuning_prop[index, 3] = 0. 
                 self.rf_sizes[index, 0] = rf_sizes_x[i_RF]
                 self.rf_sizes[index, 2] = rf_sizes_v[i_v_rho]
+#                print 'debug', index, tuning_prop[index, 0], tuning_prop[index, 2], self.rf_sizes[index, 0], self.rf_sizes[index, 2]
                 index += 1
-
-
 
         assert (index == n_cells), 'ERROR, index != n_cells, %d, %d' % (index, n_cells)
 #        exit(1)

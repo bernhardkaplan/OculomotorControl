@@ -237,10 +237,9 @@ class MotionPrediction(object):
         """
         local_nodes = []
         node_info   = nest.GetStatus(pop)
-        for i_, d in enumerate(node_info):
+        for d in node_info:
             if d['local']:
                 local_nodes.append(d['global_id'])
-        self.n_local_exc = len(local_nodes)
         return local_nodes
         
 
