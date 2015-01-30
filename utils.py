@@ -165,14 +165,15 @@ def get_sigmoid_params(params, x_pre, v_stim):
     reward function
     """
     v_stim_max = 1.5
-
-#    k_ = 40.
-#    k_ = params['reward_transition']
     x_displ = np.abs(x_pre - 0.5)
-    k_range = params['reward_transition_range']
     dx_max =  v_stim_max * params['delay_input'] / params['t_cross_visual_field']
-    k_ = 40 # transform_linear(x_displ, k_range, [0., 0.5 + dx_max])
-#    print 'debug x pre vstim k_', x_pre, v_stim, k_
+    if params['map_reward_transition_speed'] == 'linear':
+        k_range = params['reward_transition_range']
+        k_ = transform_linear(x_displ, k_range, [0., 0.5 + dx_max])
+#    elif params['map_reward_transition'] == 'quadratic':
+#        k_ = transform_quadratic(x_displ, k_range, [0., 0.5 + dx_max])
+    else:
+        k_ = params['reward_transition'] 
 
     x_pre_range = (0., 0.5) # absolute displacement
 
@@ -191,8 +192,10 @@ def get_sigmoid_params(params, x_pre, v_stim):
     tolerance = abs_speed_factor * params['reward_tolerance']
     c_range = (tolerance, worst_case)
 
-    c = transform_quadratic(x_displ, 'pos', c_range, x_pre_range)
-#    c = transform_linear(x_displ, c_range, x_pre_range)
+    if params['map_reward_transition_point'] == 'quadratic':
+        c = transform_quadratic(x_displ, 'pos', c_range, x_pre_range)
+    else: 
+        c = transform_linear(x_displ, c_range, x_pre_range)
     return c, k_
 
 

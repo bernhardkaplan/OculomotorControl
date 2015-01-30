@@ -50,8 +50,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
-        self.params['delay_input'] = 0.
-        self.params['delay_output'] = 0.
+        self.params['delay_input'] = 75.
+        self.params['delay_output'] = 75.
         self.params['with_input_delay'] = not (self.params['delay_input'] == 0)
         self.params['with_output_delay'] = not (self.params['delay_output'] == 0)
 
@@ -61,11 +61,16 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.blur_v = 0.00
         self.n_actions = 17
         self.params['reward_threshold'] = 0.0
+        # Reward function parameters:
         self.params['softmax_action_selection_temperature'] = 0.5
-        self.params['reward_tolerance'] = 0.05
+        self.params['reward_tolerance'] = 0.03
         self.params['reward_function_speed_multiplicator_range'] = [1., 2.]
-        self.params['reward_transition'] = 40
-        self.params['reward_transition_range'] = [100, 10]
+        self.params['reward_transition'] = 100 # only used if map_reward_transition_speed != 'linear'
+        self.params['reward_transition_range'] = [100, 100]
+        self.params['map_reward_transition_speed'] = 'linear' # determines how x_displ determines k (or tau) in the reward function
+        # if map_reward_transition_speed is not linear --> k = reward_transition 
+        self.params['map_reward_transition_point'] = 'quadratic' # determines how x_displ determines c in the reward function
+
         self.params['continue_training'] = True
         self.params['reward_based_learning'] = True
 #        self.params['training'] = False
@@ -179,10 +184,9 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'NEW5_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = '_nactions%d_delayIn%d_out%d' % (self.n_actions, self.params['delay_input'], self.params['delay_output'])
         else:
-#            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = 'NEW2_%d_nactions%d_VA_bX%.1f_bV%.1x' % (self.params['t_iteration'], self.n_actions, self.blur_x, self.blur_v)
+            self.params['sim_id'] = '_%d_nactions%d_VA_delayIn%d_out%d_bX%.2f_bV%.2f' % (self.params['t_iteration'], self.n_actions, self.params['delay_input'], self.params['delay_output'], self.blur_x, self.blur_v)
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -461,7 +465,6 @@ class global_parameters(ParameterContainer.ParameterContainer):
             self.K = 0.
         self.params['pos_kappa'] = 1.
         self.params['neg_kappa'] = -1. # for the nonoptimal decision
-        self.params['k_range'] = [1000., 1000.]
 
         # gain parameters
         if self.params['training']:
