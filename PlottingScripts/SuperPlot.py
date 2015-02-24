@@ -138,6 +138,7 @@ class PlotEverything(MetaAnalysisClass):
 #            text_pos_x = t_0 + 0.2 * (t_1 - t_0) 
 #            print 'debug text_pos:', text_pos_x, text_pos_y
             # for presentation
+            ax.text(text_pos_x, text_pos_y, '(%.2f, %.2f)\n%d: %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=14)
 #            ax.text(text_pos_x, text_pos_y, 'Stimulus parameters: \n(%.2f, %.2f)\n%d: iterations %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=14)
 #            ax.text(text_pos_x, text_pos_y, 'Activity in BG during training\nStimulus parameters: (%.2f, %.2f) %d: iterations %d-%d' % (x, v, np.int(cnt + stim_offset), start, stop), fontsize=28)
             ax.plot((t_0, t_0), (ylim[0], text_pos_y), ls='-', c='k', lw=3)

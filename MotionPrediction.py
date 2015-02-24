@@ -257,6 +257,7 @@ class MotionPrediction(object):
         nest.ConvergentConnect(self.voltmeter, gids_to_record)
 
 
+
     def write_cell_gids_to_file(self):
         d = {}
         d['exc'] = self.exc_pop

@@ -562,9 +562,7 @@ class VisualInput(object):
         trajectory -- two - dimensional (x, y) array of where the stimulus is positioned over time
         """
         self.stim = [ [] for gid in xrange(len(local_gids))]
-
         dt = self.params['dt_input_mpn'] # [ms] time step for the non-homogenous Poisson process 
-
         time = np.arange(0, self.params['t_iteration'], dt)
         n_cells = len(local_gids)
         L_input = np.zeros((n_cells, time.shape[0]))
@@ -590,6 +588,7 @@ class VisualInput(object):
             input_nspikes[i_, :] = (gid, len(st))
             self.stim[i_] = st
         return self.stim
+
 
     def get_input_additive_blur(self, tuning_prop, rfs_x, rfs_v, motion_params, blur_x, blur_v):
         """

@@ -91,8 +91,8 @@ if __name__ == '__main__':
     plotting = True
     run = True
     stim_params = [0.5, 0.5, 1.0, 0.]
-    blur = [0.0, 0.0]
-
+    blur = [0.05, 0.05]
+    t_sim = 0
     GP = simulation_parameters.global_parameters()
     params = GP.params
     if run:
@@ -114,6 +114,7 @@ if __name__ == '__main__':
         if comm != None:
             comm.Barrier()
         nest.Simulate(params['t_iteration'])
+        t_sim += params['t_iteration']
         MT.advance_iteration(params['t_iteration'])
         VI.advance_iteration(params['t_iteration'])
         if comm != None:
@@ -127,6 +128,7 @@ if __name__ == '__main__':
         if comm != None:
             comm.Barrier()
         nest.Simulate(params['t_iteration'])
+        t_sim += params['t_iteration']
         if comm != None:
             comm.Barrier()
 
@@ -158,13 +160,15 @@ if __name__ == '__main__':
         iter_range = (0, 3)
         it_max = 1
         AP = ActivityPlotter(params, it_max)
+        AP.plot_raster_sorted(title='', cell_type='exc', sort_idx=0, t_range=[0, t_sim])
+
         AP.bin_spiketimes()
         AP.plot_input(v_or_x='x')
         AP.plot_input(v_or_x='v')
         AP.plot_input_cmap(iteration=0, t_plot=params['t_iteration'])
         AP.plot_output(iter_range, v_or_x='x', compute_state_differences=False)
         AP.plot_output_xv_cmap(t_plot=params['t_iteration'])
-        MAC = MetaAnalysisClass([params['folder_name']], show=True)
+#        MAC = MetaAnalysisClass([params['folder_name']], show=True)
 
     else:
         print 'Waiting for plotting...'

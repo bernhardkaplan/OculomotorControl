@@ -78,6 +78,19 @@ class Plotter(object):
         cnt, bins = np.histogram(tp[:, 2], bins=20)
         ax4.bar(bins[:-1], cnt, width=bins[1]-bins[0])
 
+        fig = pylab.figure()
+        ax1 = fig.add_subplot(221)
+        ax2 = fig.add_subplot(222)
+        ax3 = fig.add_subplot(223)
+        ax4 = fig.add_subplot(224)
+        sort_idx_x = np.argsort(tp[:, 0])
+        sort_idx_v = np.argsort(tp[:, 2])
+        ax1.plot(range(tp[:, 0].size), tp[sort_idx_x, 0], 'o', ls='')
+        ax2.plot(range(tp[:, 2].size), tp[sort_idx_v, 2], 'o', ls='')
+        ax3.plot(range(tp[:, 0].size - 1), tp[sort_idx_x[1:], 0] - tp[sort_idx_x[:-1], 0], 'o', ls='', c='k', markersize=5)
+        ax4.plot(range(tp[:, 2].size - 1), tp[sort_idx_v[1:], 2] - tp[sort_idx_v[:-1], 2], 'o', ls='', c='k', markersize=5)
+        ax1.set_title('Spatial receptive field positions')
+        ax2.set_title('Preferred speeds')
 
 
 
