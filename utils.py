@@ -56,7 +56,6 @@ def get_optimal_action(params, stim_params):
     except:
         action_bins = []
         n_bins_x = np.int(np.round((params['n_actions'] - 1) / 2.))
-        n_bins_y = np.int(np.round((params['n_actions'] - 1) / 2.))
         v_scale_half = ((-1.) * np.logspace(np.log(params['v_min_out']) / np.log(params['log_scale']),
                             np.log(params['v_max_out']) / np.log(params['log_scale']), num=n_bins_x,
                             endpoint=True, base=params['log_scale'])).tolist()

@@ -7,6 +7,7 @@ Analyses the json output dictionary written by: PlottingScripts/show_reward_stim
 """
 
 fn = 'reward_function_quadrMap_parameter_sweep_delayIn0_delayOut0.json'
+fn = 'reward_function_quadrMap_parameter_sweep_delayIn75_delayOut75.json'
 f = file(fn, 'r')
 d = json.load(f)
 
