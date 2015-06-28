@@ -125,7 +125,7 @@ class VisualInput(object):
         returns S0, S1, S2 
         """
         different_training_stim = np.zeros((self.params['n_training_stim_per_cycle'], 4))
-        v_lim_frac = .7
+        v_lim_frac = self.params['v_lim_frac']
         v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
         print 'debug VisualInput v_lim:', v_lim
         v_grid = np.linspace(v_lim[0], v_lim[1], self.params['n_training_v'])
@@ -175,7 +175,7 @@ class VisualInput(object):
         S0, S0, S0 ... S1 S1 S1 
         """
 
-        v_lim_frac = .8
+        v_lim_frac = self.params['v_lim_frac']
         v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
         self.training_stimuli = np.zeros((self.params['n_stim_training'], 4))
 
@@ -217,7 +217,7 @@ class VisualInput(object):
         S0, S1, S2   S2 S1 S0   S1 S0 S2   S2 S0 S1
         """
 
-        v_lim_frac = .8
+        v_lim_frac = self.params['v_lim_frac']
         v_lim = (v_lim_frac * np.min(self.tuning_prop_exc[:, 2]), v_lim_frac * np.max(self.tuning_prop_exc[:, 2]))
         self.training_stimuli = np.zeros((self.params['n_stim_training'], 4))
 
@@ -266,8 +266,8 @@ class VisualInput(object):
             n_stim = self.params['n_stim_training']
         mp_training = np.zeros((n_stim, 4))
 
-        x_lim_frac = .9
-        v_lim_frac = .6
+        x_lim_frac = self.params['x_lim_frac']
+        v_lim_frac = self.params['v_lim_frac']
 #        x_lim_frac = 1.
 #        v_lim_frac = 1.
 #        x_lim = ((1. - x_lim_frac) * (self.params['x_max_tp'] - self.params['x_min_tp']), x_lim_frac * self.params['x_max_tp'])
@@ -394,7 +394,6 @@ class VisualInput(object):
         """
         n_steps = t_sim / self.params['dt_input_mpn']
         time_axis = np.arange(0, t_sim, self.params['dt_input_mpn'])
-        #x_stim = self.current_motion_params[0] + (self.current_motion_params[2] - v_eye[0]) 
         x_stim = self.current_motion_params[0] + (time_axis * self.current_motion_params[2] - v_eye[0] * t_sim * np.ones(n_steps)) / self.params['t_cross_visual_field']
         y_stim = self.current_motion_params[1] + (time_axis * self.current_motion_params[3] - v_eye[1] * t_sim * np.ones(n_steps)) / self.params['t_cross_visual_field']
 

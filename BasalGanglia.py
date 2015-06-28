@@ -446,7 +446,8 @@ class BasalGanglia(object):
         action_bins = self.action_bins_x
         all_outcomes = np.zeros(len(action_bins))
         for i_, action in enumerate(action_bins):    
-            all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action)[0]
+            all_outcomes[i_] = utils.get_next_stim(self.params, stim_params, action, \
+                    with_input_delay=self.params['with_input_delay'], with_output_delay=self.params['with_output_delay'])[0]
         best_action_idx = np.argmin(np.abs(all_outcomes - .5))
         best_speed = self.action_bins_x[best_action_idx ]
         return (best_speed, 0, best_action_idx)

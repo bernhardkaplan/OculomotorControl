@@ -154,7 +154,8 @@ if __name__ == '__main__':
                 # integrate the real world trajectory and the eye direction and compute spike trains from that
                 # and get the state information BEFORE MPN perceives anything
                 # computes input between t0 and t2
-                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], testing_params['delay_input'] + testing_params['t_iteration']) 
+                t_sim = testing_params['delay_input'] + testing_params['t_iteration'] + testing_params['delay_output']
+                stim, supervisor_state = VI.compute_input(MT.local_idx_exc, actions[iteration_cnt, :], t_sim)
 
             if testing_params['debug_mpn']:
                 print 'Iteration %d: Saving spike trains...' % iteration_cnt

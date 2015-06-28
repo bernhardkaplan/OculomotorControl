@@ -50,13 +50,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
-        self.params['delay_input'] = 75.
-        self.params['delay_output'] = 75.
-        self.params['with_input_delay'] = not (self.params['delay_input'] == 0)
-        self.params['with_output_delay'] = not (self.params['delay_output'] == 0)
+        self.params['delay_input'] = 0.
+        self.params['delay_output'] = 100.
+        self.params['with_input_delay'] = not (self.params['delay_input'] == 0.)
+        self.params['with_output_delay'] = not (self.params['delay_output'] == 0.)
 
-        self.params['n_rf'] = 20
-        self.params['n_v'] = 20
+        self.params['n_rf'] = 30
+        self.params['n_v'] = 30
         self.blur_x = 0.00
         self.blur_v = 0.00
         self.n_actions = 9
@@ -103,7 +103,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
 #        else:
         self.params['n_training_stim_per_cycle'] = self.params['n_training_x'] * self.params['n_training_v']
-        self.params['n_steps_training_trajectory'] = 4
+        self.params['n_steps_training_trajectory'] = 3
         self.params['n_stim_training'] = self.params['n_training_cycles'] * self.params['n_training_stim_per_cycle'] # total number of stimuli presented during training
         self.params['stim_range'] = [0, self.params['n_stim_training']] # will likely be overwritten
         self.params['frac_training_samples_from_grid'] = 0.8
@@ -184,10 +184,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # if reward_based_learning == True: this parameter is the interval with which non-optimal decisions are trained
         if self.params['training']:
             if self.params['reward_based_learning']:
-                self.params['sim_id'] = 'NewTP_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
+                self.params['sim_id'] = 'DEBUG_nactions%d_%d_temp%.1f_nC%d_' % (self.n_actions, self.params['n_max_trials_same_stim'], self.params['softmax_action_selection_temperature'], self.params['n_training_cycles'])
         else:
 #            self.params['sim_id'] = '%d_K10g0.2_' % (self.params['t_iteration'])
-            self.params['sim_id'] = 'NewTP_%d_nactions%d_VA_bX%.1f_bV%.1x' % (self.params['t_iteration'], self.n_actions, self.blur_x, self.blur_v)
+            self.params['sim_id'] = 'DEBUG_%d_nactions%d_VA_bX%.1f_bV%.1x' % (self.params['t_iteration'], self.n_actions, self.blur_x, self.blur_v)
 
 #        self.params['initial_state'] = (.3, .5, -.2, .0) # initial motion parameters: (x, y, v_x, v_y) position and direction at start
 
@@ -351,8 +351,10 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['v_lim_training'] = (-self.params['v_max_tp'] * 0.7, self.params['v_max_tp'] * 0.7)
 #        self.params['v_max_out'] = 12.0   # max velocity for eye movements (for humans ~900 degree/sec, i.e. if screen for stimulus representation (=visual field) is 45 debgree of the whole visual field (=180 degree))
         self.params['blur_X'], self.params['blur_V'] = self.blur_x, self.blur_v
-        self.params['training_stim_noise_x'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
-        self.params['training_stim_noise_v'] = 0.10 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['training_stim_noise_x'] = 0.01 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['training_stim_noise_v'] = 0.01 # noise to be applied to the training stimulus parameters (absolute, not relative to the 'pure stimulus parameters')
+        self.params['x_lim_frac'] = 0.8             # limits the range of training stimuli in x-direction
+        self.params['v_lim_frac'] = 0.8             # limits the range of training stimuli in x-direction
         self.params['blur_theta'] = 1.0
         self.params['rf_size_x_multiplicator'] = 1.0 # receptive field sizes for x-position are multiplied with this factor (to increase / decrease overlap)
         self.params['rf_size_v_multiplicator'] = 1.0 # receptive field sizes for vx are multiplied with this factor (to increase / decrease overlap)

@@ -58,9 +58,6 @@ def create_stimuli_along_a_trajectory(params):
     #np.random.shuffle(shuffled_idx)
 
     stim_params_start = stim_params_grid[shuffled_idx, :]
-
-#    print 'debug stim_params_start', stim_params_start
-#    print 'debug stim_params_start', stim_params_start.shape
     BG = BasalGanglia.BasalGanglia(params, dummy=True)
     output_array = np.zeros((n_stim * params['n_steps_training_trajectory'], 4))
     for i_stim in xrange(n_stim):
@@ -68,10 +65,9 @@ def create_stimuli_along_a_trajectory(params):
         for it_ in xrange(params['n_steps_training_trajectory'] - 1):
             output_array[i_stim * params['n_steps_training_trajectory'] + it_, :] = [x, y, u, v]
             (best_speed, vy, best_action_idx) = BG.get_optimal_action_for_stimulus(output_array[i_stim * params['n_steps_training_trajectory'] + it_, :])
-            print 'i_stim it_', i_stim, it_, 'x y u v', x, u, best_speed, best_action_idx
-            (x, y, u, v) = utils.get_next_stim(params, output_array[i_stim * params['n_steps_training_trajectory'] + it_, :], best_speed)
+            (x, y, u, v) = utils.get_next_stim(params, output_array[i_stim * params['n_steps_training_trajectory'] + it_, :], best_speed, \
+                    with_input_delay=params['with_input_delay'], with_output_delay=params['with_output_delay'])
             output_array[i_stim * params['n_steps_training_trajectory']+ it_ + 1, :] = [x, y, u, v]
-
     return output_array
 
 
@@ -163,15 +159,9 @@ if __name__ == '__main__':
         training_stimuli = create_stimuli_from_grid_center_and_tuning_prop(params)
 #        training_stimuli = VI.create_training_sequence_from_a_grid()       # sampled from a grid layed over the tuning property space
 
-
     print 'debug', training_stimuli
     print 'Debug saving training_stimuli to:', params['training_stimuli_fn']
     np.savetxt(params['training_stimuli_fn'], training_stimuli)
-
-
-#    exit(1)
-
-
 
     VI = VisualInput.VisualInput(params)
     supervisor_states, action_indices, motion_params_precomputed = VI.get_supervisor_actions(training_stimuli, BG)
@@ -186,7 +176,6 @@ if __name__ == '__main__':
     np.savetxt(params['action_indices_fn'], action_indices, fmt='%d')
     np.savetxt(params['actions_taken_fn'], output_array)
 #    np.savetxt(params['motion_params_precomputed_fn'], motion_params_precomputed)
-
 
     n_bins = params['n_actions']
     cnt, bins = np.histogram(action_indices, bins=n_bins, range=(np.min(action_indices), np.max(action_indices)))

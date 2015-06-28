@@ -135,23 +135,30 @@ def draw_from_discrete_distribution(prob_dist, size=1):
     return R
 
 
-def get_next_stim(params, stim_params, v_eye, with_input_delay=True, with_output_delay=True):
+#def get_next_stim(params, stim_params, v_eye, with_input_delay=True, with_output_delay=True):
+def get_next_stim(params, stim_params, v_eye, with_input_delay, with_output_delay):
     """
     Returns the stimulus parameters for a given action (v_eye) in x-direction
     """
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field']
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
 
-    if with_input_delay and with_output_delay:
-        x_stim = stim_params[0] + stim_params[2] * (params['delay_input'] + params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
-                - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
-    elif with_input_delay and not with_output_delay:
-        x_stim = stim_params[0] + stim_params[2] * (params['delay_input'] + params['t_iteration']) / params['t_cross_visual_field']
-    elif not with_input_delay and with_output_delay:
-        x_stim = stim_params[0] + stim_params[2] * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
-                - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
-    elif not with_input_delay and not with_output_delay:
-        x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
+    print 'DEBUG with_input_delay', with_input_delay, 'with_output_delay ', with_output_delay
+    x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_input'] + params['delay_output'])/ params['t_cross_visual_field']
+
+#    if not with_input_delay and not with_output_delay:
+#        x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
+#    elif with_input_delay and not with_output_delay:
+#        x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field'] + stim_params[2] * params['delay_input'] / params['t_cross_visual_field']
+#    elif not with_input_delay and with_output_delay:
+#        x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field'] + stim_params[2] * (params['delay_input'] / params['t_cross_visual_field'] \
+#                + (stim_params[2] - v_eye)
+#        x_stim = stim_params[0] + stim_params[2] * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
+#                - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
+#    elif with_input_delay and with_output_delay:
+#        x_stim = stim_params[0] + stim_params[2] * (params['delay_input'] + params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field'] \
+#                - (stim_params[2] - v_eye) * params['delay_output'] / params['t_cross_visual_field']
+#        x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field'] + stim_params[2] * params['delay_input'] / params['t_cross_visual_field']
 
 
     return (x_stim, stim_params[1], stim_params[2], stim_params[3])
