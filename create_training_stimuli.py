@@ -154,7 +154,6 @@ if __name__ == '__main__':
     np.random.seed(params['visual_stim_seed'])
     BG = BasalGanglia.BasalGanglia(params, dummy=True)
 
-
 #    training_stimuli = create_non_overlapping_training_stimuli(params)
     if params['n_steps_training_trajectory'] > 1:
         training_stimuli = create_stimuli_along_a_trajectory(params)
