@@ -165,7 +165,8 @@ class ActivityPlotter(object):
         if stim_params.ndim == 1:
             stim_params = stim_params.reshape((1, stim_params.size))
 #        print 'debug stim_range', stim_range
-        for i_ in xrange(len(self.params['test_stim_range'])):
+#        for i_ in xrange(len(self.params['test_stim_range'])):
+        for i_ in xrange(self.params['n_stim']):
             x, y, u, v = stim_params[i_, :]
             xpos_txt = .5 * (i_ * t_stim + (i_ + 1) * t_stim)
             (best_speed, vy, best_action_idx) = utils.get_optimal_action(self.params, stim_params[i_, :])

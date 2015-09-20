@@ -39,7 +39,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         # ######################
         # SIMULATION PARAMETERS
         # ######################
-        self.params['training'] = True
+        self.params['training'] = False
         self.params['Cluster'] = False
         self.params['Cluster_Milner'] = False
         self.params['total_num_virtual_procs'] = 4
@@ -50,8 +50,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['total_num_virtual_procs'] = 80
         if self.params['Cluster'] and not self.params['Cluster_Milner']:
             self.params['total_num_virtual_procs'] = 96
-        self.params['delay_input'] = 0.
-        self.params['delay_output'] = 100.
+        self.params['delay_input'] = 50.
+        self.params['delay_output'] = 50.
         self.params['with_input_delay'] = not (self.params['delay_input'] == 0.)
         self.params['with_output_delay'] = not (self.params['delay_output'] == 0.)
 
@@ -59,7 +59,7 @@ class global_parameters(ParameterContainer.ParameterContainer):
         self.params['n_v'] = 30
         self.blur_x = 0.00
         self.blur_v = 0.00
-        self.n_actions = 9
+        self.n_actions = 17
         self.params['reward_threshold'] = 0.0
         # Reward function parameters:
         self.params['softmax_action_selection_temperature'] = 0.5
@@ -90,13 +90,13 @@ class global_parameters(ParameterContainer.ParameterContainer):
         """
 
         self.params['trained_stimuli'] = []
-        self.params['n_training_x'] = 1 # how often a stimulus with the same speed is replaced & presented during one training cycle
+        self.params['n_training_x'] = 2 # how often a stimulus with the same speed is replaced & presented during one training cycle
         # n_training_x: how often a stimulus 'is followed' towards the center (+ suboptimal_training steps without an effect on the trajectory)
-        self.params['n_training_v'] = 2 # number of training samples to cover the v-direction of the tuning space, should be an even number
+        self.params['n_training_v'] = 1 # number of training samples to cover the v-direction of the tuning space, should be an even number
         self.params['n_divide_training_space_v'] = 1 # in how many tiles should the v-space be divided for training (should be larger than n_training_v), but constant for different training trials (i.e. differen n_training_v) to continue the training
         self.params['n_max_trials_same_stim'] = 30 # after this number of training trials (presenting the same stimulus) and having received a negative reward, the next stimulus is presented
         # to make sure that the correct action is learned n_max_trials_same_stim should be n_actions + n_max_trials_pos_rew
-        self.params['n_max_trials_pos_rew'] = 1 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
+        self.params['n_max_trials_pos_rew'] = 2 # after this number of training trials (presenting the same stimulus) and having received a positive reward, the stimulus is removed from the training set
 #        self.params['suboptimal_training'] = 1
 #        if self.params['reward_based_learning']:
 #            self.params['n_training_stim_per_cycle'] = (self.params['suboptimal_training'] + 1) * self.params['n_training_x'] * self.params['n_training_v'] # + 1 because one good action is to be trained for each stimulus
@@ -117,8 +117,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
         #self.params['test_stim_range'] = self.params['test_stim_range'] + [285 + i * 3 for i in xrange(15)] #range(0, 10)
         #self.params['test_stim_range'] = [300 + i * 3 for i in xrange(100)]
         #self.params['test_stim_range'] = [i * 3 for i in xrange(100)]
-        self.params['test_stim_range'] = range(100)
-        #self.params['test_stim_range'] = [0, 1]
+#        self.params['test_stim_range'] = range(100)
+        self.params['test_stim_range'] = [0, 1]
         #self.params['test_stim_range'] = range(0, 10)
         if len(self.params['test_stim_range']) > 1:
             self.params['n_stim_testing'] = len(self.params['test_stim_range'])
@@ -135,8 +135,8 @@ class global_parameters(ParameterContainer.ParameterContainer):
                 self.params['n_iterations_per_stim'] = 4 + self.params['n_iterations_RBL_training']  
                 # noise, stim, noise, training, noise
             self.params['t_training_stim'] = self.params['n_iterations_per_stim'] * self.params['t_iteration'] + self.params['delay_input']
-        else:
-            self.params['n_iterations_per_stim'] = 40 + self.params['n_silent_iterations']
+        else: # TESTING
+            self.params['n_iterations_per_stim'] = 20 + self.params['n_silent_iterations']
         # effective number of training iterations is n_iterations_per_stim - n_silent_iterations
         self.params['weight_tracking'] = False# if True weights will be written to file after each iteration --> use only for debugging / plotting
         # if != 0. then weights with abs(w) < 

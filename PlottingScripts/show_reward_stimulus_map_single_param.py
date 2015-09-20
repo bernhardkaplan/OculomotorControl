@@ -77,7 +77,7 @@ if __name__ == '__main__':
     cnt_ = 0
     speed_mult_0 = 1.0
     speed_mult_1 = 2.0
-    n_actions = 17
+    n_actions = params['n_actions'] # 17
     k_ = 100
     rew_tol = 0.04
     speed_mult = [speed_mult_0, speed_mult_1]

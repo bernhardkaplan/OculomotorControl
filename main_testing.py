@@ -139,6 +139,10 @@ if __name__ == '__main__':
     iteration_cnt = 0
 
     motion_params_testing = []
+    print 'debug check n_iterations:'
+    print 'loop:', len(testing_params['test_stim_range']) * testing_params['n_iterations_per_stim']
+    print 'testing_params[n_iterations]', testing_params['n_iterations']
+
     for i_, i_stim in enumerate(testing_params['test_stim_range']):
         if testing_params['use_training_stim_for_testing']:
             VI.current_motion_params = deepcopy(training_stimuli[i_stim, :])
@@ -176,7 +180,6 @@ if __name__ == '__main__':
             actions[iteration_cnt + 1, :] = next_action
             print 'Iteration: %d\t%d\tState after action: ' % (iteration_cnt, pc_id), next_action
             advance_iteration(MT, BG, VI, testing_params['delay_input'] + testing_params['t_iteration'])
-            iteration_cnt += 1
             if comm != None:
                 comm.Barrier()
 
@@ -208,6 +211,7 @@ if __name__ == '__main__':
                 advance_iteration(MT, BG, VI, testing_params['delay_output'])
                 if comm != None:
                     comm.Barrier()
+            iteration_cnt += 1
 
 
 

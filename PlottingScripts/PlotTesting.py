@@ -84,6 +84,9 @@ class PlotTesting(MetaAnalysisClass):
         else:
             self.stim_range = range(stim_range[0], stim_range[1])
 
+#        if len(self.stim_range) == 0: # only one test stimulus
+#            self.stim_range = (stim_range[0]
+
         print 'debug self.stim_range:', self.stim_range
         self.n_stim = self.stim_range[-1] - self.stim_range[0] + 1
         self.it_range = [0, 0]
@@ -183,6 +186,7 @@ class PlotTesting(MetaAnalysisClass):
             
         print 'Problematic_stimuli_idx:', problematic_stimuli_idx
         print 'good_stimuli_idx:', good_stimuli_idx
+        good_stimuli_idx = np.array(good_stimuli_idx)
 
         for it_ in xrange(self.params['n_iterations_per_stim']):
             avg_displ[it_, 0] = all_displ[it_, :].mean()

@@ -1,3 +1,7 @@
+"""
+script possibly deprecated, worked with get_reward_gauss, but return value of get_reward_sigmoid returns only R and no other parameters
+"""
+
 import numpy as np
 import pylab
 import utils
@@ -105,7 +109,8 @@ def get_rewards_for_all_stimuli_and_actions(n_pos=20, n_v=20):
             for i_a in xrange(params['n_actions']):
                 x_new = utils.get_next_stim(params, stim_params, speeds[i_a])[0]
 #                R = utils.get_reward_from_perceived_states(x_old, x_new)
-                R, sigma_R = utils.get_reward_gauss(x_new, stim_params, params)
+#                R, sigma_R = utils.get_reward_gauss(x_new, stim_params, params)
+                R = utils.get_reward_sigmoid(x_new, stim_params, params)
                 #R = utils.get_reward_from_perceived_states(x_old, x_new)
                 stimuli_and_rewards[idx, 0] = x_old
                 stimuli_and_rewards[idx, 1] = x_new
@@ -228,7 +233,8 @@ def plot_actions_and_rewards_for_single_stim(stim_params, ax=None, x_offset=0.):
     R = np.zeros(params['n_actions'])
     for i_a in xrange(params['n_actions']):
         x_new = utils.get_next_stim(params, stim_params, speeds[i_a])[0]
-        R[i_a] = utils.get_reward_gauss(x_new, stim_params, params)
+        R[i_a] = utils.get_reward_sigmoid(x_new, stim_params, params)
+#        R[i_a] = utils.get_reward_gauss(x_new, stim_params, params)
 #        R[i_a] = utils.get_reward_from_perceived_states(x_old, x_new)
         x_post[i_a] = x_new
 
@@ -270,7 +276,7 @@ def plot_actions_and_rewards_for_single_stim(stim_params, ax=None, x_offset=0.):
     return ax
 
 
-def plot_reward_schedule(params, x_pre_action, ls='-', ax=None, ax2=None):
+def plot_reward_schedule_gauss(params, x_pre_action, ls='-', ax=None, ax2=None):
 
     pylab.rcParams.update(plot_params)
 
@@ -283,6 +289,10 @@ def plot_reward_schedule(params, x_pre_action, ls='-', ax=None, ax2=None):
         for i_v in xrange(len(v_range)):
             stim_params = (x_pre_action, .5, v_range[i_v], .0)
             R[i_x, i_v], sigma_R[i_x, i_v] = utils.get_reward_gauss(x_range_new[i_x], stim_params, params)
+            # _sigmaoid does not return a sigma value
+#            debug = utils.get_reward_sigmoid(x_range_new[i_x], stim_params, params)
+#            print 'DEBUG', debug
+            R[i_x, i_v], sigma_R[i_x, i_v] = utils.get_reward_sigmoid(x_range_new[i_x], stim_params, params)
 
     n_curves = len(v_range)
     bounds = np.abs(v_range)
@@ -360,7 +370,8 @@ def plot_reward_schedule_single_actions(params, x_pre_action, n_speeds, v_max=1.
         for i_ in xrange(params['n_actions']):
             stim_params = (x_pre_action, .5, v_stim, .0)
             x_post_action[i_v, i_] = utils.get_next_stim(params, stim_params, actions_v[i_])[0]
-            R[i_v, i_], sigma_r = utils.get_reward_gauss(x_post_action[i_v, i_], stim_params, params)
+#            R[i_v, i_], sigma_r = utils.get_reward_gauss(x_post_action[i_v, i_], stim_params, params)
+            R[i_v, i_], sigma_r = utils.get_reward_sigmoid(x_new, stim_params, params)
 
 #    bounds = np.abs(actions_v)
     if n_speeds > 1:
@@ -378,7 +389,6 @@ def plot_reward_schedule_single_actions(params, x_pre_action, n_speeds, v_max=1.
         if n_speeds > 1:
             cb = fig.colorbar(m)
             cb.set_label('$|v_{stim}|$', fontsize=fontsize)
-
 
 
     for i_v, v_stim in enumerate(stim_speeds):
@@ -430,10 +440,11 @@ if __name__ == '__main__':
     n_speeds = 1
     v_max = 2.0
     for i_, x_pre_action in enumerate(x_pre_actions):
-        ax, p = plot_reward_schedule(params, x_pre_action, ls=linestyles[i_], ax=ax, ax2=ax_r)
-        label = '$x_{stim}$ before action: %.2f' % (x_pre_action)
-        labels.append(label)
-        plots.append(p)
+#        ax, p = plot_reward_schedule_gauss(params, x_pre_action, ls=linestyles[i_], ax=ax, ax2=ax_r)
+#        label = '$x_{stim}$ before action: %.2f' % (x_pre_action)
+#        labels.append(label)
+#        plots.append(p)
+
 #        for i_v, v_stim in enumerate(stim_speeds):
 #        ax2, p2 = plot_reward_schedule_single_actions(params, x_pre_action, n_speeds, v_max=v_max, ax=ax2)
         ax2, p2 = plot_reward_schedule_single_actions(params, x_pre_action, n_speeds, v_max=v_max, ls=linestyles[i_], ax=ax2)

@@ -143,7 +143,6 @@ def get_next_stim(params, stim_params, v_eye, with_input_delay, with_output_dela
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_output']) / params['t_cross_visual_field']
 #    x_stim = stim_params[0] + (stim_params[2] - v_eye) * params['t_iteration'] / params['t_cross_visual_field']
 
-    print 'DEBUG with_input_delay', with_input_delay, 'with_output_delay ', with_output_delay
     x_stim = stim_params[0] + (stim_params[2] - v_eye) * (params['t_iteration'] + params['delay_input'] + params['delay_output'])/ params['t_cross_visual_field']
 
 #    if not with_input_delay and not with_output_delay:

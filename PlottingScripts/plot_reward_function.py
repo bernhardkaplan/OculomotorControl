@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
             x_post_action = np.zeros(n_actions_to_plot)
             for i_a in xrange(n_actions_to_plot):
-                x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a])[0] # the next stimulus position takes into account both delay_input and delay_output
+                x_post_action[i_a] = utils.get_next_stim(params, stim_params, actions_v[i_a], params['with_input_delay'], params['with_output_delay'])[0] # the next stimulus position takes into account both delay_input and delay_output
                 R = utils.get_reward_sigmoid(x_post_action[i_a], stim_params_evaluation, params)  # the reward function needs to operate on the updated positions, taking into account both delay_input, delay_output
                 if R > 0:
                     n_pos_reward[i_stim, i_] += 1
@@ -180,18 +180,18 @@ if __name__ == '__main__':
 #    x_pre_range = np.linspace(0., 0.5, 100)
     x_pre_range = np.linspace(0., 1.0, 500)
 #    x_pre_range = (0., 0.5) # absolute displacement
-    k_range = params['k_range']
+#    k_range = params['k_range']
     # k_range[0] --> affects the stimuli that start at x_pre_range[0], i.e. in the periphery
     # k_range[1] --> affects the stimuli that start at x_pre_range[1], near the center
 #    tau = transform_quadratic(x_pre, 'neg', k_range, x_pre_range)
 #    tau = utils.transform_linear(x_pre_range, k_range)
-    k = k_range[0]
+#    k = k_range[0]
 
     ax2.set_title('Sigmoid parameters')
 #    ax2.set_ylabel('Speed-tolerance-increase')
     ax2.set_xlabel('$x_{pre}$')
 #    ax2.plot(x_pre_range, tau)
-    ax2.plot((x_pre_range[0], x_pre_range[-1]), k_range)
+#    ax2.plot((x_pre_range[0], x_pre_range[-1]), k_range)
 
     yticks = ax2.get_yticks()
 #    print 'delme', yticks[0].get_text()
